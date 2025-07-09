@@ -7,6 +7,7 @@
 #define LEDC_DUTY_RES LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
 #define LEDC_DUTY (4096)                // Set duty to 50%. (2 ** 13) * 50% = 4096
 #define LEDC_FREQUENCY (4000) 
+#define LED_OFF 0 // Define a constant for LED off state
 
 
 
@@ -51,7 +52,7 @@ namespace indicators
     void PowerLed::setState(ControlBoardState state)
     {
         
-        const int ledOff = 0; // 0% duty cycle
+
 
 
         switch (state)
@@ -60,20 +61,20 @@ namespace indicators
             onLed.setDuty(dutyCycle); // 50% duty cycle
             onLed.updateDuty();
             
-            standBy.setDuty( ledOff); // 0% duty cycle
+            standBy.setDuty( LED_OFF); // 0% duty cycle
             standBy.updateDuty();
             break;
         case ControlBoardState::Standby:
             standBy.setDuty(dutyCycle); // 50% duty cycle
             standBy.updateDuty();
 
-            onLed.setDuty( ledOff); // 0% duty cycle
+            onLed.setDuty( LED_OFF); // 0% duty cycle
             onLed.updateDuty();
             break;
         default:
             // switch off all leds
-            onLed.setDuty(ledOff); // 0% duty cycle
-            standBy.setDuty( ledOff); // 0% duty cycle
+            onLed.setDuty(LED_OFF); // 0% duty cycle
+            standBy.setDuty( LED_OFF); // 0% duty cycle
             onLed.updateDuty();
             standBy.updateDuty();
             ESP_LOGW("PowerLed", "Unknown state: %d, turning off all LEDs", static_cast<int>(state));
