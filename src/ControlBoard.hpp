@@ -2,13 +2,8 @@
 #pragma once
 #include "powerLed.hpp"
 
-
-
-
 namespace controlSystem
 {
-
-
     class ControlBoard
     {
     public:
@@ -18,5 +13,8 @@ namespace controlSystem
         // Initialize the control board
         void init();
 
-    };// namespace controlSystem
+    private:
+        void SetRelaySystemPowerOnStatus();
+
+    }; // namespace controlSystem
 }
