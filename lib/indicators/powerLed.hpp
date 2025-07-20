@@ -1,7 +1,7 @@
-
+#pragma once
 #include "driver/ledc.h"
 #include "pwmLed.hpp" // Ensure this header defines the LED class
-#include "enums.hpp" // Add this include for ControlBoardState
+ #include "led_definitions.hpp"
 #pragma once
 
 
@@ -26,4 +26,6 @@ namespace indicators
         led::LEDPWM standBy; // LED for power off indication
         int dutyCycle = 4096; // 50% duty cycle for 13-bit resolution
     };
+
+
 }

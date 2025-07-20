@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 #include "driver/ledc.h"
 #include "esp_err.h"

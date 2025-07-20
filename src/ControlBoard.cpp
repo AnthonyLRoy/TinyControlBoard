@@ -1,9 +1,11 @@
 
 #include "controlboard.hpp"
 #include "powerLed.hpp"
+#include "activeLed.hpp"
 #include "relay.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "led_Manager.hpp"
 
 #define PIN_APP_ACTIVE_LED GPIO_NUM_3
 #define PIN_APP_STANDBY_LED GPIO_NUM_4
@@ -12,13 +14,13 @@
 
 namespace controlSystem
 {
-
+        indicators::PowerLed powerLed(PIN_APP_ACTIVE_LED, PIN_APP_STANDBY_LED);
+        indicators::ActiveLed activeLed(PIN_APP_ACTIVE_LED);
     void ControlBoard::init()
     {
 
         // this command is only executed when the ESP32 is first started
         //  system witll default to Standby state
-        indicators::PowerLed powerLed(PIN_APP_ACTIVE_LED, PIN_APP_STANDBY_LED);
 
         powerLed.setState(ControlBoardState::Standby);
         void SetRelaySystemPowerOnStatus();
@@ -42,6 +44,10 @@ namespace controlSystem
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_2, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_3, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_4, false);
+
+        indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
+
+   
 
 }
