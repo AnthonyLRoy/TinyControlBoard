@@ -25,6 +25,8 @@ namespace buttons
     esp_err_t MCPInputHandler::begin()
     {
         ESP_LOGI(TAG, "Initializing I2C on port %d", i2cPort);
+        ESP_LOGI(TAG, "Using I2C address 0x%02X", i2cAddr);
+        ESP_LOGI(TAG, "Using I2C port 0x%02X", i2cPort);
 
         // 1. Configure I2C hardware
         i2c_config_t conf = {};
