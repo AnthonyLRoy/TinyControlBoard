@@ -14,17 +14,13 @@
 
 namespace controlSystem
 {
-        indicators::PowerLed powerLed(PIN_APP_ACTIVE_LED, PIN_APP_STANDBY_LED);
-        indicators::ActiveLed activeLed(PIN_APP_ACTIVE_LED);
     void ControlBoard::init()
     {
-
         // this command is only executed when the ESP32 is first started
         //  system witll default to Standby state
 
-        powerLed.setState(ControlBoardState::Standby);
-        void SetRelaySystemPowerOnStatus();
-
+        indicators::getPowerLed().setState(ControlBoardState::Standby);
+        SetRelaySystemPowerOnStatus();
     };
 
     void ControlBoard::SetRelaySystemPowerOnStatus()
@@ -47,7 +43,4 @@ namespace controlSystem
 
         indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
-
-   
-
 }

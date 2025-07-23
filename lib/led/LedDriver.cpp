@@ -8,8 +8,8 @@
 namespace led
 {
 
-#define MOSI_PIN GPIO_NUM_20
-#define SCLK_PIN GPIO_NUM_18
+#define MOSI_PIN GPIO_NUM_7
+#define SCLK_PIN GPIO_NUM_6
 
     LEDDriver::LEDDriver(spi_host_device_t spiHost, gpio_num_t latchPin)
         : host(spiHost), latch(latchPin) {}
@@ -22,11 +22,11 @@ namespace led
             .sclk_io_num = SCLK_PIN,
             .max_transfer_sz = 2,
         };
-        
+
         spi_bus_initialize(host, &buscfg, SPI_DMA_DISABLED);
 
         spi_device_interface_config_t devcfg = {
-            .mode= 0,
+            .mode = 0,
             .clock_speed_hz = 1 * 1000 * 1000,
             .spics_io_num = -1,
             .queue_size = 1,
@@ -66,5 +66,4 @@ namespace led
         esp_rom_delay_us(1);
         gpio_set_level(latch, 1);
     }
-
 }
