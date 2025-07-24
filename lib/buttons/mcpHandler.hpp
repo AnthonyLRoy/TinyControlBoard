@@ -7,58 +7,63 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include "esp_Check.h"
+#include <esp_log.h>
 
-namespace buttons {
 
-class MCPInputHandler {
-public:
-    MCPInputHandler(uint8_t address, i2c_port_t port, gpio_num_t intPin);
 
-    // Must be called before any other method
-    esp_err_t begin();
+namespace buttons
+{
 
-    // Optional: scans I2C bus and logs found devices
-    void scanner();
+    class MCPInputHandler
+    {
+    public:
+        MCPInputHandler(uint8_t address, i2c_port_t port);
 
-    // Optional: checks if given device is reachable
-    esp_err_t testConnection(uint8_t devAddr, int32_t timeout = -1);
+        // Must be called before any other method
+        esp_err_t begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin);
 
-    // Sets time to wait for I2C commands
-    void setTimeout(uint32_t ms);
+        // Optional: scans I2C bus and logs found devices
+        void scanner();
 
-    // Button press callback (pin, pressed)
-    void setButtonCallback(std::function<void(uint8_t, bool)> cb);
+        // Optional: checks if given device is reachable
+        esp_err_t testConnection(uint8_t devAddr, int32_t timeout = -1);
 
-    // Button release callback (pin, released)
-    void setReleaseCallback(std::function<void(uint8_t, bool)> cb);
+        // Sets time to wait for I2C commands
+        void setTimeout(uint32_t ms);
 
-    // Rotary encoder callback (movement -1, 0, 1)
-    void setRotaryCallback(std::function<void(int)> cb);
+        // Button press callback (pin, pressed)
+        void setButtonCallback(std::function<void(uint8_t, bool)> cb);
 
-private:
-    uint8_t i2cAddr;
-    i2c_port_t i2cPort;
-    gpio_num_t interruptPin;
+        // Button release callback (pin, released)
+        void setReleaseCallback(std::function<void(uint8_t, bool)> cb);
 
-    uint16_t prevState;
-    uint8_t rotaryLast;
-    TickType_t ticksToWait;
+        // Rotary encoder callback (movement -1, 0, 1)
+        void setRotaryCallback(std::function<void(int)> cb);
 
-    TimerHandle_t timers[16];
+    private:
+        uint8_t i2cAddr;
+        i2c_port_t i2cPort;
+        gpio_num_t interruptPin;
 
-    std::function<void(uint8_t, bool)> buttonCallback;
-    std::function<void(uint8_t, bool)> releaseCallback;
-    std::function<void(int)> rotaryCallback;
+        uint16_t prevState;
+        uint8_t rotaryLast;
+        TickType_t ticksToWait;
 
-    // Internal handlers
-    void handleInterrupt();
-    void decodeRotary(uint16_t state);
-    static void timerCallback(TimerHandle_t xTimer);
+        TimerHandle_t timers[16];
 
-    // I2C helpers
-    uint16_t readGPIO16();
-    void writeRegister(uint8_t reg, uint8_t val);
-    void writeRegisterPair(uint8_t baseReg, uint8_t a, uint8_t b);
-};
+        std::function<void(uint8_t, bool)> buttonCallback;
+        std::function<void(uint8_t, bool)> releaseCallback;
+        std::function<void(int)> rotaryCallback;
+
+        // Internal handlers
+        void handleInterrupt();
+        void decodeRotary(uint16_t state);
+        static void timerCallback(TimerHandle_t xTimer);
+
+        // I2C helpers
+        uint16_t readGPIO16();
+        void writeRegister(uint8_t reg, uint8_t val);
+        void writeRegisterPair(uint8_t baseReg, uint8_t a, uint8_t b);
+    };
 
 } // namespace buttons

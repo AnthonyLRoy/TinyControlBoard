@@ -10,15 +10,14 @@
 #define PIN_APP_ACTIVE_LED GPIO_NUM_3
 #define PIN_APP_STANDBY_LED GPIO_NUM_4
 
-
-
 namespace controlSystem
 {
+    static const char *TAG = "CONTROL_BOARD";
     void ControlBoard::init()
     {
         // this command is only executed when the ESP32 is first started
         //  system witll default to Standby state
-
+        ESP_LOGI(TAG, "Initializing Power LED...");
         indicators::getPowerLed().setState(ControlBoardState::Standby);
         SetRelaySystemPowerOnStatus();
     };

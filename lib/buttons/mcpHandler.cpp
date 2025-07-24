@@ -1,10 +1,7 @@
 #include "mcpHandler.hpp"
-#include "esp_check.h"
-#include <esp_log.h>
-#include <driver/gpio.h>
-#include <driver/i2c.h>
 
 
+#define PIN_I2C_ENABLE GPIO_NUM_17 // GPIO to enable I2C bus
 namespace buttons
 {
 
@@ -17,29 +14,35 @@ namespace buttons
         -1, 0, 0, 1,
         0, 1, -1, 0};
 
-    MCPInputHandler::MCPInputHandler(uint8_t address, i2c_port_t port, gpio_num_t intPin)
-        : i2cAddr(address), i2cPort(port), interruptPin(intPin), prevState(0xFFFF), rotaryLast(0), ticksToWait(pdMS_TO_TICKS(50))
+    MCPInputHandler::MCPInputHandler(uint8_t address, i2c_port_t port)
+        : i2cAddr(address), i2cPort(port), prevState(0xFFFF), rotaryLast(0), ticksToWait(pdMS_TO_TICKS(50))
     {
     }
 
-    esp_err_t MCPInputHandler::begin()
+    esp_err_t MCPInputHandler::begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin)
     {
+        this->interruptPin = intPin;
+
         ESP_LOGI(TAG, "Initializing I2C on port %d", i2cPort);
         ESP_LOGI(TAG, "Using I2C address 0x%02X", i2cAddr);
         ESP_LOGI(TAG, "Using I2C port 0x%02X", i2cPort);
+        ESP_LOGI(TAG, "Using interrupt pin %d", interruptPin);
 
         // 1. Configure I2C hardware
         i2c_config_t conf = {};
         conf.mode = I2C_MODE_MASTER;
-        conf.sda_io_num = GPIO_NUM_16;
-        conf.scl_io_num = GPIO_NUM_15;
+        conf.sda_io_num = sda;
+        conf.scl_io_num = scl;
         conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
         conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
         conf.clk_flags = 0;
         conf.master.clk_speed = 50000; // Set I2C clock speed to 100kHz
 
-         ESP_RETURN_ON_ERROR(i2c_param_config(i2cPort, &conf), TAG, "I2C config failed");
-         ESP_RETURN_ON_ERROR(i2c_driver_install(i2cPort, I2C_MODE_MASTER, 0, 0, 0), TAG, "I2C install failed");
+        ESP_RETURN_ON_ERROR(i2c_param_config(i2cPort, &conf), TAG, "I2C config failed");
+        ESP_RETURN_ON_ERROR(i2c_driver_install(i2cPort, I2C_MODE_MASTER, 0, 0, 0), TAG, "I2C install failed");
+
+        gpio_set_direction(PIN_I2C_ENABLE, GPIO_MODE_OUTPUT);
+        gpio_set_level(PIN_I2C_ENABLE, 1);
 
         ESP_LOGI(TAG, "Configuring MCP23017 registers");
 
@@ -62,10 +65,12 @@ namespace buttons
             .intr_type = GPIO_INTR_NEGEDGE,
         };
 
+
         // 4. Configure interrupt pin
         ESP_LOGI(TAG, "Configuring interrupt pin %d", interruptPin);
         gpio_config(&io_conf);
 
+        ESP_LOGI(TAG, "Installing GPIO ISR service");
         if (gpio_install_isr_service(0) != ESP_OK)
         {
             ESP_LOGW(TAG, "ISR service already installed, skipping");
@@ -75,7 +80,6 @@ namespace buttons
         ESP_RETURN_ON_ERROR(gpio_isr_handler_add(interruptPin, [](void *arg) -> void
                                                  { static_cast<MCPInputHandler *>(arg)->handleInterrupt(); }, this),
                             TAG, "ISR add failed");
-
 
         return ESP_OK;
     }
@@ -182,6 +186,10 @@ namespace buttons
             {
                 ESP_LOGI("I2C", "Device at 0x%02X", addr);
                 ++found;
+            }
+            else
+            {
+                ESP_LOGI("I2C", "No device at 0x%02X", addr);
             }
         }
         if (found == 0)
