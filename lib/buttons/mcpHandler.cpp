@@ -1,6 +1,5 @@
 #include "mcpHandler.hpp"
 
-
 #define PIN_I2C_ENABLE GPIO_NUM_17 // GPIO to enable I2C bus
 namespace buttons
 {
@@ -25,18 +24,14 @@ namespace buttons
 
         ESP_LOGI(TAG, "Initializing I2C on port %d", i2cPort);
         ESP_LOGI(TAG, "Using I2C address 0x%02X", i2cAddr);
-        ESP_LOGI(TAG, "Using I2C port 0x%02X", i2cPort);
-        ESP_LOGI(TAG, "Using interrupt pin %d", interruptPin);
 
-        // 1. Configure I2C hardware
         i2c_config_t conf = {};
         conf.mode = I2C_MODE_MASTER;
         conf.sda_io_num = sda;
         conf.scl_io_num = scl;
         conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
         conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-        conf.clk_flags = 0;
-        conf.master.clk_speed = 50000; // Set I2C clock speed to 100kHz
+        conf.master.clk_speed = 50000;
 
         ESP_RETURN_ON_ERROR(i2c_param_config(i2cPort, &conf), TAG, "I2C config failed");
         ESP_RETURN_ON_ERROR(i2c_driver_install(i2cPort, I2C_MODE_MASTER, 0, 0, 0), TAG, "I2C install failed");
@@ -44,44 +39,90 @@ namespace buttons
         gpio_set_direction(PIN_I2C_ENABLE, GPIO_MODE_OUTPUT);
         gpio_set_level(PIN_I2C_ENABLE, 1);
 
-        ESP_LOGI(TAG, "Configuring MCP23017 registers");
+        ESP_LOGI(TAG, "Configuring MCP23017");
 
-        // 2. Configure GPIO direction and pull-ups (IODIRx and GPPUx)
-        writeRegisterPair(0x00, 0xFF, 0xFF); // IODIRA/B: inputs
-        writeRegisterPair(0x0C, 0xFF, 0xFF); // GPPUA/B: pull-ups on
+        writeRegisterPair(0x00, 0xFF, 0xFF); // All inputs
+        writeRegisterPair(0x0C, 0xFF, 0xFF); // Pull-ups
+        writeRegisterPair(0x04, 0xFF, 0xFF); // Interrupt on change
+        writeRegisterPair(0x08, 0x00, 0x00); // Compare to previous
 
-        // 3. Enable interrupt-on-change on all pins
-        writeRegisterPair(0x04, 0xFF, 0xFF); // GPINTENA/B: interrupt on change
-        writeRegisterPair(0x08, 0x00, 0x00); // INTCONA/B: compare to previous
-        writeRegisterPair(0x0A, 0x00, 0x00); // DEFVALA/B: don't care
-        writeRegister(0x0A, 0x00);           // IOCON: default
-        writeRegister(0x0B, 0b01000000);     // IOCON mirror, open-drain
+        writeRegister(0x0A, 0b01000100); // MIRROR=1, SEQOP=1
 
         gpio_config_t io_conf = {
             .pin_bit_mask = 1ULL << interruptPin,
             .mode = GPIO_MODE_INPUT,
-            .pull_up_en = GPIO_PULLUP_DISABLE,
+            .pull_up_en = GPIO_PULLUP_ENABLE,
             .pull_down_en = GPIO_PULLDOWN_DISABLE,
             .intr_type = GPIO_INTR_NEGEDGE,
         };
+        ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Interrupt pin config failed");
 
 
-        // 4. Configure interrupt pin
-        ESP_LOGI(TAG, "Configuring interrupt pin %d", interruptPin);
-        gpio_config(&io_conf);
 
-        ESP_LOGI(TAG, "Installing GPIO ISR service");
-        if (gpio_install_isr_service(0) != ESP_OK)
+
+
+
+
+        esp_err_t isr_err = gpio_install_isr_service(0);
+        if (isr_err != ESP_OK && isr_err != ESP_ERR_INVALID_STATE)
         {
-            ESP_LOGW(TAG, "ISR service already installed, skipping");
-        };
+            ESP_LOGE(TAG, "ISR install failed");
+            return isr_err;
+        }
 
-        ESP_LOGI(TAG, "Adding ISR handler for pin %d", interruptPin);
-        ESP_RETURN_ON_ERROR(gpio_isr_handler_add(interruptPin, [](void *arg) -> void
-                                                 { static_cast<MCPInputHandler *>(arg)->handleInterrupt(); }, this),
-                            TAG, "ISR add failed");
+        xTaskCreate([](void *arg)
+                    { static_cast<MCPInputHandler *>(arg)->interruptTaskLoop(); }, "mcp_int_task", 4096, this, 10, &interruptTaskHandle);
 
+
+        gpio_isr_handler_add(interruptPin, [](void *arg)
+                             {
+                                BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+                                vTaskNotifyGiveFromISR(static_cast<MCPInputHandler *>(arg)->interruptTaskHandle, &xHigherPriorityTaskWoken);
+                                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+                             }, this);
+
+                              writeRegisterPair(0x04, 0xFF, 0xFF); // Interrupt on change
+                              readRegister(0x12); // Read GPIOA
+readRegister(0x13); // Read GPIOB
         return ESP_OK;
+    }
+    void MCPInputHandler::interruptTaskLoop()
+    {
+        while (true)
+        {
+            ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // Wait for ISR to notify
+            handleInterrupt();                       // Safe to call I2C here
+        }
+    }
+
+    uint8_t MCPInputHandler::readRegister(uint8_t reg)
+    {
+        uint8_t val = 0;
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write_byte(cmd, reg, true);
+        i2c_master_start(cmd); // Repeated start
+        i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_READ, true);
+        i2c_master_read_byte(cmd, &val, I2C_MASTER_LAST_NACK);
+        i2c_master_stop(cmd);
+        i2c_master_cmd_begin(i2cPort, cmd, ticksToWait);
+        i2c_cmd_link_delete(cmd);
+        return val;
+    }
+    void MCPInputHandler::dumpRegisters()
+    {
+        ESP_LOGI(TAG, "Reading all MCP23018 registers:");
+        for (uint8_t reg = 0x00; reg <= 0x15; ++reg)
+        {
+            uint8_t val = readRegister(reg);
+            ESP_LOGI(TAG, "Reg 0x%02X = 0x%02X", reg, val);
+        }
+    }
+    void MCPInputHandler::I2CEnable(bool enable)
+    {
+        gpio_set_level(PIN_I2C_ENABLE, enable ? 1 : 0);
+        ESP_LOGI(TAG, "I2C %s", enable ? "enabled" : "disabled");
     }
 
     void MCPInputHandler::writeRegister(uint8_t reg, uint8_t val)
@@ -110,6 +151,8 @@ namespace buttons
 
     uint16_t MCPInputHandler::readGPIO16()
     {
+
+        ESP_LOGI(TAG, "Reading GPIO16 state");
         uint8_t data[2] = {0};
         i2c_cmd_handle_t cmd = i2c_cmd_link_create();
         i2c_master_start(cmd);
@@ -127,7 +170,25 @@ namespace buttons
 
     void MCPInputHandler::handleInterrupt()
     {
-        uint16_t current = readGPIO16();
+
+        uint8_t intfA = readRegister(0x0E); // INTFA
+        uint8_t intfB = readRegister(0x0F); // INTFB
+
+        ESP_LOGI(TAG, "INTFA = 0x%02X", intfA);
+        ESP_LOGI(TAG, "INTFB = 0x%02X", intfB);
+
+        uint8_t intcapA = readRegister(0x10); // INTCAPA
+        uint8_t intcapB = readRegister(0x11); // INTCAPB
+
+        ESP_LOGI(TAG, "INTCAPA = 0x%02X", intcapA);
+        ESP_LOGI(TAG, "INTCAPB = 0x%02X", intcapB);
+
+        ESP_LOGI(TAG, "Interrupt received on pin %d", interruptPin);
+
+        // Explicitly read GPIOA and GPIOB to clear INTFA/INTFB
+        uint8_t gpioa = readRegister(0x12); // GPIOA
+        uint8_t gpiob = readRegister(0x13); // GPIOB
+        uint16_t current = (gpiob << 8) | gpioa;
 
         for (int i = 0; i < 16; ++i)
         {
@@ -150,7 +211,6 @@ namespace buttons
         decodeRotary(current); // Optional: if using rotary encoders
         prevState = current;
     }
-
     void MCPInputHandler::decodeRotary(uint16_t state)
     {
         uint8_t a = !(state & (1 << 14));

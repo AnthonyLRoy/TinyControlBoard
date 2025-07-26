@@ -45,8 +45,56 @@ void main::PerformStartupTasks()
     ESP_LOGI(TAG, "Initialising  MCP23017");
     mcpHandler.setTimeout(10); // Set timeout for I2C commands
     ESP_ERROR_CHECK(mcpHandler.begin(GPIO_NUM_SDA, GPPIO_NUM_SCDL,GPIO_NUM_INTERRUPT)); // Initialize MCP23017 with SDA and SCL pins
+    
+    mcpHandler.I2CEnable(true); // Enable I2C bus
+
     // Optional: scan I2C bus for devices    
     mcpHandler.scanner();
+
+
+mcpHandler.dumpRegisters();
+
+
+
+    // Button press callback
+    mcpHandler.setButtonCallback([](uint8_t pin, bool pressed)
+                                 {
+        ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
+
+        // Visual feedback: set LED to "doing work" if pressed
+        if (pressed) {
+            getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+        } });
+
+    // Button release callback
+    mcpHandler.setReleaseCallback([](uint8_t pin, bool released)
+                                  {
+        ESP_LOGI(TAG, "Pin %u RELEASED", pin);
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle); });
+
+    // Rotary encoder movement
+    mcpHandler.setRotaryCallback([](int movement)
+                                 {
+        ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); });
+    // Optional idle/sleep LED indication if no activity
+    while (true)
+    {
+        static int64_t lastActionTime = esp_timer_get_time();
+        int64_t now = esp_timer_get_time();
+
+        if ((now - lastActionTime) > 5000000)
+        { // 5 seconds
+            getActiveLed().SetStatus(ControlBoardWorkingStatus::sleeping);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(500));
+
+        ESP_LOGI(TAG, "Current LED Status: 0x%02X", mcpHandler.readRegister(0X13)); // Read the current status of the LED register
+        // Example usage of esp_timer_get_time
+    
+    }
+
 
 }
 
