@@ -9,6 +9,25 @@
 #include "esp_Check.h"
 #include <esp_log.h>
 
+constexpr uint8_t MCP_IODIRA = 0x00;
+constexpr uint8_t MCP_IODIRB = 0x01;
+constexpr uint8_t MCP_IPOLA = 0x02;
+constexpr uint8_t MCP_IPOLB = 0x03;
+constexpr uint8_t MCP_GPINTENA = 0x04;
+constexpr uint8_t MCP_GPINTENB = 0x05;
+constexpr uint8_t MCP_DEFVALA = 0x06;
+constexpr uint8_t MCP_DEFVALB = 0x07;
+constexpr uint8_t MCP_INTCONA = 0x08;
+constexpr uint8_t MCP_INTCONB = 0x09;
+constexpr uint8_t MCP_IOCON = 0x0A;
+constexpr uint8_t MCP_GPPUA = 0x0C;
+constexpr uint8_t MCP_GPPUB = 0x0D;
+constexpr uint8_t MCP_INTFA = 0x0E;
+constexpr uint8_t MCP_INTFB = 0x0F;
+constexpr uint8_t MCP_INTCAPA = 0x10;
+constexpr uint8_t MCP_INTCAPB = 0x11;
+constexpr uint8_t MCP_GPIOA = 0x12;
+constexpr uint8_t MCP_GPIOB = 0x13;
 
 // registers
 #define MCP23017_IODIRA 0x00
@@ -22,7 +41,6 @@
 #define MCP23017_INTCAPA 0x10
 #define MCP23017_GPIOA 0x12
 #define MCP23017_OLATA 0x14
-
 
 #define MCP23017_IODIRB 0x01
 #define MCP23017_IPOLB 0x03
@@ -38,40 +56,29 @@
 
 #define MCP23017_INT_ERR 255
 
-
-
 namespace buttons
 {
 
     class MCPInputHandler
     {
     public:
-
-    TaskHandle_t interruptTaskHandle = nullptr;
+        TaskHandle_t interruptTaskHandle = nullptr;
         MCPInputHandler(uint8_t address, i2c_port_t port);
 
-
         void interruptTaskLoop();
-
-        // Must be called before any other method
         esp_err_t begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin);
 
-        // Optional: scans I2C bus and logs found devices
         void scanner();
-
-        // Optional: checks if given device is reachable
+        static void gpioISR(void *arg);
+        static void interruptTask(void *pvParameters);
         esp_err_t testConnection(uint8_t devAddr, int32_t timeout = -1);
 
-        // Sets time to wait for I2C commands
         void setTimeout(uint32_t ms);
 
-        // Button press callback (pin, pressed)
         void setButtonCallback(std::function<void(uint8_t, bool)> cb);
 
-        // Button release callback (pin, released)
         void setReleaseCallback(std::function<void(uint8_t, bool)> cb);
 
-        // Rotary encoder callback (movement -1, 0, 1)
         void setRotaryCallback(std::function<void(int)> cb);
 
         void I2CEnable(bool enable);

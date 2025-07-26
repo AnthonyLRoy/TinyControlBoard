@@ -57,12 +57,6 @@ namespace buttons
         };
         ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Interrupt pin config failed");
 
-
-
-
-
-
-
         esp_err_t isr_err = gpio_install_isr_service(0);
         if (isr_err != ESP_OK && isr_err != ESP_ERR_INVALID_STATE)
         {
@@ -73,19 +67,23 @@ namespace buttons
         xTaskCreate([](void *arg)
                     { static_cast<MCPInputHandler *>(arg)->interruptTaskLoop(); }, "mcp_int_task", 4096, this, 10, &interruptTaskHandle);
 
+        gpio_isr_handler_add(interruptPin, MCPInputHandler::gpioISR, this);
 
-        gpio_isr_handler_add(interruptPin, [](void *arg)
-                             {
-                                BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-                                vTaskNotifyGiveFromISR(static_cast<MCPInputHandler *>(arg)->interruptTaskHandle, &xHigherPriorityTaskWoken);
-                                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-                             }, this);
-
-                              writeRegisterPair(0x04, 0xFF, 0xFF); // Interrupt on change
-                              readRegister(0x12); // Read GPIOA
-readRegister(0x13); // Read GPIOB
+        writeRegisterPair(0x04, 0xFF, 0xFF); // Interrupt on change
+        readRegister(0x12);                  // Read GPIOA
+        readRegister(0x13);                  // Read GPIOB
         return ESP_OK;
     }
+
+    void IRAM_ATTR MCPInputHandler::gpioISR(void *arg)
+    {
+
+        MCPInputHandler *self = static_cast<MCPInputHandler *>(arg);
+        BaseType_t higherPriorityWoken = pdFALSE;
+        vTaskNotifyGiveFromISR(self->interruptTaskHandle, &higherPriorityWoken);
+        portYIELD_FROM_ISR(higherPriorityWoken);
+    }
+
     void MCPInputHandler::interruptTaskLoop()
     {
         while (true)
