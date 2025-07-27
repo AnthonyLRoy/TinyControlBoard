@@ -18,6 +18,18 @@ namespace buttons
     {
     }
 
+    /// @brief 
+    /// @details This function initializes the MCPInputHandler with the specified I2C address and port.
+    /// It sets up the I2C configuration, GPIO interrupt pin, and installs the ISR          
+    /// service for handling interrupts from the MCP23017 device.
+    /// @param sda GPIO pin for I2C SDA
+    /// @param scl GPIO pin for I2C SCL
+    /// @param intPin GPIO pin for the interrupt from the MCP23017
+    /// @return esp_err_t ESP_OK on success, error code on failure
+    /// @see i2c_param_config(), i2c_driver_install(), gpio_config(), gpio_install_isr_service(), gpio_isr_handler_add()
+    /// @warning Ensure that the GPIO pins for SDA, SCL, and interrupt are correctly
+    /// defined in the project configuration.
+    /// @note This function should be called after the control board is initialized.
     esp_err_t MCPInputHandler::begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin)
     {
         this->interruptPin = intPin;
@@ -82,6 +94,14 @@ namespace buttons
         return ESP_OK;
     }
 
+    /// @brief
+    /// @details This function handles the GPIO interrupt from the MCP23017.
+    /// It reads the interrupt flags and captures the GPIO state, then processes the button presses and
+    /// rotary encoder movements.
+    /// @note This function is called from the ISR and should not block or take too long.
+    /// @see readRegister(), readGPIO16(), handleInterrupt()
+    /// @warning Ensure that the GPIO ISR is correctly configured to call this function.
+    /// @return 
     void IRAM_ATTR MCPInputHandler::gpioISR(void *arg)
     {
 
@@ -91,6 +111,10 @@ namespace buttons
         portYIELD_FROM_ISR(higherPriorityWoken);
     }
 
+    /// @brief 
+    /// @details This function runs in a separate task and waits for notifications from the GPIO ISR.
+    /// It calls handleInterrupt() to process the GPIO state and button presses.
+    /// @note This function should be created as a FreeRTOS task.
     void MCPInputHandler::interruptTaskLoop()
     {
         while (true)
