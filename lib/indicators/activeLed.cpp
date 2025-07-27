@@ -1,4 +1,3 @@
-#pragma once
 #include "activeLed.hpp"
 
 namespace indicators

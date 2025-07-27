@@ -64,6 +64,5 @@ struct UARTMessage {
 };
 
 uint8_t calculate_checksum(const uint8_t *data, size_t len);
-uint8_t calculate_checksum(const uint8_t *data, size_t len);
-void serialize_message(const UARTMessage &msg, uint8_t *buffer);
+void serialize_message( UARTMessage &msg, uint8_t *buffer);
 bool deserialize_message(const uint8_t *buffer, UARTMessage &msg);

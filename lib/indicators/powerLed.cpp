@@ -1,5 +1,4 @@
 
-#pragma once
 
 #include "powerLed.hpp"
 #include <algorithm>

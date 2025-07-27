@@ -8,7 +8,7 @@
 #include "led_manager.hpp"
 #include "esp_timer.h"
 #include "serial.hpp"
-
+#include "uart_protocol.hpp"
 class main
 {
 public:
