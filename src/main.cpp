@@ -42,7 +42,10 @@ void main::run()
         { // 5 seconds
             getActiveLed().SetStatus(ControlBoardWorkingStatus::sleeping);
         }
-
+        vTaskDelay(pdMS_TO_TICKS(5000));
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); 
+                vTaskDelay(pdMS_TO_TICKS(5000));
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle); 
         UARTMessage msg;
         msg.src_app = APP_ESP32;
         msg.msg_type = MSG_COMMAND;
@@ -58,7 +61,8 @@ void main::run()
         vTaskDelay(pdMS_TO_TICKS(1500));
 
         ESP_LOGI(TAG, "Current LED Status: 0x%02X", mcpHandler.readRegister(0X13)); // Read the current status of the LED register
-        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);             // Update the active LED state
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);  
+
     }
 }
 

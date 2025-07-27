@@ -10,14 +10,7 @@
         Maintenance
     };
 
-    enum class ControlBoardWorkingStatus    
-    {
-        doingWork,
-        Idle,
-        sleeping,
-        MaintenanceMode
-    };
-
+  
 
     #define CONTROL_BOARD_VERSION "1.0.0"
     #define CONTROL_BOARD_NAME "TinyControlBoard"
