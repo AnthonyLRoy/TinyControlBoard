@@ -48,6 +48,7 @@ namespace buttons
 
         writeRegister(0x0A, 0b01000100); // MIRROR=1, SEQOP=1
 
+        ESP_LOGI(TAG, "Configuring interrupt pin %d", interruptPin);
         gpio_config_t io_conf = {
             .pin_bit_mask = 1ULL << interruptPin,
             .mode = GPIO_MODE_INPUT,
@@ -56,22 +57,28 @@ namespace buttons
             .intr_type = GPIO_INTR_NEGEDGE,
         };
         ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Interrupt pin config failed");
-
+        ESP_LOGI(TAG, "Interrupt pin %d configured", interruptPin);
+        ESP_LOGI(TAG, "Installing ISR service");
         esp_err_t isr_err = gpio_install_isr_service(0);
         if (isr_err != ESP_OK && isr_err != ESP_ERR_INVALID_STATE)
         {
             ESP_LOGE(TAG, "ISR install failed");
             return isr_err;
         }
-
+        ESP_LOGI(TAG, "Creating interrupt task");
+        interruptTaskHandle = nullptr;
         xTaskCreate([](void *arg)
                     { static_cast<MCPInputHandler *>(arg)->interruptTaskLoop(); }, "mcp_int_task", 4096, this, 10, &interruptTaskHandle);
-
+        ESP_LOGI(TAG, "Adding GPIO ISR handler");
         gpio_isr_handler_add(interruptPin, MCPInputHandler::gpioISR, this);
-
+        ESP_LOGI(TAG, "MCP23017 initialized successfully");
         writeRegisterPair(0x04, 0xFF, 0xFF); // Interrupt on change
-        readRegister(0x12);                  // Read GPIOA
-        readRegister(0x13);                  // Read GPIOB
+
+        writeRegisterPair(0x08, 0x00, 0x00); // Compare to previous
+
+        ESP_LOGI(TAG, "Reading initial GPIO state to force clear interrupts");
+        readRegister(0x12); // Read GPIOA
+        readRegister(0x13); // Read GPIOB
         return ESP_OK;
     }
 

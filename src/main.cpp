@@ -5,21 +5,26 @@
 using namespace buttons;
 using namespace indicators;
 using namespace controlSystem;
-
+using namespace serialBus;  
 
 #define GPPIO_NUM_SCDL GPIO_NUM_15
 #define GPIO_NUM_SDA GPIO_NUM_16    
 #define GPIO_NUM_INTERRUPT GPIO_NUM_18
 #define MCP_ADDRESS 0x20 // Default I2C address for MCP23017
 
+#define  UART_NUM UART_NUM_2
+#define  PIN_SERIAL_TX  GPIO_NUM_2 
+#define  PIN_SERIAL_RX GPIO_NUM_1
+#define  SERIAL_BUFFER_SIZE 1024
+
 static const char *TAG = "CONTROL_BOARD";
 
 ControlBoard controlBoardInstance = ControlBoard();
 MCPInputHandler mcpHandler(MCP_ADDRESS, I2C_NUM_0); // MCP23017 handler
+Serial serialHandler; // Serial handler
 
 extern "C" void app_main(void)
 {
-
     static main myApp;
     nvs_flash_init();
     myApp.run();
@@ -29,55 +34,6 @@ extern "C" void app_main(void)
 void main::run()
 {
     PerformStartupTasks();
-
-}
-
-
-void main::PerformStartupTasks()
-{
-
-    vTaskDelay(pdMS_TO_TICKS(5000)); // Delay to allow system to stabilize
-    
-    ESP_LOGI(TAG, "Starting Control Board Application");
-    // Initialize the control board
-    controlBoardInstance.init(); // Initialize control board
-    ESP_LOGI(TAG, "Control Board Initialized");
-    ESP_LOGI(TAG, "Initialising  MCP23017");
-    mcpHandler.setTimeout(10); // Set timeout for I2C commands
-    ESP_ERROR_CHECK(mcpHandler.begin(GPIO_NUM_SDA, GPPIO_NUM_SCDL,GPIO_NUM_INTERRUPT)); // Initialize MCP23017 with SDA and SCL pins
-    
-    mcpHandler.I2CEnable(true); // Enable I2C bus
-
-    // Optional: scan I2C bus for devices    
-    mcpHandler.scanner();
-
-
-mcpHandler.dumpRegisters();
-
-
-
-    // Button press callback
-    mcpHandler.setButtonCallback([](uint8_t pin, bool pressed)
-                                 {
-        ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
-
-        // Visual feedback: set LED to "doing work" if pressed
-        if (pressed) {
-            getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
-        } });
-
-    // Button release callback
-    mcpHandler.setReleaseCallback([](uint8_t pin, bool released)
-                                  {
-        ESP_LOGI(TAG, "Pin %u RELEASED", pin);
-        getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle); });
-
-    // Rotary encoder movement
-    mcpHandler.setRotaryCallback([](int movement)
-                                 {
-        ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
-        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); });
-    // Optional idle/sleep LED indication if no activity
     while (true)
     {
         static int64_t lastActionTime = esp_timer_get_time();
@@ -88,13 +44,86 @@ mcpHandler.dumpRegisters();
             getActiveLed().SetStatus(ControlBoardWorkingStatus::sleeping);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(500));
+    UARTMessage msg;
+    msg.src_app = APP_ESP32;
+    msg.msg_type = MSG_COMMAND;
+    msg.sequence = 1;
+    msg.command_id = CMD_NEXT_TRACK;
+    msg.params[0] = 1;
+    msg.params[1] = 20;
+
+        uint8_t tx_buffer[UART_PACKET_SIZE];
+        uart_write_bytes(UART_NUM, (const char *)&msg, sizeof(msg));
+
+        vTaskDelay(pdMS_TO_TICKS(1500));
 
         ESP_LOGI(TAG, "Current LED Status: 0x%02X", mcpHandler.readRegister(0X13)); // Read the current status of the LED register
-        // Example usage of esp_timer_get_time
-    
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); // Update the active LED state
     }
+}
 
+void SetupControlBoard()
+{
+    controlBoardInstance.init(); // Initialize control board
+    ESP_LOGI(TAG, "Control Board Initialized");
+}
+
+void setupButtonHandler()
+{
+    // Initialize MCPInputHandler
+
+    ESP_LOGI(TAG, "Initializing MCPInputHandler");
+    ESP_ERROR_CHECK(mcpHandler.begin(GPIO_NUM_SDA, GPPIO_NUM_SCDL,GPIO_NUM_INTERRUPT)); // Initialize MCP23017 with SDA and SCL pins
+
+    ESP_LOGI(TAG, "MCPInputHandler Initialized");
+    mcpHandler.setTimeout(10); // Set timeout for I2C commands
+    mcpHandler.I2CEnable(true); // Enable I2C bus
+    mcpHandler.scanner();
+    mcpHandler.dumpRegisters();
+
+    ESP_LOGI(TAG, "MCPInputHandler Setup Complete");
+}
+
+void SetupButtonCallbacks()
+{
+    mcpHandler.setButtonCallback([](uint8_t pin, bool pressed)
+                                 {
+        ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
+
+
+        if (pressed) {
+            getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+        } });
+
+    mcpHandler.setReleaseCallback([](uint8_t pin, bool released)
+                                  {
+        ESP_LOGI(TAG, "Pin %u RELEASED", pin);
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle); });
+
+    mcpHandler.setRotaryCallback([](int movement)
+                                 {
+        ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); });
+
+}
+
+void SetupSerialPort()
+{
+    ESP_LOGI(TAG, "Initializing Serial Port");
+    if (!serialHandler.init_uart(UART_NUM, 9600, PIN_SERIAL_TX, PIN_SERIAL_RX,256, UART_PARITY_DISABLE, UART_STOP_BITS_1, UART_HW_FLOWCTRL_DISABLE)) {
+        ESP_LOGE(TAG, "Failed to initialize UART");
+    } else {
+        ESP_LOGI(TAG, "UART Initialized Successfully");
+    }
+}
+void main::PerformStartupTasks()
+{
+
+    vTaskDelay(pdMS_TO_TICKS(5000)); // Delay to allow system to stabilize
+    SetupControlBoard(); // Initialize control board and peripherals
+    setupButtonHandler(); // Initialize button handler
+    SetupButtonCallbacks(); // Set up button callbacks
+    SetupSerialPort(); // Initialize serial port
 
 }
 

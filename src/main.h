@@ -7,6 +7,7 @@
 #include "mcpHandler.hpp"
 #include "led_manager.hpp"
 #include "esp_timer.h"
+#include "serial.hpp"
 
 class main
 {
