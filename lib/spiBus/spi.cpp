@@ -29,12 +29,12 @@ void SPI::init(gpio_num_t serial_data_out, gpio_num_t data_clock_out, int mhz) {
 
     ESP_ERROR_CHECK(spi_bus_initialize(host, &buscfg, SPI_DMA_CH_AUTO));
 
-    spi_device_interface_config_t devcfg = {
-        .clock_speed_hz = mhz * 1000 * 1000,
-        .mode = 0,
-        .spics_io_num = -1,
-        .queue_size = 1,
-    };
+    spi_device_interface_config_t devcfg = {};
+        devcfg.clock_speed_hz = mhz * 1000 * 1000;
+        devcfg.mode = 0;
+        devcfg.spics_io_num = -1;
+        devcfg.queue_size = 1;
+    
 
     ESP_ERROR_CHECK(spi_bus_add_device(host, &devcfg, &spi));
     ESP_LOGI(TAG, "SPI initialized on host %d at %d MHz", host, mhz);

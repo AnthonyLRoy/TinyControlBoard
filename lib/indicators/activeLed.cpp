@@ -54,6 +54,9 @@ void ActiveLed::SetStatus(ControlBoardWorkingStatus newStatus)
     case ControlBoardWorkingStatus::sleeping:
         startBreatheEffect();
         break;
+    case ControlBoardWorkingStatus::Active:
+        updateDuty(4096);
+        break;
     case ControlBoardWorkingStatus::doingWork:
     case ControlBoardWorkingStatus::Idle:
     case ControlBoardWorkingStatus::MaintenanceMode:

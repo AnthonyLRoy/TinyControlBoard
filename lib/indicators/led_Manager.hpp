@@ -6,5 +6,6 @@ namespace indicators
 {
     indicators::ActiveLed& getActiveLed();
     indicators::PowerLed& getPowerLed();
+    indicators::ActiveLed& getButtonLed();
 
 }

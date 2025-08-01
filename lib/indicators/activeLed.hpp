@@ -9,7 +9,8 @@ enum class ControlBoardWorkingStatus {
     doingWork,
     Idle,
     sleeping,
-    MaintenanceMode
+    MaintenanceMode,
+    Active
 };
 
 namespace indicators {

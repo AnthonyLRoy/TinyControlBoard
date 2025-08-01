@@ -1,6 +1,7 @@
 
 #include "main.h"
 #include "ControlBoard.hpp"
+#include "spi.hpp"
 
 using namespace buttons;
 using namespace indicators;
@@ -17,10 +18,17 @@ using namespace serialBus;
 #define PIN_SERIAL_RX GPIO_NUM_1
 #define SERIAL_BUFFER_SIZE 1024
 
+#define SPI_DATA GPIO_NUM_10
+#define SPI_CLK  GPIO_NUM_12
+#define SPI_LATCH GPIO_NUM_14
+
+
 static const char *TAG = "CONTROL_BOARD";
 
 ControlBoard controlBoardInstance = ControlBoard();
 MCPInputHandler mcpHandler(MCP_ADDRESS, I2C_NUM_0); // MCP23017 handler
+spibus::SPI spi2(SPI2_HOST);
+
 Serial serialHandler;                               // Serial handler
 
 extern "C" void app_main(void)
@@ -42,9 +50,8 @@ void main::run()
         { // 5 seconds
             getActiveLed().SetStatus(ControlBoardWorkingStatus::sleeping);
         }
-        vTaskDelay(pdMS_TO_TICKS(5000));
         getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); 
-                vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(5000));
         getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle); 
         UARTMessage msg;
         msg.src_app = APP_ESP32;
@@ -57,11 +64,16 @@ void main::run()
         uint8_t tx_buffer[UART_PACKET_SIZE];
         serialize_message(msg, tx_buffer);
         uart_write_bytes(UART_NUM, (const char *)tx_buffer, sizeof(msg));
+        spi2.send(0xFFFF);
+        spi2.pulse_latch(SPI_LATCH);
 
-        vTaskDelay(pdMS_TO_TICKS(1500));
-
+        vTaskDelay(pdMS_TO_TICKS(100));
+        
         ESP_LOGI(TAG, "Current LED Status: 0x%02X", mcpHandler.readRegister(0X13)); // Read the current status of the LED register
-        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);  
+        getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); 
+        
+        spi2.send(0xFFFF);
+        spi2.pulse_latch(SPI_LATCH);
 
     }
 }
@@ -70,6 +82,12 @@ void SetupControlBoard()
 {
     controlBoardInstance.init(); // Initialize control board
     ESP_LOGI(TAG, "Control Board Initialized");
+}
+
+void SetupSpiPort()
+{
+    spi2.init(SPI_DATA,SPI_CLK,1);
+    getButtonLed().SetStatus(ControlBoardWorkingStatus::Active);
 }
 
 /// @brief  Initialize the button handler
@@ -140,6 +158,7 @@ void main::PerformStartupTasks()
     setupButtonHandler();            // Initialize button handler
     SetupButtonCallbacks();          // Set up button callbacks
     SetupSerialPort();               // Initialize serial port
+    SetupSpiPort();
 }
 
 // public ot()
