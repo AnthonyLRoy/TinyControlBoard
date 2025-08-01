@@ -7,7 +7,7 @@
 
 namespace indicators
 {
-    PowerLed::PowerLed(gpio_num_t PIN_APP_ACTIVE_LED, gpio_num_t PIN_APP_STANDBY_LED)
+    PowerLed::PowerLed(gpio_num_t PIN_APP_ACTIVE_LED, gpio_num_t PIN_APP_STANDBY_LEDl,ledc_channel_t channel)
     {
 
         dutyCycle = 4096;
@@ -21,16 +21,16 @@ namespace indicators
         ledc_channel_config_t ledc_channel_on = {
             .gpio_num = PIN_APP_ACTIVE_LED,
             .speed_mode = LEDC_MODE,
-            .channel = LEDC_CHANNEL_ON,
+            .channel = channel,
             .intr_type = LEDC_INTR_DISABLE,
             .timer_sel = LEDC_TIMER,
             .duty = 0, // Set duty to 0%
             .hpoint = 0};
 
         ledc_channel_config_t ledc_channel_standBy = {
-            .gpio_num = PIN_APP_STANDBY_LED,
+            .gpio_num = PIN_APP_STANDBY_LEDl,
             .speed_mode = LEDC_MODE,
-            .channel = LEDC_CHANNEL_STANDBY,
+            .channel = channel,
             .intr_type = LEDC_INTR_DISABLE,
             .timer_sel = LEDC_TIMER,
             .duty = 0, // Set duty to 0%

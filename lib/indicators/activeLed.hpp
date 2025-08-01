@@ -17,7 +17,7 @@ namespace indicators {
 
 class ActiveLed {
 public:
-    ActiveLed(gpio_num_t pin);
+    ActiveLed(gpio_num_t pin,ledc_channel_t channel);
     ~ActiveLed();
 
     void SetStatus(ControlBoardWorkingStatus newStatus);

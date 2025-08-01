@@ -10,7 +10,7 @@ namespace indicators
     class PowerLed
     {
     public:
-        PowerLed(gpio_num_t PIN_APP_ACTIVE_LED, gpio_num_t PIN_APP_STANDBY_LED);
+        PowerLed(gpio_num_t PIN_APP_ACTIVE_LED, gpio_num_t PIN_APP_STANDBY_LED,ledc_channel_t channel);
         ~PowerLed();
 
         // Set the power LED state

@@ -9,7 +9,7 @@
 
 namespace indicators {
 
-ActiveLed::ActiveLed(gpio_num_t pin) : pin(pin), currentStatus(ControlBoardWorkingStatus::Idle)
+ActiveLed::ActiveLed(gpio_num_t pin,ledc_channel_t channel) : pin(pin), currentStatus(ControlBoardWorkingStatus::Idle)
 {
     ledc_timer_config_t ledc_timer = {};
         ledc_timer.speed_mode       = LEDC_MODE;
@@ -21,7 +21,7 @@ ActiveLed::ActiveLed(gpio_num_t pin) : pin(pin), currentStatus(ControlBoardWorki
     ledc_timer_config(&ledc_timer);
 
     ledc_channel_config_t ledc_channel = {};
-        ledc_channel.channel    = LEDC_CHANNEL;
+        ledc_channel.channel    = channel;
         ledc_channel.duty       = 0;
         ledc_channel.gpio_num   = pin;
         ledc_channel.speed_mode = LEDC_MODE;
