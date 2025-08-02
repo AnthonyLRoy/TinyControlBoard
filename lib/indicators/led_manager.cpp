@@ -8,7 +8,7 @@
 namespace indicators {
 
     static ActiveLed activeLed(PIN_WORKING_STATUS_LED,LEDC_CHANNEL_0);
-    static ActiveLed buttonLed(STP_LEDS_BRIGHTNESS_LEVEL,LEDC_CHANNEL_1);
+    static ActiveLed stpLed(STP_LEDS_BRIGHTNESS_LEVEL,LEDC_CHANNEL_1);
     static PowerLed powerLed(PIN_APP_ACTIVE_LED, PIN_APP_STANDBY_LED,LEDC_CHANNEL_2);
 
     ActiveLed& getActiveLed() {
@@ -20,6 +20,6 @@ namespace indicators {
     }
 
     ActiveLed& getButtonLed() {
-        return buttonLed;
+        return stpLed;
     }
 }
