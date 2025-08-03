@@ -1,6 +1,7 @@
 
 #pragma once
 #include "uart_protocol.hpp"
+#include "ControlBoard.hpp"
 
 namespace actions
 {
@@ -8,6 +9,6 @@ namespace actions
     {
         bool messageCreated;
         UARTMessage message;
+        ControlBoardState  ledStatus;
     };
-
 }

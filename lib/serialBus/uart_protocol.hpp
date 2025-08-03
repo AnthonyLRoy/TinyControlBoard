@@ -27,8 +27,7 @@ enum MessageType : uint8_t {
 #define UART_PACKET_SIZE 20
 
 enum commandID : uint16_t {
-    
-    //track control commands
+     //track control commands
     CMD_NEXT_TRACK = 0x0100,
     CMD_PREVIOUS_TRACK    = 0x0101,
     CMD_PLAY_PAUSE = 0x0102,

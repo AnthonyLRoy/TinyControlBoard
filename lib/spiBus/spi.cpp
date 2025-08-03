@@ -4,7 +4,6 @@ static const char *TAG = "SPI";
 
 namespace spibus
 {
-
     SPI::SPI(spi_host_device_t spi_host) : host(spi_host) {}
 
     SPI::~SPI()
@@ -79,4 +78,4 @@ namespace spibus
         ESP_LOGI(TAG, "Latch pulse on GPIO %d", latch_pin);
     }
 
-} // namespace spibus
+} 

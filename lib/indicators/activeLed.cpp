@@ -110,7 +110,6 @@ uint32_t ActiveLed::getBlinkDuty(ControlBoardWorkingStatus status)
     }
 }
 
-// ==== BREATHE EFFECT ====
 
 void ActiveLed::startBreatheEffect()
 {

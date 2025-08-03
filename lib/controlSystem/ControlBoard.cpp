@@ -1,7 +1,6 @@
 // ControlBoard.cpp
 #include "ControlBoard.hpp"
 #include "led_Manager.hpp"
-
 #include "uart_protocol.hpp"
 
 namespace controlSystem
@@ -72,36 +71,34 @@ namespace controlSystem
 
     void ControlBoard::SetupMCPCallbacks()
     {
+        indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
         mcpHandler.setButtonCallback([this](uint8_t pin, bool pressed)
-        {
+                                     {
             ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
             if (pressed && buttonActions[pin])
             {
-                indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
-                buttonActions[pin]->execute();
-            }
-        });
+              actions::actionResponse result =  buttonActions[pin]->execute(false);
+            } });
 
         mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)
-        {
+                                      {
             ESP_LOGI(TAG, "Pin %u RELEASED", pin);
             indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
-            if (buttonActions[pin])
+            if (buttonActions[pin] && released)
             {
-             actions::actionResponse result =   buttonActions[pin]->execute();
-            }
-        });
+             actions::actionResponse result =   buttonActions[pin]->execute(true);
+            } });
 
         mcpHandler.setRotaryCallback([](int movement)
-        {
+                                     {
             ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
-            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
-        });
+            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); });
     }
 
     void ControlBoard::SetupButtonActions()
     {
         buttonActions[0] = &actions::toggleTrackInstance;
         buttonActions[1] = &actions::volumeUpInstance;
+        buttonActions[2] = &actions::PowerButtonInstance;
     }
-} // namespace controlSystem
+}

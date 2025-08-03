@@ -8,7 +8,10 @@
 #include "spi.hpp"
 #include "buttonActions.hpp"
 #include "actionsResponse.hpp"
-
+namespace actions
+{
+    class ButtonAction;
+}
 namespace controlSystem
 {
     class ControlBoard
@@ -24,7 +27,7 @@ namespace controlSystem
         void SetupMCPCallbacks();
         void SetupButtonActions();
 
-         // Static pin and config values
+        // Static pin and config values
         static constexpr gpio_num_t PIN_SPI_DATA = GPIO_NUM_10;
         static constexpr gpio_num_t PIN_SPI_CLK = GPIO_NUM_12;
         static constexpr gpio_num_t PIN_SPI_LATCH = GPIO_NUM_14;
@@ -43,7 +46,6 @@ namespace controlSystem
         spibus::SPI spi2 = spibus::SPI(SPI2_HOST);
         serialBus::Serial serialHandler;
         buttons::MCPInputHandler mcpHandler = buttons::MCPInputHandler(MCP_ADDRESS, I2C_NUM_0);
-
-        actions::ButtonAction* buttonActions[16] = {nullptr};
+        actions::ButtonAction *buttonActions[16] = {nullptr};
     };
 }

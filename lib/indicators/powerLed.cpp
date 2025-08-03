@@ -1,13 +1,9 @@
-
-
 #include "powerLed.hpp"
 #include <algorithm>
 
-
-
 namespace indicators
 {
-    PowerLed::PowerLed(gpio_num_t PIN_APP_ACTIVE_LED, gpio_num_t PIN_APP_STANDBY_LEDl,ledc_channel_t channel)
+    PowerLed::PowerLed(gpio_num_t PIN_APP_ACTIVE_LED, gpio_num_t PIN_APP_STANDBY_LEDl, ledc_channel_t channel)
     {
 
         dutyCycle = 4096;
@@ -73,7 +69,7 @@ namespace indicators
 
     void PowerLed::setBrightness(int brightness)
     {
-        brightness = std::clamp(brightness, 0, 99); 
+        brightness = std::clamp(brightness, 0, 99);
         dutyCycle = (brightness * 4096) / 100; // Convert percentage to duty cycle for 13-bit resolution
     }
 
@@ -82,6 +78,4 @@ namespace indicators
         // For example, you might want to blink the LED or change its brightness
         // based on some conditions.
     };
-
-  
 };
