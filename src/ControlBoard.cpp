@@ -1,6 +1,7 @@
 // ControlBoard.cpp
 #include "ControlBoard.hpp"
 #include "led_Manager.hpp"
+
 #include "uart_protocol.hpp"
 
 namespace controlSystem
@@ -87,7 +88,7 @@ namespace controlSystem
             indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
             if (buttonActions[pin])
             {
-                buttonActions[pin]->execute();
+             actions::actionResponse result =   buttonActions[pin]->execute();
             }
         });
 

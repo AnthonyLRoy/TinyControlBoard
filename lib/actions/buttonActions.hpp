@@ -1,5 +1,7 @@
 #pragma once
+#include "uart_protocol.hpp"
 #include "ButtonAction.hpp"
+#include "actionsResponse.hpp"
 #include "esp_log.h"
 
 namespace actions
@@ -8,13 +10,13 @@ namespace actions
     class ToggleTrack : public ButtonAction
     {
     public:
-        bool execute() override;
+        actionResponse execute() override;
     };
 
     class VolumeUp : public ButtonAction
     {
     public:
-        bool execute() override;
+        actionResponse execute() override;
     };
 
     extern ToggleTrack toggleTrackInstance;

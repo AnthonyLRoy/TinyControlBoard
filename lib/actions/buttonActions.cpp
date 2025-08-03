@@ -4,24 +4,29 @@
 namespace actions
 {
 
+
     ToggleTrack toggleTrackInstance;
     VolumeUp volumeUpInstance;
 
-    bool ToggleTrack::execute()
+    actionResponse ToggleTrack::execute()
     {
         static bool state = false;
         state = !state;
         ESP_LOGI("ButtonActions", "ToggleTrack: %s", state ? "ON" : "OFF");
-        return state;
+        actionResponse response;
+        response.messageCreated = true;
+        return response;
     }
 
-    bool VolumeUp::execute()
+    actionResponse VolumeUp::execute()
     {
         static int volume = 0;
         if (volume < 100)
             volume += 5;
         ESP_LOGI("ButtonActions", "VolumeUp: %d", volume);
-        return true;
+        actionResponse response;
+        response.messageCreated = true;
+        return response;
     }
 
     // Implement more actions here
