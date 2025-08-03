@@ -1,30 +1,27 @@
-
-#include "controlboard.hpp"
-#include "powerLed.hpp"
-#include "activeLed.hpp"
-#include "relay.hpp"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+// ControlBoard.cpp
+#include "ControlBoard.hpp"
 #include "led_Manager.hpp"
-
-#define PIN_APP_ACTIVE_LED GPIO_NUM_3
-#define PIN_APP_STANDBY_LED GPIO_NUM_4
+#include "uart_protocol.hpp"
 
 namespace controlSystem
 {
     static const char *TAG = "CONTROL_BOARD";
+
     void ControlBoard::init()
     {
-        // this command is only executed when the ESP32 is first started
-        //  system witll default to Standby state
-        ESP_LOGI(TAG, "Initializing Power LED...");
+        ESP_LOGI(TAG, "Initializing Control Board...");
         indicators::getPowerLed().setState(ControlBoardState::Standby);
-        SetRelaySystemPowerOnStatus();
-    };
 
-    void ControlBoard::SetRelaySystemPowerOnStatus()
+        SetupRelays();
+        SetupMCPHandler();
+        SetupMCPCallbacks();
+        SetupSerial();
+        SetupSPI();
+        SetupButtonActions();
+    }
+
+    void ControlBoard::SetupRelays()
     {
-        // Initialize all relays with their respective GPIO pins
         relays::StandardRelay::init(PIN_RELAY_SCREEN);
         relays::StandardRelay::init(PIN_RELAY_DAC);
         relays::StandardRelay::init(PIN_RELAY_MAINS);
@@ -32,7 +29,6 @@ namespace controlSystem
         relays::StandardRelay::init(PIN_RELAY_GENERAL_3);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_4);
 
-        // Set all relays to off state initially
         relays::StandardRelay::setRelayState(PIN_RELAY_SCREEN, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_DAC, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_MAINS, false);
@@ -42,4 +38,69 @@ namespace controlSystem
 
         indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
-}
+
+    void ControlBoard::SetupSPI()
+    {
+        spi2.init(PIN_SPI_DATA, PIN_SPI_CLK, 1);
+        indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Active);
+    }
+
+    void ControlBoard::SetupSerial()
+    {
+        ESP_LOGI(TAG, "Initializing Serial Port");
+        if (!serialHandler.init_uart(UART_NUM, 9600, PIN_SERIAL_TX, PIN_SERIAL_RX, 256, UART_PARITY_DISABLE, UART_STOP_BITS_1, UART_HW_FLOWCTRL_DISABLE))
+        {
+            ESP_LOGE(TAG, "Failed to initialize UART");
+        }
+        else
+        {
+            ESP_LOGI(TAG, "UART Initialized Successfully");
+        }
+    }
+
+    void ControlBoard::SetupMCPHandler()
+    {
+        ESP_LOGI(TAG, "Initializing MCPInputHandler");
+        ESP_ERROR_CHECK(mcpHandler.begin(PIN_I2C_SDA, PIN_I2C_SCL, PIN_I2C_INT));
+        mcpHandler.setTimeout(10);
+        mcpHandler.I2CEnable(true);
+        mcpHandler.scanner();
+        mcpHandler.dumpRegisters();
+        ESP_LOGI(TAG, "MCPInputHandler Setup Complete");
+    }
+
+    void ControlBoard::SetupMCPCallbacks()
+    {
+        mcpHandler.setButtonCallback([this](uint8_t pin, bool pressed)
+        {
+            ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
+            if (pressed && buttonActions[pin])
+            {
+                indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+                buttonActions[pin]->execute();
+            }
+        });
+
+        mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)
+        {
+            ESP_LOGI(TAG, "Pin %u RELEASED", pin);
+            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
+            if (buttonActions[pin])
+            {
+                buttonActions[pin]->execute();
+            }
+        });
+
+        mcpHandler.setRotaryCallback([](int movement)
+        {
+            ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
+            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+        });
+    }
+
+    void ControlBoard::SetupButtonActions()
+    {
+        buttonActions[0] = &actions::toggleTrackInstance;
+        buttonActions[1] = &actions::volumeUpInstance;
+    }
+} // namespace controlSystem
