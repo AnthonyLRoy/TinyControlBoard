@@ -1,7 +1,10 @@
+#pragma once
+
 #include "serial.hpp"
 #include "spi.hpp"
 #include "relay.hpp"
 #include "actionsResponse.hpp"
+#include "esp_log.h"
 
 namespace controlSystem
 {

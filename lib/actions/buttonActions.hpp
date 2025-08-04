@@ -22,7 +22,7 @@ namespace actions
         actionResponse execute(bool buttonMode) override;
     };
 
-    extern PowerButton PowerButtonInstance;
-    extern ToggleTrack toggleTrackInstance;
-    extern VolumeUp volumeUpInstance;
+     extern PowerButton PowerButtonInstance;
+     extern ToggleTrack toggleTrackInstance;
+     extern VolumeUp volumeUpInstance;
 }

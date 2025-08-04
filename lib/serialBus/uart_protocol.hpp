@@ -30,19 +30,24 @@ enum commandID : uint16_t {
      
     // system
 
-    CMD_SYS_POWERON = 0x0001,
-    CMD_SYS_POWER_SLEEP = 0x0002,
-    CMS_SYS_POWER_OFF = 0x0003,
+    CMD_SYS_POWER = 0x0001,
 
     //track control commands
     CMD_NEXT_TRACK = 0x0100,
-    CMD_PREVIOUS_TRACK    = 0x0101,
-    CMD_PLAY_PAUSE = 0x0102,
-    CMD_STOP       = 0x0103,
+    // CMD_PREVIOUS_TRACK    = 0x0101,
+    // CMD_PLAY_PAUSE = 0x0102,
+    // CMD_STOP       = 0x0103,
 
-    // PI Control commands
-    CMD_GET_PI_STATUS  = 0x0201,
-    CMD_SET__PI_STATUS  = 0x0202,
+    // // PI Control commands
+    // CMD_GET_PI_STATUS  = 0x0201,
+    // CMD_SET__PI_STATUS  = 0x0202,
+};
+
+enum PowerCommand : uint8_t
+{
+    POWER_ACTIVE = 0x01,
+    POWER_SLEEP = 0x02,
+    POSER_DEEP_SLEEP = 0x03
 };
 
 // Source application IDs

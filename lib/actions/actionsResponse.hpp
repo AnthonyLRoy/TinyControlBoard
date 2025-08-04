@@ -6,7 +6,8 @@ namespace actions
 {
  struct actionResponse
     {
-        bool messageCreated;
-        UARTMessage message;
+        bool active;
+        commandID  command;
+        char parameters[10];   
     };
 }
