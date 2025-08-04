@@ -1,12 +1,10 @@
 #pragma once
-#include "uart_protocol.hpp"
 #include "ButtonAction.hpp"
 #include "actionsResponse.hpp"
 #include "esp_log.h"
 
 namespace actions
 {
-
     class ToggleTrack : public ButtonAction
     {
     public:

@@ -1,8 +1,10 @@
 #pragma once
-#include "actionsResponse.hpp"
+
 
 namespace actions
 {
+
+    struct actionResponse;
     class ButtonAction
     {
     public:

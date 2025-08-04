@@ -2,10 +2,18 @@
 #include "ControlBoard.hpp"
 #include "led_Manager.hpp"
 #include "uart_protocol.hpp"
-
+#include "actionProcessor.hpp"
+#include "serial.hpp"
+#include "spi.hpp"
 namespace controlSystem
 {
+    
     static const char *TAG = "CONTROL_BOARD";
+
+    serialBus::Serial serialHandler;
+    relays::StandardRelay relays;
+    spibus::SPI spi(SPI2_HOST);
+    actionProcessor responseProcessor(serialHandler,relays,spi);
 
     void ControlBoard::init()
     {
@@ -23,14 +31,14 @@ namespace controlSystem
     void ControlBoard::SetupRelays()
     {
         relays::StandardRelay::init(PIN_RELAY_SCREEN);
-        relays::StandardRelay::init(PIN_RELAY_DAC);
+        relays::StandardRelay::init(PIN_RELAY_RPI);
         relays::StandardRelay::init(PIN_RELAY_MAINS);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_2);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_3);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_4);
 
         relays::StandardRelay::setRelayState(PIN_RELAY_SCREEN, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_DAC, false);
+        relays::StandardRelay::setRelayState(PIN_RELAY_RPI, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_MAINS, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_2, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_3, false);
@@ -78,6 +86,8 @@ namespace controlSystem
             if (pressed && buttonActions[pin])
             {
               actions::actionResponse result =  buttonActions[pin]->execute(false);
+              responseProcessor.process(result);
+              
             } });
 
         mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)

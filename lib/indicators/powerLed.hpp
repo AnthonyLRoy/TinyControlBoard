@@ -3,8 +3,6 @@
 #include "pwmLed.hpp" // Ensure this header defines the LED class
 #include "led_definitions.hpp"
 
-
-
 namespace indicators
 {
     class PowerLed
@@ -26,6 +24,4 @@ namespace indicators
         led::LEDPWM standBy; // LED for power off indication
         int dutyCycle = 4096; // 50% duty cycle for 13-bit resolution
     };
-
-
 }
