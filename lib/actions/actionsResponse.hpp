@@ -8,6 +8,7 @@ namespace actions
     {
         bool active;
         commandID  command;
-        char parameters[10];   
+        char parameters[10];  
+        uint16_t releaseTimeMilliSecs ;
     };
 }

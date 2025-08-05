@@ -9,6 +9,7 @@
 #include "buttonActions.hpp"
 #include "actionsResponse.hpp"
 #include "actionProcessor.hpp"
+#include "PowerStateManager.hpp"
 
 #define UART_BOARD_RATE 9600
 namespace actions {

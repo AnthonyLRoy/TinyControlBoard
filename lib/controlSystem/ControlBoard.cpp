@@ -13,8 +13,10 @@ namespace controlSystem
     {
         ESP_LOGI(TAG, "Starting ControlBoard init...");
 
+        //system just switched on from the mains switch so default  -- no histyory storage yet
+        PowerStateManager::instance().setPowerState(ControlBoardPowerState::OFF);
         indicators::getPowerLed().setState(ControlBoardState::Standby);
-        uint16_t  spiButtonStatus = 0;
+
         serialHandler = new serialBus::Serial();
         relays = new relays::StandardRelay();
         spi = new spibus::SPI(SPI2_HOST);
@@ -55,14 +57,14 @@ namespace controlSystem
         relays::StandardRelay::init(PIN_RELAY_SCREEN);
         relays::StandardRelay::init(PIN_RELAY_RPI);
         relays::StandardRelay::init(PIN_RELAY_DAC);
-        relays::StandardRelay::init(PIN_RELAY_GENERAL_2);
+        relays::StandardRelay::init(PIN_RELAY_OUTPUT_STAGE);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_3);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_4);
 
         relays::StandardRelay::setRelayState(PIN_RELAY_SCREEN, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_RPI, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_DAC, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_2, false);
+        relays::StandardRelay::setRelayState(PIN_RELAY_OUTPUT_STAGE, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_3, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_4, false);
 

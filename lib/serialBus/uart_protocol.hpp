@@ -31,12 +31,13 @@ enum commandID : uint16_t {
     // system
 
     CMD_SYS_POWER = 0x0001,
+    CMD_SYS_RPI_SHUTDOWN = 0x0002,
 
     //track control commands
     CMD_NEXT_TRACK = 0x0100,
     // CMD_PREVIOUS_TRACK    = 0x0101,
     // CMD_PLAY_PAUSE = 0x0102,
-    // CMD_STOP       = 0x0103,
+     CMD_STOP_TRACK       = 0x0103,
 
     // // PI Control commands
     // CMD_GET_PI_STATUS  = 0x0201,
