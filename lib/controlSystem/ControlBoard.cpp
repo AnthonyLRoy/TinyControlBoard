@@ -14,7 +14,7 @@ namespace controlSystem
         ESP_LOGI(TAG, "Starting ControlBoard init...");
 
         indicators::getPowerLed().setState(ControlBoardState::Standby);
-
+        uint16_t  spiButtonStatus = 0;
         serialHandler = new serialBus::Serial();
         relays = new relays::StandardRelay();
         spi = new spibus::SPI(SPI2_HOST);
@@ -23,6 +23,7 @@ namespace controlSystem
 
         if (!setupRelays()) return false;
         if (!setupMCPHandler()) return false;
+        
         setupMCPCallbacks();
 
         if (!setupSerial()) return false;
@@ -67,13 +68,13 @@ namespace controlSystem
 
         indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
 
-        return true; // add error checking if your relay init returns error
+        return true; 
     }
 
     bool ControlBoard::setupSerial()
     {
         ESP_LOGI(TAG, "Initializing serial...");
-        bool ok = serialHandler->init_uart(UART_NUM, 9600, PIN_SERIAL_TX, PIN_SERIAL_RX, 256,
+        bool ok = serialHandler->init_uart(UART_NUM, UART_BOARD_RATE, PIN_SERIAL_TX, PIN_SERIAL_RX, 256,
                                            UART_PARITY_DISABLE, UART_STOP_BITS_1, UART_HW_FLOWCTRL_DISABLE);
         if (!ok)
         {
@@ -114,6 +115,7 @@ namespace controlSystem
         indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
         mcpHandler.setButtonCallback([this](uint8_t pin, bool pressed)
         {
+            spi->send(0xFF);
             ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
             if (pressed && buttonActions[pin])
             {
@@ -124,6 +126,7 @@ namespace controlSystem
 
         mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)
         {
+            spi->send(0x00);
             ESP_LOGI(TAG, "Pin %u RELEASED", pin);
             indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
             if (buttonActions[pin] && released)

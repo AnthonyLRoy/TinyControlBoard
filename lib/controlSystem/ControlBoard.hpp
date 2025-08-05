@@ -10,6 +10,7 @@
 #include "actionsResponse.hpp"
 #include "actionProcessor.hpp"
 
+#define UART_BOARD_RATE 9600
 namespace actions {
     class ButtonAction;
 }
@@ -38,9 +39,9 @@ namespace controlSystem
 
 
         // SPI pins
-        static constexpr gpio_num_t PIN_SPI_DATA = GPIO_NUM_10;
-        static constexpr gpio_num_t PIN_SPI_CLK = GPIO_NUM_12;
-        static constexpr gpio_num_t PIN_SPI_LATCH = GPIO_NUM_14;
+        static constexpr gpio_num_t PIN_SPI_DATA = GPIO_NUM_6;
+        static constexpr gpio_num_t PIN_SPI_CLK = GPIO_NUM_7;
+        static constexpr gpio_num_t PIN_SPI_LATCH = GPIO_NUM_5;
 
         // serial port pins
         static constexpr gpio_num_t PIN_SERIAL_TX = GPIO_NUM_2;
@@ -55,7 +56,7 @@ namespace controlSystem
         static constexpr uint8_t MCP_ADDRESS = 0x20;
         static constexpr uart_port_t UART_NUM = UART_NUM_2;
 
-        // Members - raw pointers or better use smart pointers if available
+        // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
         serialBus::Serial* serialHandler = nullptr;
         relays::StandardRelay* relays = nullptr;
         spibus::SPI* spi = nullptr;
