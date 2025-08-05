@@ -1,5 +1,6 @@
 #include "actionProcessor.hpp"
 
+
 namespace controlSystem
 {
     actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef, spibus::SPI &spiRef) : serial(serialBusRef), relays(relaysRef), spiBus(spiRef) {}
@@ -19,6 +20,7 @@ namespace controlSystem
             break;
 
         case CMD_NEXT_TRACK:
+        ESP_LOGI("NEXTTRACK","Sending next Track Message");
             UARTMessage message ;
             message.command_id = CMD_NEXT_TRACK;
             message.msg_type = MessageType::MSG_COMMAND;

@@ -1,24 +1,30 @@
-// ControlBoard.cpp
 #include "ControlBoard.hpp"
 #include "led_Manager.hpp"
 #include "uart_protocol.hpp"
 #include "actionProcessor.hpp"
 #include "serial.hpp"
 #include "spi.hpp"
+
 namespace controlSystem
 {
-    
     static const char *TAG = "CONTROL_BOARD";
 
-    serialBus::Serial serialHandler;
-    relays::StandardRelay relays;
-    spibus::SPI spi(SPI2_HOST);
-    actionProcessor responseProcessor(serialHandler,relays,spi);
+    // Define the pointer objects declared as extern in the header
+    serialBus::Serial* serialHandler = nullptr;
+    relays::StandardRelay* relays = nullptr;
+    spibus::SPI* spi = nullptr;
+    actionProcessor* responseProcessor = nullptr;
 
     void ControlBoard::init()
     {
         ESP_LOGI(TAG, "Initializing Control Board...");
         indicators::getPowerLed().setState(ControlBoardState::Standby);
+
+        // Allocate objects in correct order
+        serialHandler = new serialBus::Serial();
+        relays = new relays::StandardRelay();
+        spi = new spibus::SPI(SPI2_HOST);
+        responseProcessor = new actionProcessor(*serialHandler, *relays, *spi);
 
         SetupRelays();
         SetupMCPHandler();
@@ -49,14 +55,15 @@ namespace controlSystem
 
     void ControlBoard::SetupSPI()
     {
-        spi2.init(PIN_SPI_DATA, PIN_SPI_CLK, 1);
+        spi->init(PIN_SPI_DATA, PIN_SPI_CLK, 1);
         indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Active);
     }
 
     void ControlBoard::SetupSerial()
     {
         ESP_LOGI(TAG, "Initializing Serial Port");
-        if (!serialHandler.init_uart(UART_NUM, 9600, PIN_SERIAL_TX, PIN_SERIAL_RX, 256, UART_PARITY_DISABLE, UART_STOP_BITS_1, UART_HW_FLOWCTRL_DISABLE))
+        if (!serialHandler->init_uart(UART_NUM, 9600, PIN_SERIAL_TX, PIN_SERIAL_RX,
+                                      256, UART_PARITY_DISABLE, UART_STOP_BITS_1, UART_HW_FLOWCTRL_DISABLE))
         {
             ESP_LOGE(TAG, "Failed to initialize UART");
         }
@@ -80,29 +87,33 @@ namespace controlSystem
     void ControlBoard::SetupMCPCallbacks()
     {
         indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+
         mcpHandler.setButtonCallback([this](uint8_t pin, bool pressed)
-                                     {
+        {
             ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
             if (pressed && buttonActions[pin])
             {
-              actions::actionResponse result =  buttonActions[pin]->execute(false);
-              responseProcessor.process(result);
-              
-            } });
+                actions::actionResponse result = buttonActions[pin]->execute(false);
+                responseProcessor->process(result);
+            }
+        });
 
         mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)
-                                      {
+        {
             ESP_LOGI(TAG, "Pin %u RELEASED", pin);
             indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
             if (buttonActions[pin] && released)
             {
-             actions::actionResponse result =   buttonActions[pin]->execute(true);
-            } });
+                actions::actionResponse result = buttonActions[pin]->execute(true);
+                // Possibly handle the result if needed
+            }
+        });
 
         mcpHandler.setRotaryCallback([](int movement)
-                                     {
+        {
             ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
-            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork); });
+            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+        });
     }
 
     void ControlBoard::SetupButtonActions()

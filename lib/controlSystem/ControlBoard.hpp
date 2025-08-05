@@ -8,14 +8,14 @@
 #include "spi.hpp"
 #include "buttonActions.hpp"
 #include "actionsResponse.hpp"
-namespace actions
-{
+#include "actionProcessor.hpp"
+
+namespace actions {
     class ButtonAction;
 }
-namespace controlSystem
-{
-    class ControlBoard
-    {
+
+namespace controlSystem {
+    class ControlBoard {
     public:
         void init();
 
@@ -43,9 +43,13 @@ namespace controlSystem
         static constexpr uart_port_t UART_NUM = UART_NUM_2;
 
         // Internal module instances
-        spibus::SPI spi2 = spibus::SPI(SPI2_HOST);
-        serialBus::Serial serialHandler;
         buttons::MCPInputHandler mcpHandler = buttons::MCPInputHandler(MCP_ADDRESS, I2C_NUM_0);
-        actions::ButtonAction *buttonActions[16] = {nullptr};
+        actions::ButtonAction* buttonActions[16] = {nullptr};
     };
+
+    // These are now external pointers shared globally
+    extern serialBus::Serial* serialHandler;
+    extern relays::StandardRelay* relays;
+    extern spibus::SPI* spi;
+    extern actionProcessor* responseProcessor;
 }
