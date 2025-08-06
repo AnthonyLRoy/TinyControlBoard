@@ -19,6 +19,7 @@ namespace controlSystem
 
     private:
         bool HandleCommandPowerStateChange(actions::actionResponse resposne);
+        bool HandleToggleDac(bool state);
         bool ShutDownRPI(bool wait);
         bool ShutDownScreen(bool wait);
 

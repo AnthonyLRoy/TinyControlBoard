@@ -8,36 +8,53 @@
 
 // Message structure: total 20 bytes
 // Indices for field parsing
-#define PROTO_INDEX_VERSION     1
-#define PROTO_INDEX_SRC_APP     2
-#define PROTO_INDEX_TYPE        3
-#define PROTO_INDEX_SEQUENCE    4
-#define PROTO_INDEX_COMMAND_ID  5
-#define PROTO_INDEX_PARAMS      7
-#define PROTO_INDEX_CHECKSUM    17
+#define PROTO_INDEX_VERSION 1
+#define PROTO_INDEX_SRC_APP 2
+#define PROTO_INDEX_TYPE 3
+#define PROTO_INDEX_SEQUENCE 4
+#define PROTO_INDEX_COMMAND_ID 5
+#define PROTO_INDEX_PARAMS 7
+#define PROTO_INDEX_CHECKSUM 17
 
 // Enumerated types for messageType
-enum MessageType : uint8_t {
+enum MessageType : uint8_t
+{
     MSG_COMMAND = 0x01,
-    MSG_STATUS  = 0x02,
-    MSG_ACK     = 0x03,
-    MSG_NACK    = 0x04
+    MSG_STATUS = 0x02,
+    MSG_ACK = 0x03,
+    MSG_NACK = 0x04
 };
 
 #define UART_PACKET_SIZE 20
 
-enum commandID : uint16_t {
-     
-    // system
+enum commandID : uint16_t
+{
 
+    // system
+    CMD_NO_ACTION = 0x000,
     CMD_SYS_POWER = 0x0001,
     CMD_SYS_RPI_SHUTDOWN = 0x0002,
 
-    //track control commands
+    // track control commands
     CMD_NEXT_TRACK = 0x0100,
-    // CMD_PREVIOUS_TRACK    = 0x0101,
-    // CMD_PLAY_PAUSE = 0x0102,
-     CMD_STOP_TRACK       = 0x0103,
+    CMD_PREVIOUS_TRACK = 0x0101,
+    CMD_PLAY_PAUSE = 0x0102,
+    CMD_STOP_TRACK = 0x0103,
+    CMD_SKIP_FORWARD = 0x0104,
+    CMD_SKIP_BACK = 0x0105,
+    CMD_PREV_MENU_ITEM = 0x0106,
+    CMD_NEXT_MENU_ITEM = 0x0107,
+    CMD_ITEM_SELECT = 0x0108,
+    CMD_EXIT_ITEM = 0x0109,
+
+    CMD_DISPLAY_OFF = 0x010B,
+    CMD_TOGGLE_METER_ON = 0x010C,
+    CMD_TOGGLE_METER_OFF = 0x010D,
+    CMD_DISPLAY_ON = 0x010E,
+    CMD_TOGGLE_DAC_ON = 0x010A,
+    CMD_TOGGLE_DAC_OFF = 0x010F,
+    CMD_ROTARY_LEFT = 0x0110,
+    CMD_ROTARY_RIGHT = 0x0111
 
     // // PI Control commands
     // CMD_GET_PI_STATUS  = 0x0201,
@@ -52,12 +69,14 @@ enum PowerCommand : uint8_t
 };
 
 // Source application IDs
-enum AppID : uint8_t {
+enum AppID : uint8_t
+{
     APP_ESP32 = 0x01,
-    APP_PI    = 0x02
+    APP_PI = 0x02
 };
 
-struct UARTMessage {
+struct UARTMessage
+{
     uint8_t start_byte;
     uint8_t version;
     uint8_t src_app;
@@ -67,7 +86,7 @@ struct UARTMessage {
     uint16_t params[5];
     uint8_t checksum;
 
-        UARTMessage()
+    UARTMessage()
         : start_byte(UART_START_BYTE), version(UART_PROTOCOL_VERSION), src_app(APP_ESP32),
           msg_type(MSG_COMMAND), sequence(0), command_id(0), checksum(0)
     {
@@ -76,5 +95,5 @@ struct UARTMessage {
 };
 
 uint8_t calculate_checksum(const uint8_t *data, size_t len);
-void serialize_message( UARTMessage &msg, uint8_t *buffer);
+void serialize_message(UARTMessage &msg, uint8_t *buffer);
 bool deserialize_message(const uint8_t *buffer, UARTMessage &msg);

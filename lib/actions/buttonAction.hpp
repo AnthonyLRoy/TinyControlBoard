@@ -9,6 +9,6 @@ namespace actions
     {
     public:
         virtual ~ButtonAction() = default;
-        virtual actionResponse execute(bool buttonMode) = 0;
+        virtual actionResponse execute(bool pressed) = 0;
     };
 }

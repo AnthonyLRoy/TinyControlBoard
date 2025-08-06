@@ -16,6 +16,8 @@ namespace led
 
     void LEDDriver::begin()
     {
+
+        ESP_LOGW("LEDDriver", "Initializing LED Driver on SPI host %d with latch pin %d", host, latch);
         spi_bus_config_t buscfg = {
             .mosi_io_num = MOSI_PIN,
             .miso_io_num = -1,

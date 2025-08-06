@@ -12,6 +12,7 @@ class SPI {
 public:
     static SPI& instance(spi_host_device_t spi_host = SPI2_HOST);
 
+
     void init(gpio_num_t serial_data_out, gpio_num_t data_clock_out, int mhz = 1);
     void send(uint16_t data);
     void send_bulk(const uint16_t* data, size_t word_count);

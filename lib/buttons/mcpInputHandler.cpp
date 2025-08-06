@@ -5,7 +5,8 @@ namespace buttons
 {
 
     static const char *TAG = "MCP";
-
+constexpr uint8_t ROTARY_A_PIN = 14;
+constexpr uint8_t ROTARY_B_PIN = 15;
     // Lookup table for rotary encoder transitions
     static constexpr int8_t ROTARY_TABLE[16] = {
         0, -1, 1, 0,
@@ -220,7 +221,8 @@ namespace buttons
         uint16_t current = (gpiob << 8) | gpioa;
 
         for (int i = 0; i < 16; ++i)
-        {
+        {    if (i == ROTARY_A_PIN || i == ROTARY_B_PIN)
+        continue;
             bool now = (current >> i) & 1;
             bool before = (prevState >> i) & 1;
 
@@ -242,8 +244,8 @@ namespace buttons
     }
     void MCPInputHandler::decodeRotary(uint16_t state)
     {
-        uint8_t a = !(state & (1 << 14));
-        uint8_t b = !(state & (1 << 15));
+        uint8_t a = !(state & (1 << ROTARY_A_PIN));
+        uint8_t b = !(state & (1 << ROTARY_B_PIN));
         uint8_t rotaryNow = (rotaryLast << 2) | (a << 1) | b;
 
         int8_t move = ROTARY_TABLE[rotaryNow & 0x0F];

@@ -5,24 +5,58 @@
 
 namespace actions
 {
-    class ToggleTrack : public ButtonAction
+
+
+    class PowerButton : public ButtonAction
     {
     public:
-        actionResponse execute(bool buttonMode) override;
+        actionResponse execute(bool pressed) override;
     };
 
-    class VolumeUp : public ButtonAction
+    class ToggleDac : public ButtonAction
     {
     public:
-        actionResponse execute(bool buttonMode) override;
-    };
-  class PowerButton : public ButtonAction
-    {
-    public:
-        actionResponse execute(bool buttonMode) override;
+        actionResponse execute(bool pressed) override;
     };
 
-     extern PowerButton PowerButtonInstance;
-     extern ToggleTrack toggleTrackInstance;
-     extern VolumeUp volumeUpInstance;
+    class SwitchOffDisplay : public ButtonAction
+    {
+    public:
+        actionResponse execute(bool pressed) override;
+    };
+    class ToggleMeterDisplay : public ButtonAction
+    {
+    public:
+        actionResponse execute(bool pressed) override;
+    };
+
+
+    class RotaryMove : public ButtonAction
+    {   
+    public:
+        actionResponse execute(bool pressed) override;
+    };
+
+extern RotaryMove RotaryMoveInstance;
+extern PowerButton  PowerButtonInstance;
+extern ToggleDac ToggleDacInstance;
+extern SwitchOffDisplay SwitchOffDisplayInstance ;
+extern ToggleMeterDisplay ToggleMeterDisplayInstance;
+extern ButtonAction& PreviousTrackInstance;
+extern ButtonAction& NextTrackInstance;
+extern ButtonAction& SkipForwardInstance;
+extern ButtonAction& SkipBackInstance;
+extern ButtonAction& PauseInstance;
+extern ButtonAction& StopInstance;
+extern ButtonAction& PreviousMenuInstance;
+extern ButtonAction& NextMenuInstance;
+extern ButtonAction& MenuSelectInstance;
+
+
+
+
+ 
+
+
+
 }

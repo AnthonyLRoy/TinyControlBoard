@@ -6,34 +6,108 @@ namespace controlSystem
     void actionProcessor::process(actions::actionResponse response)
     {
 
+        UARTMessage message;
         switch (response.command)
         {
-
-        case CMD_STOP_TRACK:
+        case CMD_NEXT_TRACK:
+            ESP_LOGI("NEXTTRACK", "Sending next Track Message");
+            message.command_id = CMD_NEXT_TRACK;
             break;
+
+        case CMD_PREVIOUS_TRACK:
+            ESP_LOGI("PREVTRACK", "Sending previous Track Message");
+            message.command_id = CMD_PREVIOUS_TRACK;
+            break;
+        case CMD_PLAY_PAUSE:
+            ESP_LOGI("PLAYPAUSE", "Sending Play/Pause Message");
+            message.command_id = CMD_PLAY_PAUSE;
+            break;
+        case CMD_STOP_TRACK:
+            ESP_LOGI("STOP", "Sending Stop Track Message");
+            message.command_id = CMD_STOP_TRACK;
+            break;
+        case CMD_SKIP_FORWARD:
+            ESP_LOGI("SKIPFORWARD", "Sending Skip Forward Message");
+            message.command_id = CMD_SKIP_FORWARD;
+            break;
+        case CMD_SKIP_BACK:
+            ESP_LOGI("SKIPBACK", "Sending Skip Back Message");
+            message.command_id = CMD_SKIP_BACK;
+            break;
+        case CMD_PREV_MENU_ITEM:
+            ESP_LOGI("PREVMENU", "Sending Previous Menu Item Message");
+            message.command_id = CMD_PREV_MENU_ITEM;
+            break;
+        case CMD_NEXT_MENU_ITEM:
+            ESP_LOGI("NEXTMENU", "Sending Next Menu Item Message");
+            message.command_id = CMD_NEXT_MENU_ITEM;
+            break;
+        case CMD_ITEM_SELECT:
+            ESP_LOGI("ITEMSELECT", "Sending Item Select Message");
+            message.command_id = CMD_ITEM_SELECT;
+            break;
+        case CMD_EXIT_ITEM:
+            ESP_LOGI("EXITITEM", "Sending Exit Item Message");
+            break;
+        case CMD_DISPLAY_OFF:
+            ESP_LOGI("DISPLAYOFF", "Sending Display Off Message");
+            message.command_id = CMD_DISPLAY_OFF;
+            break;
+        case CMD_TOGGLE_METER_ON:
+            ESP_LOGI("METERON", "Sending Meter On Message");
+            message.command_id = CMD_TOGGLE_METER_ON;
+            break;
+        case CMD_TOGGLE_METER_OFF:
+            ESP_LOGI("METEROFF", "Sending Meter Off Message");
+            message.command_id = CMD_TOGGLE_METER_OFF;
+            break;
+        case CMD_DISPLAY_ON:
+            ESP_LOGI("DISPLAYON", "Sending Display On Message");
+            message.command_id = CMD_DISPLAY_ON;
+            break;
+        case CMD_TOGGLE_DAC_ON:
+            HandleToggleDac(true);
+            break;
+        case CMD_TOGGLE_DAC_OFF:
+            HandleToggleDac(false);
+            break;
+        case CMD_ROTARY_LEFT:
+            ESP_LOGI("ROTARYLEFT", "Sending Rotary Left Message");
+            message.command_id = CMD_ROTARY_LEFT;
+            break;
+        case CMD_ROTARY_RIGHT:
+            ESP_LOGI("ROTARYRIGHT", "Sending Rotary Right Message");
+            message.command_id = CMD_ROTARY_RIGHT;
+            break;
+        case CMD_NO_ACTION:
+            // No action needed, just return
+            return;
+        case CMD_SYS_RPI_SHUTDOWN:
+            ShutDownRPI(true);
+            return;
 
         case CMD_SYS_POWER:
             HandleCommandPowerStateChange(response);
+            return;
 
-            break;
-
-        case CMD_NEXT_TRACK:
-        {
-            ESP_LOGI("NEXTTRACK", "Sending next Track Message");
-            UARTMessage message;
-            message.command_id = CMD_NEXT_TRACK;
-            message.msg_type = MessageType::MSG_COMMAND;
-            message.src_app = AppID::APP_ESP32;
-            uint8_t tx_buffer[UART_PACKET_SIZE];
-            serialize_message(message, tx_buffer);
-            serial.send_data((const char *)tx_buffer);
-            break;
-        }
         default:
-            break;
+            return;
         }
 
+        //send the message for all items that require it
+        uint8_t tx_buffer[UART_PACKET_SIZE];    
+        serialize_message(message, tx_buffer);
+        if (!serial.send_data((const char *)tx_buffer)) {
+            ESP_LOGE("UART", "Failed to send data");
+            return;
+        }
     };
+
+    bool actionProcessor::HandleToggleDac(bool state)
+    {
+        relays.setRelayState(PIN_RELAY_DAC, state);
+        return true;
+    }
 
     bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse resposne)
     {
@@ -69,10 +143,10 @@ namespace controlSystem
 
             spiBus.send(0xAAA0);
 
-            bool ShutDownRPI(true);
+           bool rpiState = ShutDownRPI(true);
             spiBus.send(0xAA00);
 
-            bool ShutDownScreen(false);
+            bool screenState = ShutDownScreen(false);
             spiBus.send(0xA000);
 
             vTaskDelay(pdMS_TO_TICKS(500));

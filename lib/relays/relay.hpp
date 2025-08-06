@@ -13,6 +13,11 @@ namespace relays
     class StandardRelay
     {
     public:
+        // Singleton instance accessor
+        static StandardRelay instance() {
+            static StandardRelay instance;
+            return instance;
+    }
         // Initialize the relays
         static void init(gpio_num_t pinRelay);
         static void setRelayState(gpio_num_t relay, bool state);
