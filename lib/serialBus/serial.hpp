@@ -9,8 +9,7 @@ namespace serialBus {
 
 class Serial {
 public:
-    Serial();
-    ~Serial();
+    static Serial& instance();
 
     bool init_uart(uart_port_t uart_num,
                    int baud_rate,
@@ -26,6 +25,8 @@ public:
     int read_data(char *buffer, size_t buffer_size, TickType_t timeout_ms = 100);
 
 private:
+    Serial();
+    ~Serial();
     uart_port_t uart_number;
     bool initialized;
 };

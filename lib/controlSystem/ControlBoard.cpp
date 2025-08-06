@@ -17,9 +17,9 @@ namespace controlSystem
         PowerStateManager::instance().setPowerState(ControlBoardPowerState::OFF);
         indicators::getPowerLed().setState(ControlBoardState::Standby);
 
-        serialHandler = new serialBus::Serial();
+        serialHandler = &serialBus::Serial::instance();
         relays = new relays::StandardRelay();
-        spi = new spibus::SPI(SPI2_HOST);
+        spi = &spibus::SPI::instance(SPI2_HOST);
 
         responseProcessor = new actionProcessor(*serialHandler, *relays, *spi);
 
@@ -41,14 +41,13 @@ namespace controlSystem
     {
         // Optional, for completeness or if you want soft reset support
         delete responseProcessor;
-        delete spi;
         delete relays;
-        delete serialHandler;
+   
 
         responseProcessor = nullptr;
-        spi = nullptr;
+
         relays = nullptr;
-        serialHandler = nullptr;
+
     }
 
     bool ControlBoard::setupRelays()

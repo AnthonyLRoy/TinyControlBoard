@@ -2,6 +2,12 @@
 
 static const char *TAG = "SERIAL";
 
+
+serialBus::Serial& serialBus::Serial::instance() {
+    static Serial instance;
+    return instance;
+}
+
 serialBus::Serial::Serial() : uart_number(UART_NUM_0), initialized(false) {}
 
 serialBus::Serial::~Serial() {
