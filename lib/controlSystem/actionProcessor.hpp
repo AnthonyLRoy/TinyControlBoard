@@ -6,22 +6,29 @@
 #include "actionsResponse.hpp"
 #include "esp_log.h"
 #include "PowerStateManager.hpp"
+#include <driver/gpio.h> // Added for gpio_num_t
 
 namespace controlSystem
 {
     class actionProcessor
     {
-    private:
-        /* data */
+    public:
+        struct CommandConfig {
+            const char* logTag;
+            uint32_t commandId; // Using uint32_t as assumed type for CMD_* constants
+        };
+
     public:
         actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef, spibus::SPI &spiRef);
         void process(actions::actionResponse response);
 
     private:
-        bool HandleCommandPowerStateChange(actions::actionResponse resposne);
+        bool HandleCommandPowerStateChange(actions::actionResponse response);
         bool HandleToggleDac(bool state);
         bool ShutDownRPI(bool wait);
         bool ShutDownScreen(bool wait);
+        void sendUartCommand(const char* logTag, uint32_t commandId);
+        void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs); // Changed uint8_t to gpio_num_t
 
         serialBus::Serial &serial;
         relays::StandardRelay &relays;

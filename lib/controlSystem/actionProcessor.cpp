@@ -2,106 +2,97 @@
 
 namespace controlSystem
 {
-    actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef, spibus::SPI &spiRef) : serial(serialBusRef), relays(relaysRef), spiBus(spiRef) {}
+    // Constants for clarity
+    constexpr uint32_t POWER_SETTLE_DELAY_MS = 1500;
+    constexpr uint32_t SCREEN_ON_DELAY_MS = 1000;
+    constexpr uint32_t LONG_PRESS_THRESHOLD_MS = 3000;
+    constexpr uint32_t DEEP_SLEEP_THRESHOLD_MS = 8000;
+
+    // SPI command codes to show the led lights displaying the shutdown sequence
+    constexpr uint16_t SPI_INIT_SHUTDOWN = 0xAAAA;
+    constexpr uint16_t SPI_STOP_TRACK_SENT = 0xAAA0;
+    constexpr uint16_t SPI_RPI_SHUTDOWN_SENT = 0xAA00;
+    constexpr uint16_t SPI_SCREEN_SHUTDOWN_SENT = 0xA000;
+    constexpr uint16_t SPI_ALL_OFF = 0x0000;
+
+    // Array of command configurations
+    static constexpr actionProcessor::CommandConfig commandConfigs[] = {
+        {"NEXTTRACK", CMD_NEXT_TRACK},
+        {"PREVTRACK", CMD_PREVIOUS_TRACK},
+        {"PLAYPAUSE", CMD_PLAY_PAUSE},
+        {"STOP", CMD_STOP_TRACK},
+        {"SKIPFORWARD", CMD_SKIP_FORWARD},
+        {"SKIPBACK", CMD_SKIP_BACK},
+        {"PREVMENU", CMD_PREV_MENU_ITEM},
+        {"NEXTMENU", CMD_NEXT_MENU_ITEM},
+        {"ITEMSELECT", CMD_ITEM_SELECT},
+        {"DISPLAYOFF", CMD_DISPLAY_OFF},
+        {"METERON", CMD_TOGGLE_METER_ON},
+        {"METEROFF", CMD_TOGGLE_METER_OFF},
+        {"DISPLAYON", CMD_DISPLAY_ON},
+        {"ROTARYLEFT", CMD_ROTARY_LEFT},
+        {"ROTARYRIGHT", CMD_ROTARY_RIGHT}};
+
+    constexpr size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);
+
+    actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef, spibus::SPI &spiRef)
+        : serial(serialBusRef), relays(relaysRef), spiBus(spiRef) {}
+
     void actionProcessor::process(actions::actionResponse response)
     {
-
-        UARTMessage message;
-        switch (response.command)
+        if (response.command == CMD_NO_ACTION)
         {
-        case CMD_NEXT_TRACK:
-            ESP_LOGI("NEXTTRACK", "Sending next Track Message");
-            message.command_id = CMD_NEXT_TRACK;
-            break;
-
-        case CMD_PREVIOUS_TRACK:
-            ESP_LOGI("PREVTRACK", "Sending previous Track Message");
-            message.command_id = CMD_PREVIOUS_TRACK;
-            break;
-        case CMD_PLAY_PAUSE:
-            ESP_LOGI("PLAYPAUSE", "Sending Play/Pause Message");
-            message.command_id = CMD_PLAY_PAUSE;
-            break;
-        case CMD_STOP_TRACK:
-            ESP_LOGI("STOP", "Sending Stop Track Message");
-            message.command_id = CMD_STOP_TRACK;
-            break;
-        case CMD_SKIP_FORWARD:
-            ESP_LOGI("SKIPFORWARD", "Sending Skip Forward Message");
-            message.command_id = CMD_SKIP_FORWARD;
-            break;
-        case CMD_SKIP_BACK:
-            ESP_LOGI("SKIPBACK", "Sending Skip Back Message");
-            message.command_id = CMD_SKIP_BACK;
-            break;
-        case CMD_PREV_MENU_ITEM:
-            ESP_LOGI("PREVMENU", "Sending Previous Menu Item Message");
-            message.command_id = CMD_PREV_MENU_ITEM;
-            break;
-        case CMD_NEXT_MENU_ITEM:
-            ESP_LOGI("NEXTMENU", "Sending Next Menu Item Message");
-            message.command_id = CMD_NEXT_MENU_ITEM;
-            break;
-        case CMD_ITEM_SELECT:
-            ESP_LOGI("ITEMSELECT", "Sending Item Select Message");
-            message.command_id = CMD_ITEM_SELECT;
-            break;
-        case CMD_EXIT_ITEM:
-            ESP_LOGI("EXITITEM", "Sending Exit Item Message");
-            break;
-        case CMD_DISPLAY_OFF:
-            ESP_LOGI("DISPLAYOFF", "Sending Display Off Message");
-            message.command_id = CMD_DISPLAY_OFF;
-            break;
-        case CMD_TOGGLE_METER_ON:
-            ESP_LOGI("METERON", "Sending Meter On Message");
-            message.command_id = CMD_TOGGLE_METER_ON;
-            break;
-        case CMD_TOGGLE_METER_OFF:
-            ESP_LOGI("METEROFF", "Sending Meter Off Message");
-            message.command_id = CMD_TOGGLE_METER_OFF;
-            break;
-        case CMD_DISPLAY_ON:
-            ESP_LOGI("DISPLAYON", "Sending Display On Message");
-            message.command_id = CMD_DISPLAY_ON;
-            break;
-        case CMD_TOGGLE_DAC_ON:
-            HandleToggleDac(true);
-            break;
-        case CMD_TOGGLE_DAC_OFF:
-            HandleToggleDac(false);
-            break;
-        case CMD_ROTARY_LEFT:
-            ESP_LOGI("ROTARYLEFT", "Sending Rotary Left Message");
-            message.command_id = CMD_ROTARY_LEFT;
-            break;
-        case CMD_ROTARY_RIGHT:
-            ESP_LOGI("ROTARYRIGHT", "Sending Rotary Right Message");
-            message.command_id = CMD_ROTARY_RIGHT;
-            break;
-        case CMD_NO_ACTION:
-            // No action needed, just return
             return;
-        case CMD_SYS_RPI_SHUTDOWN:
+        }
+        if (response.command == CMD_SYS_RPI_SHUTDOWN)
+        {
             ShutDownRPI(true);
             return;
-
-        case CMD_SYS_POWER:
+        }
+        if (response.command == CMD_SYS_POWER)
+        {
             HandleCommandPowerStateChange(response);
             return;
-
-        default:
+        }
+        if (response.command == CMD_TOGGLE_DAC_ON)
+        {
+            HandleToggleDac(true);
+            return;
+        }
+        if (response.command == CMD_TOGGLE_DAC_OFF)
+        {
+            HandleToggleDac(false);
+            return;
+        }
+        if (response.command == CMD_EXIT_ITEM)
+        {
+            ESP_LOGI("EXITITEM", "Sending Exit Item Message");
             return;
         }
 
-        //send the message for all items that require it
-        uint8_t tx_buffer[UART_PACKET_SIZE];    
+        // Handle commands requiring UART message
+        for (size_t i = 0; i < NUM_COMMANDS; ++i)
+        {
+            if (commandConfigs[i].commandId == response.command)
+            {
+                sendUartCommand(commandConfigs[i].logTag, commandConfigs[i].commandId);
+                return;
+            }
+        }
+    }
+
+    void actionProcessor::sendUartCommand(const char *logTag, uint32_t commandId)
+    {
+        UARTMessage message;
+        message.command_id = commandId;
+        uint8_t tx_buffer[UART_PACKET_SIZE];
         serialize_message(message, tx_buffer);
-        if (!serial.send_data((const char *)tx_buffer)) {
-            ESP_LOGE("UART", "Failed to send data");
-            return;
+        ESP_LOGI(logTag, "Sending %s Message", logTag);
+        if (!serial.send_data(reinterpret_cast<const char *>(tx_buffer)))
+        {
+            ESP_LOGE("UART", "Failed to send %s command", logTag);
         }
-    };
+    }
 
     bool actionProcessor::HandleToggleDac(bool state)
     {
@@ -109,58 +100,55 @@ namespace controlSystem
         return true;
     }
 
-    bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse resposne)
+    void actionProcessor::setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs)
+    {
+        relays.setRelayState(pin, state);
+        if (delayMs > 0)
+        {
+            vTaskDelay(pdMS_TO_TICKS(delayMs));
+        }
+    }
+
+    bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
     {
         auto &stateMgr = PowerStateManager::instance();
 
         if (stateMgr.getPowerState() == ControlBoardPowerState::OFF)
         {
-            // switch on the relays
-            relays.setRelayState(PIN_RELAY_DAC, true);          // dav 5v and 3.3
-            vTaskDelay(pdMS_TO_TICKS(1500));                    // delay for power supply to settle
-            relays.setRelayState(PIN_RELAY_OUTPUT_STAGE, true); // dav 5v and 3.3
-            vTaskDelay(pdMS_TO_TICKS(1500));                    // delay for power supply to settle
-
-            relays.setRelayState(PIN_RELAY_RPI, true); // switch on the RPI
-            vTaskDelay(pdMS_TO_TICKS(1000));
-            relays.setRelayState(PIN_RELAY_SCREEN, true); // swithc on the screen
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            // Power on sequence
+            setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
+            setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
+            setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
+            setRelayWithDelay(PIN_RELAY_SCREEN, true, SCREEN_ON_DELAY_MS);
+            stateMgr.setPowerState(ControlBoardPowerState::ON);
             return true;
         }
 
-        if (stateMgr.getPowerState() == ControlBoardPowerState::ON && resposne.releaseTimeMilliSecs > 3000)
+        if (stateMgr.getPowerState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
         {
+            // Power off or sleep sequence
             stateMgr.setPowerState(ControlBoardPowerState::GOING_TO_SLEEP);
-            // sleep switch off the screen and  the RPI
-            // Fuck this just shut down the RPI this bitch is burning too much power
-            spiBus.send(0xAAAA);
+            spiBus.send(SPI_INIT_SHUTDOWN);
 
-            UARTMessage message;
-            message.command_id = CMD_STOP_TRACK;
-            uint8_t tx_buffer[UART_PACKET_SIZE];
-            serialize_message(message, tx_buffer);
-            serial.send_data((const char *)tx_buffer);
+            sendUartCommand("STOP", CMD_STOP_TRACK);
+            spiBus.send(SPI_STOP_TRACK_SENT);
 
-            spiBus.send(0xAAA0);
+            ShutDownRPI(true);
+            spiBus.send(SPI_RPI_SHUTDOWN_SENT);
 
-           bool rpiState = ShutDownRPI(true);
-            spiBus.send(0xAA00);
-
-            bool screenState = ShutDownScreen(false);
-            spiBus.send(0xA000);
+            ShutDownScreen(false);
+            spiBus.send(SPI_SCREEN_SHUTDOWN_SENT);
 
             vTaskDelay(pdMS_TO_TICKS(500));
-
-            spiBus.send(0x0000);
+            spiBus.send(SPI_ALL_OFF);
             stateMgr.setPowerState(ControlBoardPowerState::SLEEP);
 
-            // Go into deep sleep
-            if (resposne.releaseTimeMilliSecs > 8000)
+            // Deep sleep if long press exceeds threshold
+            if (response.releaseTimeMilliSecs > DEEP_SLEEP_THRESHOLD_MS)
             {
-
-                relays.setRelayState(PIN_RELAY_DAC, false);
-                relays.setRelayState(PIN_RELAY_OUTPUT_STAGE, false);
-            };
+                setRelayWithDelay(PIN_RELAY_DAC, false, 0);
+                setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, false, 0);
+            }
             return false;
         }
         return true;
@@ -168,24 +156,14 @@ namespace controlSystem
 
     bool actionProcessor::ShutDownRPI(bool wait)
     {
-        // send message to shutdown RPI and wait
-        UARTMessage message;
-        message.command_id = CMD_SYS_RPI_SHUTDOWN;
-        uint8_t tx_buffer[UART_PACKET_SIZE];
-        serialize_message(message, tx_buffer);
-        serial.send_data((const char *)tx_buffer);
-
-        // wait here for a certain period of time then swith of RELAY anyway
-
-        relays::StandardRelay::setRelayState(PIN_RELAY_RPI, false);
-
+        sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+        relays.setRelayState(PIN_RELAY_RPI, false);
         return false;
     }
 
     bool actionProcessor::ShutDownScreen(bool wait)
     {
-        relays::StandardRelay::setRelayState(PIN_RELAY_SCREEN, false);
+        relays.setRelayState(PIN_RELAY_SCREEN, false);
         return true;
     }
-
 }
