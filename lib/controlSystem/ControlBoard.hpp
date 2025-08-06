@@ -25,7 +25,7 @@ namespace controlSystem
         void deinit();          // optional cleanup
 
 
-        relays::StandardRelay& getRelays() { return *controlRelays; }
+
         spibus::SPI& getSPI() { return *spi; }
         actionProcessor& getActionProcessor() { return *responseProcessor; }
 
@@ -58,7 +58,7 @@ namespace controlSystem
 
         // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
         serialBus::Serial* serialHandler = nullptr;
-        relays::StandardRelay* controlRelays = nullptr;
+          relays::StandardRelay* relays = nullptr;
         spibus::SPI* spi = nullptr;
         actionProcessor* responseProcessor = nullptr;
 

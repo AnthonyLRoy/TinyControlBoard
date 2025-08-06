@@ -8,33 +8,28 @@
 namespace controlSystem
 {
     static const char *TAG = "CONTROL_BOARD";
-    auto &serial = serialBus::Serial::instance();
-    auto &controlRelays = relays::StandardRelay::instance;
-    auto &spi = spibus::SPI::instance();
+
 
     bool ControlBoard::init()
     {
         ESP_LOGI(TAG, "Starting ControlBoard init...");
 
-        // system just switched on from the mains switch so default  -- no histyory storage yet
+        //system just switched on from the mains switch so default  -- no histyory storage yet
         PowerStateManager::instance().setPowerState(ControlBoardPowerState::OFF);
         indicators::getPowerLed().setState(ControlBoardState::Standby);
 
         serialHandler = &serialBus::Serial::instance();
-        controlRelays = relays::StandardRelay::instance;
         spi = &spibus::SPI::instance(SPI2_HOST);
 
-        if (!setupRelays())
-            return false;
-        if (!setupMCPHandler())
-            return false;
+        responseProcessor = new actionProcessor(*serialHandler, *relays, *spi);
 
+        if (!setupRelays()) return false;
+        if (!setupMCPHandler()) return false;
+        
         setupMCPCallbacks();
 
-        if (!setupSerial())
-            return false;
-        if (!setupSPI())
-            return false;
+        if (!setupSerial()) return false;
+        if (!setupSPI()) return false;
 
         setupButtonActions();
 
@@ -78,7 +73,7 @@ namespace controlSystem
     bool ControlBoard::setupSerial()
     {
         ESP_LOGI(TAG, "Initializing serial...");
-        bool ok = serial.init_uart(UART_NUM, UART_BOARD_RATE, PIN_SERIAL_TX, PIN_SERIAL_RX, 256,
+        bool ok = serialHandler->init_uart(UART_NUM, UART_BOARD_RATE, PIN_SERIAL_TX, PIN_SERIAL_RX, 256,
                                    UART_PARITY_DISABLE, UART_STOP_BITS_1, UART_HW_FLOWCTRL_DISABLE);
         if (!ok)
         {
@@ -92,7 +87,7 @@ namespace controlSystem
     bool ControlBoard::setupSPI()
     {
         ESP_LOGI(TAG, "Initializing SPI...");
-        spi.init( PIN_SPI_DATA, PIN_SPI_CLK, 1);
+        spi->init( PIN_SPI_DATA, PIN_SPI_CLK, 1);
         indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Active);
         return true;
     }
