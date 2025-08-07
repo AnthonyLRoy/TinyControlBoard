@@ -25,7 +25,7 @@ enum MessageType : uint8_t
     MSG_NACK = 0x04
 };
 
-#define UART_PACKET_SIZE 20
+#define UART_PACKET_SIZE 18
 
 enum commandID : uint16_t
 {

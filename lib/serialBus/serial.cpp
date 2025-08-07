@@ -8,7 +8,7 @@ serialBus::Serial& serialBus::Serial::instance() {
     return instance;
 }
 
-serialBus::Serial::Serial() : uart_number(UART_NUM_0), initialized(false) {}
+serialBus::Serial::Serial() : uart_number(UART_NUM_1), initialized(false) {}
 
 serialBus::Serial::~Serial() {
     deinit_uart();

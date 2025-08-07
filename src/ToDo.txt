@@ -1,0 +1,4 @@
+Things that need to be done
+
+Update the serial port to pulse the DataReady flag so the RPI know that data has been send
+update the serial class to send to receive data based of pulse from RPI telling as that data is DataReady
