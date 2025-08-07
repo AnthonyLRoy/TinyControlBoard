@@ -15,7 +15,7 @@ namespace controlSystem
     public:
         struct CommandConfig {
             const char* logTag;
-            uint32_t commandId; // Using uint32_t as assumed type for CMD_* constants
+            uint32_t commandId; // Using uint32_t as assumed type for CMD_* constants because they of version of c++ i think
         };
 
     public:

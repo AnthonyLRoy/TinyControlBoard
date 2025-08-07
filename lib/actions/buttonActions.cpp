@@ -15,7 +15,7 @@ namespace actions
     static SimpleCommandAction NextMenuCmd(CMD_NEXT_MENU_ITEM);
     static SimpleCommandAction MenuSelectCmd(CMD_ITEM_SELECT);
 
-    // References to the shared simple actions
+    // Add the refers  to the shared simple actions so avoid duplication
     ButtonAction& PreviousTrackInstance = PreviousTrackCmd;
     ButtonAction& NextTrackInstance = NextTrackCmd;
     ButtonAction& SkipForwardInstance = SkipForwardCmd;
@@ -26,7 +26,7 @@ namespace actions
     ButtonAction& NextMenuInstance = NextMenuCmd;
     ButtonAction& MenuSelectInstance = MenuSelectCmd;
 
-
+// these are seperate because that have nmore function
     PowerButton PowerButtonInstance;
     ToggleDac ToggleDacInstance;
     SwitchOffDisplay SwitchOffDisplayInstance;
@@ -88,7 +88,7 @@ namespace actions
         }
         return response;
     }
-
+// the press startes the timer and the release returns the time, to tell what type of shutdown needed
     actionResponse PowerButton::execute(bool pressed)
     {
         static int64_t lastActionTime = esp_timer_get_time();

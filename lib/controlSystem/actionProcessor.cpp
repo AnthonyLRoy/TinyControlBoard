@@ -8,7 +8,7 @@ namespace controlSystem
     constexpr uint32_t LONG_PRESS_THRESHOLD_MS = 3000;
     constexpr uint32_t DEEP_SLEEP_THRESHOLD_MS = 8000;
 
-    // SPI command codes to show the led lights displaying the shutdown sequence
+    // SPI command codes to show the Lights pattern to the user to show Shutting down taking place
     constexpr uint16_t SPI_INIT_SHUTDOWN = 0xAAAA;
     constexpr uint16_t SPI_STOP_TRACK_SENT = 0xAAA0;
     constexpr uint16_t SPI_RPI_SHUTDOWN_SENT = 0xAA00;

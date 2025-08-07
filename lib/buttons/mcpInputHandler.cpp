@@ -54,14 +54,15 @@ constexpr uint8_t ROTARY_B_PIN = 15;
 
         ESP_LOGI(TAG, "Configuring MCP23017");
 
-        writeRegisterPair(0x00, 0xFF, 0xFF); // All inputs
-        writeRegisterPair(0x0C, 0xFF, 0xFF); // Pull-ups
-        writeRegisterPair(0x04, 0xFF, 0xFF); // Interrupt on change
-        writeRegisterPair(0x08, 0x00, 0x00); // Compare to previous
+        writeRegisterPair(MCP_IODIRA, 0xFF, 0xFF); // All inputs
+        writeRegisterPair(MCP_GPPUA, 0xFF, 0xFF); // Pull-ups
+        writeRegisterPair(MCP_GPINTENA, 0xFF, 0xFF); // Interrupt on change
+        writeRegisterPair(MCP_INTCONA, 0x00, 0x00); // Compare to previous
 
-        writeRegister(0x0A, 0b01000100); // MIRROR=1, SEQOP=1
+        writeRegister(MCP_IOCON, 0b01000100); // MIRROR=1, SEQOP=1
 
         ESP_LOGI(TAG, "Configuring interrupt pin %d", interruptPin);
+
         gpio_config_t io_conf = {
             .pin_bit_mask = 1ULL << interruptPin,
             .mode = GPIO_MODE_INPUT,
@@ -69,6 +70,7 @@ constexpr uint8_t ROTARY_B_PIN = 15;
             .pull_down_en = GPIO_PULLDOWN_DISABLE,
             .intr_type = GPIO_INTR_NEGEDGE,
         };
+
         ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Interrupt pin config failed");
         ESP_LOGI(TAG, "Interrupt pin %d configured", interruptPin);
         ESP_LOGI(TAG, "Installing ISR service");
@@ -79,19 +81,20 @@ constexpr uint8_t ROTARY_B_PIN = 15;
             return isr_err;
         }
         ESP_LOGI(TAG, "Creating interrupt task");
+       
         interruptTaskHandle = nullptr;
         xTaskCreate([](void *arg)
                     { static_cast<MCPInputHandler *>(arg)->interruptTaskLoop(); }, "mcp_int_task", 4096, this, 10, &interruptTaskHandle);
         ESP_LOGI(TAG, "Adding GPIO ISR handler");
         gpio_isr_handler_add(interruptPin, MCPInputHandler::gpioISR, this);
         ESP_LOGI(TAG, "MCP23017 initialized successfully");
-        writeRegisterPair(0x04, 0xFF, 0xFF); // Interrupt on change
+        writeRegisterPair(MCP_GPINTENA, 0xFF, 0xFF); // Interrupt on change
 
-        writeRegisterPair(0x08, 0x00, 0x00); // Compare to previous
+        writeRegisterPair(MCP_INTCONA, 0x00, 0x00); // Compare to previous
 
         ESP_LOGI(TAG, "Reading initial GPIO state to force clear interrupts");
-        readRegister(0x12); // Read GPIOA
-        readRegister(0x13); // Read GPIOB
+        readRegister(MCP_GPIOA); // Read GPIOA
+        readRegister(MCP_GPIOB); // Read GPIOB
         return ESP_OK;
     }
 
@@ -201,14 +204,14 @@ constexpr uint8_t ROTARY_B_PIN = 15;
     void MCPInputHandler::handleInterrupt()
     {
 
-        uint8_t intfA = readRegister(0x0E); // INTFA
-        uint8_t intfB = readRegister(0x0F); // INTFB
+        uint8_t intfA = readRegister(MCP_INTFA); // INTFA
+        uint8_t intfB = readRegister(MCP_INTFB); // INTFB
 
         ESP_LOGI(TAG, "INTFA = 0x%02X", intfA);
         ESP_LOGI(TAG, "INTFB = 0x%02X", intfB);
 
-        uint8_t intcapA = readRegister(0x10); // INTCAPA
-        uint8_t intcapB = readRegister(0x11); // INTCAPB
+        uint8_t intcapA = readRegister(MCP_INTCAPA); // INTCAPA
+        uint8_t intcapB = readRegister(MCP_INTCAPB); // INTCAPB
 
         ESP_LOGI(TAG, "INTCAPA = 0x%02X", intcapA);
         ESP_LOGI(TAG, "INTCAPB = 0x%02X", intcapB);
@@ -216,10 +219,10 @@ constexpr uint8_t ROTARY_B_PIN = 15;
         ESP_LOGI(TAG, "Interrupt received on pin %d", interruptPin);
 
         // Explicitly read GPIOA and GPIOB to clear INTFA/INTFB
-        uint8_t gpioa = readRegister(0x12); // GPIOA
-        uint8_t gpiob = readRegister(0x13); // GPIOB
+        uint8_t gpioa = readRegister(MCP_GPIOA); // GPIOA
+        uint8_t gpiob = readRegister(MCP_GPIOB); // GPIOB
         uint16_t current = (gpiob << 8) | gpioa;
-
+//ignore pins for rotary encode
         for (int i = 0; i < 16; ++i)
         {    if (i == ROTARY_A_PIN || i == ROTARY_B_PIN)
         continue;
