@@ -16,7 +16,7 @@ namespace controlSystem
 
         //system just switched on from the mains switch so default  -- no histyory storage yet
         PowerStateManager::instance().setPowerState(ControlBoardPowerState::OFF);
-        indicators::getPowerLed().setState(ControlBoardState::Standby);
+ 
 
         serialHandler = &serialBus::Serial::instance();
         spi = &spibus::SPI::instance(SPI2_HOST);
@@ -34,6 +34,9 @@ namespace controlSystem
         setupButtonActions();
 
         ESP_LOGI(TAG, "ControlBoard init complete.");
+
+        indicators::getPowerLed().setState(ControlBoardState::Standby);
+        
         return true;
     }
 

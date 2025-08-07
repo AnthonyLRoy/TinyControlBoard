@@ -21,7 +21,7 @@ ActiveLed::ActiveLed(gpio_num_t pin,ledc_channel_t channel) : pin(pin), currentS
     ledc_timer_config(&ledc_timer);
 
     ledc_channel_config_t ledc_channel = {};
-        ledc_channel.channel    = channel;
+        ledc_channel.channel    = LEDC_CHANNEL_0;
         ledc_channel.duty       = 0;
         ledc_channel.gpio_num   = pin;
         ledc_channel.speed_mode = LEDC_MODE;

@@ -17,6 +17,8 @@ namespace led
    void LEDPWM::init(ledc_timer_config_t timerConfig, ledc_channel_config_t channelConfig)
    {
 
+      ESP_LOGI("LEDPWM", "Initializing LEDPWM with channel: %d", channelConfig.channel);
+      
       ledc_timerConfig = timerConfig;
       ledc_channelConfig = channelConfig;
 
