@@ -81,17 +81,17 @@ namespace controlSystem
         }
     }
 
-    void actionProcessor::sendUartCommand(const char *logTag, uint32_t commandId)
+    void actionProcessor::sendUartCommand(const char *logTag, uint32_t commandId)   
     {
         UARTMessage message;
         message.command_id = commandId;
         uint8_t tx_buffer[UART_PACKET_SIZE];
         serialize_message(message, tx_buffer);
         ESP_LOGI(logTag, "Sending %s Message", logTag);
-        if (!serial.send_data(reinterpret_cast<const char *>(tx_buffer)))
-        {
-            ESP_LOGE("UART", "Failed to send %s command", logTag);
-        }
+        if (!serial.send_data(tx_buffer, UART_PACKET_SIZE))
+ESP_LOGI(logTag, "Failed to send %s message", logTag);
+        else
+            ESP_LOGI(logTag, "%s message sent successfully", logTag);
     }
 
     bool actionProcessor::HandleToggleDac(bool state)

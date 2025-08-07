@@ -1,15 +1,19 @@
 #pragma once
-#include <driver/gpio.h>
+
 #include "driver/uart.h"
+#include "driver/gpio.h"
 #include "esp_log.h"
-#include <cstring>
 #include "uart_protocol.hpp"
+#include "UartReceiver.hpp"
+#include <functional>
 
 namespace serialBus {
 
 class Serial {
 public:
     static Serial& instance();
+
+    static void IRAM_ATTR gpio_isr_handler(void *arg);
 
     bool init_uart(uart_port_t uart_num,
                    int baud_rate,
@@ -21,14 +25,31 @@ public:
                    uart_hw_flowcontrol_t flow_ctrl = UART_HW_FLOWCTRL_DISABLE);
 
     void deinit_uart();
-    bool send_data(const char *message);
-    int read_data(char *buffer, size_t buffer_size, TickType_t timeout_ms = 100);
+
+    bool send_data(const uint8_t* data, size_t len);
+    bool send_data(const char* message);
+
+    void set_rx_callback(std::function<void(const UARTMessage&)> callback);
 
 private:
     Serial();
     ~Serial();
+
     uart_port_t uart_number;
     bool initialized;
+    TaskHandle_t task_handle = nullptr;
+
+    static constexpr size_t TMP_BUFFER_SIZE = 64;
+    uint8_t tmp_buffer[TMP_BUFFER_SIZE];
+
+    UartReceiver rx_buffer;
+    std::function<void(const UARTMessage&)> rx_callback;
+
+    void uart_rx_task();
+    void handle_uart_rx();
 };
 
-} // namespace serialbus
+// GPIO from Raspberry Pi indicating data available
+static constexpr gpio_num_t PIN_RPI_DATA_RECEIVED = GPIO_NUM_42;
+
+}  // namespace serialBus

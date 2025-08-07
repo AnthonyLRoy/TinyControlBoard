@@ -1,27 +1,29 @@
 #include "Serial.hpp"
+#include <cstring>
+
+using namespace serialBus;
 
 static const char *TAG = "SERIAL";
 
-
-serialBus::Serial& serialBus::Serial::instance() {
+Serial& Serial::instance() {
     static Serial instance;
     return instance;
 }
 
-serialBus::Serial::Serial() : uart_number(UART_NUM_1), initialized(false) {}
+Serial::Serial() : uart_number(UART_NUM_0), initialized(false) {}
 
-serialBus::Serial::~Serial() {
+Serial::~Serial() {
     deinit_uart();
 }
 
-bool serialBus::Serial::init_uart(uart_port_t uart_num,
-                                  int baud_rate,
-                                  gpio_num_t tx_pin,
-                                  gpio_num_t rx_pin,
-                                  size_t buffer_size,
-                                  uart_parity_t parity,
-                                  uart_stop_bits_t stop_bits,
-                                  uart_hw_flowcontrol_t flow_ctrl)
+bool Serial::init_uart(uart_port_t uart_num,
+                       int baud_rate,
+                       gpio_num_t tx_pin,
+                       gpio_num_t rx_pin,
+                       size_t buffer_size,
+                       uart_parity_t parity,
+                       uart_stop_bits_t stop_bits,
+                       uart_hw_flowcontrol_t flow_ctrl)
 {
     if (baud_rate <= 0 || uart_num >= UART_NUM_MAX || buffer_size == 0) {
         ESP_LOGE(TAG, "Invalid UART parameters.");
@@ -39,16 +41,41 @@ bool serialBus::Serial::init_uart(uart_port_t uart_num,
         .source_clk = UART_SCLK_APB,
     };
 
+    ESP_LOGI(TAG, "Configuring UART%d: %d baud, TX=%d, RX=%d", uart_number, baud_rate, tx_pin, rx_pin); 
+
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_POSEDGE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = (1ULL << PIN_RPI_DATA_RECEIVED); 
+    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    gpio_config(&io_conf);
+
+    static bool isr_service_installed = false;
+    if (!isr_service_installed) {
+        gpio_install_isr_service(0); // Call only once globally
+        isr_service_installed = true;
+    }
+
+    gpio_isr_handler_add(PIN_RPI_DATA_RECEIVED, gpio_isr_handler, (void*) this);
+
+    this->task_handle = xTaskGetCurrentTaskHandle();
+
     ESP_ERROR_CHECK(uart_driver_install(uart_number, buffer_size * 2, 0, 0, nullptr, 0));
     ESP_ERROR_CHECK(uart_param_config(uart_number, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(uart_number, tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+
+    // Launch the RX task
+    xTaskCreate([](void* arg) {
+        static_cast<Serial*>(arg)->uart_rx_task();
+    }, "uart_rx_task", 4096, this, 10, nullptr);
 
     ESP_LOGI(TAG, "UART%d initialized at %d baud.", uart_number, baud_rate);
     initialized = true;
     return true;
 }
 
-void serialBus::Serial::deinit_uart() {
+void Serial::deinit_uart() {
     if (initialized) {
         uart_driver_delete(uart_number);
         ESP_LOGI(TAG, "UART%d deinitialized.", uart_number);
@@ -56,28 +83,64 @@ void serialBus::Serial::deinit_uart() {
     }
 }
 
-bool serialBus::Serial::send_data(const char *message) {
+bool Serial::send_data(const char* message) {
     if (!message || !initialized) {
         ESP_LOGW(TAG, "Invalid send attempt.");
         return false;
     }
-
+    ESP_LOGI(TAG, "Sending message: %s", message);
     int written = uart_write_bytes(uart_number, message, strlen(message));
     return written > 0;
 }
 
-int serialBus::Serial::read_data(char *buffer, size_t buffer_size, TickType_t timeout_ms) {
-    if (!buffer || buffer_size < 2 || !initialized) {
-        ESP_LOGE(TAG, "Invalid buffer or UART not initialized.");
-        return 0;
+bool Serial::send_data(const uint8_t* data, size_t len) {
+    if (!data || len == 0 || !initialized) {
+        ESP_LOGW(TAG, "Invalid send attempt.");
+        return false;
+    }
+    ESP_LOGI(TAG, "Sending data of length %zu", len);
+    int written = uart_write_bytes(uart_number, data, len);
+    return written == len;
+}
+
+void IRAM_ATTR serialBus::Serial::gpio_isr_handler(void *arg) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    auto *self = static_cast<serialBus::Serial*>(arg);
+
+    if (self->task_handle) {
+        vTaskNotifyGiveFromISR(self->task_handle, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
 
-    int len = uart_read_bytes(uart_number, (uint8_t *)buffer, buffer_size - 1, timeout_ms / portTICK_PERIOD_MS);
+    ESP_DRAM_LOGD(TAG, "GPIO ISR: notified uart_rx_task");
+}
+
+void Serial::handle_uart_rx() {
+    if (!initialized) return;
+
+    int len = uart_read_bytes(uart_number, tmp_buffer, TMP_BUFFER_SIZE, 20 / portTICK_PERIOD_MS);
     if (len > 0) {
-        buffer[len] = '\0';
-    } else {
-        buffer[0] = '\0';
-    }
+        rx_buffer.push_bytes(tmp_buffer, len);
 
-    return len;
+        UARTMessage msg;
+        while (rx_buffer.get_next_message(msg)) {
+            if (rx_callback) {
+                rx_callback(msg);
+            } else {
+                ESP_LOGI(TAG, "Received msg: cmd=0x%04X", msg.command_id);
+            }
+        }
+    }
+}
+
+void Serial::uart_rx_task() {
+    while (true) {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        handle_uart_rx();
+    }
+}
+
+void Serial::set_rx_callback(std::function<void(const UARTMessage&)> callback) {
+    rx_callback = callback;
 }

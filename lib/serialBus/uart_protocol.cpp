@@ -26,7 +26,7 @@ void serialize_message( UARTMessage &msg, uint8_t *buffer) {
     buffer[17] = msg.checksum;
 }
 
-bool deserialize_message(uint8_t *buffer, UARTMessage &msg) {
+bool deserialize_message(const uint8_t *buffer, UARTMessage &msg) {
     if (buffer[0] != UART_START_BYTE)
         return false;
 
