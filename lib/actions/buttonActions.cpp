@@ -16,17 +16,17 @@ namespace actions
     static SimpleCommandAction MenuSelectCmd(CMD_ITEM_SELECT);
 
     // Add the refers  to the shared simple actions so avoid duplication
-    ButtonAction& PreviousTrackInstance = PreviousTrackCmd;
-    ButtonAction& NextTrackInstance = NextTrackCmd;
-    ButtonAction& SkipForwardInstance = SkipForwardCmd;
-    ButtonAction& SkipBackInstance = SkipBackCmd;
-    ButtonAction& PauseInstance = PauseCmd;
-    ButtonAction& StopInstance = StopCmd;
-    ButtonAction& PreviousMenuInstance = PreviousMenuCmd;
-    ButtonAction& NextMenuInstance = NextMenuCmd;
-    ButtonAction& MenuSelectInstance = MenuSelectCmd;
+    ButtonAction &PreviousTrackInstance = PreviousTrackCmd;
+    ButtonAction &NextTrackInstance = NextTrackCmd;
+    ButtonAction &SkipForwardInstance = SkipForwardCmd;
+    ButtonAction &SkipBackInstance = SkipBackCmd;
+    ButtonAction &PauseInstance = PauseCmd;
+    ButtonAction &StopInstance = StopCmd;
+    ButtonAction &PreviousMenuInstance = PreviousMenuCmd;
+    ButtonAction &NextMenuInstance = NextMenuCmd;
+    ButtonAction &MenuSelectInstance = MenuSelectCmd;
 
-// these are seperate because that have nmore function
+    // these are seperate because that have nmore function
     PowerButton PowerButtonInstance;
     ToggleDac ToggleDacInstance;
     SwitchOffDisplay SwitchOffDisplayInstance;
@@ -38,10 +38,14 @@ namespace actions
         static bool state = 0;
         actionResponse response;
         if (pressed == true)
-        { if( state == false)
-            response.command = CMD_TOGGLE_DAC_ON;
+        {
+            if (state == false)
+            {
+                response.command = CMD_TOGGLE_DAC_ON;
+                response.KeepLedActive = true; // Keep LED active for DAC toggle
+            }
             else
-            response.command = CMD_TOGGLE_DAC_OFF;
+                response.command = CMD_TOGGLE_DAC_OFF;
             state = !state;
         }
         return response;
@@ -52,10 +56,14 @@ namespace actions
         static bool state = 0;
         actionResponse response;
         if (pressed == true)
-        { if( state == false)
-            response.command = CMD_DISPLAY_OFF;
+        {
+            if (state == false)
+            {
+                response.command = CMD_DISPLAY_OFF;
+                response.KeepLedActive = true; // Keep LED active for DAC toggle;
+            }
             else
-            response.command = CMD_DISPLAY_ON;
+                response.command = CMD_DISPLAY_ON;
             state = !state;
         }
         return response;
@@ -66,15 +74,19 @@ namespace actions
         static bool state = 0;
         actionResponse response;
         if (pressed == true)
-        { if( state == false)
-            response.command = CMD_TOGGLE_METER_ON;
+        {
+            if (state == false)
+            {
+                response.command = CMD_TOGGLE_METER_ON;
+                response.KeepLedActive = true;
+            }
             else
-            response.command = CMD_TOGGLE_METER_OFF;
+                response.command = CMD_TOGGLE_METER_OFF;
             state = !state;
         }
         return response;
     }
-    
+
     actionResponse RotaryMove::execute(bool pressed)
     {
         actionResponse response;
@@ -88,7 +100,7 @@ namespace actions
         }
         return response;
     }
-// the press startes the timer and the release returns the time, to tell what type of shutdown needed
+    // the press startes the timer and the release returns the time, to tell what type of shutdown needed
     actionResponse PowerButton::execute(bool pressed)
     {
         static int64_t lastActionTime = esp_timer_get_time();

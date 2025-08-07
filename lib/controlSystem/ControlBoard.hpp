@@ -28,6 +28,9 @@ namespace controlSystem
         actionProcessor& getActionProcessor() { return *responseProcessor; }
 
     private:
+
+        uint16_t spiPintActiveBitMap = 0x0000; // Bitmap to track active SPI pins
+        
         bool setupRelays();
         bool setupSPI();
         bool setupSerial();
@@ -56,7 +59,7 @@ namespace controlSystem
 
         // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
         serialBus::Serial* serialHandler = nullptr;
-          relays::StandardRelay* relays = nullptr;
+        relays::StandardRelay* relays = nullptr;
         spibus::SPI* spi = nullptr;
         actionProcessor* responseProcessor = nullptr;
 

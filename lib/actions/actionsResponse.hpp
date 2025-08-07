@@ -10,6 +10,7 @@ namespace actions
         commandID  command = CMD_NO_ACTION;
         char parameters[10]{};  
         uint16_t releaseTimeMilliSecs = 0;
+        bool KeepLedActive= false;
 
         actionResponse() = default;
     };

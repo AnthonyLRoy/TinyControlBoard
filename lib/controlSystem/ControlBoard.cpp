@@ -36,7 +36,7 @@ namespace controlSystem
         ESP_LOGI(TAG, "ControlBoard init complete.");
 
         indicators::getPowerLed().setState(ControlBoardState::Standby);
-        
+
         return true;
     }
 
@@ -114,10 +114,11 @@ namespace controlSystem
 
     void ControlBoard::setupMCPCallbacks()
     {
-        indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+
         mcpHandler.setButtonCallback([this](uint8_t pin, bool pressed)
                                      {
-            spi->send(0xFF);
+            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+            spiPintActiveBitMap |= (1 << pin);
             ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
             if (pressed && buttonActions[pin])
             {
@@ -125,15 +126,16 @@ namespace controlSystem
                 responseProcessor->process(result);
             } });
 
-        mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)
-                                      {
-            spi->send(0x00);
+        mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)                                      {
+;
             ESP_LOGI(TAG, "Pin %u RELEASED", pin);
             indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
             if (buttonActions[pin] && released)
             {
                 actions::actionResponse result = buttonActions[pin]->execute(true);
                 responseProcessor->process(result);
+                if(!result.KeepLedActive)
+                spiPintActiveBitMap &= ~(1 << pin);
 
             } });
 
