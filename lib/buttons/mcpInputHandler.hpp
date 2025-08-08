@@ -1,5 +1,6 @@
 #pragma once
 
+#include "project_config.hpp"
 #include <cstdint>
 #include <functional>
 #include <driver/i2c.h>
@@ -8,6 +9,9 @@
 #include "freertos/timers.h"
 #include "esp_Check.h"
 #include <esp_log.h>
+
+
+
 
 // MCP23018 register addresses
 constexpr uint8_t MCP_IODIRA   = 0x00;
