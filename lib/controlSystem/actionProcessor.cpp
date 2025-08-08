@@ -81,7 +81,7 @@ namespace controlSystem
         }
     }
 
-    void actionProcessor::sendUartCommand(const char *logTag, uint32_t commandId)   
+    void actionProcessor::sendUartCommand(const char *logTag, uint32_t commandId)
     {
         UARTMessage message;
         message.command_id = commandId;
@@ -89,7 +89,7 @@ namespace controlSystem
         serialize_message(message, tx_buffer);
         ESP_LOGI(logTag, "Sending %s Message", logTag);
         if (!serial.send_data(tx_buffer, UART_PACKET_SIZE))
-ESP_LOGI(logTag, "Failed to send %s message", logTag);
+            ESP_LOGI(logTag, "Failed to send %s message", logTag);
         else
             ESP_LOGI(logTag, "%s message sent successfully", logTag);
     }

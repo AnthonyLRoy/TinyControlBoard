@@ -1,325 +1,237 @@
 #include "mcpInputHandler.hpp"
 
-#define PIN_I2C_ENABLE GPIO_NUM_17 // GPIO to enable I2C bus
-namespace buttons
-{
+namespace buttons {
 
-    static const char *TAG = "MCP";
-constexpr uint8_t ROTARY_A_PIN = 14;
-constexpr uint8_t ROTARY_B_PIN = 15;
-    // Lookup table for rotary encoder transitions
-    static constexpr int8_t ROTARY_TABLE[16] = {
-        0, -1, 1, 0,
-        1, 0, 0, -1,
-        -1, 0, 0, 1,
-        0, 1, -1, 0};
+static const char *TAG = "MCP";
 
-    MCPInputHandler::MCPInputHandler(uint8_t address, i2c_port_t port)
-        : i2cAddr(address), i2cPort(port), prevState(0xFFFF), rotaryLast(0), ticksToWait(pdMS_TO_TICKS(50))
-    {
+// Constructor
+MCPInputHandler::MCPInputHandler(uint8_t address, i2c_port_t port)
+    : i2cAddr(address),
+      i2cPort(port),
+      interruptPin(GPIO_NUM_NC),
+      prevState(0xFFFF),
+      rotaryLast(0),
+      ticksToWait(pdMS_TO_TICKS(50)),
+      interruptTaskHandle(nullptr) {}
+
+// Public API
+esp_err_t MCPInputHandler::begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin) {
+    interruptPin = intPin;
+
+    ESP_RETURN_ON_ERROR(initI2CBus(sda, scl), TAG, "I2C init failed");
+    ESP_RETURN_ON_ERROR(initMCP23018(), TAG, "MCP init failed");
+    ESP_RETURN_ON_ERROR(initInterruptPin(), TAG, "Interrupt pin setup failed");
+
+    createInterruptTask();
+    clearInitialInterrupts();
+
+    ESP_LOGI(TAG, "MCP23018 initialized successfully");
+    return ESP_OK;
+}
+
+void MCPInputHandler::setButtonCallback(std::function<void(uint8_t, bool)> cb) { buttonCallback = cb; }
+void MCPInputHandler::setReleaseCallback(std::function<void(uint8_t, bool)> cb) { releaseCallback = cb; }
+void MCPInputHandler::setRotaryCallback(std::function<void(int)> cb) { rotaryCallback = cb; }
+void MCPInputHandler::setTimeout(uint32_t ms) { ticksToWait = pdMS_TO_TICKS(ms); }
+
+void MCPInputHandler::I2CEnable(bool enable) {
+    gpio_set_level(PIN_I2C_ENABLE, enable ? 1 : 0);
+    ESP_LOGI(TAG, "I2C %s", enable ? "enabled" : "disabled");
+}
+#ifdef DEBUG_MCP_SCAN
+
+void MCPInputHandler::dumpRegisters() const {
+    for (uint8_t reg = 0x00; reg <= 0x15; ++reg) {
+        uint8_t val = readRegister(reg);
+        ESP_LOGI(TAG, "Reg 0x%02X = 0x%02X", reg, val);
     }
+}
 
-    /// @brief 
-    /// @details This function initializes the MCPInputHandler with the specified I2C address and port.
-    /// It sets up the I2C configuration, GPIO interrupt pin, and installs the ISR          
-    /// service for handling interrupts from the MCP23017 device.
-    /// @param sda GPIO pin for I2C SDA
-    /// @param scl GPIO pin for I2C SCL
-    /// @param intPin GPIO pin for the interrupt from the MCP23017
-    /// @return esp_err_t ESP_OK on success, error code on failure
-    /// @see i2c_param_config(), i2c_driver_install(), gpio_config(), gpio_install_isr_service(), gpio_isr_handler_add()
-    /// @warning Ensure that the GPIO pins for SDA, SCL, and interrupt are correctly
-    /// defined in the project configuration.
-    /// @note This function should be called after the control board is initialized.
-    esp_err_t MCPInputHandler::begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin)
-    {
-        this->interruptPin = intPin;
+#endif
 
-        ESP_LOGI(TAG, "Initializing I2C on port %d", i2cPort);
-        ESP_LOGI(TAG, "Using I2C address 0x%02X", i2cAddr);
+#ifdef DEBUG_MCP_SCAN
 
-        i2c_config_t conf = {};
-        conf.mode = I2C_MODE_MASTER;
-        conf.sda_io_num = sda;
-        conf.scl_io_num = scl;
-        conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-        conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-        conf.master.clk_speed = 50000;
+void MCPInputHandler::scanner() const {
+    int found = 0;
 
-        ESP_RETURN_ON_ERROR(i2c_param_config(i2cPort, &conf), TAG, "I2C config failed");
-        ESP_RETURN_ON_ERROR(i2c_driver_install(i2cPort, I2C_MODE_MASTER, 0, 0, 0), TAG, "I2C install failed");
-
-        gpio_set_direction(PIN_I2C_ENABLE, GPIO_MODE_OUTPUT);
-        gpio_set_level(PIN_I2C_ENABLE, 1);
-
-        ESP_LOGI(TAG, "Configuring MCP23017");
-
-        writeRegisterPair(MCP_IODIRA, 0xFF, 0xFF); // All inputs
-        writeRegisterPair(MCP_GPPUA, 0xFF, 0xFF); // Pull-ups
-        writeRegisterPair(MCP_GPINTENA, 0xFF, 0xFF); // Interrupt on change
-        writeRegisterPair(MCP_INTCONA, 0x00, 0x00); // Compare to previous
-
-        writeRegister(MCP_IOCON, 0b01000100); // MIRROR=1, SEQOP=1
-
-        ESP_LOGI(TAG, "Configuring interrupt pin %d", interruptPin);
-
-        gpio_config_t io_conf = {
-            .pin_bit_mask = 1ULL << interruptPin,
-            .mode = GPIO_MODE_INPUT,
-            .pull_up_en = GPIO_PULLUP_ENABLE,
-            .pull_down_en = GPIO_PULLDOWN_DISABLE,
-            .intr_type = GPIO_INTR_NEGEDGE,
-        };
-
-        ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Interrupt pin config failed");
-        ESP_LOGI(TAG, "Interrupt pin %d configured", interruptPin);
-        ESP_LOGI(TAG, "Installing ISR service");
-        esp_err_t isr_err = gpio_install_isr_service(0);
-        if (isr_err != ESP_OK && isr_err != ESP_ERR_INVALID_STATE)
-        {
-            ESP_LOGE(TAG, "ISR install failed");
-            return isr_err;
-        }
-        ESP_LOGI(TAG, "Creating interrupt task");
-       
-        interruptTaskHandle = nullptr;
-        xTaskCreate([](void *arg)
-                    { static_cast<MCPInputHandler *>(arg)->interruptTaskLoop(); }, "mcp_int_task", 4096, this, 10, &interruptTaskHandle);
-        ESP_LOGI(TAG, "Adding GPIO ISR handler");
-        gpio_isr_handler_add(interruptPin, MCPInputHandler::gpioISR, this);
-        ESP_LOGI(TAG, "MCP23017 initialized successfully");
-        writeRegisterPair(MCP_GPINTENA, 0xFF, 0xFF); // Interrupt on change
-
-        writeRegisterPair(MCP_INTCONA, 0x00, 0x00); // Compare to previous
-
-        ESP_LOGI(TAG, "Reading initial GPIO state to force clear interrupts");
-        readRegister(MCP_GPIOA); // Read GPIOA
-        readRegister(MCP_GPIOB); // Read GPIOB
-        return ESP_OK;
-    }
-
-    /// @brief
-    /// @details This function handles the GPIO interrupt from the MCP23017.
-    /// It reads the interrupt flags and captures the GPIO state, then processes the button presses and
-    /// rotary encoder movements.
-    /// @note This function is called from the ISR and should not block or take too long.
-    /// @see readRegister(), readGPIO16(), handleInterrupt()
-    /// @warning Ensure that the GPIO ISR is correctly configured to call this function.
-    /// @return 
-    void IRAM_ATTR MCPInputHandler::gpioISR(void *arg)
-    {
-
-        MCPInputHandler *self = static_cast<MCPInputHandler *>(arg);
-        BaseType_t higherPriorityWoken = pdFALSE;
-        vTaskNotifyGiveFromISR(self->interruptTaskHandle, &higherPriorityWoken);
-        portYIELD_FROM_ISR(higherPriorityWoken);
-    }
-
-    /// @brief 
-    /// @details This function runs in a separate task and waits for notifications from the GPIO ISR.
-    /// It calls handleInterrupt() to process the GPIO state and button presses.
-    /// @note This function should be created as a FreeRTOS task.
-    void MCPInputHandler::interruptTaskLoop()
-    {
-        while (true)
-        {
-            ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // Wait for ISR to notify
-            handleInterrupt();                       // Safe to call I2C here
-        }
-    }
-
-    uint8_t MCPInputHandler::readRegister(uint8_t reg)
-    {
-        uint8_t val = 0;
+    for (uint8_t addr = 0x03; addr < 0x78; ++addr) {
+        // Create I2C command link
         i2c_cmd_handle_t cmd = i2c_cmd_link_create();
         i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write_byte(cmd, reg, true);
-        i2c_master_start(cmd); // Repeated start
-        i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_READ, true);
-        i2c_master_read_byte(cmd, &val, I2C_MASTER_LAST_NACK);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
         i2c_master_stop(cmd);
-        i2c_master_cmd_begin(i2cPort, cmd, ticksToWait);
-        i2c_cmd_link_delete(cmd);
-        return val;
-    }
-    void MCPInputHandler::dumpRegisters()
-    {
-        ESP_LOGI(TAG, "Reading all MCP23018 registers:");
-        for (uint8_t reg = 0x00; reg <= 0x15; ++reg)
-        {
-            uint8_t val = readRegister(reg);
-            ESP_LOGI(TAG, "Reg 0x%02X = 0x%02X", reg, val);
-        }
-    }
-    void MCPInputHandler::I2CEnable(bool enable)
-    {
-        gpio_set_level(PIN_I2C_ENABLE, enable ? 1 : 0);
-        ESP_LOGI(TAG, "I2C %s", enable ? "enabled" : "disabled");
-    }
 
-    void MCPInputHandler::writeRegister(uint8_t reg, uint8_t val)
-    {
-        uint8_t buf[] = {reg, val};
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write(cmd, buf, sizeof(buf), true);
-        i2c_master_stop(cmd);
-        i2c_master_cmd_begin(i2cPort, cmd, ticksToWait);
-        i2c_cmd_link_delete(cmd);
-    }
-
-    void MCPInputHandler::writeRegisterPair(uint8_t baseReg, uint8_t a, uint8_t b)
-    {
-        uint8_t buf[] = {baseReg, a, b};
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write(cmd, buf, sizeof(buf), true);
-        i2c_master_stop(cmd);
-        i2c_master_cmd_begin(i2cPort, cmd, ticksToWait);
-        i2c_cmd_link_delete(cmd);
-    }
-
-    uint16_t MCPInputHandler::readGPIO16()
-    {
-
-        ESP_LOGI(TAG, "Reading GPIO16 state");
-        uint8_t data[2] = {0};
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_write_byte(cmd, 0x12, true); // GPIOA
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_READ, true);
-        i2c_master_read(cmd, data, 2, I2C_MASTER_LAST_NACK);
-        i2c_master_stop(cmd);
-        i2c_master_cmd_begin(i2cPort, cmd, ticksToWait);
+        // Send command and delete link
+        esp_err_t ret = i2c_master_cmd_begin(i2cPort, cmd, pdMS_TO_TICKS(20));
         i2c_cmd_link_delete(cmd);
 
-        return (data[1] << 8) | data[0];
-    }
-
-    void MCPInputHandler::handleInterrupt()
-    {
-
-        uint8_t intfA = readRegister(MCP_INTFA); // INTFA
-        uint8_t intfB = readRegister(MCP_INTFB); // INTFB
-
-        ESP_LOGI(TAG, "INTFA = 0x%02X", intfA);
-        ESP_LOGI(TAG, "INTFB = 0x%02X", intfB);
-
-        uint8_t intcapA = readRegister(MCP_INTCAPA); // INTCAPA
-        uint8_t intcapB = readRegister(MCP_INTCAPB); // INTCAPB
-
-        ESP_LOGI(TAG, "INTCAPA = 0x%02X", intcapA);
-        ESP_LOGI(TAG, "INTCAPB = 0x%02X", intcapB);
-
-        ESP_LOGI(TAG, "Interrupt received on pin %d", interruptPin);
-
-        // Explicitly read GPIOA and GPIOB to clear INTFA/INTFB
-        uint8_t gpioa = readRegister(MCP_GPIOA); // GPIOA
-        uint8_t gpiob = readRegister(MCP_GPIOB); // GPIOB
-        uint16_t current = (gpiob << 8) | gpioa;
-//ignore pins for rotary encode
-        for (int i = 0; i < 16; ++i)
-        {    if (i == ROTARY_A_PIN || i == ROTARY_B_PIN)
-        continue;
-            bool now = (current >> i) & 1;
-            bool before = (prevState >> i) & 1;
-
-            if (now != before)
-            {
-                if (!now && buttonCallback)
-                {
-                    buttonCallback(i, true); // Button pressed
-                }
-                else if (now && releaseCallback)
-                {
-                    releaseCallback(i, true); // Button released
-                }
-            }
-        }
-
-        decodeRotary(current); // Optional: if using rotary encoders
-        prevState = current;
-    }
-    void MCPInputHandler::decodeRotary(uint16_t state)
-    {
-        uint8_t a = !(state & (1 << ROTARY_A_PIN));
-        uint8_t b = !(state & (1 << ROTARY_B_PIN));
-        uint8_t rotaryNow = (rotaryLast << 2) | (a << 1) | b;
-
-        int8_t move = ROTARY_TABLE[rotaryNow & 0x0F];
-        if (move != 0 && rotaryCallback)
-        {
-            rotaryCallback(move);
-        }
-
-        rotaryLast = (a << 1) | b;
-    }
-
-    void MCPInputHandler::timerCallback(TimerHandle_t xTimer)
-    {
-        uint32_t pin = (uint32_t)pvTimerGetTimerID(xTimer);
-        MCPInputHandler *self = static_cast<MCPInputHandler *>(pvTimerGetTimerID(xTimer));
-        if (self->releaseCallback)
-        {
-            self->releaseCallback(pin, true);
+        if (ret == ESP_OK) {
+            ESP_LOGI(TAG, "Device at 0x%02X", addr);
+            ++found;
         }
     }
 
-    void MCPInputHandler::scanner()
-    {
-        ESP_LOGI("I2C", "Scanning...");
-        int found = 0;
-        for (uint8_t addr = 0x03; addr < 0x78; ++addr)
-        {
-            if (testConnection(addr, 20) == ESP_OK)
-            {
-                ESP_LOGI("I2C", "Device at 0x%02X", addr);
-                ++found;
-            }
-            else
-            {
-                ESP_LOGI("I2C", "No device at 0x%02X", addr);
-            }
+    if (!found) {
+        ESP_LOGW(TAG, "No I2C devices found");
+    }
+}
+
+#endif
+
+// Setup helpers
+esp_err_t MCPInputHandler::initI2CBus(gpio_num_t sda, gpio_num_t scl) {
+    i2c_config_t conf = {};
+    conf.mode = I2C_MODE_MASTER;
+    conf.sda_io_num = sda;
+    conf.scl_io_num = scl;
+    conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+    conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+    conf.master.clk_speed = I2C_CLK_SPEED_HZ;
+
+    ESP_RETURN_ON_ERROR(i2c_param_config(i2cPort, &conf), TAG, "I2C config failed");
+    ESP_RETURN_ON_ERROR(i2c_driver_install(i2cPort, I2C_MODE_MASTER, 0, 0, 0), TAG, "I2C install failed");
+
+    gpio_set_direction(PIN_I2C_ENABLE, GPIO_MODE_OUTPUT);
+    gpio_set_level(PIN_I2C_ENABLE, 1);
+    return ESP_OK;
+}
+
+esp_err_t MCPInputHandler::initMCP23018() {
+    writeRegisterPair(MCP_IODIRA, ALL_INPUTS, ALL_INPUTS);
+    writeRegisterPair(MCP_GPPUA,  ALL_INPUTS, ALL_INPUTS);
+    writeRegisterPair(MCP_GPINTENA, ALL_INPUTS, ALL_INPUTS);
+    writeRegisterPair(MCP_INTCONA, 0x00, 0x00);
+    writeRegister(MCP_IOCON, 0b01000100); // MIRROR=1, SEQOP=1
+    return ESP_OK;
+}
+
+esp_err_t MCPInputHandler::initInterruptPin() {
+    gpio_config_t io_conf = {
+        .pin_bit_mask = 1ULL << interruptPin,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_NEGEDGE,
+    };
+    ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Interrupt pin config failed");
+
+    esp_err_t isr_err = gpio_install_isr_service(0);
+    if (isr_err != ESP_OK && isr_err != ESP_ERR_INVALID_STATE) return isr_err;
+
+    gpio_isr_handler_add(interruptPin, MCPInputHandler::gpioISR, this);
+    return ESP_OK;
+}
+
+void MCPInputHandler::createInterruptTask() {
+    xTaskCreate([](void *arg) {
+        static_cast<MCPInputHandler*>(arg)->interruptTaskLoop();
+    }, "mcp_int_task", 4096, this, 10, &interruptTaskHandle);
+}
+
+void MCPInputHandler::clearInitialInterrupts() {
+    readRegister(MCP_GPIOA);
+    readRegister(MCP_GPIOB);
+}
+
+// Interrupt handling
+void IRAM_ATTR MCPInputHandler::gpioISR(void *arg) {
+    auto *self = static_cast<MCPInputHandler*>(arg);
+    BaseType_t higherPriorityWoken = pdFALSE;
+    vTaskNotifyGiveFromISR(self->interruptTaskHandle, &higherPriorityWoken);
+    portYIELD_FROM_ISR(higherPriorityWoken);
+}
+
+void MCPInputHandler::interruptTaskLoop() {
+    while (true) {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        handleInterrupt();
+    }
+}
+
+void MCPInputHandler::handleInterrupt() {
+    uint8_t intfA = readRegister(MCP_INTFA);
+    uint8_t intfB = readRegister(MCP_INTFB);
+    uint8_t intcapA = readRegister(MCP_INTCAPA);
+    uint8_t intcapB = readRegister(MCP_INTCAPB);
+
+    ESP_LOGI(TAG, "INTFA=0x%02X INTFB=0x%02X INTCAPA=0x%02X INTCAPB=0x%02X",
+             intfA, intfB, intcapA, intcapB);
+
+    uint8_t gpioa = readRegister(MCP_GPIOA);
+    uint8_t gpiob = readRegister(MCP_GPIOB);
+    uint16_t current = (gpiob << 8) | gpioa;
+
+    for (int i = 0; i < 16; ++i) {
+        if (i == ROTARY_A_PIN || i == ROTARY_B_PIN) continue;
+        bool now = (current >> i) & 1;
+        bool before = (prevState >> i) & 1;
+        if (now != before) {
+            if (!now && buttonCallback) buttonCallback(i, true);
+            else if (now && releaseCallback) releaseCallback(i, true);
         }
-        if (found == 0)
-            ESP_LOGI("I2C", "No devices found");
     }
 
-    esp_err_t MCPInputHandler::testConnection(uint8_t devAddr, int32_t timeout)
-    {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (devAddr << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_stop(cmd);
-        esp_err_t err = i2c_master_cmd_begin(i2cPort, cmd,
-                                             (timeout < 0 ? ticksToWait : pdMS_TO_TICKS(timeout)));
-        i2c_cmd_link_delete(cmd);
-        return err;
-    }
+    decodeRotary(current);
+    prevState = current;
+}
 
-    void MCPInputHandler::setTimeout(uint32_t ms)
-    {
-        ticksToWait = pdMS_TO_TICKS(ms);
-    }
+void MCPInputHandler::decodeRotary(uint16_t state) {
+    uint8_t a = !(state & (1 << ROTARY_A_PIN));
+    uint8_t b = !(state & (1 << ROTARY_B_PIN));
+    uint8_t rotaryNow = (rotaryLast << 2) | (a << 1) | b;
 
-    void MCPInputHandler::setButtonCallback(std::function<void(uint8_t, bool)> cb)
-    {
-        buttonCallback = cb;
-    }
+    int8_t move = ROTARY_TABLE[rotaryNow & 0x0F];
+    if (move && rotaryCallback) rotaryCallback(move);
 
-    void MCPInputHandler::setReleaseCallback(std::function<void(uint8_t, bool)> cb)
-    {
-        releaseCallback = cb;
-    }
+    rotaryLast = (a << 1) | b;
+}
 
-    void MCPInputHandler::setRotaryCallback(std::function<void(int)> cb)
-    {
-        rotaryCallback = cb;
-    }
+// I2C helpers
+esp_err_t MCPInputHandler::i2cWrite(const uint8_t *data, size_t len) const {
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_WRITE, true);
+    i2c_master_write(cmd, data, len, true);
+    i2c_master_stop(cmd);
+    esp_err_t ret = i2c_master_cmd_begin(i2cPort, cmd, ticksToWait);
+    i2c_cmd_link_delete(cmd);
+    return ret;
+}
+
+esp_err_t MCPInputHandler::i2cWriteRead(uint8_t reg, uint8_t *data, size_t len) const {
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_WRITE, true);
+    i2c_master_write_byte(cmd, reg, true);
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (i2cAddr << 1) | I2C_MASTER_READ, true);
+    i2c_master_read(cmd, data, len, I2C_MASTER_LAST_NACK);
+    i2c_master_stop(cmd);
+    esp_err_t ret = i2c_master_cmd_begin(i2cPort, cmd, ticksToWait);
+    i2c_cmd_link_delete(cmd);
+    return ret;
+}
+
+uint8_t MCPInputHandler::readRegister(uint8_t reg) const {
+    uint8_t val = 0;
+    i2cWriteRead(reg, &val, 1);
+    return val;
+}
+
+uint16_t MCPInputHandler::readGPIO16() const {
+    uint8_t data[2] = {};
+    i2cWriteRead(MCP_GPIOA, data, 2);
+    return (data[1] << 8) | data[0];
+}
+
+void MCPInputHandler::writeRegister(uint8_t reg, uint8_t val) {
+    uint8_t buf[] = {reg, val};
+    i2cWrite(buf, sizeof(buf));
+}
+
+void MCPInputHandler::writeRegisterPair(uint8_t baseReg, uint8_t a, uint8_t b) {
+    uint8_t buf[] = {baseReg, a, b};
+    i2cWrite(buf, sizeof(buf));
+}
 
 } // namespace buttons

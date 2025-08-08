@@ -106,8 +106,13 @@ namespace controlSystem
         }
         mcpHandler.setTimeout(10);
         mcpHandler.I2CEnable(true);
-        mcpHandler.scanner();
+        #ifdef DEBUG_MCP_SCAN
+            mcpHandler.scanner();
+        #endif
+        ESP_LOGI(TAG, "MCP Handler initialized successfully.");
+        #ifdef DEBUG_MCP_SCAN
         mcpHandler.dumpRegisters();
+        #endif
         ESP_LOGI(TAG, "MCP Handler ready.");
         return true;
     }
