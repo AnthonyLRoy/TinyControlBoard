@@ -173,8 +173,9 @@ namespace controlSystem
         buttonActions[11] = &actions::ToggleDacInstance;
         buttonActions[12] = &actions::SwitchOffDisplayInstance;
         buttonActions[13] = &actions::ToggleMeterDisplayInstance;
-        buttonActions[14] = &actions::RotaryMoveInstance; // Rotary left
-        buttonActions[15] = &actions::RotaryMoveInstance; // Rotary right
+        buttonActions[14] = &actions::RotaryRightInstance;
+        buttonActions[15] = &actions::RotaryLeftInstance;   
+
 
         //todo: need to add the buttons for the rotary encoder
     }
