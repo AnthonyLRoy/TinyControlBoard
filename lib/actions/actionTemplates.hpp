@@ -5,11 +5,7 @@
 
 namespace actions
 {
-    /**
-     * Generic ON/OFF toggle button.
-     * CMD_ON:  Command when turning ON
-     * CMD_OFF: Command when turning OFF
-     */
+
     template <commandID CMD_ON, commandID CMD_OFF>
     class ToggleAction : public ButtonAction
     {
@@ -51,10 +47,7 @@ namespace actions
         }
     };
 
-    /**
-     * Button that measures press duration and sends it with the command.
-     * CMD: Command to send on release
-     */
+  
     template <commandID CMD>
     class TimedAction : public ButtonAction
     {

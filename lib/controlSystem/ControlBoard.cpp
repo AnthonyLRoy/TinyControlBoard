@@ -9,7 +9,7 @@ namespace controlSystem
 {
     static const char *TAG = "CONTROL_BOARD";
 
-
+   
     bool ControlBoard::init()
     {
         ESP_LOGI(TAG, "Starting ControlBoard init...");
@@ -17,7 +17,6 @@ namespace controlSystem
         //system just switched on from the mains switch so default  -- no histyory storage yet
         PowerStateManager::instance().setPowerState(ControlBoardPowerState::OFF);
  
-
         serialHandler = &serialBus::Serial::instance();
         spi = &spibus::SPI::instance(SPI2_HOST);
 
@@ -70,7 +69,7 @@ namespace controlSystem
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_3, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_4, false);
 
-        indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
+        indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
 
         return true;
     }
@@ -93,7 +92,7 @@ namespace controlSystem
     {
         ESP_LOGI(TAG, "Initializing SPI...");
         spi->init( PIN_SPI_DATA, PIN_SPI_CLK, 1);
-        indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Active);
+
         return true;
     }
 
@@ -124,7 +123,7 @@ namespace controlSystem
 
         mcpHandler.setButtonCallback([this](uint8_t pin, bool pressed)
                                      {
-            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
             spiPintActiveBitMap |= (1 << pin);
             ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
             if (pressed && buttonActions[pin])
@@ -136,7 +135,7 @@ namespace controlSystem
         mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)                                      {
 ;
             ESP_LOGI(TAG, "Pin %u RELEASED", pin);
-            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::Idle);
+            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
             if (buttonActions[pin] && released)
             {
                 actions::actionResponse result = buttonActions[pin]->execute(true);
@@ -149,13 +148,14 @@ namespace controlSystem
         mcpHandler.setRotaryCallback([this](int movement)
                                      {
             ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
-            indicators::getActiveLed().SetStatus(ControlBoardWorkingStatus::doingWork);
+            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
             actions::actionResponse result;
             if (movement > 0)
                 result = buttonActions[14]->execute(true);
             else
                 result = buttonActions[15]->execute(false);
             responseProcessor->process(result); });
+                    indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
 
     void ControlBoard::setupButtonActions()

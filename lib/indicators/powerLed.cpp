@@ -52,7 +52,7 @@ namespace indicators
         case ControlBoardState::Active:
             onLed.setDuty(dutyCycle);
             onLed.updateDuty();
-            standBy.setDuty(LED_OFF); // 0% duty cycle
+            standBy.setDuty(LED_OFF); // set to 0
             standBy.updateDuty();
             break;
         case ControlBoardState::Standby:

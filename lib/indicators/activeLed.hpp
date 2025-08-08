@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include "freertos/task.h"
-
+#include "freertos/queue.h"
 enum class ControlBoardWorkingStatus {
     doingWork,
     Idle,
@@ -21,8 +21,11 @@ public:
     ~ActiveLed();
 
     void SetStatus(ControlBoardWorkingStatus newStatus);
-
+    void sendStatus(ControlBoardWorkingStatus status);
+    void init();
 private:
+    QueueHandle_t statusQueue = nullptr;
+    static void ledTask(void* param);
     void updateDuty(uint32_t duty);
     static void TimerCallback(TimerHandle_t xTimer);
     void handleBlink();

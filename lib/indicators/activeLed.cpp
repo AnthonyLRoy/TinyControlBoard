@@ -1,6 +1,7 @@
 #include "activeLed.hpp"
 #include "esp_log.h"
 
+
 #define LEDC_TIMER          LEDC_TIMER_0
 #define LEDC_MODE           LEDC_LOW_SPEED_MODE
 #define LEDC_CHANNEL        LEDC_CHANNEL_0
@@ -29,7 +30,7 @@ ActiveLed::ActiveLed(gpio_num_t pin,ledc_channel_t channel) : pin(pin), currentS
         ledc_channel.timer_sel  = LEDC_TIMER;
     
     ledc_channel_config(&ledc_channel);
-
+    init();
     blinkTimer = xTimerCreate("LedBlinkTimer", pdMS_TO_TICKS(1000), pdTRUE, this, TimerCallback);
 }
 
@@ -41,7 +42,31 @@ ActiveLed::~ActiveLed()
     }
     stopBreatheEffect();
 }
+void ActiveLed::init()
+{
+    statusQueue = xQueueCreate(10, sizeof(ControlBoardWorkingStatus));
+    xTaskCreate(ledTask, "ActiveLedTask", 2048, this, 5, nullptr);
+}
 
+void ActiveLed::sendStatus(ControlBoardWorkingStatus status)
+{
+    if (statusQueue)
+        xQueueSend(statusQueue, &status, 0);
+}
+
+void ActiveLed::ledTask(void* param)
+{
+    ActiveLed* self = static_cast<ActiveLed*>(param);
+    ControlBoardWorkingStatus status;
+    while(true)
+    {
+        if(xQueueReceive(self->statusQueue, &status, portMAX_DELAY) == pdTRUE)
+        {
+            // Update LED hardware here
+            self->SetStatus(status);
+        }
+    }
+}
 void ActiveLed::SetStatus(ControlBoardWorkingStatus newStatus)
 {
     currentStatus = newStatus;

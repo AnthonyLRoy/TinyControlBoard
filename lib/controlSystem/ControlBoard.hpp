@@ -24,7 +24,6 @@ namespace controlSystem
     public:
         bool init();            // returns true if everything initialized successfully
         void deinit();          // optional cleanup
-
         spibus::SPI& getSPI() { return *spi; }
         actionProcessor& getActionProcessor() { return *responseProcessor; }
 
