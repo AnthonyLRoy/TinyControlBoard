@@ -60,7 +60,9 @@ namespace controlSystem
         relays::StandardRelay::init(PIN_RELAY_OUTPUT_STAGE);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_3);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_4);
+        relays::StandardRelay::init(PIN_RELAY_GENERAL_1);
 
+        relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_1, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_SCREEN, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_RPI, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_DAC, false);

@@ -7,6 +7,7 @@
 #define PIN_RELAY_OUTPUT_STAGE GPIO_NUM_10
 #define PIN_RELAY_GENERAL_3 GPIO_NUM_9  //  General purpose relay
 #define PIN_RELAY_GENERAL_4 GPIO_NUM_47 //  General purpose relay
+#define PIN_RELAY_GENERAL_1 GPIO_NUM_39 //  General purpose relay
 
 namespace relays
 {

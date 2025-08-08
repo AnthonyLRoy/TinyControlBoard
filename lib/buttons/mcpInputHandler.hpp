@@ -1,6 +1,6 @@
 #pragma once
 
-#include "project_config.hpp"
+
 #include <cstdint>
 #include <functional>
 #include <driver/i2c.h>
@@ -9,6 +9,8 @@
 #include "freertos/timers.h"
 #include "esp_Check.h"
 #include <esp_log.h>
+#include "project_cfg.hpp"
+
 
 
 

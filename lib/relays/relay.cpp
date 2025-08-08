@@ -13,7 +13,7 @@ void StandardRelay::init(gpio_num_t pinRelay)
     io_conf.intr_type = GPIO_INTR_DISABLE; // Disable interrupts
     io_conf.mode = GPIO_MODE_OUTPUT;       // Set as output mode
     io_conf.pin_bit_mask = (1ULL << pinRelay); // Set the pin bit mask
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE; // Disable pull-down
+    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE; // Disable pull-down
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;     // Disable pull-up
 
     // Apply the configuration
