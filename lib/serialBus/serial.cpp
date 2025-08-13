@@ -72,8 +72,15 @@ bool Serial::init_uart(uart_port_t uart_num,
 
     ESP_LOGI(TAG, "UART%d initialized at %d baud.", uart_number, baud_rate);
     initialized = true;
+
+    set_rx_callback([this](const UARTMessage& msg) {
+        ESP_LOGI(TAG, "Received message: cmd=0x%04X", msg.command_id);
+        ESP_LOGI(TAG, "Message content: %s", msg.params[0] ? "Non-empty" : "Empty");
+
+});
     return true;
 }
+
 
 void Serial::deinit_uart() {
     if (initialized) {
@@ -118,18 +125,20 @@ void IRAM_ATTR serialBus::Serial::gpio_isr_handler(void *arg) {
 
 void Serial::handle_uart_rx() {
     if (!initialized) return;
-
-    int len = uart_read_bytes(uart_number, tmp_buffer, TMP_BUFFER_SIZE, 20 / portTICK_PERIOD_MS);
+//todo: changed packed size to correct value make sure this is correct , danny don't forget please
+    int len = uart_read_bytes(uart_number, tmp_buffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
     if (len > 0) {
         rx_buffer.push_bytes(tmp_buffer, len);
 
         UARTMessage msg;
         while (rx_buffer.get_next_message(msg)) {
             if (rx_callback) {
+                ESP_LOGI(TAG, "Parsed message: cmd=0x%04X", msg.command_id);
                 rx_callback(msg);
-            } else {
-                ESP_LOGI(TAG, "Received msg: cmd=0x%04X", msg.command_id);
             }
+            else {
+                ESP_LOGW(TAG, "Failed to parse message");
+            }    
         }
     }
 }
@@ -144,3 +153,5 @@ void Serial::uart_rx_task() {
 void Serial::set_rx_callback(std::function<void(const UARTMessage&)> callback) {
     rx_callback = callback;
 }
+
+

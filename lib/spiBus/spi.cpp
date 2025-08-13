@@ -20,17 +20,17 @@ SPI::~SPI() {
 }
 
 void SPI::init(gpio_num_t serial_data_out, gpio_num_t data_clock_out, int mhz) {
-    sdo = serial_data_out;
-    clk = data_clock_out;
+    serialDataOutPin = serial_data_out;
+    serialDataClockPin = data_clock_out;
 
-    spi_bus_config_t buscfg = {
-        .mosi_io_num = sdo,
-        .miso_io_num = -1,
-        .sclk_io_num = clk,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = 4096,
-    };
+    spi_bus_config_t buscfg = {};
+        buscfg.mosi_io_num = serialDataOutPin;
+        buscfg.miso_io_num = -1;
+        buscfg.sclk_io_num = serialDataClockPin;
+        buscfg.quadwp_io_num = -1;
+        buscfg.quadhd_io_num = -1;
+        buscfg.max_transfer_sz = 4096;
+    
 
     ESP_ERROR_CHECK(spi_bus_initialize(host, &buscfg, SPI_DMA_CH_AUTO));
 

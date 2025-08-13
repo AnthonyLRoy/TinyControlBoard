@@ -102,6 +102,7 @@ namespace controlSystem
 
     void actionProcessor::setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs)
     {
+        ESP_LOGI("RelayControl", "Setting relay %d to %s with delay %lu ms", pin, state ? "ON" : "OFF", delayMs);
         relays.setRelayState(pin, state);
         if (delayMs > 0)
         {

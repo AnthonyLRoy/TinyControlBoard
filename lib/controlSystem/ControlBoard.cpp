@@ -43,11 +43,7 @@ namespace controlSystem
     {
         // Optional, for completeness or if you want soft reset support
         delete responseProcessor;
-   
-
-        responseProcessor = nullptr;
-
-
+           responseProcessor = nullptr;
     }
 
     bool ControlBoard::setupRelays()
@@ -77,8 +73,14 @@ namespace controlSystem
     bool ControlBoard::setupSerial()
     {
         ESP_LOGI(TAG, "Initializing serial...");
-        bool ok = serialHandler->init_uart(UART_NUM, UART_BOARD_RATE, PIN_SERIAL_TX, PIN_SERIAL_RX, 256,
-                                   UART_PARITY_DISABLE, UART_STOP_BITS_1, UART_HW_FLOWCTRL_DISABLE);
+        bool ok = serialHandler->init_uart( UART_NUM, 
+                                            UART_BOARD_RATE, 
+                                            PIN_SERIAL_TX, 
+                                            PIN_SERIAL_RX, 
+                                            256,
+                                            UART_PARITY_DISABLE, 
+                                            UART_STOP_BITS_1, 
+                                            UART_HW_FLOWCTRL_DISABLE);
         if (!ok)
         {
             ESP_LOGE(TAG, "Failed to initialize UART");

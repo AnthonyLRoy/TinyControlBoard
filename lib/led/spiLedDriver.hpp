@@ -5,10 +5,10 @@
 namespace led
 {
 
-    class LEDDriver
+    class spiLedDriver
     {
     public:
-        LEDDriver(spi_host_device_t spiHost, gpio_num_t latchPin);
+        spiLedDriver(spi_host_device_t spiHost, gpio_num_t latchPin);
         void begin();
         void setLed(uint8_t index, bool on);
         void update();

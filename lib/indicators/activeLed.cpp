@@ -1,174 +1,180 @@
 #include "activeLed.hpp"
 #include "esp_log.h"
+#include "esp_err.h"
+#include "driver/ledc.h"
 
+using namespace indicators;
 
-#define LEDC_TIMER          LEDC_TIMER_0
-#define LEDC_MODE           LEDC_LOW_SPEED_MODE
-#define LEDC_CHANNEL        LEDC_CHANNEL_0
-#define LEDC_DUTY_RES       LEDC_TIMER_13_BIT
-#define LEDC_FREQUENCY      5000 // 5kHz PWM
+static const char *TAG = "ActiveLed";
 
-namespace indicators {
+static constexpr uint32_t MAX_DUTY = 8191; // 13-bit resolution
 
-ActiveLed::ActiveLed(gpio_num_t pin,ledc_channel_t channel) : pin(pin), currentStatus(ControlBoardWorkingStatus::Idle)
-{
-    ledc_timer_config_t ledc_timer = {};
-        ledc_timer.speed_mode       = LEDC_MODE;
-        ledc_timer.duty_resolution  = LEDC_DUTY_RES;
-        ledc_timer.timer_num        = LEDC_TIMER;
-        ledc_timer.freq_hz          = LEDC_FREQUENCY;
-        ledc_timer.clk_cfg          = LEDC_AUTO_CLK;
-    
-    ledc_timer_config(&ledc_timer);
-
-    ledc_channel_config_t ledc_channel = {};
-        ledc_channel.channel    = LEDC_CHANNEL_0;
-        ledc_channel.duty       = 0;
-        ledc_channel.gpio_num   = pin;
-        ledc_channel.speed_mode = LEDC_MODE;
-        ledc_channel.hpoint     = 0;
-        ledc_channel.timer_sel  = LEDC_TIMER;
-    
-    ledc_channel_config(&ledc_channel);
-    init();
-    blinkTimer = xTimerCreate("LedBlinkTimer", pdMS_TO_TICKS(1000), pdTRUE, this, TimerCallback);
+ActiveLed::ActiveLed(gpio_num_t pin, ledc_channel_t channel)
+    : pin(pin),
+      channel(channel),
+      currentStatus(ControlBoardWorkingStatus::Idle),
+      ledOn(false),
+      statusQueue(nullptr),
+      blinkTimer(nullptr),
+      breatheTaskHandle(nullptr),
+      ledTaskHandle(nullptr) {  init();
 }
 
-ActiveLed::~ActiveLed()
-{
-    if (blinkTimer) {
-        xTimerStop(blinkTimer, 0);
-        xTimerDelete(blinkTimer, 0);
+ActiveLed::~ActiveLed() {
+    if (ledTaskHandle) vTaskDelete(ledTaskHandle);
+    if (blinkTimer) xTimerDelete(blinkTimer, portMAX_DELAY);
+    if (breatheTaskHandle) vTaskDelete(breatheTaskHandle);
+    if (statusQueue) vQueueDelete(statusQueue);
+}
+
+void ActiveLed::init() {
+    ledc_timer_config_t timerConfig = {
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .duty_resolution = LEDC_TIMER_13_BIT,
+        .timer_num = LEDC_TIMER_0,
+        .freq_hz = 5000,
+        .clk_cfg = LEDC_AUTO_CLK
+    };
+    ESP_ERROR_CHECK(ledc_timer_config(&timerConfig));
+
+    ledc_channel_config_t channelConfig = {};
+            channelConfig.gpio_num = pin;
+            channelConfig.speed_mode = LEDC_LOW_SPEED_MODE;
+            channelConfig.channel = channel;
+            channelConfig.intr_type = LEDC_INTR_DISABLE;
+            channelConfig.timer_sel = LEDC_TIMER_0;
+            channelConfig.duty = 0;
+            channelConfig.hpoint = 0;
+    
+    ESP_ERROR_CHECK(ledc_channel_config(&channelConfig));
+
+    statusQueue = xQueueCreate(1, sizeof(ControlBoardWorkingStatus));
+
+    blinkTimer = xTimerCreate("BlinkTimer", pdMS_TO_TICKS(100), pdTRUE, this, TimerCallback);
+
+    xTaskCreate(ledTask, "LED_Task", 2048, this, 5, &ledTaskHandle);
+}
+
+void ActiveLed::SetStatus(ControlBoardWorkingStatus newStatus) {
+    sendStatus(newStatus);
+}
+
+void ActiveLed::sendStatus(ControlBoardWorkingStatus status) {
+    if (statusQueue) {
+        xQueueOverwrite(statusQueue, &status);
+    }       
+    ESP_LOGI(TAG, "Status sent: %d", static_cast<int>(status));
+    if (ledTaskHandle) {
+        xTaskNotifyGive(ledTaskHandle);
+    } else {
+        ESP_LOGE(TAG, "LED Task not initialized, cannot send status");
     }
-    stopBreatheEffect();
-}
-void ActiveLed::init()
-{
-    statusQueue = xQueueCreate(10, sizeof(ControlBoardWorkingStatus));
-    xTaskCreate(ledTask, "ActiveLedTask", 2048, this, 5, nullptr);
 }
 
-void ActiveLed::sendStatus(ControlBoardWorkingStatus status)
-{
-    if (statusQueue)
-        xQueueSend(statusQueue, &status, 0);
-}
+void ActiveLed::ledTask(void* param) {
+    auto *self = static_cast<ActiveLed*>(param);
+    ControlBoardWorkingStatus receivedStatus;
+ESP_LOGI(TAG, "LED Task started on pin %d", self->pin);
+    for (;;) {
+        if (xQueueReceive(self->statusQueue, &receivedStatus, portMAX_DELAY)) {
+            self->currentStatus = receivedStatus;
+            ESP_LOGI(TAG, "LED status updated to %d", static_cast<int>(receivedStatus));
+ESP_LOGI(TAG, "Handling status change for pin %d", self->pin);
+            // Stop any previous effect
+            xTimerStop(self->blinkTimer, 0);
+            self->stopBreatheEffect();
 
-void ActiveLed::ledTask(void* param)
-{
-    ActiveLed* self = static_cast<ActiveLed*>(param);
-    ControlBoardWorkingStatus status;
-    while(true)
-    {
-        if(xQueueReceive(self->statusQueue, &status, portMAX_DELAY) == pdTRUE)
-        {
-            // Update LED hardware here
-            self->SetStatus(status);
+            switch (receivedStatus) {
+                case ControlBoardWorkingStatus::doingWork:
+                    self->updateDuty(MAX_DUTY); // Solid ON
+                    break;
+
+                case ControlBoardWorkingStatus::Idle:
+                case ControlBoardWorkingStatus::MaintenanceMode:
+                case ControlBoardWorkingStatus::Active:
+                    // Blink at the appropriate interval and brightness
+                    xTimerChangePeriod(
+                        self->blinkTimer,
+                        pdMS_TO_TICKS(self->getBlinkInterval(receivedStatus)),
+                        0
+                    );
+                    xTimerStart(self->blinkTimer, 0);
+                    ESP_LOGI(TAG, "Blinking at interval: %lu ms on pin %d", self->getBlinkInterval(receivedStatus),self->pin);
+                    break;
+
+                case ControlBoardWorkingStatus::sleeping:
+                    self->startBreatheEffect();
+                    break;
+            }
         }
     }
 }
-void ActiveLed::SetStatus(ControlBoardWorkingStatus newStatus)
-{
-    currentStatus = newStatus;
-    ledOn = true;
 
-    stopBreatheEffect();
-    xTimerStop(blinkTimer, 0);
-
-    switch (currentStatus) {
-    case ControlBoardWorkingStatus::sleeping:
-        startBreatheEffect();
-        break;
-    case ControlBoardWorkingStatus::Active:
-        updateDuty(4096);
-        break;
-    case ControlBoardWorkingStatus::doingWork:
-    case ControlBoardWorkingStatus::Idle:
-    case ControlBoardWorkingStatus::MaintenanceMode:
-        xTimerChangePeriod(blinkTimer, pdMS_TO_TICKS(getBlinkInterval(currentStatus)), 0);
-        xTimerStart(blinkTimer, 0);
-        break;
-    default:
-        updateDuty(0);
-        break;
-    }
+void ActiveLed::updateDuty(uint32_t duty) {
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, channel, duty);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, channel);
 }
 
-void ActiveLed::TimerCallback(TimerHandle_t xTimer)
-{
-    auto *self = static_cast<ActiveLed *>(pvTimerGetTimerID(xTimer));
-    self->handleBlink();
+void ActiveLed::TimerCallback(TimerHandle_t xTimer) {
+    auto *self = static_cast<ActiveLed*>(pvTimerGetTimerID(xTimer));
+    self->ledOn = !self->ledOn;
+    uint32_t duty = self->ledOn
+                        ? self->getBlinkDuty(self->currentStatus)
+                        : 0;
+    self->updateDuty(duty);
+}
+void ActiveLed::startBreatheEffect() {
+    xTaskCreate(BreatheTask, "BreatheTask", 2048, this, 5, &breatheTaskHandle);
 }
 
-void ActiveLed::handleBlink()
-{
-    ledOn = !ledOn;
-    if (ledOn)
-        updateDuty(getBlinkDuty(currentStatus));
-    else
-        updateDuty(0);
-}
-
-void ActiveLed::updateDuty(uint32_t duty)
-{
-    ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty);
-    ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
-}
-
-uint32_t ActiveLed::getBlinkInterval(ControlBoardWorkingStatus status)
-{
-    switch (status) {
-    case ControlBoardWorkingStatus::doingWork: return 500;
-    case ControlBoardWorkingStatus::Idle: return 2000;
-    case ControlBoardWorkingStatus::MaintenanceMode: return 5000;
-    default: return 1000;
-    }
-}
-
-uint32_t ActiveLed::getBlinkDuty(ControlBoardWorkingStatus status)
-{
-    switch (status) {
-    case ControlBoardWorkingStatus::doingWork: return 4096;
-    case ControlBoardWorkingStatus::Idle: return 2048;
-    case ControlBoardWorkingStatus::MaintenanceMode: return 512;
-    default: return 0;
-    }
-}
-
-
-void ActiveLed::startBreatheEffect()
-{
-    xTaskCreate(BreatheTask, "LedBreatheTask", 2048, this, 5, &breatheTaskHandle);
-}
-
-void ActiveLed::stopBreatheEffect()
-{
+void ActiveLed::stopBreatheEffect() {
     if (breatheTaskHandle) {
         vTaskDelete(breatheTaskHandle);
         breatheTaskHandle = nullptr;
     }
 }
 
-void ActiveLed::BreatheTask(void *pvParameter)
-{
-    auto *self = static_cast<ActiveLed *>(pvParameter);
-
-    const int maxDuty = 1024;
-    const int step = 16;
-    const int delayMs = 30;
+void ActiveLed::BreatheTask(void *pvParameter) {
+    auto *self = static_cast<ActiveLed*>(pvParameter);
+    uint32_t duty = 0;
+    bool increasing = true;
 
     while (true) {
-        // Fade in
-        for (int duty = 0; duty <= maxDuty; duty += step) {
-            self->updateDuty(duty);
-            vTaskDelay(pdMS_TO_TICKS(delayMs));
+        self->updateDuty(duty);
+
+        if (increasing) {
+            duty += 64;
+            if (duty >= MAX_DUTY) increasing = false;
+        } else {
+            duty -= 64;
+            if (duty == 0) increasing = true;
         }
-        // Fade out
-        for (int duty = maxDuty; duty >= 0; duty -= step) {
-            self->updateDuty(duty);
-            vTaskDelay(pdMS_TO_TICKS(delayMs));
-        }
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
-} // namespace indicators
+uint32_t ActiveLed::getBlinkInterval(ControlBoardWorkingStatus status) {
+    switch (status) {
+        case ControlBoardWorkingStatus::Idle:
+            return 1000; // 1 second period
+        case ControlBoardWorkingStatus::MaintenanceMode:
+            return 1000;
+        case ControlBoardWorkingStatus::Active:
+            return 500;
+        default:
+            return 1000;
+    }
+}
+
+uint32_t ActiveLed::getBlinkDuty(ControlBoardWorkingStatus status) {
+    switch (status) {
+        case ControlBoardWorkingStatus::Idle:
+            return MAX_DUTY / 4; // Dim blink for idle
+        case ControlBoardWorkingStatus::MaintenanceMode:
+            return MAX_DUTY / 2;
+        case ControlBoardWorkingStatus::Active:
+            return MAX_DUTY;
+        default:
+            return MAX_DUTY;
+    }
+}

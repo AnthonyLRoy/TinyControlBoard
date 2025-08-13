@@ -13,7 +13,6 @@ namespace indicators
 
         // Set the power LED state
         void setState(ControlBoardState state);
-
         void setBrightness(int brightness);
 
         // Update the power LED state

@@ -47,6 +47,7 @@ private:
 
     void uart_rx_task();
     void handle_uart_rx();
+    void on_message_received(const UARTMessage& msg);
 };
 
 // GPIO from Raspberry Pi indicating data available
