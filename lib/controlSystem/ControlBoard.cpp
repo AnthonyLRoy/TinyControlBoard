@@ -41,7 +41,10 @@ namespace controlSystem
 
     void ControlBoard::deinit()
     {
-        // Optional, for completeness or if you want soft reset support
+        if (serialHandler) {
+            serialHandler->deinit_uart();
+            serialHandler = nullptr;
+        }
         delete responseProcessor;
            responseProcessor = nullptr;
     }

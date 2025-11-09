@@ -71,11 +71,11 @@ namespace controlSystem
         }
 
         // Handle commands requiring UART message
-        for (size_t i = 0; i < NUM_COMMANDS; ++i)
+        for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; ++cmdReference)
         {
-            if (commandConfigs[i].commandId == response.command)
+            if (commandConfigs[cmdReference].commandId == response.command)
             {
-                sendUartCommand(commandConfigs[i].logTag, commandConfigs[i].commandId);
+                sendUartCommand(commandConfigs[cmdReference].logTag, commandConfigs[cmdReference].commandId);
                 return;
             }
         }
