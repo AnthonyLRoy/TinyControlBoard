@@ -109,7 +109,7 @@ namespace controlSystem
         {
             ESP_LOGE(TAG, "Failed MCPHandler begin: %d", err);
             return false;
-        }
+        }                                                                                                                                                                                                                                                                 
         mcpHandler.setTimeout(10);
         mcpHandler.I2CEnable(true);
         #ifdef DEBUG_MCP_SCAN

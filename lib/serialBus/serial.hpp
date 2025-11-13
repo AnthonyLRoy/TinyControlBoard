@@ -51,6 +51,6 @@ private:
 };
 
 // GPIO from Raspberry Pi indicating data available
-static constexpr gpio_num_t PIN_RPI_DATA_RECEIVED = GPIO_NUM_42;
+static constexpr gpio_num_t PIN_RPI_DATA_READY = GPIO_NUM_42;
 
 }  // namespace serialBus

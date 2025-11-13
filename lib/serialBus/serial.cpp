@@ -46,7 +46,7 @@ bool Serial::init_uart(uart_port_t uart_num,
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_POSEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = (1ULL << PIN_RPI_DATA_RECEIVED); 
+    io_conf.pin_bit_mask = (1ULL << PIN_RPI_DATA_READY); 
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     gpio_config(&io_conf);
@@ -57,7 +57,7 @@ bool Serial::init_uart(uart_port_t uart_num,
         isr_service_installed = true;
     }
 
-    gpio_isr_handler_add(PIN_RPI_DATA_RECEIVED, gpio_isr_handler, (void*) this);
+    gpio_isr_handler_add(PIN_RPI_DATA_READY, gpio_isr_handler, (void*) this);
 
     this->task_handle = xTaskGetCurrentTaskHandle();
 

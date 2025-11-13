@@ -27,7 +27,7 @@ enum MessageType : uint8_t
 
 #define UART_PACKET_SIZE 18
 
-enum commandID : uint16_t
+enum  commandID : uint16_t
 {
 
     // system

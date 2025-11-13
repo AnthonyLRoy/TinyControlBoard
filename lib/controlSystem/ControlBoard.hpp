@@ -12,7 +12,7 @@
 #include "actionProcessor.hpp"
 #include "PowerStateManager.hpp"
 
-#define UART_BOARD_RATE 9600
+#define UART_BOARD_RATE 115200 
 namespace actions {
     class ButtonAction;
 }
