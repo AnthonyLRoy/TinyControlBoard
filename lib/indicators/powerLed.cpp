@@ -81,8 +81,8 @@ namespace indicators
     }
 
     void PowerLed::update() {
-        // This function can be used to update the LED state if needed
-        // For example, you might want to blink the LED or change its brightness
+        // update the LED state if needed
+        //  to blink the LED or change its brightness
         // based on some conditions.
     };
 };

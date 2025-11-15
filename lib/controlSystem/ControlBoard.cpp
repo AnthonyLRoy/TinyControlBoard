@@ -19,21 +19,24 @@ namespace controlSystem
  
         serialHandler = &serialBus::Serial::instance();
         spi = &spibus::SPI::instance(SPI2_HOST);
-
+ESP_LOGW(TAG, "Creating actionProcessor...");
         responseProcessor = new actionProcessor(*serialHandler, *relays, *spi);
+ESP_LOGW(TAG, "actionProcessor created.");  
 
         if (!setupRelays()) return false;
+ESP_LOGW(TAG, "Relays setup complete.");
         if (!setupMCPHandler()) return false;
-        
+ESP_LOGW(TAG, "MCP Handler setup complete.");
         setupMCPCallbacks();
+ESP_LOGW(TAG, "MCP Callbacks setup complete."); 
 
         if (!setupSerial()) return false;
         if (!setupSPI()) return false;
-
+ESP_LOGW(TAG, "SPI setup complete.");
         setupButtonActions();
 
         ESP_LOGI(TAG, "ControlBoard init complete.");
-
+ESP_LOGW(TAG, "Setting Power LED to Standby...");
         indicators::getPowerLed().setState(ControlBoardState::Standby);
 
         return true;

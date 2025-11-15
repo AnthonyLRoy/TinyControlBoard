@@ -19,27 +19,25 @@ namespace led
 
         ESP_LOGW("LEDDriver", "Initializing LED Driver on SPI host %d with latch pin %d", host, latch);
         spi_bus_config_t buscfg = {};
-            buscfg.mosi_io_num = MOSI_PIN;
-            buscfg.miso_io_num = -1;
-            buscfg.sclk_io_num = SCLK_PIN;
-            buscfg.max_transfer_sz = 2;
-        
+        buscfg.mosi_io_num = MOSI_PIN;
+        buscfg.miso_io_num = -1;
+        buscfg.sclk_io_num = SCLK_PIN;
+        buscfg.max_transfer_sz = 2;
 
         spi_bus_initialize(host, &buscfg, SPI_DMA_DISABLED);
 
         spi_device_interface_config_t devcfg = {};
-            devcfg.mode = 0;
-            devcfg.clock_speed_hz = 1 * 1000 * 1000;
-            devcfg.spics_io_num = -1;
-            devcfg.queue_size = 1;
-        
+        devcfg.mode = 0;
+        devcfg.clock_speed_hz = 1 * 1000 * 1000;
+        devcfg.spics_io_num = -1;
+        devcfg.queue_size = 1;
 
         spi_bus_add_device(host, &devcfg, &spiHandle);
 
         gpio_config_t io_conf = {};
-            io_conf.pin_bit_mask = 1ULL << latch;
-            io_conf.mode = GPIO_MODE_OUTPUT;
-        
+        io_conf.pin_bit_mask = 1ULL << latch;
+        io_conf.mode = GPIO_MODE_OUTPUT;
+
         gpio_config(&io_conf);
     }
 
@@ -60,8 +58,8 @@ namespace led
         uint8_t txBuf[2] = {(uint8_t)(ledState >> 8), (uint8_t)(ledState & 0xFF)};
 
         spi_transaction_t transaction = {};
-            transaction.length = 16;
-            transaction.tx_buffer = txBuf;
+        transaction.length = 16;
+        transaction.tx_buffer = txBuf;
         spi_device_transmit(spiHandle, &transaction);
 
         gpio_set_level(latch, 0);

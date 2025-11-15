@@ -52,7 +52,7 @@ void ActiveLed::init() {
 
     blinkTimer = xTimerCreate("BlinkTimer", pdMS_TO_TICKS(100), pdTRUE, this, TimerCallback);
 
-    xTaskCreate(ledTask, "LED_Task", 2048, this, 5, &ledTaskHandle);
+    xTaskCreate(ledTask, "LED_Task", 4096, this, 5, &ledTaskHandle);
 }
 
 void ActiveLed::SetStatus(ControlBoardWorkingStatus newStatus) {

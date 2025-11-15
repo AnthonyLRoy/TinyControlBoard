@@ -40,20 +40,32 @@ namespace controlSystem
 
     void actionProcessor::process(actions::actionResponse response)
     {
+        auto &stateMgr = PowerStateManager::instance();
+
         if (response.command == CMD_NO_ACTION)
         {
             return;
         }
-        if (response.command == CMD_SYS_RPI_SHUTDOWN)
-        {
-            ShutDownRPI(true);
-            return;
-        }
+        
         if (response.command == CMD_SYS_POWER)
         {
             HandleCommandPowerStateChange(response);
             return;
         }
+ 
+        if(stateMgr.getPowerState() != ControlBoardPowerState::ON)
+        {
+            ESP_LOGI("ActionProcessor", "Ignoring command %u as system is not ON", response.command);
+            return;
+        }       
+         
+        if (response.command == CMD_SYS_RPI_SHUTDOWN)
+        {
+            ShutDownRPI(true);
+            return;
+        }
+
+        
         if (response.command == CMD_TOGGLE_DAC_ON)
         {
             HandleToggleDac(true);
