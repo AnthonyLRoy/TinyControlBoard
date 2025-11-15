@@ -9,34 +9,37 @@ namespace controlSystem
 {
     static const char *TAG = "CONTROL_BOARD";
 
-   
     bool ControlBoard::init()
     {
         ESP_LOGI(TAG, "Starting ControlBoard init...");
 
-        //system just switched on from the mains switch so default  -- no histyory storage yet
+        // system just switched on from the mains switch so default  -- no histyory storage yet
         PowerStateManager::instance().setPowerState(ControlBoardPowerState::OFF);
- 
+
         serialHandler = &serialBus::Serial::instance();
         spi = &spibus::SPI::instance(SPI2_HOST);
-ESP_LOGW(TAG, "Creating actionProcessor...");
+        ESP_LOGW(TAG, "Creating actionProcessor...");
         responseProcessor = new actionProcessor(*serialHandler, *relays, *spi);
-ESP_LOGW(TAG, "actionProcessor created.");  
+        ESP_LOGW(TAG, "actionProcessor created.");
 
-        if (!setupRelays()) return false;
-ESP_LOGW(TAG, "Relays setup complete.");
-        if (!setupMCPHandler()) return false;
-ESP_LOGW(TAG, "MCP Handler setup complete.");
+        if (!setupRelays())
+            return false;
+        ESP_LOGW(TAG, "Relays setup complete.");
+        if (!setupMCPHandler())
+            return false;
+        ESP_LOGW(TAG, "MCP Handler setup complete.");
         setupMCPCallbacks();
-ESP_LOGW(TAG, "MCP Callbacks setup complete."); 
+        ESP_LOGW(TAG, "MCP Callbacks setup complete.");
 
-        if (!setupSerial()) return false;
-        if (!setupSPI()) return false;
-ESP_LOGW(TAG, "SPI setup complete.");
+        if (!setupSerial())
+            return false;
+        if (!setupSPI())
+            return false;
+        ESP_LOGW(TAG, "SPI setup complete.");
         setupButtonActions();
 
         ESP_LOGI(TAG, "ControlBoard init complete.");
-ESP_LOGW(TAG, "Setting Power LED to Standby...");
+        ESP_LOGW(TAG, "Setting Power LED to Standby...");
         indicators::getPowerLed().setState(ControlBoardState::Standby);
 
         return true;
@@ -44,12 +47,13 @@ ESP_LOGW(TAG, "Setting Power LED to Standby...");
 
     void ControlBoard::deinit()
     {
-        if (serialHandler) {
+        if (serialHandler)
+        {
             serialHandler->deinit_uart();
             serialHandler = nullptr;
         }
         delete responseProcessor;
-           responseProcessor = nullptr;
+        responseProcessor = nullptr;
     }
 
     bool ControlBoard::setupRelays()
@@ -79,14 +83,14 @@ ESP_LOGW(TAG, "Setting Power LED to Standby...");
     bool ControlBoard::setupSerial()
     {
         ESP_LOGI(TAG, "Initializing serial...");
-        bool ok = serialHandler->init_uart( UART_NUM, 
-                                            UART_BOARD_RATE, 
-                                            PIN_SERIAL_TX, 
-                                            PIN_SERIAL_RX, 
-                                            256,
-                                            UART_PARITY_DISABLE, 
-                                            UART_STOP_BITS_1, 
-                                            UART_HW_FLOWCTRL_DISABLE);
+        bool ok = serialHandler->init_uart(UART_NUM,
+                                           UART_BOARD_RATE,
+                                           PIN_SERIAL_TX,
+                                           PIN_SERIAL_RX,
+                                           256,
+                                           UART_PARITY_DISABLE,
+                                           UART_STOP_BITS_1,
+                                           UART_HW_FLOWCTRL_DISABLE);
         if (!ok)
         {
             ESP_LOGE(TAG, "Failed to initialize UART");
@@ -99,7 +103,7 @@ ESP_LOGW(TAG, "Setting Power LED to Standby...");
     bool ControlBoard::setupSPI()
     {
         ESP_LOGI(TAG, "Initializing SPI...");
-        spi->init( PIN_SPI_DATA, PIN_SPI_CLK, 1);
+        spi->init(PIN_SPI_DATA, PIN_SPI_CLK, 1);
 
         return true;
     }
@@ -112,16 +116,16 @@ ESP_LOGW(TAG, "Setting Power LED to Standby...");
         {
             ESP_LOGE(TAG, "Failed MCPHandler begin: %d", err);
             return false;
-        }                                                                                                                                                                                                                                                                 
+        }
         mcpHandler.setTimeout(10);
         mcpHandler.I2CEnable(true);
-        #ifdef DEBUG_MCP_SCAN
-            mcpHandler.scanner();
-        #endif
+#ifdef DEBUG_MCP_SCAN
+        mcpHandler.scanner();
+#endif
         ESP_LOGI(TAG, "MCP Handler initialized successfully.");
-        #ifdef DEBUG_MCP_SCAN
+#ifdef DEBUG_MCP_SCAN
         mcpHandler.dumpRegisters();
-        #endif
+#endif
         ESP_LOGI(TAG, "MCP Handler ready.");
         return true;
     }
@@ -140,7 +144,8 @@ ESP_LOGW(TAG, "Setting Power LED to Standby...");
                 responseProcessor->process(result);
             } });
 
-        mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)                                      {
+        mcpHandler.setReleaseCallback([this](uint8_t pin, bool released)
+                                      {
 ;
             ESP_LOGI(TAG, "Pin %u RELEASED", pin);
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
@@ -163,7 +168,7 @@ ESP_LOGW(TAG, "Setting Power LED to Standby...");
             else
                 result = buttonActions[15]->execute(false);
             responseProcessor->process(result); });
-                    indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Idle);
+        indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
 
     void ControlBoard::setupButtonActions()
@@ -182,9 +187,8 @@ ESP_LOGW(TAG, "Setting Power LED to Standby...");
         buttonActions[12] = &actions::SwitchOffDisplayInstance;
         buttonActions[13] = &actions::ToggleMeterDisplayInstance;
         buttonActions[14] = &actions::RotaryRightInstance;
-        buttonActions[15] = &actions::RotaryLeftInstance;   
+        buttonActions[15] = &actions::RotaryLeftInstance;
 
-
-        //todo: need to add the buttons for the rotary encoder
+        // todo: need to add the buttons for the rotary encoder
     }
 }
