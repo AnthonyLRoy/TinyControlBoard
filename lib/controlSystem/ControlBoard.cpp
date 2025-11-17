@@ -4,7 +4,7 @@
 #include "actionProcessor.hpp"
 #include "serial.hpp"
 #include "spi.hpp"
-
+#include "controlSytemHelpers.hpp"
 namespace controlSystem
 {
     static const char *TAG = "CONTROL_BOARD";
@@ -137,7 +137,13 @@ namespace controlSystem
                                      {
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
             spiPintActiveBitMap |= (1 << pin);
-            ESP_LOGI(TAG, "Pin %u %s", pin, pressed ? "PRESSED" : "RELEASED");
+            const char* cmdName = getCommandNameForPin(pin);
+
+             ESP_LOGI(TAG, "Pin %u (%s) %s", 
+             pin, 
+             cmdName,
+             pressed ? "PRESSED" : "RELEASED");
+
             if (pressed && buttonActions[pin])
             {
                 actions::actionResponse result = buttonActions[pin]->execute(false);

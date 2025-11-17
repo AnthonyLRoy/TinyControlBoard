@@ -16,24 +16,26 @@ namespace controlSystem
     constexpr uint16_t SPI_ALL_OFF = 0x0000;
 
     // Array of command configurations
-    static constexpr actionProcessor::CommandConfig commandConfigs[] = {
-        {"NEXTTRACK", CMD_NEXT_TRACK},
-        {"PREVTRACK", CMD_PREVIOUS_TRACK},
-        {"PLAYPAUSE", CMD_PLAY_PAUSE},
-        {"STOP", CMD_STOP_TRACK},
-        {"SKIPFORWARD", CMD_SKIP_FORWARD},
-        {"SKIPBACK", CMD_SKIP_BACK},
-        {"PREVMENU", CMD_PREV_MENU_ITEM},
-        {"NEXTMENU", CMD_NEXT_MENU_ITEM},
-        {"ITEMSELECT", CMD_ITEM_SELECT},
-        {"DISPLAYOFF", CMD_DISPLAY_OFF},
-        {"METERON", CMD_TOGGLE_METER_ON},
-        {"METEROFF", CMD_TOGGLE_METER_OFF},
-        {"DISPLAYON", CMD_DISPLAY_ON},
-        {"ROTARYLEFT", CMD_ROTARY_LEFT},
-        {"ROTARYRIGHT", CMD_ROTARY_RIGHT}};
+    const actionProcessor::CommandConfig commandConfigs[] = {
+        {"NEXTTRACK", CMD_NEXT_TRACK},          //pin 1
+        {"PREVTRACK", CMD_PREVIOUS_TRACK},      //pin 2
+        {"PLAYPAUSE", CMD_PLAY_PAUSE},          //pin 3
+        {"STOP", CMD_STOP_TRACK},               //pin 4
+        {"SKIPFORWARD", CMD_SKIP_FORWARD},      //pin 5
+        {"SKIPBACK", CMD_SKIP_BACK},            //pin 6
+        {"PREVMENU", CMD_PREV_MENU_ITEM},       //pin 7
+        {"NEXTMENU", CMD_NEXT_MENU_ITEM},       //pin 8
+        {"ITEMSELECT", CMD_ITEM_SELECT},        //pin 9
+        {"DISPLAYOFF", CMD_DISPLAY_OFF},        //pin 10   
+        {"METERON", CMD_TOGGLE_METER_ON},       //pin 11
+        {"METEROFF", CMD_TOGGLE_METER_OFF},     //pin 12
+        {"DISPLAYON", CMD_DISPLAY_ON},          //pin 13
+        {"ROTARYLEFT", CMD_ROTARY_LEFT},        //pin 14
+        {"ROTARYRIGHT", CMD_ROTARY_RIGHT},      //pin 15
+        {"POWERCOMMAND", CMD_SYS_POWER}         //pin 16
+    };
 
-    constexpr size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);
+    const size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);
 
     actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef, spibus::SPI &spiRef)
         : serial(serialBusRef), relays(relaysRef), spiBus(spiRef) {}
@@ -128,12 +130,14 @@ namespace controlSystem
 
         if (stateMgr.getPowerState() == ControlBoardPowerState::OFF)
         {
+            //prevent multiple power on commands
+            stateMgr.setPowerState(ControlBoardPowerState::ON);
             // Power on sequence
             setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
             setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
             setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
             setRelayWithDelay(PIN_RELAY_SCREEN, true, SCREEN_ON_DELAY_MS);
-            stateMgr.setPowerState(ControlBoardPowerState::ON);
+
             return true;
         }
 
@@ -179,4 +183,6 @@ namespace controlSystem
         relays.setRelayState(PIN_RELAY_SCREEN, false);
         return true;
     }
+
+
 }
