@@ -17,22 +17,22 @@ namespace controlSystem
 
     // Array of command configurations
     const actionProcessor::CommandConfig commandConfigs[] = {
-        {"NEXTTRACK", CMD_NEXT_TRACK},          //pin 1
-        {"PREVTRACK", CMD_PREVIOUS_TRACK},      //pin 2
-        {"PLAYPAUSE", CMD_PLAY_PAUSE},          //pin 3
-        {"STOP", CMD_STOP_TRACK},               //pin 4
-        {"SKIPFORWARD", CMD_SKIP_FORWARD},      //pin 5
-        {"SKIPBACK", CMD_SKIP_BACK},            //pin 6
-        {"PREVMENU", CMD_PREV_MENU_ITEM},       //pin 7
-        {"NEXTMENU", CMD_NEXT_MENU_ITEM},       //pin 8
-        {"ITEMSELECT", CMD_ITEM_SELECT},        //pin 9
-        {"DISPLAYOFF", CMD_DISPLAY_OFF},        //pin 10   
-        {"METERON", CMD_TOGGLE_METER_ON},       //pin 11
-        {"METEROFF", CMD_TOGGLE_METER_OFF},     //pin 12
-        {"DISPLAYON", CMD_DISPLAY_ON},          //pin 13
-        {"ROTARYLEFT", CMD_ROTARY_LEFT},        //pin 14
-        {"ROTARYRIGHT", CMD_ROTARY_RIGHT},      //pin 15
-        {"POWERCOMMAND", CMD_SYS_POWER}         //pin 16
+        {"POWERCOMMAND", CMD_SYS_POWER},
+        {"NEXTTRACK", CMD_NEXT_TRACK},
+        {"PREVTRACK", CMD_PREVIOUS_TRACK},
+        {"PLAYPAUSE", CMD_PLAY_PAUSE},
+        {"STOP", CMD_STOP_TRACK},
+        {"SKIPFORWARD", CMD_SKIP_FORWARD},
+        {"SKIPBACK", CMD_SKIP_BACK},
+        {"PREVMENU", CMD_PREV_MENU_ITEM},
+        {"NEXTMENU", CMD_NEXT_MENU_ITEM},
+        {"ITEMSELECT", CMD_ITEM_SELECT},
+        {"DISPLAYOFF", CMD_DISPLAY_OFF},
+        {"METERON", CMD_TOGGLE_METER_ON},
+        {"METEROFF", CMD_TOGGLE_METER_OFF},
+        {"DISPLAYON", CMD_DISPLAY_ON},
+        {"ROTARYLEFT", CMD_ROTARY_LEFT},
+        {"ROTARYRIGHT", CMD_ROTARY_RIGHT},
     };
 
     const size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);
@@ -48,26 +48,26 @@ namespace controlSystem
         {
             return;
         }
-        
+
         if (response.command == CMD_SYS_POWER)
         {
+            ESP_LOGI("ActionProcessor", "Processing Power State Change Command");
             HandleCommandPowerStateChange(response);
             return;
         }
- 
-        if(stateMgr.getPowerState() != ControlBoardPowerState::ON)
+
+        if (stateMgr.getPowerState() != ControlBoardPowerState::ON)
         {
             ESP_LOGI("ActionProcessor", "Ignoring command %u as system is not ON", response.command);
             return;
-        }       
-         
+        }
+
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
             ShutDownRPI(true);
             return;
         }
 
-        
         if (response.command == CMD_TOGGLE_DAC_ON)
         {
             HandleToggleDac(true);
@@ -127,10 +127,10 @@ namespace controlSystem
     bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
     {
         auto &stateMgr = PowerStateManager::instance();
-
-        if (stateMgr.getPowerState() == ControlBoardPowerState::OFF)
+        ESP_LOGI("PowerCommand", "Current Power State: %d", static_cast<int>(stateMgr.getPowerState()));
+        if (stateMgr.getPowerState() == ControlBoardPowerState::OFF || stateMgr.getPowerState() == ControlBoardPowerState::SLEEP)
         {
-            //prevent multiple power on commands
+            // prevent multiple power on commands
             stateMgr.setPowerState(ControlBoardPowerState::ON);
             // Power on sequence
             setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
@@ -143,6 +143,7 @@ namespace controlSystem
 
         if (stateMgr.getPowerState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
         {
+            ESP_LOGI("PowerCommand", "Initiating Shutdown/Sleep Sequence");
             // Power off or sleep sequence
             stateMgr.setPowerState(ControlBoardPowerState::GOING_TO_SLEEP);
             spiBus.send(SPI_INIT_SHUTDOWN);
@@ -163,6 +164,7 @@ namespace controlSystem
             // Deep sleep if long press exceeds threshold
             if (response.releaseTimeMilliSecs > DEEP_SLEEP_THRESHOLD_MS)
             {
+                ESP_LOGI("PowerCommand", "Entering Deep Sleep Mode");
                 setRelayWithDelay(PIN_RELAY_DAC, false, 0);
                 setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, false, 0);
             }
@@ -183,6 +185,5 @@ namespace controlSystem
         relays.setRelayState(PIN_RELAY_SCREEN, false);
         return true;
     }
-
 
 }

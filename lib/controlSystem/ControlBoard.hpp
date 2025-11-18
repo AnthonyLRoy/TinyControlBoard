@@ -57,6 +57,10 @@ namespace controlSystem
         static constexpr uint8_t MCP_ADDRESS = 0x20;
         static constexpr uart_port_t UART_NUM = UART_NUM_2;
 
+        //ROTARY PINS
+        static constexpr gpio_num_t PIN_ROTARY_LEFT = GPIO_NUM_13;
+        static constexpr gpio_num_t PIN_ROTARY_RIGHT = GPIO_NUM_14;
+
         // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
         serialBus::Serial* serialHandler = nullptr;
         relays::StandardRelay* relays = nullptr;
@@ -65,6 +69,6 @@ namespace controlSystem
 
         //declare handler and button action fucntions
         buttons::MCPInputHandler mcpHandler{MCP_ADDRESS, I2C_NUM_0};
-        actions::ButtonAction* buttonActions[16] = {nullptr};
+        actions::ButtonAction* buttonActions[15] = {nullptr};
     };
 }

@@ -14,29 +14,30 @@ namespace controlSystem
     class actionProcessor
     {
     public:
-        struct CommandConfig {
-            const char* logTag;
+        struct CommandConfig
+        {
+            const char *logTag;
             uint32_t commandId; // Using uint32_t as assumed type for CMD_* constants because they of version of c++ i think
         };
 
     public:
         actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef, spibus::SPI &spiRef);
         void process(actions::actionResponse response);
- const char* getCommandNameForPin(uint8_t pin);
- 
+        const char *getCommandNameForPin(uint8_t pin);
+
     private:
         bool HandleCommandPowerStateChange(actions::actionResponse response);
         bool HandleToggleDac(bool state);
         bool ShutDownRPI(bool wait);
         bool ShutDownScreen(bool wait);
-        void sendUartCommand(const char* logTag, uint32_t commandId);
+        void sendUartCommand(const char *logTag, uint32_t commandId);
         void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs); // Changed uint8_t to gpio_num_t
-         serialBus::Serial &serial;
+        serialBus::Serial &serial;
         relays::StandardRelay &relays;
         spibus::SPI &spiBus;
     };
 
-        extern const actionProcessor::CommandConfig commandConfigs[];
+    extern const actionProcessor::CommandConfig commandConfigs[];
     extern const size_t NUM_COMMANDS;
 
 }

@@ -154,7 +154,7 @@ void MCPInputHandler::handleInterrupt() {
     uint8_t intfB = readRegister(MCP_INTFB);
     uint8_t intcapA = readRegister(MCP_INTCAPA);
     uint8_t intcapB = readRegister(MCP_INTCAPB);
-
+ESP_LOGI(TAG,    "...............Handling interrupt.......................");
     ESP_LOGI(TAG, "INTFA=0x%02X INTFB=0x%02X INTCAPA=0x%02X INTCAPB=0x%02X",
              intfA, intfB, intcapA, intcapB);
 
@@ -162,13 +162,20 @@ void MCPInputHandler::handleInterrupt() {
     uint8_t gpiob = readRegister(MCP_GPIOB);
     uint16_t current = (gpiob << 8) | gpioa;
 
-    for (int i = 0; i < 16; ++i) {
-        if (i == ROTARY_A_PIN || i == ROTARY_B_PIN) continue;
+    for (int i = 0; i < 16; ++i) 
+    {
+        if (i == ROTARY_A_PIN || i == ROTARY_B_PIN) 
+            continue;
+        
         bool now = (current >> i) & 1;
         bool before = (prevState >> i) & 1;
-        if (now != before) {
-            if (!now && buttonCallback) buttonCallback(i, true);
-            else if (now && releaseCallback) releaseCallback(i, true);
+        
+        if (now != before) 
+        {
+            if (!now && buttonCallback) 
+                   buttonCallback(i, true);
+            else if (now && releaseCallback) 
+                   releaseCallback(i, true);
         }
     }
 

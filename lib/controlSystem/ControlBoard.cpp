@@ -170,31 +170,29 @@ namespace controlSystem
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
             actions::actionResponse result;
             if (movement > 0)
-                result = buttonActions[14]->execute(true);
+                result = buttonActions[ROTARY_A_PIN]->execute(true);
             else
-                result = buttonActions[15]->execute(false);
+                result = buttonActions[ROTARY_B_PIN]->execute(false);
             responseProcessor->process(result); });
         indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
 
     void ControlBoard::setupButtonActions()
     {
-        buttonActions[1] = &actions::PowerButtonInstance;
-        buttonActions[2] = &actions::PreviousTrackInstance;
-        buttonActions[3] = &actions::NextTrackInstance;
-        buttonActions[4] = &actions::SkipForwardInstance;
-        buttonActions[5] = &actions::SkipBackInstance;
-        buttonActions[6] = &actions::PauseInstance;
-        buttonActions[7] = &actions::StopInstance;
-        buttonActions[8] = &actions::PreviousMenuInstance;
-        buttonActions[9] = &actions::NextMenuInstance;
-        buttonActions[10] = &actions::MenuSelectInstance;
-        buttonActions[11] = &actions::ToggleDacInstance;
-        buttonActions[12] = &actions::SwitchOffDisplayInstance;
-        buttonActions[13] = &actions::ToggleMeterDisplayInstance;
-        buttonActions[14] = &actions::RotaryRightInstance;
-        buttonActions[15] = &actions::RotaryLeftInstance;
-
-        // todo: need to add the buttons for the rotary encoder
+        buttonActions[0] = &actions::PowerButtonInstance;
+        buttonActions[1] = &actions::PreviousTrackInstance;
+        buttonActions[2] = &actions::NextTrackInstance;
+        buttonActions[5] = &actions::PauseInstance;
+        buttonActions[6] = &actions::StopInstance;
+        buttonActions[3] = &actions::SkipForwardInstance;
+        buttonActions[4] = &actions::SkipBackInstance;
+        buttonActions[7] = &actions::PreviousMenuInstance;
+        buttonActions[8] = &actions::NextMenuInstance;
+        buttonActions[9] = &actions::MenuSelectInstance;
+        buttonActions[12] = &actions::ToggleMeterDisplayInstance;
+        buttonActions[11] = &actions::SwitchOffDisplayInstance;
+        buttonActions[10] = &actions::ToggleDacInstance;
+        buttonActions[13] = &actions::RotaryRightInstance;
+        buttonActions[14]= &actions::RotaryLeftInstance;
     }
 }
