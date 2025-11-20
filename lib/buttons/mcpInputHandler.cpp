@@ -162,28 +162,35 @@ ESP_LOGI(TAG,    "...............Handling interrupt.......................");
     uint8_t gpiob = readRegister(MCP_GPIOB);
     uint16_t current = (gpiob << 8) | gpioa;
 
-    for (int i = 0; i < 16; ++i) 
-    {
-        if (i == ROTARY_A_PIN || i == ROTARY_B_PIN) 
-            continue;
-        
-        bool now = (current >> i) & 1;
-        bool before = (prevState >> i) & 1;
-        
-        if (now != before) 
-        {
-            if (!now && buttonCallback) 
-                   buttonCallback(i, true);
-            else if (now && releaseCallback) 
-                   releaseCallback(i, true);
-        }
+
+// ...existing code...
+    uint16_t changed = current ^ prevState;
+
+    // Handle rotary bits once if either changed, then remove them from the bit-scan
+    const uint16_t rotaryMask = (1u << ROTARY_A_PIN) | (1u << ROTARY_B_PIN);
+    if (changed & rotaryMask) {
+        decodeRotary(current);
+        changed &= ~rotaryMask;
     }
 
-    decodeRotary(current);
+    while (changed) {
+        uint8_t loopCntr = __builtin_ctz(changed);
+        changed &= changed - 1;
+
+        bool now = (current >> loopCntr) & 1;
+
+        if (!now && buttonCallback)
+            buttonCallback(loopCntr, true);
+        else if (now && releaseCallback)
+            releaseCallback(loopCntr, true);
+    }
+
     prevState = current;
 }
-
+  // todo: do not fire on relase if not pressed before
 void MCPInputHandler::decodeRotary(uint16_t state) {
+    
+    ESP_LOGI(TAG, "Decoding rotary with state: 0x%04X", state);
     uint8_t a = !(state & (1 << ROTARY_A_PIN));
     uint8_t b = !(state & (1 << ROTARY_B_PIN));
     uint8_t rotaryNow = (rotaryLast << 2) | (a << 1) | b;

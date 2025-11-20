@@ -34,7 +34,6 @@ enum  commandID : uint16_t
     CMD_NO_ACTION = 0x000,
     CMD_SYS_POWER = 0x0001,
     CMD_SYS_RPI_SHUTDOWN = 0x0002,
-
     // track control commands
     CMD_NEXT_TRACK = 0x0100,
     CMD_PREVIOUS_TRACK = 0x0101,
@@ -46,7 +45,6 @@ enum  commandID : uint16_t
     CMD_NEXT_MENU_ITEM = 0x0107,
     CMD_ITEM_SELECT = 0x0108,
     CMD_EXIT_ITEM = 0x0109,
-
     CMD_DISPLAY_OFF = 0x010B,
     CMD_TOGGLE_METER_ON = 0x010C,
     CMD_TOGGLE_METER_OFF = 0x010D,
