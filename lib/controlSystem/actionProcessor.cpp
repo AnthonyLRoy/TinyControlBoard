@@ -85,7 +85,7 @@ namespace controlSystem
         }
 
         // Handle commands requiring UART message
-        for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; ++cmdReference)
+        for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; cmdReference++)
         {
             if (commandConfigs[cmdReference].commandId == response.command)
             {
