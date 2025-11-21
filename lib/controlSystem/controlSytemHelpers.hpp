@@ -4,5 +4,5 @@
 
 namespace controlSystem
 {
-    const char* getCommandNameForPin(uint8_t pin);
+    const char* getCommandNamebyId(commandID commandId);
 }

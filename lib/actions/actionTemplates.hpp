@@ -2,7 +2,7 @@
 #include "ButtonAction.hpp"
 #include "actionsResponse.hpp"
 #include <esp_timer.h>
-
+#include "controlSytemHelpers.hpp"
 namespace actions
 {
 
@@ -21,6 +21,8 @@ namespace actions
                 response.command = state_ ? CMD_ON : CMD_OFF;
                 response.KeepLedActive = state_;
             }
+            const char* commandName =controlSystem::getCommandNamebyId(response.command);
+            ESP_LOGI("ToggleAction", "Executed toggle action: %s, New State: %s", commandName, state_ ? "ON" : "OFF");
             return response;
         }
 

@@ -4,7 +4,7 @@
 namespace actions
 {
     ToggleDac ToggleDacInstance;
-    SwitchOffDisplay SwitchOffDisplayInstance;
+    ToggleDisplay ToggleDisplayInstance;
     ToggleMeterDisplay ToggleMeterDisplayInstance;
     PowerButton PowerButtonInstance;
     RotaryRight RotaryRightInstance;

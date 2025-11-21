@@ -4,7 +4,7 @@
 #include "actionProcessor.hpp"
 #include "serial.hpp"
 #include "spi.hpp"
-#include "controlSytemHelpers.hpp"
+
 namespace controlSystem
 {
     static const char *TAG = "CONTROL_BOARD";
@@ -137,12 +137,7 @@ namespace controlSystem
                                      {
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
             spiPintActiveBitMap |= (1 << pin);
-            const char* cmdName = getCommandNameForPin(pin);
-
-             ESP_LOGI(TAG, "Pin %u (%s) %s", 
-             pin, 
-             cmdName,
-             pressed ? "PRESSED" : "RELEASED");
+             ESP_LOGI(TAG, "Pin %u  %s", pin, pressed ? "PRESSED" : "RELEASED");
 
             if (pressed && buttonActions[pin])
             {
@@ -190,9 +185,9 @@ namespace controlSystem
         buttonActions[8] = &actions::NextMenuInstance;
         buttonActions[9] = &actions::MenuSelectInstance;
         buttonActions[12] = &actions::ToggleMeterDisplayInstance;
-        buttonActions[11] = &actions::SwitchOffDisplayInstance;
+        buttonActions[11] = &actions::ToggleDisplayInstance;
         buttonActions[10] = &actions::ToggleDacInstance;
         buttonActions[13] = &actions::RotaryRightInstance;
-        buttonActions[14]= &actions::RotaryLeftInstance;
+        buttonActions[14] = &actions::RotaryLeftInstance;
     }
 }

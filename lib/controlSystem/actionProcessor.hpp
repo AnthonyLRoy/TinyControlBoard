@@ -18,7 +18,7 @@ namespace controlSystem
         {
             const char *logTag;
             uint32_t commandId; // Using uint32_t as assumed type for CMD_* constants because they of version of c++ i think
-            uint8_t pin;
+
         };
 
     public:
