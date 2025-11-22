@@ -6,6 +6,7 @@ namespace actions
 {
  struct actionResponse
     {
+       
         bool active = false;
         commandID  command = CMD_NO_ACTION;
         char parameters[10]{};  

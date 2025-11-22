@@ -3,12 +3,14 @@
 #include "actionsResponse.hpp"
 #include <esp_timer.h>
 #include "controlSytemHelpers.hpp"
+#include "esp_log.h"
 namespace actions
 {
 
     template <commandID CMD_ON, commandID CMD_OFF>
     class ToggleAction : public ButtonAction
     {
+
     public:
         ToggleAction() : state_(false) {}
 
@@ -21,7 +23,7 @@ namespace actions
                 response.command = state_ ? CMD_ON : CMD_OFF;
                 response.KeepLedActive = state_;
             }
-            const char* commandName =controlSystem::getCommandNamebyId(response.command);
+            const char* commandName = controlSystem::getCommandNameById(response.command);
             ESP_LOGI("ToggleAction", "Executed toggle action: %s, New State: %s", commandName, state_ ? "ON" : "OFF");
             return response;
         }
@@ -29,6 +31,7 @@ namespace actions
     private:
         bool state_;
     };
+
 
     /**
      * Momentary button that only sends a command when pressed.

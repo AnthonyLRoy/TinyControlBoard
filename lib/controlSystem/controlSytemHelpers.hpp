@@ -4,5 +4,5 @@
 
 namespace controlSystem
 {
-    const char* getCommandNamebyId(commandID commandId);
+    const char* getCommandNameById(commandID commandId);
 }
