@@ -2,13 +2,15 @@
 #include <algorithm>
 #include "esp_log.h"
 
+
+#define TAG "PowerLed"
 namespace indicators
 {
     PowerLed::PowerLed(gpio_num_t PIN_APP_ACTIVE_LED, gpio_num_t PIN_APP_STANDBY_LEDl, ledc_channel_t channel)
     {
 
         dutyCycle = 4096;
-        ESP_LOGI("PowerLed", "Initializing PowerLed with channel: %d", channel);
+        ESP_LOGI(TAG, "Initializing PowerLed with channel: %d", channel);
         ledc_timer_config_t ledc_timer = {};
         ledc_timer.speed_mode = LEDC_MODE;
         ledc_timer.duty_resolution = LEDC_DUTY_RES;
@@ -40,35 +42,35 @@ namespace indicators
 
         onLed.init(ledc_timer, ledc_channel_on);
 
-        standBy.init(ledc_timer, ledc_channel_standBy); // Initialize the LED channels
+        standByLed.init(ledc_timer, ledc_channel_standBy); // Initialize the LED channels
     };
     PowerLed::~PowerLed() {
     };
 
-    void PowerLed::setState(ControlBoardState state)
+    void PowerLed::setState(ControlBoardPowerState state)
     {
         switch (state)
         {
-        case ControlBoardState::Active:
+        case ControlBoardPowerState::ON:
             onLed.setDuty(dutyCycle);
             onLed.updateDuty();
-            standBy.setDuty(LED_OFF); // set to 0
-            standBy.updateDuty();
+            standByLed.setDuty(LED_OFF); // set to 0
+            standByLed.updateDuty();
             break;
-        case ControlBoardState::Standby:
+        case ControlBoardPowerState::SLEEP:
         ESP_LOGI("PowerLed", "Setting state to Standby with duty cycle: %d", dutyCycle);
 
-            standBy.setDuty(dutyCycle); // 50% duty cycle
-            standBy.updateDuty();
+            standByLed.setDuty(dutyCycle); // 50% duty cycle
+            standByLed.updateDuty();
             onLed.setDuty(LED_OFF); // 0% duty cycle
             onLed.updateDuty();
             break;
         default:
             ESP_LOGI("PowerLed", "Unknown state: %d, turning off all LEDs", static_cast<int>(state));
             onLed.setDuty(LED_OFF);   // 0% duty cycle
-            standBy.setDuty(LED_OFF); // 0% duty cycle
+            standByLed.setDuty(LED_OFF); // 0% duty cycle
             onLed.updateDuty();
-            standBy.updateDuty();
+            standByLed.updateDuty();
             ESP_LOGW("PowerLed", "Unknown state: %d, turning off all LEDs", static_cast<int>(state));
             break;
         };
