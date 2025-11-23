@@ -154,9 +154,8 @@ void MCPInputHandler::handleInterrupt() {
     uint8_t intfB = readRegister(MCP_INTFB);
     uint8_t intcapA = readRegister(MCP_INTCAPA);
     uint8_t intcapB = readRegister(MCP_INTCAPB);
-ESP_LOGI(TAG,    "...............Handling interrupt.......................");
-    ESP_LOGI(TAG, "INTFA=0x%02X INTFB=0x%02X INTCAPA=0x%02X INTCAPB=0x%02X",
-             intfA, intfB, intcapA, intcapB);
+    ESP_LOGI(TAG,    "...............Handling interrupt.......................");
+    ESP_LOGI(TAG, "INTFA=0x%02X INTFB=0x%02X INTCAPA=0x%02X INTCAPB=0x%02X", intfA, intfB, intcapA, intcapB);
 
     uint8_t gpioa = readRegister(MCP_GPIOA);
     uint8_t gpiob = readRegister(MCP_GPIOB);

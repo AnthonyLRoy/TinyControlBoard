@@ -15,7 +15,6 @@ namespace controlSystem
 
         // system just switched on from the mains switch so default  -- no histyory storage yet
         indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
-
         serialHandler = &serialBus::Serial::instance();
         spi = &spibus::SPI::instance(SPI2_HOST);
         ESP_LOGW(TAG, "Creating actionProcessor...");
@@ -40,6 +39,7 @@ namespace controlSystem
 
         ESP_LOGI(TAG, "ControlBoard init complete.");
         ESP_LOGW(TAG, "Setting Power LED to Standby...");
+        vTaskDelay(pdMS_TO_TICKS(2000));
         indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
 
         return true;

@@ -59,7 +59,7 @@ namespace indicators
         currentPowerState = state;
         uint64_t currentTime = esp_timer_get_time() / 1000; // Current time in ms
         ESP_LOGI(TAG, "PowerLed::setState called with state: %d", static_cast<int>(state));
-        
+
         switch (state)
         {
         case ControlBoardPowerState::ON:
@@ -70,6 +70,7 @@ namespace indicators
             onLed.updateDuty();
             standByLed.setDuty(LED_OFF);
             standByLed.updateDuty();
+   
             break;
             
         case ControlBoardPowerState::SLEEP:
@@ -104,7 +105,7 @@ namespace indicators
             isStandByLedFlashing = false;
             onFlashInterval = 250; // Flash every 250ms
             lastOnFlashTime = currentTime;
-            onFlashState = false;
+            onFlashState = true;
             onLed.setDuty(LED_OFF);
             onLed.updateDuty();
             standByLed.setDuty(mediumDutyCycle);
