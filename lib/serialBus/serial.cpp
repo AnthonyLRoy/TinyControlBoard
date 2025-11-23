@@ -125,7 +125,7 @@ void IRAM_ATTR serialBus::Serial::gpio_isr_handler(void *arg) {
 
 void Serial::handle_uart_rx() {
     if (!initialized) return;
-//todo: changed packed size to correct value make sure this is correct , danny don't forget please
+
     int len = uart_read_bytes(uart_number, tmp_buffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
     if (len > 0) {
         rx_buffer.push_bytes(tmp_buffer, len);

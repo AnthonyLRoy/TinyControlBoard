@@ -1,4 +1,6 @@
 #include "actionProcessor.hpp"
+#include "powerLed.hpp"
+
 
 namespace controlSystem
 {
@@ -127,8 +129,10 @@ namespace controlSystem
     bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
     {
         auto &stateMgr = PowerStateManager::instance();
-        ESP_LOGI("PowerCommand", "Current Power State: %d", static_cast<int>(stateMgr.getPowerState()));
-        if (stateMgr.getPowerState() == ControlBoardPowerState::OFF || stateMgr.getPowerState() == ControlBoardPowerState::SLEEP)
+        indicators::PowerLed& pLed = indicators::getPowerLed();
+
+        ESP_LOGI("PowerCommand", "Current Power State: %d", static_cast<int>(pLed.getState()));
+        if (pLed.getState() == ControlBoardPowerState::OFF || pLed.getState() == ControlBoardPowerState::SLEEP)
         {
             // prevent multiple power on commands
             stateMgr.setPowerState(ControlBoardPowerState::ON);
@@ -141,11 +145,11 @@ namespace controlSystem
             return true;
         }
 
-        if (stateMgr.getPowerState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
+        if (pLed.getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
         {
             ESP_LOGI("PowerCommand", "Initiating Shutdown/Sleep Sequence");
             // Power off or sleep sequence
-            stateMgr.setPowerState(ControlBoardPowerState::GOING_TO_SLEEP);
+            pLed.setState(ControlBoardPowerState::GOING_TO_SLEEP);
             spiBus.send(SPI_INIT_SHUTDOWN);
 
             sendUartCommand("STOP", CMD_STOP_TRACK);
@@ -159,7 +163,7 @@ namespace controlSystem
 
             vTaskDelay(pdMS_TO_TICKS(500));
             spiBus.send(SPI_ALL_OFF);
-            stateMgr.setPowerState(ControlBoardPowerState::SLEEP);
+            pLed.setState(ControlBoardPowerState::SLEEP);
 
             // Deep sleep if long press exceeds threshold
             if (response.releaseTimeMilliSecs > DEEP_SLEEP_THRESHOLD_MS)
