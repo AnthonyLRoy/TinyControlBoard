@@ -58,6 +58,7 @@ namespace indicators
     {
         currentPowerState = state;
         uint64_t currentTime = esp_timer_get_time() / 1000; // Current time in ms
+        ESP_LOGI(TAG, "PowerLed::setState called with state: %d", static_cast<int>(state));
         
         switch (state)
         {
@@ -80,7 +81,7 @@ namespace indicators
             standByFlashState = false;
             onLed.setDuty(LED_OFF);
             onLed.updateDuty();
-            standByLed.setDuty(LED_OFF);
+            standByLed.setDuty(mediumDutyCycle);
             standByLed.updateDuty();
             break;
             
@@ -91,7 +92,7 @@ namespace indicators
             onFlashInterval = 250; // Flash every 250ms
             lastOnFlashTime = currentTime;
             onFlashState = false;
-            onLed.setDuty(LED_OFF);
+            onLed.setDuty(mediumDutyCycle);
             onLed.updateDuty();
             standByLed.setDuty(LED_OFF);
             standByLed.updateDuty();
@@ -117,7 +118,7 @@ namespace indicators
             onFlashInterval = 500; // Flash every 500ms
             lastOnFlashTime = currentTime;
             onFlashState = false;
-            onLed.setDuty(LED_OFF);
+            onLed.setDuty(mediumDutyCycle);
             onLed.updateDuty();
             standByLed.setDuty(LED_OFF);
             standByLed.updateDuty();
@@ -132,7 +133,7 @@ namespace indicators
             standByFlashState = false;
             onLed.setDuty(LED_OFF);
             onLed.updateDuty();
-            standByLed.setDuty(LED_OFF);
+            standByLed.setDuty(mediumDutyCycle);
             standByLed.updateDuty();
             break;
             
@@ -145,7 +146,7 @@ namespace indicators
             standByFlashState = false;
             onLed.setDuty(LED_OFF);
             onLed.updateDuty();
-            standByLed.setDuty(LED_OFF);
+            standByLed.setDuty(mediumDutyCycle);
             standByLed.updateDuty();
             break;
             

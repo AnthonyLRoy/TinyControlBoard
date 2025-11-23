@@ -40,7 +40,7 @@ namespace controlSystem
 
         ESP_LOGI(TAG, "ControlBoard init complete.");
         ESP_LOGW(TAG, "Setting Power LED to Standby...");
-        indicators::getPowerLed().setState(ControlBoardPowerState::OFF);
+        indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
 
         return true;
     }

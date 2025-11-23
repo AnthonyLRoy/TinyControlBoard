@@ -132,10 +132,10 @@ namespace controlSystem
         indicators::PowerLed& pLed = indicators::getPowerLed();
 
         ESP_LOGI("PowerCommand", "Current Power State: %d", static_cast<int>(pLed.getState()));
-        if (pLed.getState() == ControlBoardPowerState::OFF || pLed.getState() == ControlBoardPowerState::SLEEP)
+        if (pLed.getState() == ControlBoardPowerState::OFF || pLed.getState() == ControlBoardPowerState::SLEEP || pLed.getState() == ControlBoardPowerState::DEEPSLEEP)
         {
             // prevent multiple power on commands
-            stateMgr.setPowerState(ControlBoardPowerState::ON);
+            pLed.setState(ControlBoardPowerState::ON);
             // Power on sequence
             setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
             setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
@@ -171,6 +171,7 @@ namespace controlSystem
                 ESP_LOGI("PowerCommand", "Entering Deep Sleep Mode");
                 setRelayWithDelay(PIN_RELAY_DAC, false, 0);
                 setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, false, 0);
+                pLed.setState(ControlBoardPowerState::DEEPSLEEP);
             }
             return false;
         }
