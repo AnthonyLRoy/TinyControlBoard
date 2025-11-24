@@ -16,6 +16,10 @@ namespace indicators {
     }
 
     PowerLed& getPowerLed() {
+        if (!powerLed.started)
+        {
+            powerLed.init();
+        }
         return powerLed;
     }
 

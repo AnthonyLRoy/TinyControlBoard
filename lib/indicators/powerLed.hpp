@@ -1,33 +1,61 @@
 #pragma once
+
 #include "driver/ledc.h"
-#include "pwmLed.hpp" // Ensure this header defines the LED class
-#include "led_definitions.hpp"
+#include "esp_timer.h"
+#include "pwmLed.hpp"
 #include "PowerStateManager.hpp"
+#include "led_definitions.hpp"
+#include "esp_log.h"
+
 namespace indicators
 {
     class PowerLed
     {
     public:
-        PowerLed(gpio_num_t PIN_APP_ACTIVE_LED,ledc_channel_t OnChannel, gpio_num_t PIN_APP_STANDBY_LED,ledc_channel_t StandbyChannel);
+        // Constructor only stores pins/channels, no timers are created
+        PowerLed(gpio_num_t activePin,
+                 ledc_channel_t activeChannel,
+                 gpio_num_t standbyPin,
+                 ledc_channel_t standbyChannel);
+
         ~PowerLed();
 
-        // Set the power LED state
+        // Must be called after app_main() starts
+        void init();
+        bool started = false;
         void setState(ControlBoardPowerState state);
-        ControlBoardPowerState getState() const;
+        ControlBoardPowerState getState() const { return currentPowerState; }
         void setBrightness(int brightness);
 
-
-
     private:
-        led::LEDPWM onLed;  // LED for power on indication
-        led::LEDPWM standByLed; // LED for power off indication
-        int dutyCycle = 4096; // Max duty cycle for 13-bit resolution
-        
-        // Current power state
-        ControlBoardPowerState currentPowerState = ControlBoardPowerState::OFF;
-        
+        void update();
+        static void timerCallback(void *arg);
 
-        int mediumDutyCycle = 2048; // 50% of max (4096)
-        int lowDutyCycle = 1024; // 25% of max (4096)
+        // LEDs
+        led::LEDPWM activeLed;
+        led::LEDPWM standbyLed;
+
+        // Timer handle (created in init)
+        esp_timer_handle_t updateTimer = nullptr;
+
+        // Power state
+        ControlBoardPowerState currentPowerState = ControlBoardPowerState::OFF;
+
+        // Flashing
+        bool activeFlash = false;
+        bool standbyFlash = false;
+        bool flashState = false;
+        uint64_t lastFlashToggle = 0;
+
+        // LED duty levels
+        int dutyCycle = 4096;
+        int mediumDuty = 2048;
+        int offDuty = 0;
+
+        // Store pin/channel info for init
+        gpio_num_t activePin;
+        ledc_channel_t activeChannel;
+        gpio_num_t standbyPin;
+        ledc_channel_t standbyChannel;
     };
 }

@@ -1,139 +1,178 @@
 #include "powerLed.hpp"
-#include <algorithm>
-#include "esp_log.h"
-#include "esp_timer.h"
-
 
 #define TAG "PowerLed"
+
 namespace indicators
 {
-    PowerLed::PowerLed(gpio_num_t PIN_APP_ACTIVE_LED,ledc_channel_t onChannel, gpio_num_t PIN_APP_STANDBY_LEDl, ledc_channel_t offChannel)
+
+PowerLed::PowerLed(gpio_num_t aPin, ledc_channel_t aChannel,
+                   gpio_num_t sPin, ledc_channel_t sChannel)
+    : activePin(aPin), activeChannel(aChannel),
+      standbyPin(sPin), standbyChannel(sChannel)
+{
+    // Just store values; do not create timers here
+}
+
+
+PowerLed::~PowerLed()
+{
+    if (updateTimer)
     {
+        esp_timer_stop(updateTimer);
+        esp_timer_delete(updateTimer);
+    }
+}
 
-        dutyCycle = 4096;
-        ESP_LOGI(TAG, "Initializing PowerLed with channel: %d  off Channel %d", onChannel,offChannel);
-        ledc_timer_config_t ledc_timer = {};
-        ledc_timer.speed_mode = LEDC_MODE;
-        ledc_timer.duty_resolution = LEDC_DUTY_RES;
-        ledc_timer.timer_num = LEDC_TIMER_1;
-        ledc_timer.freq_hz = LEDC_FREQUENCY; // Set output frequency at 4 kHz
-        ledc_timer.clk_cfg = LEDC_AUTO_CLK;
+void PowerLed::init()
+{
+    ESP_LOGI(TAG, "Initializing PowerLed hardware");
 
-        ledc_timer_config(&ledc_timer);
+    // LEDC timer
+    ledc_timer_config_t timer = {};
+    timer.speed_mode = LEDC_MODE;
+    timer.duty_resolution = LEDC_DUTY_RES;
+    timer.timer_num = LEDC_TIMER_1;
+    timer.freq_hz = LEDC_FREQUENCY;
+    timer.clk_cfg = LEDC_AUTO_CLK;
+    ledc_timer_config(&timer);
 
-        ledc_channel_config_t ledc_channel_on = {};
-        ledc_channel_on.channel    = onChannel;
-        ledc_channel_on.duty       = 0;
-        ledc_channel_on.gpio_num   = PIN_APP_ACTIVE_LED;
-        ledc_channel_on.speed_mode = LEDC_MODE;
-        ledc_channel_on.hpoint     = 0;
-        ledc_channel_on.timer_sel  = LEDC_TIMER;
+    // Active LED
+    ledc_channel_config_t activeCfg = {};
+    activeCfg.channel = activeChannel;
+    activeCfg.duty = 0;
+    activeCfg.gpio_num = activePin;
+    activeCfg.speed_mode = LEDC_MODE;
+    activeCfg.hpoint = 0;
+    activeCfg.timer_sel = LEDC_TIMER;
+    ledc_channel_config(&activeCfg);
 
-        ledc_channel_config(&ledc_channel_on);
+    // Standby LED
+    ledc_channel_config_t standbyCfg = {};
+    standbyCfg.channel = standbyChannel;
+    standbyCfg.duty = 0;
+    standbyCfg.gpio_num = standbyPin;
+    standbyCfg.speed_mode = LEDC_MODE;
+    standbyCfg.hpoint = 0;
+    standbyCfg.timer_sel = LEDC_TIMER;
+    ledc_channel_config(&standbyCfg);
 
-        ledc_channel_config_t ledc_channel_standBy = {};
-        ledc_channel_standBy.channel    = offChannel;
-        ledc_channel_standBy.duty       = 0;
-        ledc_channel_standBy.gpio_num   = PIN_APP_STANDBY_LEDl;
-        ledc_channel_standBy.speed_mode = LEDC_MODE;
-        ledc_channel_standBy.hpoint     = 0;
-        ledc_channel_standBy.timer_sel  = LEDC_TIMER;
+    // Init PWM wrappers
+    activeLed.init(timer, activeCfg);
+    standbyLed.init(timer, standbyCfg);
 
-        ledc_channel_config(&ledc_channel_standBy);
+    // Create periodic update timer
+    esp_timer_create_args_t args = {};
+    args.callback = &PowerLed::timerCallback;
+    args.arg = this;
+    args.dispatch_method = ESP_TIMER_TASK;
+    args.name = "power_led_update";
 
-        onLed.init(ledc_timer, ledc_channel_on);
+    ESP_ERROR_CHECK(esp_timer_create(&args, &updateTimer));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(updateTimer, 50 * 1000)); // 50 ms
 
-        standByLed.init(ledc_timer, ledc_channel_standBy); // Initialize the LED channels
-    };
-    PowerLed::~PowerLed() {
-    };
+  
+}
 
-    void PowerLed::setState(ControlBoardPowerState state)
+
+void PowerLed::timerCallback(void *arg)
+{
+    PowerLed *self = static_cast<PowerLed *>(arg);
+    self->update();
+}
+
+
+void PowerLed::setBrightness(int brightness)
+{
+    if (brightness < 0) brightness = 0;
+    else if (brightness > 99) brightness = 99;
+
+    dutyCycle = (brightness * 4096) / 100;
+}
+
+
+void PowerLed::setState(ControlBoardPowerState state)
+{
+    currentPowerState = state;
+    activeFlash = false;
+    standbyFlash = false;
+
+    switch (state)
     {
-        currentPowerState = state;
-        uint64_t currentTime = esp_timer_get_time() / 1000; // Current time in ms
-        ESP_LOGI(TAG, "PowerLed::setState called with state: %d", static_cast<int>(state));
-
-        switch (state)
-        {
-        case ControlBoardPowerState::ON:
-            ESP_LOGI(TAG, "Setting state to ON");
-            onLed.setDuty(dutyCycle);
-            onLed.updateDuty();
-            standByLed.setDuty(LED_OFF);
-            standByLed.updateDuty();
-   
-            break;
-            
-        case ControlBoardPowerState::SLEEP:
-            ESP_LOGI(TAG, "Setting state to SLEEP");
-            onLed.setDuty(LED_OFF);
-            onLed.updateDuty();
-            standByLed.setDuty(mediumDutyCycle);
-            standByLed.updateDuty();
-            break;
-            
-        case ControlBoardPowerState::SHUTTING_DOWN:
-            ESP_LOGI(TAG, "Setting state to SHUTTING_DOWN");
-            onLed.setDuty(mediumDutyCycle);
-            onLed.updateDuty();
-            standByLed.setDuty(LED_OFF);
-            standByLed.updateDuty();
-            break;
-            
-        case ControlBoardPowerState::TURNING_ON:
-            ESP_LOGI(TAG, "Setting state to TURNING_ON");
-            onLed.setDuty(LED_OFF);
-            onLed.updateDuty();
-            standByLed.setDuty(mediumDutyCycle);
-            standByLed.updateDuty();
-            break;
-            
-        case ControlBoardPowerState::GOING_TO_SLEEP:
-            ESP_LOGI(TAG, "Setting state to GOING_TO_SLEEP");
-            onLed.setDuty(mediumDutyCycle);
-            onLed.updateDuty();
-            standByLed.setDuty(LED_OFF);
-            standByLed.updateDuty();
-            break;
-            
-        case ControlBoardPowerState::DEEPSLEEP:
-            ESP_LOGI(TAG, "Setting state to DEEPSLEEP");
-            onLed.setDuty(LED_OFF);
-            onLed.updateDuty();
-            standByLed.setDuty(mediumDutyCycle);
-            standByLed.updateDuty();
-            break;
-            
-        case ControlBoardPowerState::GOING_INTO_DEEP_SLEEP:
-            ESP_LOGI(TAG, "Setting state to GOING_INTO_DEEP_SLEEP");
-            onLed.setDuty(LED_OFF);
-            onLed.updateDuty();
-            standByLed.setDuty(mediumDutyCycle);
-            standByLed.updateDuty();
-            break;
-            
         case ControlBoardPowerState::OFF:
-        default:
-            ESP_LOGI(TAG, "Setting state to OFF");
-            onLed.setDuty(LED_OFF);
-            standByLed.setDuty(LED_OFF);
-            onLed.updateDuty();
-            standByLed.updateDuty();
+            activeLed.setDuty(offDuty);
+            standbyLed.setDuty(mediumDuty);
             break;
-        };
-    };
 
-    ControlBoardPowerState PowerLed::getState() const
-    {
-        return currentPowerState;
+        case ControlBoardPowerState::SHUTTING_DOWN:
+            activeFlash = true;
+            standbyLed.setDuty(offDuty);
+            break;
+
+        case ControlBoardPowerState::ON:
+            activeLed.setDuty(dutyCycle);
+            standbyLed.setDuty(offDuty);
+            break;
+
+        case ControlBoardPowerState::TURNING_ON:
+            activeFlash = true;
+            standbyLed.setDuty(offDuty);
+            break;
+
+        case ControlBoardPowerState::SLEEP:
+            activeLed.setDuty(offDuty);
+            standbyLed.setDuty(mediumDuty);
+            break;
+
+        case ControlBoardPowerState::GOING_TO_SLEEP:
+            activeLed.setDuty(offDuty);
+            standbyFlash = true;
+            break;
+
+        case ControlBoardPowerState::DEEPSLEEP:
+            activeLed.setDuty(offDuty);
+            standbyLed.setDuty(mediumDuty);
+            break;
+
+        case ControlBoardPowerState::GOING_INTO_DEEP_SLEEP:
+            activeLed.setDuty(offDuty);
+            standbyFlash = true;
+            break;
+
+        default:
+            activeLed.setDuty(offDuty);
+            standbyLed.setDuty(offDuty);
+            break;
     }
 
-    void PowerLed::setBrightness(int brightness)
-    {
-        brightness = std::clamp(brightness, 0, 99);
-        dutyCycle = (brightness * 4096) / 100; // Convert percentage to duty cycle for 13-bit resolution
-    }
+    activeLed.updateDuty();
+    standbyLed.updateDuty();
+}
 
-    
-};
+
+void PowerLed::update()
+{
+    const uint32_t flashPeriod = 300; // ms
+    uint64_t now = esp_timer_get_time() / 1000;
+
+    if (!(activeFlash || standbyFlash)) return;
+
+    if (now - lastFlashToggle >= flashPeriod)
+    {
+        lastFlashToggle = now;
+        flashState = !flashState;
+
+        if (activeFlash)
+        {
+            activeLed.setDuty(flashState ? dutyCycle : offDuty);
+            activeLed.updateDuty();
+        }
+
+        if (standbyFlash)
+        {
+            standbyLed.setDuty(flashState ? dutyCycle : offDuty);
+            standbyLed.updateDuty();
+        }
+    }
+}
+
+} // namespace indicators

@@ -163,8 +163,9 @@ namespace controlSystem
 
             vTaskDelay(pdMS_TO_TICKS(500));
             spiBus.send(SPI_ALL_OFF);
-            pLed.setState(ControlBoardPowerState::SLEEP);
-
+           
+vTaskDelay(pdMS_TO_TICKS(5000));
+ pLed.setState(ControlBoardPowerState::SLEEP);
             // Deep sleep if long press exceeds threshold
             if (response.releaseTimeMilliSecs > DEEP_SLEEP_THRESHOLD_MS)
             {
