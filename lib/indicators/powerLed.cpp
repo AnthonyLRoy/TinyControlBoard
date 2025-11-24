@@ -7,7 +7,7 @@
 #define TAG "PowerLed"
 namespace indicators
 {
-    PowerLed::PowerLed(gpio_num_t PIN_APP_ACTIVE_LED, gpio_num_t PIN_APP_STANDBY_LEDl, ledc_channel_t channel)
+    PowerLed::PowerLed(gpio_num_t PIN_APP_ACTIVE_LED,ledc_channel_t onChannel, gpio_num_t PIN_APP_STANDBY_LEDl, ledc_channel_t offChannel)
     {
 
         dutyCycle = 4096;
@@ -17,7 +17,7 @@ namespace indicators
         lastStandByFlashTime = 0;
         onFlashState = false;
         standByFlashState = false;
-        ESP_LOGI(TAG, "Initializing PowerLed with channel: %d", channel);
+        ESP_LOGI(TAG, "Initializing PowerLed with channel: %d  off Channel %d", onChannel,offChannel);
         ledc_timer_config_t ledc_timer = {};
         ledc_timer.speed_mode = LEDC_MODE;
         ledc_timer.duty_resolution = LEDC_DUTY_RES;
@@ -28,7 +28,7 @@ namespace indicators
         ledc_timer_config(&ledc_timer);
 
         ledc_channel_config_t ledc_channel_on = {};
-        ledc_channel_on.channel    = LEDC_CHANNEL_3;
+        ledc_channel_on.channel    = onChannel;
         ledc_channel_on.duty       = 0;
         ledc_channel_on.gpio_num   = PIN_APP_ACTIVE_LED;
         ledc_channel_on.speed_mode = LEDC_MODE;
@@ -38,7 +38,7 @@ namespace indicators
         ledc_channel_config(&ledc_channel_on);
 
         ledc_channel_config_t ledc_channel_standBy = {};
-        ledc_channel_standBy.channel    = LEDC_CHANNEL_4;
+        ledc_channel_standBy.channel    = offChannel;
         ledc_channel_standBy.duty       = 0;
         ledc_channel_standBy.gpio_num   = PIN_APP_STANDBY_LEDl;
         ledc_channel_standBy.speed_mode = LEDC_MODE;
