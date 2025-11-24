@@ -128,7 +128,7 @@ namespace controlSystem
 
     bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
     {
-        auto &stateMgr = PowerStateManager::instance();
+
         indicators::PowerLed& pLed = indicators::getPowerLed();
 
         ESP_LOGI("PowerCommand", "Current Power State: %d", static_cast<int>(pLed.getState()));
