@@ -11,12 +11,6 @@ namespace indicators
     {
 
         dutyCycle = 4096;
-        isOnLedFlashing = false;
-        isStandByLedFlashing = false;
-        lastOnFlashTime = 0;
-        lastStandByFlashTime = 0;
-        onFlashState = false;
-        standByFlashState = false;
         ESP_LOGI(TAG, "Initializing PowerLed with channel: %d  off Channel %d", onChannel,offChannel);
         ledc_timer_config_t ledc_timer = {};
         ledc_timer.speed_mode = LEDC_MODE;
@@ -64,8 +58,6 @@ namespace indicators
         {
         case ControlBoardPowerState::ON:
             ESP_LOGI(TAG, "Setting state to ON");
-            isOnLedFlashing = false;
-            isStandByLedFlashing = false;
             onLed.setDuty(dutyCycle);
             onLed.updateDuty();
             standByLed.setDuty(LED_OFF);
@@ -75,11 +67,6 @@ namespace indicators
             
         case ControlBoardPowerState::SLEEP:
             ESP_LOGI(TAG, "Setting state to SLEEP");
-            isOnLedFlashing = false;
-            isStandByLedFlashing = true;
-            standByFlashInterval = 500; // Flash every 500ms
-            lastStandByFlashTime = currentTime;
-            standByFlashState = false;
             onLed.setDuty(LED_OFF);
             onLed.updateDuty();
             standByLed.setDuty(mediumDutyCycle);
@@ -88,11 +75,6 @@ namespace indicators
             
         case ControlBoardPowerState::SHUTTING_DOWN:
             ESP_LOGI(TAG, "Setting state to SHUTTING_DOWN");
-            isOnLedFlashing = true;
-            isStandByLedFlashing = false;
-            onFlashInterval = 250; // Flash every 250ms
-            lastOnFlashTime = currentTime;
-            onFlashState = false;
             onLed.setDuty(mediumDutyCycle);
             onLed.updateDuty();
             standByLed.setDuty(LED_OFF);
@@ -101,11 +83,6 @@ namespace indicators
             
         case ControlBoardPowerState::TURNING_ON:
             ESP_LOGI(TAG, "Setting state to TURNING_ON");
-            isOnLedFlashing = true;
-            isStandByLedFlashing = false;
-            onFlashInterval = 250; // Flash every 250ms
-            lastOnFlashTime = currentTime;
-            onFlashState = true;
             onLed.setDuty(LED_OFF);
             onLed.updateDuty();
             standByLed.setDuty(mediumDutyCycle);
@@ -114,11 +91,6 @@ namespace indicators
             
         case ControlBoardPowerState::GOING_TO_SLEEP:
             ESP_LOGI(TAG, "Setting state to GOING_TO_SLEEP");
-            isOnLedFlashing = true;
-            isStandByLedFlashing = false;
-            onFlashInterval = 500; // Flash every 500ms
-            lastOnFlashTime = currentTime;
-            onFlashState = false;
             onLed.setDuty(mediumDutyCycle);
             onLed.updateDuty();
             standByLed.setDuty(LED_OFF);
@@ -127,11 +99,6 @@ namespace indicators
             
         case ControlBoardPowerState::DEEPSLEEP:
             ESP_LOGI(TAG, "Setting state to DEEPSLEEP");
-            isOnLedFlashing = false;
-            isStandByLedFlashing = true;
-            standByFlashInterval = 500; // Flash every 500ms
-            lastStandByFlashTime = currentTime;
-            standByFlashState = false;
             onLed.setDuty(LED_OFF);
             onLed.updateDuty();
             standByLed.setDuty(mediumDutyCycle);
@@ -140,11 +107,6 @@ namespace indicators
             
         case ControlBoardPowerState::GOING_INTO_DEEP_SLEEP:
             ESP_LOGI(TAG, "Setting state to GOING_INTO_DEEP_SLEEP");
-            isOnLedFlashing = false;
-            isStandByLedFlashing = true;
-            standByFlashInterval = 5000; // Flash every 5 seconds
-            lastStandByFlashTime = currentTime;
-            standByFlashState = false;
             onLed.setDuty(LED_OFF);
             onLed.updateDuty();
             standByLed.setDuty(mediumDutyCycle);
@@ -154,8 +116,6 @@ namespace indicators
         case ControlBoardPowerState::OFF:
         default:
             ESP_LOGI(TAG, "Setting state to OFF");
-            isOnLedFlashing = false;
-            isStandByLedFlashing = false;
             onLed.setDuty(LED_OFF);
             standByLed.setDuty(LED_OFF);
             onLed.updateDuty();
@@ -175,43 +135,5 @@ namespace indicators
         dutyCycle = (brightness * 4096) / 100; // Convert percentage to duty cycle for 13-bit resolution
     }
 
-    void PowerLed::update() {
-        uint64_t currentTime = esp_timer_get_time() / 1000; // Current time in ms
-        
-        // Handle onLed flashing
-        if (isOnLedFlashing) {
-            if (currentTime - lastOnFlashTime >= onFlashInterval) {
-                onFlashState = !onFlashState;
-                lastOnFlashTime = currentTime;
-                
-                if (onFlashState) {
-                    onLed.setDuty(mediumDutyCycle);
-                } else {
-                    onLed.setDuty(LED_OFF);
-                }
-                onLed.updateDuty();
-            }
-        }
-        
-        // Handle standByLed flashing
-        if (isStandByLedFlashing) {
-            if (currentTime - lastStandByFlashTime >= standByFlashInterval) {
-                standByFlashState = !standByFlashState;
-                lastStandByFlashTime = currentTime;
-                
-                if (standByFlashState) {
-                    // Determine brightness based on current power state
-                    ControlBoardPowerState currentState = PowerStateManager::instance().getPowerState();
-                    if (currentState == ControlBoardPowerState::GOING_INTO_DEEP_SLEEP) {
-                        standByLed.setDuty(lowDutyCycle);
-                    } else {
-                        standByLed.setDuty(mediumDutyCycle);
-                    }
-                } else {
-                    standByLed.setDuty(LED_OFF);
-                }
-                standByLed.updateDuty();
-            }
-        }
-    };
+    
 };
