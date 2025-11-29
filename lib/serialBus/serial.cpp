@@ -64,7 +64,7 @@ bool Serial::init_uart(uart_port_t uart_num,
     ESP_ERROR_CHECK(uart_driver_install(uart_number, buffer_size * 2, 0, 0, nullptr, 0));
     ESP_ERROR_CHECK(uart_param_config(uart_number, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(uart_number, tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
-
+    init_data_ready_pin();
     // Launch the RX task
     xTaskCreate([](void* arg) {
         static_cast<Serial*>(arg)->uart_rx_task();
@@ -81,7 +81,17 @@ bool Serial::init_uart(uart_port_t uart_num,
     return true;
 }
 
-
+void Serial::init_data_ready_pin() {
+    gpio_config_t io_conf = {
+        .pin_bit_mask = 1ULL << PIN_ESP32_DATA_READY,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
+    };
+    gpio_config(&io_conf);
+    gpio_set_level(PIN_ESP32_DATA_READY, 0);
+}
 void Serial::deinit_uart() {
     if (initialized) {
         uart_driver_delete(uart_number);
@@ -105,9 +115,20 @@ bool Serial::send_data(const uint8_t* data, size_t len) {
         ESP_LOGW(TAG, "Invalid send attempt.");
         return false;
     }
+
+    if (gpio_get_level(PIN_ESP32_DATA_READY) == 1) {
+        ESP_LOGW(TAG, "Raspberry Pi not ready to receive data.");
+        return false;
+    }
+
     ESP_LOGI(TAG, "Sending data of length %zu", len);
     int written = uart_write_bytes(uart_number, data, len);
-    return written == len;
+
+ESP_LOGI(TAG, "Data sent, signaling Raspberry Pi.");
+    ESP_ERROR_CHECK(gpio_set_level(PIN_ESP32_DATA_READY,1)); // Indicate data is ready
+    vTaskDelay(pdMS_TO_TICKS(10));       // Small delay
+    gpio_set_level(PIN_ESP32_DATA_READY, 0);
+        return written == len;
 }
 
 void IRAM_ATTR serialBus::Serial::gpio_isr_handler(void *arg) {

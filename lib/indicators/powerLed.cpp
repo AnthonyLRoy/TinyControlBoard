@@ -95,6 +95,7 @@ void PowerLed::setState(ControlBoardPowerState state)
     currentPowerState = state;
     activeFlash = false;
     standbyFlash = false;
+ESP_LOGI(TAG, "Setting PowerLed state to %d", static_cast<int>(state));
 
     switch (state)
     {

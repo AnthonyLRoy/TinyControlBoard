@@ -1,7 +1,6 @@
 #include "actionProcessor.hpp"
 #include "powerLed.hpp"
 
-
 namespace controlSystem
 {
     // Constants for clarity
@@ -44,7 +43,6 @@ namespace controlSystem
 
     void actionProcessor::process(actions::actionResponse response)
     {
-        auto &stateMgr = PowerStateManager::instance();
 
         if (response.command == CMD_NO_ACTION)
         {
@@ -58,7 +56,7 @@ namespace controlSystem
             return;
         }
 
-        if (stateMgr.getPowerState() != ControlBoardPowerState::ON)
+        if (indicators::getPowerLed().getState() != ControlBoardPowerState::ON)
         {
             ESP_LOGI("ActionProcessor", "Ignoring command %u as system is not ON", response.command);
             return;
@@ -129,13 +127,10 @@ namespace controlSystem
     bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
     {
 
-        indicators::PowerLed& pLed = indicators::getPowerLed();
-
-        ESP_LOGI("PowerCommand", "Current Power State: %d", static_cast<int>(pLed.getState()));
-        if (pLed.getState() == ControlBoardPowerState::OFF || pLed.getState() == ControlBoardPowerState::SLEEP || pLed.getState() == ControlBoardPowerState::DEEPSLEEP)
+        if (indicators::getPowerLed().getState() == ControlBoardPowerState::OFF || indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP || indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
         {
             // prevent multiple power on commands
-            pLed.setState(ControlBoardPowerState::ON);
+            indicators::getPowerLed().setState(ControlBoardPowerState::ON);
             // Power on sequence
             setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
             setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
@@ -145,11 +140,11 @@ namespace controlSystem
             return true;
         }
 
-        if (pLed.getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
+        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
         {
             ESP_LOGI("PowerCommand", "Initiating Shutdown/Sleep Sequence");
             // Power off or sleep sequence
-            pLed.setState(ControlBoardPowerState::GOING_TO_SLEEP);
+            indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
             spiBus.send(SPI_INIT_SHUTDOWN);
 
             sendUartCommand("STOP", CMD_STOP_TRACK);
@@ -163,16 +158,16 @@ namespace controlSystem
 
             vTaskDelay(pdMS_TO_TICKS(500));
             spiBus.send(SPI_ALL_OFF);
-           
-vTaskDelay(pdMS_TO_TICKS(5000));
- pLed.setState(ControlBoardPowerState::SLEEP);
+
+            vTaskDelay(pdMS_TO_TICKS(5000));
+            indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             // Deep sleep if long press exceeds threshold
             if (response.releaseTimeMilliSecs > DEEP_SLEEP_THRESHOLD_MS)
             {
                 ESP_LOGI("PowerCommand", "Entering Deep Sleep Mode");
                 setRelayWithDelay(PIN_RELAY_DAC, false, 0);
                 setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, false, 0);
-                pLed.setState(ControlBoardPowerState::DEEPSLEEP);
+                indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
             }
             return false;
         }

@@ -41,7 +41,7 @@ private:
 
     static constexpr size_t TMP_BUFFER_SIZE = 64;
     uint8_t tmp_buffer[TMP_BUFFER_SIZE];
-
+    void init_data_ready_pin();
     UartReceiver rx_buffer;
     std::function<void(const UARTMessage&)> rx_callback;
 
@@ -51,6 +51,11 @@ private:
 };
 
 // GPIO from Raspberry Pi indicating data available
+
+// Fires when Pi sets this pin HIGH
 static constexpr gpio_num_t PIN_RPI_DATA_READY = GPIO_NUM_42;
+
+// GPIO from ESP32 indicating data available raised High by ESP32 
+static constexpr gpio_num_t PIN_ESP32_DATA_READY = GPIO_NUM_41; 
 
 }  // namespace serialBus
