@@ -86,7 +86,7 @@ namespace controlSystem
 
         if (response.command == CMD_ROTARY_LEFT || response.command == CMD_ROTARY_RIGHT)
         {
-            ESP_LOGI("ROTARYACTION", "Processing Rotary Action Command (%d)  ", response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
+            ESP_LOGI("ROTARYACTION", "Processing Rotary Action Command (%s)  ", response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
             UARTMessage message;
             message.command_id = CMD_ROTARY_ACTION;
             message.params[0] = (response.command == CMD_ROTARY_LEFT) ? CMD_ROTARY_LEFT : CMD_ROTARY_RIGHT;
