@@ -84,6 +84,16 @@ namespace controlSystem
             return;
         }
 
+        if (response.command == CMD_ROTARY_LEFT || response.command == CMD_ROTARY_RIGHT)
+        {
+            ESP_LOGI("ROTARYACTION", "Processing Rotary Action Command (%d)  ", response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
+            UARTMessage message;
+            message.command_id = CMD_ROTARY_ACTION;
+            message.params[0] = (response.command == CMD_ROTARY_LEFT) ? CMD_ROTARY_LEFT : CMD_ROTARY_RIGHT;
+            sendUartCommand("ROTARYACTION", CMD_ROTARY_ACTION);
+            return;
+        }
+
         // Handle commands requiring UART message
         for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; cmdReference++)
         {
@@ -95,10 +105,8 @@ namespace controlSystem
         }
     }
 
-    void actionProcessor::sendUartCommand(const char *logTag, uint32_t commandId)
+    void actionProcessor::sendUartCommand(const char *logTag, UARTMessage message)
     {
-        UARTMessage message;
-        message.command_id = commandId;
         uint8_t tx_buffer[UART_PACKET_SIZE];
         serialize_message(message, tx_buffer);
         ESP_LOGI(logTag, "Sending %s Message", logTag);
@@ -106,6 +114,14 @@ namespace controlSystem
             ESP_LOGI(logTag, "Failed to send %s message", logTag);
         else
             ESP_LOGI(logTag, "%s message sent successfully", logTag);
+    }
+
+    void actionProcessor::sendUartCommand(const char *logTag, uint32_t commandId)
+    {
+        UARTMessage message;
+        message.command_id = commandId;
+        uint8_t tx_buffer[UART_PACKET_SIZE];
+        sendUartCommand(logTag, message);
     }
 
     bool actionProcessor::HandleToggleDac(bool state)

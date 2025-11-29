@@ -179,7 +179,7 @@ namespace controlSystem
         buttonActions[0] = &actions::PowerButtonInstance;
         buttonActions[1] = &actions::PreviousTrackInstance;
         buttonActions[2] = &actions::NextTrackInstance;
-        buttonActions[5] = &actions::PauseInstance;
+        buttonActions[5] = &actions::PlayPauseInstance;
         buttonActions[6] = &actions::StopInstance;
         buttonActions[3] = &actions::SkipForwardInstance;
         buttonActions[4] = &actions::SkipBackInstance;
@@ -189,7 +189,6 @@ namespace controlSystem
         buttonActions[12] = &actions::ToggleMeterDisplayInstance;
         buttonActions[11] = &actions::ToggleDisplayInstance;
         buttonActions[10] = &actions::ToggleDacInstance;
-        buttonActions[13] = &actions::RotaryRightInstance;
-        buttonActions[14] = &actions::RotaryLeftInstance;
+        buttonActions[13] = &actions::RotaryEventInstance;
     }
 }

@@ -32,6 +32,17 @@ namespace actions
         bool state_;
     };
 
+    template <commandID ROTATE_DIRECTION>
+    class RotaryAction : public ButtonAction
+    {
+        actionResponse execute(bool IsLeft) override
+        {
+            actionResponse response;
+                response.command = CMD_ROTARY_ACTION;
+                response.parameters[0] = ROTATE_DIRECTION;
+            return response;
+        }
+    };
 
     /**
      * Momentary button that only sends a command when pressed.

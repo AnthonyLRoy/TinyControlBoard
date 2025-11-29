@@ -52,7 +52,8 @@ enum  commandID : uint16_t
     CMD_TOGGLE_DAC_ON = 0x010A,
     CMD_TOGGLE_DAC_OFF = 0x010F,
     CMD_ROTARY_LEFT = 0x0110,
-    CMD_ROTARY_RIGHT = 0x0111
+    CMD_ROTARY_RIGHT = 0x0111,
+    CMD_ROTARY_ACTION = 0x0112
 
     // // PI Control commands
     // CMD_GET_PI_STATUS  = 0x0201,
