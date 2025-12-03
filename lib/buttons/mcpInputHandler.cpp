@@ -162,7 +162,7 @@ void MCPInputHandler::handleInterrupt() {
     uint16_t current = (gpiob << 8) | gpioa;
 
 
-// ...existing code...
+
     uint16_t changed = current ^ prevState;
 
     // Handle rotary bits once if either changed, then remove them from the bit-scan
@@ -173,15 +173,15 @@ void MCPInputHandler::handleInterrupt() {
     }
 
     while (changed) {
-        uint8_t loopCntr = __builtin_ctz(changed);
+        uint8_t pinPtr = __builtin_ctz(changed);
         changed &= changed - 1;
 
-        bool now = (current >> loopCntr) & 1;
+        bool now = (current >> pinPtr) & 1;
 
         if (!now && buttonCallback)
-            buttonCallback(loopCntr, true);
+            buttonCallback(pinPtr, true);
         else if (now && releaseCallback)
-            releaseCallback(loopCntr, true);
+            releaseCallback(pinPtr, true);
     }
 
     prevState = current;

@@ -1,0 +1,12 @@
+Add this to the Read_and_process_Packet if needed
+
+
+    print("📦 Packet received:", flush=True)
+    print(f"  Start Byte: {start_byte:#02x}", flush=True)
+    print(f"  Version: {version}", flush=True)
+    print(f"  Source App: {src_app}", flush=True)
+    print(f"  Msg Type: {msg_type}", flush=True)
+    print(f"  Sequence: {sequence}", flush=True)
+    print(f"  Command ID: {cmd_id}", flush=True)
+    print(f"  Params: {params}", flush=True)
+    print(f"  Checksum: {checksum}", flush=True)

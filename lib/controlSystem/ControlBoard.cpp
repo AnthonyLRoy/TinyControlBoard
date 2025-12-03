@@ -14,9 +14,9 @@ namespace controlSystem
         ESP_LOGI(TAG, "Starting ControlBoard init...");
 
         // system just switched on from the mains switch so default  -- no histyory storage yet
-        
+
         indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
-        
+
         serialHandler = &serialBus::Serial::instance();
         spi = &spibus::SPI::instance(SPI2_HOST);
         ESP_LOGW(TAG, "Creating actionProcessor...");
@@ -37,7 +37,7 @@ namespace controlSystem
         if (!setupSPI())
             return false;
         ESP_LOGW(TAG, "SPI setup complete.");
-        setupButtonActions();
+        createButtonActionMap();
 
         ESP_LOGI(TAG, "ControlBoard init complete.");
         ESP_LOGW(TAG, "Setting Power LED to Standby...");
@@ -165,16 +165,12 @@ namespace controlSystem
                                      {
             ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-            actions::actionResponse result;
-            if (movement > 0)
-                result = buttonActions[ROTARY_A_PIN]->execute(true);
-            else
-                result = buttonActions[ROTARY_B_PIN]->execute(false);
+            actions::actionResponse result = buttonActions[ROTARY_ACTION]->execute(movement > 0);
             responseProcessor->process(result); });
         indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
 
-    void ControlBoard::setupButtonActions()
+    void ControlBoard::createButtonActionMap()
     {
         buttonActions[0] = &actions::PowerButtonInstance;
         buttonActions[1] = &actions::PreviousTrackInstance;
@@ -190,5 +186,6 @@ namespace controlSystem
         buttonActions[11] = &actions::ToggleDisplayInstance;
         buttonActions[10] = &actions::ToggleDacInstance;
         buttonActions[13] = &actions::RotaryEventInstance;
+        buttonActions[14] = &actions::RotaryEventInstance;
     }
 }

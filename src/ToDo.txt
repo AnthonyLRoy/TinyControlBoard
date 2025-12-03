@@ -1,4 +1,19 @@
 Things that need to be done
 
-Update the serial port to pulse the DataReady flag so the RPI know that data has been send
-update the serial class to send to receive data based of pulse from RPI telling as that data is DataReady
+
+0.5)  Fix Rotary Encoder Function
+
+1) Set commands for CTLBoard to  RPI4 and make sure that the are working
+    1a)  basic Controls
+    1b)  Toggle Controls
+    1c)  Specilised controls (Rotary Controler)
+2) Find method to check if RPI4 as Power
+
+3) Check that Relays are working correctly 
+
+4) Check transmit data from RPI to CTLBoard
+
+5) Log connections
+
+
+

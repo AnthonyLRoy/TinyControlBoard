@@ -1,0 +1,91 @@
+Install moode using RPI image builder
+
+Install ddcutil
+
+
+
+
+
+Install uart5_listener
+
+
+We are using Uart 5 , so make sure that the configuration file /boot/firmware/config.txt
+
+contains the line :: 
+    dtoverlay=uart5
+
+
+
+Install the PI serial Library ::
+
+    sudo python3 -m pip install pyserial
+
+Validate it was install correctly
+    python3 -c "import serial; print(serial.__version__)"
+
+
+If 'PIP' is missing then install  it
+
+    sudo apt install python3-pip
+and re-install pyserial
+
+sudo python3 -m pip install pyserial
+
+
+Create Service file :: 
+    Create File : sudo nano /etc/systemd/system/uart_listener.service
+
+
+if you get an error 'sudo python3 -m pip install pyserial error: externally-managed-environment'
+
+then try this command :
+
+sudo apt install python3-serial
+
+Add the following text :
+
+[Unit]
+Description=UART5 Listener for ESP32
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/antho/uart5_listener.py
+Restart=always
+User=antho
+Group=antho
+WorkingDirectory=/home/antho
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+
+
+------------------------
+
+Create the uart python file  :
+    nano /home/antho/uart5_listener.py
+
+Add the code from the file UArt5Listener.py and save
+
+change the Access settings
+
+    chmod +x /home/antho/uart5_listener.py
+
+make sure that the user has access :
+
+    sudo chown antho:antho /home/antho/uart5_listener.py
+    sudo chmod +x /home/antho/uart5_listener.py
+
+
+Once installed Execute the following command to Start the service and return the status
+
+        sudo systemctl daemon-reload
+        sudo systemctl enable uart5_listener.service
+        sudo systemctl start uart5_listener.service
+        sudo systemctl status uart5_listener.service
+
+Check the logs to confirm :
+
+journalctl -u uart5_listener.service -f

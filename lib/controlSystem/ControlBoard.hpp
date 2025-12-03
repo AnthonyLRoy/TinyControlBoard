@@ -36,7 +36,7 @@ namespace controlSystem
         bool setupSerial();
         bool setupMCPHandler();
         void setupMCPCallbacks();
-        void setupButtonActions();
+        void createButtonActionMap();
 
 
         // SPI pins

@@ -32,8 +32,8 @@ namespace controlSystem
         {"METERON", CMD_TOGGLE_METER_ON},
         {"METEROFF", CMD_TOGGLE_METER_OFF},
         {"DISPLAYON", CMD_DISPLAY_ON},
-        {"ROTARYLEFT", CMD_ROTARY_LEFT},
-        {"ROTARYRIGHT", CMD_ROTARY_RIGHT},
+        {"ROTARY", CMD_ROTARY_ACTION},
+
     };
 
     const size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);

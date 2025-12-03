@@ -33,8 +33,12 @@ constexpr uint8_t MCP_GPIOA    = 0x12;
 constexpr uint8_t MCP_GPIOB    = 0x13;
 
 // Rotary pins (MCP bit positions)
-constexpr uint8_t ROTARY_A_PIN = 13;
-constexpr uint8_t ROTARY_B_PIN = 14;
+ // Rotary movement detection On device Index
+
+
+constexpr uint8_t ROTARY_A_PIN = 13;  // Rotary A pin
+constexpr uint8_t ROTARY_B_PIN = 14;  // Rotary B pin 
+constexpr uint8_t ROTARY_ACTION = 13;  // Combined Rotary pin for detection 
 
 // I2C constants
 constexpr uint32_t I2C_CLK_SPEED_HZ = 50000;

@@ -1,0 +1,28 @@
+sudo apt-get install ddcutil -y
+
+
+sudo apt-get install ddcutil -y
+
+sudo ddcutil setvcp x y    :: where x is 10 for monitor  y  brightness between 0 and 100
+
+ddcutil setvcp d6 5 # switch off monitor 
+ddcutil setvcp d6 1 # switch monitor on
+ddcutil capabilities # list monitor capabilities
+
+
+Sudo commands
+
+Monitor logs for esp32 communication
+
+
+#listen to log for ESP32 to RPI Communctions
+
+sudo journalctl -u uart5_listener -f
+
+#restart listener
+
+sudo systemctl restart uart5_listener
+
+# reload the daemon-reload
+
+sudo systemctl daemon-reload
