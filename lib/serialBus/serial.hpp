@@ -33,9 +33,23 @@ namespace serialBus
 
         void set_rx_callback(std::function<void(const UARTMessage &)> callback);
 
+        // Heartbeat monitoring
+        uint64_t get_last_rx_time_us() const { return last_rx_time_us; }
+
+        void start_heartbeat_monitor(uint32_t timeout_ms,
+                                     std::function<void()> on_timeout);
+
+        void stop_heartbeat_monitor();
+
     private:
         Serial();
         ~Serial();
+
+        // Heartbeat monitoring
+        volatile uint64_t last_rx_time_us = 0;
+        uint32_t heartbeat_timeout_ms = 0;
+        TaskHandle_t heartbeat_task_handle = nullptr;
+        std::function<void()> heartbeat_timeout_callback = nullptr;
 
         uart_port_t uart_number;
         bool initialized;

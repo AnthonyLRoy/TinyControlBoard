@@ -18,6 +18,15 @@ namespace controlSystem
         indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
 
         serialHandler = &serialBus::Serial::instance();
+        serialHandler->start_heartbeat_monitor(5000, [this]()
+        {
+            actions::actionResponse response;
+            response.active = true;
+            response.command = CMD_SYS_RPI_SHUTDOWN;
+            responseProcessor->process( actions::actionResponse(response) );
+            ESP_LOGE(TAG, "Heartbeat timeout: No data received from Raspberry Pi within 5 seconds.");
+        }
+);
         spi = &spibus::SPI::instance(SPI2_HOST);
         ESP_LOGW(TAG, "Creating actionProcessor...");
         responseProcessor = new actionProcessor(*serialHandler, *relays, *spi);

@@ -1,5 +1,6 @@
 #include "Serial.hpp"
 #include <cstring>
+#include <esp_timer.h>
 
 using namespace serialBus;
 
@@ -208,7 +209,7 @@ void Serial::handle_uart_rx()
             {
                 if (rx_callback)
                 {
-                    ESP_LOGI(TAG, "Parsed message: cmd=0x%04X", msg.command_id);
+                    last_rx_time_us = esp_timer_get_time();
                     rx_callback(msg);
                 }
                 else
@@ -221,6 +222,63 @@ void Serial::handle_uart_rx()
     else
     {
         ESP_LOGW(TAG, "UART not initialized, cannot handle RX");
+    }
+
+    
+}
+void Serial::start_heartbeat_monitor(uint32_t timeout_ms,
+                                     std::function<void()> on_timeout)
+{
+    heartbeat_timeout_ms = timeout_ms;
+    heartbeat_timeout_callback = on_timeout;
+
+    if (heartbeat_task_handle == nullptr)
+    {
+        xTaskCreate(
+            [](void *arg) {
+                Serial *self = static_cast<Serial *>(arg);
+                const TickType_t delay = pdMS_TO_TICKS(100);
+
+                while (true)
+                {
+                    vTaskDelay(delay);
+
+                    uint64_t now = esp_timer_get_time();
+                    uint64_t last = self->last_rx_time_us;
+
+                    if (last == 0) {
+                        // No messages yet — do nothing
+                        continue;
+                    }
+
+                    uint64_t diff_ms = (now - last) / 1000;
+
+                    if (diff_ms > self->heartbeat_timeout_ms)
+                    {
+                        // Trigger callback ONCE
+                        if (self->heartbeat_timeout_callback)
+                            self->heartbeat_timeout_callback();
+
+                        // Reset timestamp so callback fires only once
+                        self->last_rx_time_us = now;
+                    }
+                }
+            },
+            "heartbeat_task",
+            4096,
+            this,
+            5,
+            &heartbeat_task_handle
+        );
+    }
+}
+
+void Serial::stop_heartbeat_monitor()
+{
+    if (heartbeat_task_handle)
+    {
+        vTaskDelete(heartbeat_task_handle);
+        heartbeat_task_handle = nullptr;
     }
 }
 
