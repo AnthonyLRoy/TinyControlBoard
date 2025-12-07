@@ -34,9 +34,7 @@ bool Serial::init_uart(uart_port_t uart_num,
         return false;
     }
 
-
-
-    ESP_LOGI(TAG, "Initializing UART%d...", uart_num);  
+    ESP_LOGI(TAG, "Initializing UART%d...", uart_num);
     uart_number = uart_num;
 
     uart_config_t uart_config = {
@@ -54,7 +52,7 @@ bool Serial::init_uart(uart_port_t uart_num,
     // 1. Configure RPi Data Ready pin (input with interrupt)
     // -------------------------
     gpio_config_t io_conf = {};
-    io_conf.intr_type = GPIO_INTR_POSEDGE;   // Rising edge
+    io_conf.intr_type = GPIO_INTR_POSEDGE; // Rising edge
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = (1ULL << PIN_RPI_DATA_READY);
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE; // Depends on wiring
@@ -64,19 +62,21 @@ bool Serial::init_uart(uart_port_t uart_num,
     // -------------------------
     // 2. Create RX task BEFORE adding ISR
     // -------------------------
-    if (!initialized) {
-        xTaskCreate([](void *arg){
-            static_cast<Serial*>(arg)->uart_rx_task();
-        }, "uart_rx_task", 4096, this, 10, &this->task_handle);
+    if (!initialized)
+    {
+        xTaskCreate([](void *arg)
+                    { static_cast<Serial *>(arg)->uart_rx_task(); }, "uart_rx_task", 4096, this, 10, &this->task_handle);
     }
 
     // -------------------------
     // 3. Install ISR service (only once globally)
     // -------------------------
     static bool isr_service_installed = false;
-    if (!isr_service_installed) {
+    if (!isr_service_installed)
+    {
         esp_err_t ret = gpio_install_isr_service(0);
-        if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+        {
             ESP_LOGE(TAG, "Failed to install ISR service: %d", ret);
             return false;
         }
@@ -86,7 +86,7 @@ bool Serial::init_uart(uart_port_t uart_num,
     // -------------------------
     // 4. Attach ISR handler
     // -------------------------
-    ESP_ERROR_CHECK(gpio_isr_handler_add(PIN_RPI_DATA_READY, gpio_isr_handler, (void*)this));
+    ESP_ERROR_CHECK(gpio_isr_handler_add(PIN_RPI_DATA_READY, gpio_isr_handler, (void *)this));
 
     // -------------------------
     // 5. Initialize ESP32 Data Ready pin (output, signaling to RPi)
@@ -111,14 +111,13 @@ bool Serial::init_uart(uart_port_t uart_num,
     initialized = true;
 
     // Optional: set RX callback
-    set_rx_callback([this](const UARTMessage &msg){
-        ESP_LOGI(TAG, "Received message: cmd=0x%04X", msg.command_id);
-        ESP_LOGI(TAG, "Message content: %s", msg.params[0] ? "Non-empty" : "Empty");
-    });
+    set_rx_callback([this](const UARTMessage &msg)
+                    {
+                        // ESP_LOGI(TAG, "Received message: cmd=0x%04X", msg.command_id);
+                    });
 
     return true;
 }
-
 
 void Serial::init_data_ready_pin()
 {
@@ -131,6 +130,7 @@ void Serial::init_data_ready_pin()
     gpio_config(&io_conf);
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
 }
+
 void Serial::deinit_uart()
 {
     if (initialized)
@@ -188,8 +188,6 @@ void IRAM_ATTR Serial::gpio_isr_handler(void *arg)
         vTaskNotifyGiveFromISR(self->task_handle, &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
-
-    // ⚠️ No logging or printf inside ISR!
 }
 
 void Serial::handle_uart_rx()
@@ -198,10 +196,9 @@ void Serial::handle_uart_rx()
     {
         int len = uart_read_bytes(uart_number, tmp_buffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
 
-        ESP_LOGI(TAG, "UART RX: Read %d bytes", len);
-
         if (len > 0)
         {
+            // ESP_LOGI(TAG, "UART RX: Read %d bytes", len);
             rx_buffer.push_bytes(tmp_buffer, len);
 
             UARTMessage msg;
@@ -223,9 +220,8 @@ void Serial::handle_uart_rx()
     {
         ESP_LOGW(TAG, "UART not initialized, cannot handle RX");
     }
-
-    
 }
+
 void Serial::start_heartbeat_monitor(uint32_t timeout_ms,
                                      std::function<void()> on_timeout)
 {
@@ -235,7 +231,8 @@ void Serial::start_heartbeat_monitor(uint32_t timeout_ms,
     if (heartbeat_task_handle == nullptr)
     {
         xTaskCreate(
-            [](void *arg) {
+            [](void *arg)
+            {
                 Serial *self = static_cast<Serial *>(arg);
                 const TickType_t delay = pdMS_TO_TICKS(100);
 
@@ -246,7 +243,8 @@ void Serial::start_heartbeat_monitor(uint32_t timeout_ms,
                     uint64_t now = esp_timer_get_time();
                     uint64_t last = self->last_rx_time_us;
 
-                    if (last == 0) {
+                    if (last == 0)
+                    {
                         // No messages yet — do nothing
                         continue;
                     }
@@ -268,8 +266,7 @@ void Serial::start_heartbeat_monitor(uint32_t timeout_ms,
             4096,
             this,
             5,
-            &heartbeat_task_handle
-        );
+            &heartbeat_task_handle);
     }
 }
 
