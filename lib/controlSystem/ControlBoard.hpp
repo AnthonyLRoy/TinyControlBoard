@@ -24,7 +24,6 @@ namespace controlSystem
     public:
         bool init();            // returns true if everything initialized successfully
         void deinit();          // optional cleanup
-        spibus::SPI& getSPI() { return *spi; }
         actionProcessor& getActionProcessor() { return *responseProcessor; }
 
     private:
@@ -32,17 +31,13 @@ namespace controlSystem
         uint16_t spiPintActiveBitMap = 0x0000; // Bitmap to track active SPI pins
         
         bool setupRelays();
-        bool setupSPI();
         bool setupSerial();
         bool setupMCPHandler();
         void setupMCPCallbacks();
         void createButtonActionMap();
 
 
-        // SPI pins
-        static constexpr gpio_num_t PIN_SPI_DATA = GPIO_NUM_6;
-        static constexpr gpio_num_t PIN_SPI_CLK = GPIO_NUM_7;
-        static constexpr gpio_num_t PIN_SPI_LATCH = GPIO_NUM_5;
+
 
         // serial port pins
         static constexpr gpio_num_t PIN_SERIAL_TX = GPIO_NUM_2;

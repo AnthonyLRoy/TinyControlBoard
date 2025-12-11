@@ -22,7 +22,7 @@ namespace controlSystem
         };
 
     public:
-        actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef, spibus::SPI &spiRef);
+        actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef);
         void process(actions::actionResponse response);
         const char *getCommandNameForPin(uint8_t pin);
 
@@ -36,7 +36,7 @@ namespace controlSystem
         void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs); // Changed uint8_t to gpio_num_t
         serialBus::Serial &serial;
         relays::StandardRelay &relays;
-        spibus::SPI &spiBus;
+       
     };
 
     extern const actionProcessor::CommandConfig commandConfigs[];

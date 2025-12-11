@@ -38,8 +38,8 @@ namespace controlSystem
 
     const size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);
 
-    actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef, spibus::SPI &spiRef)
-        : serial(serialBusRef), relays(relaysRef), spiBus(spiRef) {}
+    actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef)
+        : serial(serialBusRef), relays(relaysRef) {}
 
     void actionProcessor::process(actions::actionResponse response)
     {
@@ -161,19 +161,19 @@ namespace controlSystem
             ESP_LOGI("PowerCommand", "Initiating Shutdown/Sleep Sequence");
             // Power off or sleep sequence
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-            spiBus.send(SPI_INIT_SHUTDOWN);
+            
 
             sendUartCommand("STOP", CMD_STOP_TRACK);
-            spiBus.send(SPI_STOP_TRACK_SENT);
+
 
             ShutDownRPI(true);
-            spiBus.send(SPI_RPI_SHUTDOWN_SENT);
+
 
             ShutDownScreen(false);
-            spiBus.send(SPI_SCREEN_SHUTDOWN_SENT);
+    
 
             vTaskDelay(pdMS_TO_TICKS(500));
-            spiBus.send(SPI_ALL_OFF);
+
 
             vTaskDelay(pdMS_TO_TICKS(5000));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);

@@ -11,6 +11,7 @@ namespace controlSystem
 
     bool ControlBoard::init()
     {
+
         ESP_LOGI(TAG, "Starting ControlBoard init...");
 
         // system just switched on from the mains switch so default  -- no histyory storage yet
@@ -19,17 +20,15 @@ namespace controlSystem
 
         serialHandler = &serialBus::Serial::instance();
         serialHandler->start_heartbeat_monitor(5000, [this]()
-        {
+                                               {
             actions::actionResponse response;
             response.active = true;
             response.command = CMD_SYS_RPI_SHUTDOWN;
             responseProcessor->process( actions::actionResponse(response) );
-            ESP_LOGE(TAG, "Heartbeat timeout: No data received from Raspberry Pi within 5 seconds.");
-        }
-);
+            ESP_LOGE(TAG, "Heartbeat timeout: No data received from Raspberry Pi within 5 seconds."); });
         spi = &spibus::SPI::instance(SPI2_HOST);
         ESP_LOGW(TAG, "Creating actionProcessor...");
-        responseProcessor = new actionProcessor(*serialHandler, *relays, *spi);
+        responseProcessor = new actionProcessor(*serialHandler, *relays);
         ESP_LOGW(TAG, "actionProcessor created.");
 
         if (!setupRelays())
@@ -43,9 +42,8 @@ namespace controlSystem
 
         if (!setupSerial())
             return false;
-        if (!setupSPI())
-            return false;
-        ESP_LOGW(TAG, "SPI setup complete.");
+
+       ESP_LOGW(TAG, "Serial setup complete.");
         createButtonActionMap();
 
         ESP_LOGI(TAG, "ControlBoard init complete.");
@@ -111,13 +109,6 @@ namespace controlSystem
         return true;
     }
 
-    bool ControlBoard::setupSPI()
-    {
-        ESP_LOGI(TAG, "Initializing SPI...");
-        spi->init(PIN_SPI_DATA, PIN_SPI_CLK, 1);
-
-        return true;
-    }
 
     bool ControlBoard::setupMCPHandler()
     {
@@ -148,6 +139,7 @@ namespace controlSystem
                                      {
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
             spiPintActiveBitMap |= (1 << pin);
+            indicators::getSpiLedDriver().setLed(pin, pressed);
              ESP_LOGI(TAG, "Pin %u  %s", pin, pressed ? "PRESSED" : "RELEASED");
 
             if (pressed && buttonActions[pin])
@@ -166,8 +158,10 @@ namespace controlSystem
                 actions::actionResponse result = buttonActions[pin]->execute(true);
                 responseProcessor->process(result);
                 if(!result.KeepLedActive)
-                spiPintActiveBitMap &= ~(1 << pin);
-
+                {
+                    spiPintActiveBitMap &= ~(1 << pin);
+                    indicators::getSpiLedDriver().setLed(pin, false);
+                }
             } });
 
         mcpHandler.setRotaryCallback([this](int movement)
