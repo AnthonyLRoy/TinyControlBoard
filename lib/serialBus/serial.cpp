@@ -181,7 +181,7 @@ void IRAM_ATTR Serial::gpio_isr_handler(void *arg)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     auto *self = static_cast<Serial *>(arg);
-
+//test
     if (self->task_handle)
     {
         // Notify RX task from ISR
