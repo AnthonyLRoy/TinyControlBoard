@@ -228,6 +228,10 @@ void Serial::start_heartbeat_monitor(uint32_t timeout_ms,
     heartbeat_timeout_ms = timeout_ms;
     heartbeat_timeout_callback = on_timeout;
 
+    // Initialize last_rx_time_us to current time so timeout begins immediately
+    // instead of waiting for the first message to be received
+    last_rx_time_us = esp_timer_get_time();
+
     if (heartbeat_task_handle == nullptr)
     {
         xTaskCreate(
