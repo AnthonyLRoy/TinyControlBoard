@@ -31,6 +31,7 @@ namespace controlSystem
         // Pin Configuration
         static constexpr gpio_num_t PIN_SERIAL_TX = GPIO_NUM_2;
         static constexpr gpio_num_t PIN_SERIAL_RX = GPIO_NUM_1;
+       
         static constexpr gpio_num_t PIN_I2C_SCL = GPIO_NUM_15;
         static constexpr gpio_num_t PIN_I2C_SDA = GPIO_NUM_16;
         static constexpr gpio_num_t PIN_I2C_INT = GPIO_NUM_18;
@@ -85,7 +86,6 @@ namespace controlSystem
         // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
         serialBus::Serial* serialHandler = nullptr;
         relays::StandardRelay* relays = nullptr;
-        spibus::SPI* spi = nullptr;
         actionProcessor* responseProcessor = nullptr;
 
         //declare handler and button action fucntions

@@ -19,7 +19,7 @@ namespace controlSystem
 
         // Initialize serial handler and heartbeat monitor
         serialHandler = &serialBus::Serial::instance();
-        
+
         serialHandler->start_heartbeat_monitor(ControlBoardConfig::HEARTBEAT_TIMEOUT_MS, [this]() {
             ESP_LOGE(TAG, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
                      ControlBoardConfig::HEARTBEAT_TIMEOUT_MS);
@@ -30,7 +30,7 @@ namespace controlSystem
         });
 
         // Initialize SPI and action processor
-        spi = &spibus::SPI::instance(SPI2_HOST);
+
         responseProcessor = new actionProcessor(*serialHandler, *relays);
 
         // Setup hardware components with error checking
