@@ -6,40 +6,48 @@
 #include "actionsResponse.hpp"
 #include "esp_log.h"
 #include "PowerStateManager.hpp"
-#include <driver/gpio.h> // Added for gpio_num_t
+#include <driver/gpio.h>
 #include "led_Manager.hpp"
+#include "RPIBootManager.hpp"
+#include "RelayController.hpp"
+#include <memory>
 
 namespace controlSystem
 {
-
     class actionProcessor
     {
     public:
         struct CommandConfig
         {
             const char *logTag;
-            uint32_t commandId; // Using uint32_t as assumed type for CMD_* constants because they of version of c++ i think
+            uint32_t commandId;
         };
 
     public:
         actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef);
         void process(actions::actionResponse response);
         const char *getCommandNameForPin(uint8_t pin);
+        
+        // RPI boot synchronization - delegated to RPIBootManager
+        void onHeartbeatReceived();
+        void onHeartbeatTimeout();
+        bool WaitForRpiToBoot(uint32_t timeoutMs = 60000);
+        bool waitForPiShutdown(uint32_t timeoutMs = 60000);
 
     private:
         bool HandleCommandPowerStateChange(actions::actionResponse response);
-        bool HandleToggleDac(bool state);
-        bool ShutDownRPI(bool wait);
-        bool ShutDownScreen(bool wait);
-        void sendUartCommand(const char *logTag, UARTMessage message);
-        void sendUartCommand(const char *logTag, uint32_t commandId);
-        void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs); // Changed uint8_t to gpio_num_t
+        
+        // Component managers
+        std::unique_ptr<RPIBootManager> rpiBootManager;
+        std::unique_ptr<RelayController> relayController;
+        
+        // References
         serialBus::Serial &serial;
         relays::StandardRelay &relays;
-       
+        
+        static constexpr const char *TAG = "ActionProcessor";
     };
 
     extern const actionProcessor::CommandConfig commandConfigs[];
     extern const size_t NUM_COMMANDS;
-
 }

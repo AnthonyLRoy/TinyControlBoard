@@ -34,6 +34,8 @@ enum  commandID : uint16_t
     CMD_NO_ACTION = 0x000,
     CMD_SYS_POWER = 0x0001,
     CMD_SYS_RPI_SHUTDOWN = 0x0002,
+    CMD_SYS_HEARTBEAT = 0x0003,
+    CMD_SYS_NOHEARTBEAT = 0x0004,
     // track control commands
     CMD_NEXT_TRACK = 0x0100,
     CMD_PREVIOUS_TRACK = 0x0101,
@@ -53,11 +55,10 @@ enum  commandID : uint16_t
     CMD_TOGGLE_DAC_OFF = 0x010F,
     CMD_ROTARY_LEFT = 0x0110,
     CMD_ROTARY_RIGHT = 0x0111,
-    CMD_ROTARY_ACTION = 0x0112
+    CMD_ROTARY_ACTION = 0x0112,
+ 
 
-    // // PI Control commands
-    // CMD_GET_PI_STATUS  = 0x0201,
-    // CMD_SET__PI_STATUS  = 0x0202,
+
 };
 
 enum PowerCommand : uint8_t
