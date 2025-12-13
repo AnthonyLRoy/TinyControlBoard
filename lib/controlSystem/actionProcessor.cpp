@@ -4,18 +4,11 @@
 
 namespace controlSystem
 {
-    // Constants for clarity
+    // Constants for power state transitions
     constexpr uint32_t POWER_SETTLE_DELAY_MS = 1500;
     constexpr uint32_t SCREEN_ON_DELAY_MS = 1000;
     constexpr uint32_t LONG_PRESS_THRESHOLD_MS = 3000;
-    constexpr uint32_t DEEP_SLEEP_THRESHOLD_MS = 8000;
 
-    // SPI command codes to show the Lights pattern to the user to show Shutting down taking place
-    constexpr uint16_t SPI_INIT_SHUTDOWN = 0xAAAA;
-    constexpr uint16_t SPI_STOP_TRACK_SENT = 0xAAA0;
-    constexpr uint16_t SPI_RPI_SHUTDOWN_SENT = 0xAA00;
-    constexpr uint16_t SPI_SCREEN_SHUTDOWN_SENT = 0xA000;
-    constexpr uint16_t SPI_ALL_OFF = 0x0000;
 
     // Array of command configurations
     const actionProcessor::CommandConfig commandConfigs[] = {
@@ -42,13 +35,13 @@ namespace controlSystem
     actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef)
         : serial(serialBusRef), relays(relaysRef)
     {
-        // Create event group for RPI boot synchronization
-        rpi_boot_event_group = xEventGroupCreate();
+        // Create component managers
+        rpiBootManager = std::make_unique<RPIBootManager>();
+        relayController = std::make_unique<RelayController>(serial, relays);
     }
 
     void actionProcessor::process(actions::actionResponse response)
     {
-
         if (response.command == CMD_NO_ACTION)
         {
             return;
@@ -56,224 +49,152 @@ namespace controlSystem
 
         if (response.command == CMD_SYS_POWER)
         {
-            ESP_LOGI("ActionProcessor", "Processing Power State Change Command");
+            ESP_LOGI(TAG, "Processing Power State Change Command");
             HandleCommandPowerStateChange(response);
             return;
         }
 
         if (indicators::getPowerLed().getState() != ControlBoardPowerState::ON)
         {
-            ESP_LOGI("ActionProcessor", "Ignoring command %u as system is not ON", response.command);
+            ESP_LOGI(TAG, "Ignoring command %u as system is not ON", response.command);
             return;
         }
 
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
-            ShutDownRPI(true);
+            serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            relayController->ShutDownRPI(true);
             return;
         }
 
         if (response.command == CMD_TOGGLE_DAC_ON)
         {
-            HandleToggleDac(true);
+            relayController->HandleToggleDac(true);
             return;
         }
+
         if (response.command == CMD_TOGGLE_DAC_OFF)
         {
-            HandleToggleDac(false);
+            relayController->HandleToggleDac(false);
             return;
         }
+
         if (response.command == CMD_EXIT_ITEM)
         {
-            ESP_LOGI("EXITITEM", "Sending Exit Item Message");
+            ESP_LOGI(TAG, "Sending Exit Item Message");
             return;
         }
 
         if (response.command == CMD_ROTARY_LEFT || response.command == CMD_ROTARY_RIGHT)
         {
-            ESP_LOGI("ROTARYACTION", "Processing Rotary Action Command (%s)  ", response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
-            UARTMessage message;
-            message.command_id = CMD_ROTARY_ACTION;
-            message.params[0] = (response.command == CMD_ROTARY_LEFT) ? CMD_ROTARY_LEFT : CMD_ROTARY_RIGHT;
-            sendUartCommand("ROTARYACTION", CMD_ROTARY_ACTION);
+            ESP_LOGI(TAG, "Processing Rotary Action Command (%s)",
+                     response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
             return;
         }
 
+        // Handle commands requiring UART message
         for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; cmdReference++)
         {
             if (commandConfigs[cmdReference].commandId == response.command)
             {
-                sendUartCommand(commandConfigs[cmdReference].logTag, commandConfigs[cmdReference].commandId);
+                ESP_LOGI(TAG, "Sending command: %s", commandConfigs[cmdReference].logTag);
                 return;
             }
         }
     }
 
-    void actionProcessor::sendUartCommand(const char *logTag, UARTMessage message)
-    {
-        uint8_t tx_buffer[UART_PACKET_SIZE];
-        serialize_message(message, tx_buffer);
-        ESP_LOGI(logTag, "Sending %s Message", logTag);
-        if (!serial.send_data(tx_buffer, UART_PACKET_SIZE))
-            ESP_LOGI(logTag, "Failed to send %s message", logTag);
-        else
-            ESP_LOGI(logTag, "%s message sent successfully", logTag);
-    }
-
-    void actionProcessor::sendUartCommand(const char *logTag, uint32_t commandId)
-    {
-        UARTMessage message;
-        message.command_id = commandId;
-        sendUartCommand(logTag, message);
-    }
-
-    bool actionProcessor::HandleToggleDac(bool state)
-    {
-        relays.setRelayState(PIN_RELAY_DAC, state);
-        return true;
-    }
-
-    void actionProcessor::setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs)
-    {
-        ESP_LOGI("RelayControl", "Setting relay %d to %s with delay %lu ms", pin, state ? "ON" : "OFF", delayMs);
-        relays.setRelayState(pin, state);
-        if (delayMs > 0)
-        {
-            vTaskDelay(pdMS_TO_TICKS(delayMs));
-        }
-    }
-
-    bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
-    {
-        if (
-            indicators::getPowerLed().getState() == ControlBoardPowerState::OFF || indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP || indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
-        {
-            // prevent multiple power on commands
-            indicators::getPowerLed().setState(ControlBoardPowerState::ON);
-            // Power on sequence
-            setRelayWithDelay(PIN_RELAY_SCREEN, true, SCREEN_ON_DELAY_MS);
-            setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
-            setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
-
-            setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
-            bool booted = WaitForRpiToBoot(60000);
-
-            return true && booted;
-        }
-
-        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
-        {
-            ESP_LOGI("PowerCommand", "Initiating Shutdown/Sleep Sequence");
-            // Power off or sleep sequence
-            indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-
-            sendUartCommand("STOP", CMD_STOP_TRACK);
-            ShutDownRPI(true);
-            ShutDownScreen(false);
-            vTaskDelay(pdMS_TO_TICKS(500));
-            vTaskDelay(pdMS_TO_TICKS(5000));
-            indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
-            // Deep sleep if long press exceeds threshold
-            if (response.releaseTimeMilliSecs > DEEP_SLEEP_THRESHOLD_MS)
-            {
-                ESP_LOGI("PowerCommand", "Entering Deep Sleep Mode");
-                setRelayWithDelay(PIN_RELAY_DAC, false, 0);
-                setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, false, 0);
-                indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
-            }
-            return false;
-        }
-        return true;
-    }
-
-    bool actionProcessor::ShutDownRPI(bool wait)
-    {
-        sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
-        if (wait) {
-            waitForPiShutdown(60000);
-        }
-        relays.setRelayState(PIN_RELAY_RPI, false);
-        return false;
-    }
-
-    bool actionProcessor::ShutDownScreen(bool wait)
-    {
-        relays.setRelayState(PIN_RELAY_SCREEN, false);
-        return true;
-    }
-
+    // Delegation methods for RPI boot management
     void actionProcessor::onHeartbeatReceived()
     {
-        if (rpi_boot_event_group != nullptr)
+        if (rpiBootManager)
         {
-            xEventGroupSetBits(rpi_boot_event_group, RPI_HEARTBEAT_BIT);
-            ESP_LOGI("RPIBoot", "Heartbeat received from RPI - boot complete");
+            rpiBootManager->onHeartbeatReceived();
         }
     }
-
 
     void actionProcessor::onHeartbeatTimeout()
     {
-        if (rpi_boot_event_group != nullptr) {
-            xEventGroupSetBits(rpi_boot_event_group, RPI_SHUTDOWN_BIT);
-            ESP_LOGI("RPIShutdown", "Heartbeat timeout detected - RPI has shut down");
-        }
-    }
-
-    bool actionProcessor::waitForPiShutdown(uint32_t timeoutMs)
-    {
-        if (rpi_boot_event_group == nullptr) {
-            ESP_LOGE("RPIShutdown", "Event group not initialized");
-            return false;
-        }
-
-        ESP_LOGI("RPIShutdown", "Waiting for RPI shutdown confirmation (timeout: %" PRIu32 " ms)...", timeoutMs);
-
-        // Wait for shutdown bit to be set (heartbeat timeout), with timeout
-        EventBits_t bits = xEventGroupWaitBits(
-            rpi_boot_event_group,
-            RPI_SHUTDOWN_BIT,
-            pdTRUE,  // Clear bits on exit
-            pdFALSE, // Don't wait for all bits
-            pdMS_TO_TICKS(timeoutMs)
-        );
-
-        if (bits & RPI_SHUTDOWN_BIT) {
-            ESP_LOGI("RPIShutdown", "RPI shutdown confirmed - heartbeat timeout detected");
-            return true;
-        } else {
-            ESP_LOGW("RPIShutdown", "Timeout waiting for RPI shutdown after %" PRIu32 " ms", timeoutMs);
-            return false;
+        if (rpiBootManager)
+        {
+            rpiBootManager->onHeartbeatTimeout();
         }
     }
 
     bool actionProcessor::WaitForRpiToBoot(uint32_t timeoutMs)
     {
-        if (rpi_boot_event_group == nullptr)
+        if (rpiBootManager)
         {
-            ESP_LOGE("RPIBoot", "Event group not initialized");
-            return false;
+            return rpiBootManager->WaitForRpiToBoot(timeoutMs);
+        }
+        return false;
+    }
+
+    bool actionProcessor::waitForPiShutdown(uint32_t timeoutMs)
+    {
+        if (rpiBootManager)
+        {
+            return rpiBootManager->waitForPiShutdown(timeoutMs);
+        }
+        return false;
+    }
+
+    bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
+    {
+
+        // if power is OFF or SLEEP, turn ON
+        // we do this by switching on all necessary relays with delays
+        // then wait for the RPI to start , if it has not already started
+
+        if (indicators::getPowerLed().getState() == ControlBoardPowerState::OFF ||
+            indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP ||
+            indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
+        {
+            // Power on sequence
+            ESP_LOGI(TAG, "Initiating Power ON sequence");
+            indicators::getPowerLed().setState(ControlBoardPowerState::ON);
+
+            relayController->setRelayWithDelay(PIN_RELAY_SCREEN, true, SCREEN_ON_DELAY_MS);
+            relayController->setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
+            relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
+            relayController->setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
+
+            bool booted = WaitForRpiToBoot(60000);
+            return true && booted;
         }
 
-        ESP_LOGI("RPIBoot", "Waiting for RPI heartbeat (timeout: %" PRIu32 " ms)...", timeoutMs);
-
-        // Wait for heartbeat bit to be set, with timeout
-        EventBits_t bits = xEventGroupWaitBits(
-            rpi_boot_event_group,
-            RPI_HEARTBEAT_BIT,
-            pdTRUE,  // Clear bits on exit
-            pdFALSE, // Don't wait for all bits
-            pdMS_TO_TICKS(timeoutMs));
-
-        if (bits & RPI_HEARTBEAT_BIT)
+        // switching off sequence    short press = sleep
+        // 1) sleep keeps switches of power to the RPI and the Screenn but  leaves the power to the DAC and pre amplifiers
+        // 2)  (press for 3 seconds or more) switches off the power to the screen ,
+        // the RPI and the DACS and output preamps , but leves the 3.3v to the reclock-crystal boards //long press = deep sleep
+        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs < LONG_PRESS_THRESHOLD_MS)
         {
-            ESP_LOGI("RPIBoot", "RPI heartbeat detected - boot successful");
+            // Sleep sequence
+            ESP_LOGI(TAG, "Initiating Sleep Sequence");
+            indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
+        
+            serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            waitForPiShutdown(60000);
+            relayController->ShutDownRPI(true);
+            vTaskDelay(pdMS_TO_TICKS(500));
+            relayController->ShutDownScreen(false);
+            vTaskDelay(pdMS_TO_TICKS(5000));
+            indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             return true;
         }
-        else
+        // Deep sleep if long press exceeds threshold 
+        if (response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
         {
-            ESP_LOGW("RPIBoot", "Timeout waiting for RPI heartbeat after %" PRIu32 " ms", timeoutMs);
-            return false;
+            ESP_LOGI(TAG, "Initiating Deep Sleep Sequence");
+            indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
+            serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            waitForPiShutdown(60000);
+            relayController->ShutDownRPI(true);
+            vTaskDelay(pdMS_TO_TICKS(500));
+            relayController->ShutDownScreen(false);
+            relayController->setRelayWithDelay(PIN_RELAY_DAC, false, 0);
+            relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, false, 0);
+            indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
         }
+        return true;
     }
 }

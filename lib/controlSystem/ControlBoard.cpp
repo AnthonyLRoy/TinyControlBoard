@@ -223,8 +223,8 @@ namespace controlSystem
     void ControlBoard::handleSerialRxMessage(const UARTMessage &msg)
 
     {
-        ESP_LOGI(TAG, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
-                 msg.command_id, msg.sequence, msg.msg_type);
+        //ESP_LOGI(TAG, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
+        //         msg.command_id, msg.sequence, msg.msg_type);
 
         // Reset heartbeat timer on message reception
         // (This is handled by Serial class updating last_rx_time_us)

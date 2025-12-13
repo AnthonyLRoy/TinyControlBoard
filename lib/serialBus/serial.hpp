@@ -30,6 +30,7 @@ namespace serialBus
 
         bool send_data(const uint8_t *data, size_t len);
         bool send_data(const char *message);
+        void sendUartCommand(const char *logTag, uint32_t commandId);
         void set_rx_callback(std::function<void(const UARTMessage &)> callback);
 
 

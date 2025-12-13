@@ -180,6 +180,22 @@ bool Serial::send_data(const uint8_t *data, size_t len)
     return written == len;
 }
 
+void Serial::sendUartCommand(const char *logTag, uint32_t commandId)
+{
+    UARTMessage message;
+    message.command_id = commandId;
+    
+    uint8_t tx_buffer[UART_PACKET_SIZE];
+    serialize_message(message, tx_buffer);
+    ESP_LOGI(logTag, "Sending %s Message", logTag);
+    
+    if (!send_data(tx_buffer, UART_PACKET_SIZE)) {
+        ESP_LOGI(logTag, "Failed to send %s message", logTag);
+    } else {
+        ESP_LOGI(logTag, "%s message sent successfully", logTag);
+    }
+}
+
 void IRAM_ATTR Serial::gpio_isr_handler(void *arg)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
