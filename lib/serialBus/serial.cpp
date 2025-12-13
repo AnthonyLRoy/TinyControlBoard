@@ -111,10 +111,13 @@ bool Serial::init_uart(uart_port_t uart_num,
     initialized = true;
 
     // Optional: set RX callback
-    set_rx_callback([this](const UARTMessage &msg)
-                    {
-                        // ESP_LOGI(TAG, "Received message: cmd=0x%04X", msg.command_id);
-                    });
+    // set_rx_callback([this](const UARTMessage &msg)
+    //                 {
+                              
+
+
+    //                      ESP_LOGI(TAG, "Received message: cmd=0x%04X", msg.command_id);
+    //                 });
 
     return true;
 }
@@ -229,7 +232,6 @@ void Serial::start_heartbeat_monitor(uint32_t timeout_ms,
     heartbeat_timeout_callback = on_timeout;
 
     // Initialize last_rx_time_us to current time so timeout begins immediately
-    // instead of waiting for the first message to be received
     last_rx_time_us = esp_timer_get_time();
 
     if (heartbeat_task_handle == nullptr)

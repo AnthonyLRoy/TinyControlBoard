@@ -19,6 +19,11 @@ namespace controlSystem
 
         // Initialize serial handler and heartbeat monitor
         serialHandler = &serialBus::Serial::instance();
+        
+        // Register UART RX callback
+        serialHandler->set_rx_callback([this](const UARTMessage &msg) {
+            this->handleSerialRxMessage(msg);
+        });
 
         serialHandler->start_heartbeat_monitor(ControlBoardConfig::HEARTBEAT_TIMEOUT_MS, [this]() {
             ESP_LOGE(TAG, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
@@ -214,5 +219,21 @@ namespace controlSystem
         buttonActions[ControlBoardConfig::BTN_TOGGLE_METER] = &actions::ToggleMeterDisplayInstance;
         buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_1] = &actions::RotaryEventInstance;
         buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_2] = &actions::RotaryEventInstance;
+    }
+    void ControlBoard::handleSerialRxMessage(const UARTMessage &msg)
+
+    {
+        ESP_LOGI(TAG, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
+                 msg.command_id, msg.sequence, msg.msg_type);
+        
+        // Reset heartbeat timer on message reception
+        // (This is handled by Serial class updating last_rx_time_us)
+        
+        // Process the message through the action processor
+        if (responseProcessor) {
+            // Convert UART message to action response or handle as needed
+            // This depends on your message format and action system
+            ESP_LOGI(TAG, "Processing UART message through action processor");
+        }
     }
 }

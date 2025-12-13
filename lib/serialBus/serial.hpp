@@ -30,8 +30,8 @@ namespace serialBus
 
         bool send_data(const uint8_t *data, size_t len);
         bool send_data(const char *message);
-
         void set_rx_callback(std::function<void(const UARTMessage &)> callback);
+
 
         // Heartbeat monitoring
         uint64_t get_last_rx_time_us() const { return last_rx_time_us; }

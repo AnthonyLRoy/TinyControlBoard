@@ -82,6 +82,9 @@ namespace controlSystem
         void handleButtonPressed(uint8_t pin);
         void handleButtonReleased(uint8_t pin);
         void handleRotaryMovement(int movement);
+        
+        // Serial/UART Callback handler
+        void handleSerialRxMessage(const UARTMessage &msg);
 
         // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
         serialBus::Serial* serialHandler = nullptr;
