@@ -232,7 +232,7 @@ namespace controlSystem
         // Check if this is a heartbeat message from RPI
         const uint16_t CMD_ID_HEARTBEAT = 0x9999;
         if (msg.command_id == CMD_ID_HEARTBEAT) {
-            ESP_LOGI(TAG, "Heartbeat message received from RPI");
+            //ESP_LOGI(TAG, "Heartbeat message received from RPI");
             if (responseProcessor) {
                 responseProcessor->onHeartbeatReceived();
             }
