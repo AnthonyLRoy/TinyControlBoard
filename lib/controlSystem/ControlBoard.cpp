@@ -28,10 +28,10 @@ namespace controlSystem
         serialHandler->start_heartbeat_monitor(ControlBoardConfig::HEARTBEAT_TIMEOUT_MS, [this]() {
             ESP_LOGE(TAG, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
                      ControlBoardConfig::HEARTBEAT_TIMEOUT_MS);
-            actions::actionResponse response;
-            response.active = true;
-            response.command = CMD_SYS_RPI_SHUTDOWN;
-            responseProcessor->process(response);
+            // Notify action processor that heartbeat timeout occurred (RPI is offline)
+            if (responseProcessor) {
+                responseProcessor->onHeartbeatTimeout();
+            }
         });
 
         // Initialize SPI and action processor

@@ -99,7 +99,6 @@ namespace controlSystem
             return;
         }
 
-        // Handle commands requiring UART message
         for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; cmdReference++)
         {
             if (commandConfigs[cmdReference].commandId == response.command)
@@ -125,7 +124,6 @@ namespace controlSystem
     {
         UARTMessage message;
         message.command_id = commandId;
-        uint8_t tx_buffer[UART_PACKET_SIZE];
         sendUartCommand(logTag, message);
     }
 
@@ -147,11 +145,8 @@ namespace controlSystem
 
     bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
     {
-
         if (
-            indicators::getPowerLed().getState() == ControlBoardPowerState::OFF 
-            || indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP 
-            || indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
+            indicators::getPowerLed().getState() == ControlBoardPowerState::OFF || indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP || indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
         {
             // prevent multiple power on commands
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
@@ -162,7 +157,7 @@ namespace controlSystem
 
             setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
             bool booted = WaitForRpiToBoot(60000);
-               
+
             return true && booted;
         }
 
@@ -171,20 +166,11 @@ namespace controlSystem
             ESP_LOGI("PowerCommand", "Initiating Shutdown/Sleep Sequence");
             // Power off or sleep sequence
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-            
 
             sendUartCommand("STOP", CMD_STOP_TRACK);
-
-
             ShutDownRPI(true);
-
-
             ShutDownScreen(false);
-    
-
             vTaskDelay(pdMS_TO_TICKS(500));
-
-
             vTaskDelay(pdMS_TO_TICKS(5000));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             // Deep sleep if long press exceeds threshold
@@ -203,6 +189,9 @@ namespace controlSystem
     bool actionProcessor::ShutDownRPI(bool wait)
     {
         sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+        if (wait) {
+            waitForPiShutdown(60000);
+        }
         relays.setRelayState(PIN_RELAY_RPI, false);
         return false;
     }
@@ -215,15 +204,53 @@ namespace controlSystem
 
     void actionProcessor::onHeartbeatReceived()
     {
-        if (rpi_boot_event_group != nullptr) {
+        if (rpi_boot_event_group != nullptr)
+        {
             xEventGroupSetBits(rpi_boot_event_group, RPI_HEARTBEAT_BIT);
             ESP_LOGI("RPIBoot", "Heartbeat received from RPI - boot complete");
         }
     }
 
-    bool actionProcessor::WaitForRpiToBoot(uint32_t timeoutMs)
+
+    void actionProcessor::onHeartbeatTimeout()
+    {
+        if (rpi_boot_event_group != nullptr) {
+            xEventGroupSetBits(rpi_boot_event_group, RPI_SHUTDOWN_BIT);
+            ESP_LOGI("RPIShutdown", "Heartbeat timeout detected - RPI has shut down");
+        }
+    }
+
+    bool actionProcessor::waitForPiShutdown(uint32_t timeoutMs)
     {
         if (rpi_boot_event_group == nullptr) {
+            ESP_LOGE("RPIShutdown", "Event group not initialized");
+            return false;
+        }
+
+        ESP_LOGI("RPIShutdown", "Waiting for RPI shutdown confirmation (timeout: %" PRIu32 " ms)...", timeoutMs);
+
+        // Wait for shutdown bit to be set (heartbeat timeout), with timeout
+        EventBits_t bits = xEventGroupWaitBits(
+            rpi_boot_event_group,
+            RPI_SHUTDOWN_BIT,
+            pdTRUE,  // Clear bits on exit
+            pdFALSE, // Don't wait for all bits
+            pdMS_TO_TICKS(timeoutMs)
+        );
+
+        if (bits & RPI_SHUTDOWN_BIT) {
+            ESP_LOGI("RPIShutdown", "RPI shutdown confirmed - heartbeat timeout detected");
+            return true;
+        } else {
+            ESP_LOGW("RPIShutdown", "Timeout waiting for RPI shutdown after %" PRIu32 " ms", timeoutMs);
+            return false;
+        }
+    }
+
+    bool actionProcessor::WaitForRpiToBoot(uint32_t timeoutMs)
+    {
+        if (rpi_boot_event_group == nullptr)
+        {
             ESP_LOGE("RPIBoot", "Event group not initialized");
             return false;
         }
@@ -236,16 +263,17 @@ namespace controlSystem
             RPI_HEARTBEAT_BIT,
             pdTRUE,  // Clear bits on exit
             pdFALSE, // Don't wait for all bits
-            pdMS_TO_TICKS(timeoutMs)
-        );
+            pdMS_TO_TICKS(timeoutMs));
 
-        if (bits & RPI_HEARTBEAT_BIT) {
+        if (bits & RPI_HEARTBEAT_BIT)
+        {
             ESP_LOGI("RPIBoot", "RPI heartbeat detected - boot successful");
             return true;
-        } else {
+        }
+        else
+        {
             ESP_LOGW("RPIBoot", "Timeout waiting for RPI heartbeat after %" PRIu32 " ms", timeoutMs);
             return false;
         }
     }
-
 }

@@ -30,7 +30,9 @@ namespace controlSystem
         
         // RPI boot synchronization
         void onHeartbeatReceived();  // Called by ControlBoard when heartbeat is detected
-        bool WaitForRpiToBoot(uint32_t timeoutMs = 10000);  // Waits for heartbeat with timeout
+        void onHeartbeatTimeout();  // Called by ControlBoard when heartbeat timeout occurs (RPI offline)
+        bool WaitForRpiToBoot(uint32_t timeoutMs = 60000);  // Waits for heartbeat with timeout
+        bool waitForPiShutdown(uint32_t timeoutMs = 60000);  // Waits for RPI shutdown completion
 
     private:
         bool HandleCommandPowerStateChange(actions::actionResponse response);
@@ -45,7 +47,8 @@ namespace controlSystem
         
         // RPI boot synchronization
         EventGroupHandle_t rpi_boot_event_group = nullptr;
-        static constexpr int RPI_HEARTBEAT_BIT = (1 << 0);  // Event bit for heartbeat reception
+        static constexpr int RPI_HEARTBEAT_BIT = (1 << 0);      // Event bit for heartbeat reception
+        static constexpr int RPI_SHUTDOWN_BIT = (1 << 1);       // Event bit for heartbeat timeout (RPI offline)
        
     };
 
