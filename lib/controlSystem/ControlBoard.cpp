@@ -225,11 +225,21 @@ namespace controlSystem
     {
         ESP_LOGI(TAG, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
                  msg.command_id, msg.sequence, msg.msg_type);
-        
+
         // Reset heartbeat timer on message reception
         // (This is handled by Serial class updating last_rx_time_us)
-        
-        // Process the message through the action processor
+
+        // Check if this is a heartbeat message from RPI
+        const uint16_t CMD_ID_HEARTBEAT = 0x9999;
+        if (msg.command_id == CMD_ID_HEARTBEAT) {
+            ESP_LOGI(TAG, "Heartbeat message received from RPI");
+            if (responseProcessor) {
+                responseProcessor->onHeartbeatReceived();
+            }
+            return;
+        }
+
+        // Process other messages through the action processor
         if (responseProcessor) {
             // Convert UART message to action response or handle as needed
             // This depends on your message format and action system
@@ -237,3 +247,4 @@ namespace controlSystem
         }
     }
 }
+

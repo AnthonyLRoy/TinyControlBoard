@@ -1,5 +1,6 @@
 #include "actionProcessor.hpp"
 #include "powerLed.hpp"
+#include <inttypes.h>
 
 namespace controlSystem
 {
@@ -39,7 +40,11 @@ namespace controlSystem
     const size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);
 
     actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef)
-        : serial(serialBusRef), relays(relaysRef) {}
+        : serial(serialBusRef), relays(relaysRef)
+    {
+        // Create event group for RPI boot synchronization
+        rpi_boot_event_group = xEventGroupCreate();
+    }
 
     void actionProcessor::process(actions::actionResponse response)
     {
@@ -143,17 +148,22 @@ namespace controlSystem
     bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
     {
 
-        if (indicators::getPowerLed().getState() == ControlBoardPowerState::OFF || indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP || indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
+        if (
+            indicators::getPowerLed().getState() == ControlBoardPowerState::OFF 
+            || indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP 
+            || indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
         {
             // prevent multiple power on commands
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
             // Power on sequence
+            setRelayWithDelay(PIN_RELAY_SCREEN, true, SCREEN_ON_DELAY_MS);
             setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
             setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
-            setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
-            setRelayWithDelay(PIN_RELAY_SCREEN, true, SCREEN_ON_DELAY_MS);
 
-            return true;
+            setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
+            bool booted = WaitForRpiToBoot(60000);
+               
+            return true && booted;
         }
 
         if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
@@ -201,6 +211,41 @@ namespace controlSystem
     {
         relays.setRelayState(PIN_RELAY_SCREEN, false);
         return true;
+    }
+
+    void actionProcessor::onHeartbeatReceived()
+    {
+        if (rpi_boot_event_group != nullptr) {
+            xEventGroupSetBits(rpi_boot_event_group, RPI_HEARTBEAT_BIT);
+            ESP_LOGI("RPIBoot", "Heartbeat received from RPI - boot complete");
+        }
+    }
+
+    bool actionProcessor::WaitForRpiToBoot(uint32_t timeoutMs)
+    {
+        if (rpi_boot_event_group == nullptr) {
+            ESP_LOGE("RPIBoot", "Event group not initialized");
+            return false;
+        }
+
+        ESP_LOGI("RPIBoot", "Waiting for RPI heartbeat (timeout: %" PRIu32 " ms)...", timeoutMs);
+
+        // Wait for heartbeat bit to be set, with timeout
+        EventBits_t bits = xEventGroupWaitBits(
+            rpi_boot_event_group,
+            RPI_HEARTBEAT_BIT,
+            pdTRUE,  // Clear bits on exit
+            pdFALSE, // Don't wait for all bits
+            pdMS_TO_TICKS(timeoutMs)
+        );
+
+        if (bits & RPI_HEARTBEAT_BIT) {
+            ESP_LOGI("RPIBoot", "RPI heartbeat detected - boot successful");
+            return true;
+        } else {
+            ESP_LOGW("RPIBoot", "Timeout waiting for RPI heartbeat after %" PRIu32 " ms", timeoutMs);
+            return false;
+        }
     }
 
 }

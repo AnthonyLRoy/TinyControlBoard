@@ -8,6 +8,8 @@
 #include "PowerStateManager.hpp"
 #include <driver/gpio.h> // Added for gpio_num_t
 #include "led_Manager.hpp"
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
 
 namespace controlSystem
 {
@@ -25,6 +27,10 @@ namespace controlSystem
         actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef);
         void process(actions::actionResponse response);
         const char *getCommandNameForPin(uint8_t pin);
+        
+        // RPI boot synchronization
+        void onHeartbeatReceived();  // Called by ControlBoard when heartbeat is detected
+        bool WaitForRpiToBoot(uint32_t timeoutMs = 10000);  // Waits for heartbeat with timeout
 
     private:
         bool HandleCommandPowerStateChange(actions::actionResponse response);
@@ -36,6 +42,10 @@ namespace controlSystem
         void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs); // Changed uint8_t to gpio_num_t
         serialBus::Serial &serial;
         relays::StandardRelay &relays;
+        
+        // RPI boot synchronization
+        EventGroupHandle_t rpi_boot_event_group = nullptr;
+        static constexpr int RPI_HEARTBEAT_BIT = (1 << 0);  // Event bit for heartbeat reception
        
     };
 
