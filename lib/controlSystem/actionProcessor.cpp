@@ -165,6 +165,7 @@ namespace controlSystem
         // 1) sleep keeps switches of power to the RPI and the Screenn but  leaves the power to the DAC and pre amplifiers
         // 2)  (press for 3 seconds or more) switches off the power to the screen ,
         // the RPI and the DACS and output preamps , but leves the 3.3v to the reclock-crystal boards //long press = deep sleep
+        ESP_LOGI(TAG, "Release Time MS: %" PRIu16 "", response.releaseTimeMilliSecs );
         if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs < LONG_PRESS_THRESHOLD_MS)
         {
             // Sleep sequence

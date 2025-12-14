@@ -76,10 +76,14 @@ namespace actions
             if (pressed)
             {
                 pressStartUs_ = esp_timer_get_time();
+                ESP_LOGI("TimedAction", "inital value at %" PRIi64 " us", pressStartUs_ );   
+                
             }
             else
             {
-                const int64_t durationUs = esp_timer_get_time() - pressStartUs_;
+                 ESP_LOGI("TimedAction", "Validate at %" PRIi64 " us", pressStartUs_ );   
+                 const int64_t durationUs = esp_timer_get_time() - pressStartUs_;
+                ESP_LOGI("TimedAction", "Button was pressed for %" PRIu64 " us", durationUs);
                 response.releaseTimeMilliSecs = static_cast<uint32_t>(durationUs / 1000);
                 response.command = CMD;
             }
