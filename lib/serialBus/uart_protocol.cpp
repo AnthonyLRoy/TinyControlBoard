@@ -4,7 +4,7 @@ uint8_t calculate_checksum(const uint8_t *data)
 {
     uint16_t sum = 0;
 
-    // Sum bytes 1..16 exactly like Python (skip start byte, skip checksum)
+    // Sum bytes 1..16 exactly like Python otherwise we are fucked (skip start byte, skip checksum)
     for (int i = 1; i <= 16; i++)
     {
         sum += data[i];

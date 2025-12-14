@@ -1,4 +1,5 @@
 #include "powerLed.hpp"
+#include <cmath>
 
 #define TAG "PowerLed"
 
@@ -95,7 +96,12 @@ void PowerLed::setState(ControlBoardPowerState state)
     currentPowerState = state;
     activeFlash = false;
     standbyFlash = false;
-ESP_LOGI(TAG, "Setting PowerLed state to %d", static_cast<int>(state));
+    activeBreathing = false;
+    standbyBreathing = false;
+    activeBlip = false;
+    standbyBlip = false;
+    uint64_t now = esp_timer_get_time() / 1000;
+    ESP_LOGI(TAG, "Setting PowerLed state to %d", static_cast<int>(state));
 
     switch (state)
     {
@@ -115,13 +121,14 @@ ESP_LOGI(TAG, "Setting PowerLed state to %d", static_cast<int>(state));
             break;
 
         case ControlBoardPowerState::TURNING_ON:
-            activeFlash = true;
-            standbyLed.setDuty(offDuty);
+            standbyFlash = true;
+            activeLed.setDuty(offDuty);
             break;
 
         case ControlBoardPowerState::SLEEP:
             activeLed.setDuty(offDuty);
-            standbyLed.setDuty(mediumDuty);
+            standbyBreathing = true;
+            breathingStartTime = now;
             break;
 
         case ControlBoardPowerState::GOING_TO_SLEEP:
@@ -131,7 +138,8 @@ ESP_LOGI(TAG, "Setting PowerLed state to %d", static_cast<int>(state));
 
         case ControlBoardPowerState::DEEPSLEEP:
             activeLed.setDuty(offDuty);
-            standbyLed.setDuty(mediumDuty);
+            standbyBlip = true;
+            blipStartTime = now;
             break;
 
         case ControlBoardPowerState::GOING_INTO_DEEP_SLEEP:
@@ -155,9 +163,8 @@ void PowerLed::update()
     const uint32_t flashPeriod = 300; // ms
     uint64_t now = esp_timer_get_time() / 1000;
 
-    if (!(activeFlash || standbyFlash)) return;
-
-    if (now - lastFlashToggle >= flashPeriod)
+    // Handle regular flashing
+    if ((activeFlash || standbyFlash) && (now - lastFlashToggle >= flashPeriod))
     {
         lastFlashToggle = now;
         flashState = !flashState;
@@ -171,6 +178,54 @@ void PowerLed::update()
         if (standbyFlash)
         {
             standbyLed.setDuty(flashState ? dutyCycle : offDuty);
+            standbyLed.updateDuty();
+        }
+    }
+
+    // Handle breathing effect (smooth fade in/out)
+    if (activeBreathing || standbyBreathing)
+    {
+        uint64_t elapsed = now - breathingStartTime;
+        uint32_t phase = elapsed % BREATHING_PERIOD;
+        
+        // Use sine-like breathing: 0->max->0 over the period
+        // phase goes from 0 to BREATHING_PERIOD
+        float ratio = (float)phase / BREATHING_PERIOD;
+        // Create smooth breathing curve (sine wave from 0 to 1 to 0)
+        float sineValue = sinf(ratio * 3.14159f); // 0 to pi gives 0->1->0
+        int breathingDuty = (int)(2048 * sineValue); // 50% brightness
+
+        if (activeBreathing)
+        {
+            activeLed.setDuty(breathingDuty);
+            activeLed.updateDuty();
+        }
+
+        if (standbyBreathing)
+        {
+            standbyLed.setDuty(breathingDuty);
+            standbyLed.updateDuty();
+        }
+    }
+
+    // Handle blip effect (short pulse every 10 seconds)
+    if (activeBlip || standbyBlip)
+    {
+        uint64_t elapsed = now - blipStartTime;
+        uint32_t cyclePhase = elapsed % BLIP_PERIOD;
+        bool shouldBeOn = (cyclePhase < BLIP_DURATION);
+        
+        int blipDuty = shouldBeOn ? 2048 : offDuty; // 50% brightness
+
+        if (activeBlip)
+        {
+            activeLed.setDuty(blipDuty);
+            activeLed.updateDuty();
+        }
+
+        if (standbyBlip)
+        {
+            standbyLed.setDuty(blipDuty);
             standbyLed.updateDuty();
         }
     }

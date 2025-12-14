@@ -47,6 +47,19 @@ namespace indicators
         bool flashState = false;
         uint64_t lastFlashToggle = 0;
 
+        // Breathing effect
+        bool activeBreathing = false;
+        bool standbyBreathing = false;
+        uint64_t breathingStartTime = 0;
+        const uint32_t BREATHING_PERIOD = 4000; // 2 seconds for full cycle
+
+        // Blip effect (short pulse)
+        bool activeBlip = false;
+        bool standbyBlip = false;
+        uint64_t blipStartTime = 0;
+        const uint32_t BLIP_DURATION = 125;    // 1/8 second
+        const uint32_t BLIP_PERIOD = 10000;    // every 10 seconds
+
         // LED duty levels
         int dutyCycle = 4096;
         int mediumDuty = 2048;

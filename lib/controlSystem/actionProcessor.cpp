@@ -9,7 +9,6 @@ namespace controlSystem
     constexpr uint32_t SCREEN_ON_DELAY_MS = 1000;
     constexpr uint32_t LONG_PRESS_THRESHOLD_MS = 3000;
 
-
     // Array of command configurations
     const actionProcessor::CommandConfig commandConfigs[] = {
         {"POWERCOMMAND", CMD_SYS_POWER},
@@ -166,12 +165,13 @@ namespace controlSystem
         // 1) sleep keeps switches of power to the RPI and the Screenn but  leaves the power to the DAC and pre amplifiers
         // 2)  (press for 3 seconds or more) switches off the power to the screen ,
         // the RPI and the DACS and output preamps , but leves the 3.3v to the reclock-crystal boards //long press = deep sleep
+        ESP_LOGI(TAG, "Release Time MS: %" PRIu16 "", response.releaseTimeMilliSecs );
         if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs < LONG_PRESS_THRESHOLD_MS)
         {
             // Sleep sequence
             ESP_LOGI(TAG, "Initiating Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-        
+
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
             waitForPiShutdown(60000);
             relayController->ShutDownRPI(true);
@@ -181,8 +181,8 @@ namespace controlSystem
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             return true;
         }
-        // Deep sleep if long press exceeds threshold 
-        if (response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
+        // Deep sleep if long press exceeds threshold
+        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
         {
             ESP_LOGI(TAG, "Initiating Deep Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);

@@ -170,7 +170,7 @@ namespace controlSystem
         indicators::getSpiLedDriver().setLed(pin, true);
 
         if (buttonActions[pin]) {
-            actions::actionResponse result = buttonActions[pin]->execute(false);
+            actions::actionResponse result = buttonActions[pin]->execute(true);
             responseProcessor->process(result);
         }
     }
@@ -181,7 +181,7 @@ namespace controlSystem
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
 
         if (buttonActions[pin]) {
-            actions::actionResponse result = buttonActions[pin]->execute(true);
+            actions::actionResponse result = buttonActions[pin]->execute(false);
             responseProcessor->process(result);
 
             if (!result.KeepLedActive) {
