@@ -9,7 +9,6 @@ namespace controlSystem
     constexpr uint32_t SCREEN_ON_DELAY_MS = 1000;
     constexpr uint32_t LONG_PRESS_THRESHOLD_MS = 3000;
 
-
     // Array of command configurations
     const actionProcessor::CommandConfig commandConfigs[] = {
         {"POWERCOMMAND", CMD_SYS_POWER},
@@ -171,7 +170,7 @@ namespace controlSystem
             // Sleep sequence
             ESP_LOGI(TAG, "Initiating Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-        
+
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
             waitForPiShutdown(60000);
             relayController->ShutDownRPI(true);
@@ -181,8 +180,8 @@ namespace controlSystem
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             return true;
         }
-        // Deep sleep if long press exceeds threshold 
-        if (response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
+        // Deep sleep if long press exceeds threshold
+        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
         {
             ESP_LOGI(TAG, "Initiating Deep Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);

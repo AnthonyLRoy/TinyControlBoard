@@ -29,7 +29,7 @@ namespace controlSystem
     bool RelayController::ShutDownRPI(bool wait)
     {
         relays.setRelayState(PIN_RELAY_RPI, false);
-        ESP_LOGI(TAG, "RPI shutdown command sent, relay disabled");
+        ESP_LOGI(TAG, "RPI relay disabled");
         return true;
     }
 
