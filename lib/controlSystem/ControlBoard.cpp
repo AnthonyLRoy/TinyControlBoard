@@ -200,6 +200,7 @@ namespace controlSystem
             actions::actionResponse result = buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_1]->execute(movement > 0);
             responseProcessor->process(result);
         }
+        indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
     }
 
     void ControlBoard::createButtonActionMap()
