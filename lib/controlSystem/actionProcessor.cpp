@@ -150,7 +150,6 @@ namespace controlSystem
         {
             // Power on sequence
             ESP_LOGI(TAG, "Initiating Power ON sequence");
-            indicators::getPowerLed().setState(ControlBoardPowerState::ON);
 
             relayController->setRelayWithDelay(PIN_RELAY_SCREEN, true, SCREEN_ON_DELAY_MS);
             relayController->setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
@@ -158,6 +157,8 @@ namespace controlSystem
             relayController->setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
 
             bool booted = WaitForRpiToBoot(60000);
+            indicators::getPowerLed().setState(ControlBoardPowerState::ON);
+            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Active);
             return true && booted;
         }
 
@@ -179,6 +180,7 @@ namespace controlSystem
             relayController->ShutDownScreen(false);
             vTaskDelay(pdMS_TO_TICKS(5000));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
+            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::sleeping);
             return true;
         }
         // Deep sleep if long press exceeds threshold
@@ -194,6 +196,7 @@ namespace controlSystem
             relayController->setRelayWithDelay(PIN_RELAY_DAC, false, 0);
             relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, false, 0);
             indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
+            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::sleeping);
         }
         return true;
     }
