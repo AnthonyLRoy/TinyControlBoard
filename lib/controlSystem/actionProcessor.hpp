@@ -10,6 +10,7 @@
 #include "led_Manager.hpp"
 #include "RPIBootManager.hpp"
 #include "RelayController.hpp"
+#include "uart_protocol.hpp"
 #include <memory>
 
 namespace controlSystem

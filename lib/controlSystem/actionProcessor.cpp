@@ -2,6 +2,7 @@
 #include "powerLed.hpp"
 #include <inttypes.h>
 
+
 namespace controlSystem
 {
     // Constants for power state transitions
@@ -41,6 +42,7 @@ namespace controlSystem
 
     void actionProcessor::process(actions::actionResponse response)
     {
+        ESP_LOGI(TAG, "Action Processor received command: 0x%04X", response.command);
         if (response.command == CMD_NO_ACTION)
         {
             return;
@@ -58,7 +60,7 @@ namespace controlSystem
             ESP_LOGI(TAG, "Ignoring command %u as system is not ON", response.command);
             return;
         }
-
+//todo remove as handled in power state change
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
@@ -84,8 +86,12 @@ namespace controlSystem
             return;
         }
 
-        if (response.command == CMD_ROTARY_LEFT || response.command == CMD_ROTARY_RIGHT)
+        if (response.command == CMD_ROTARY_ACTION)
         {
+            UARTMessage message;
+            message.command_id = response.command;
+            message.params[0] = (response.parameters[0]);
+            serial.sendUartMessage("ROTARY", message);          
             ESP_LOGI(TAG, "Processing Rotary Action Command (%s)",
                      response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
             return;
@@ -96,6 +102,7 @@ namespace controlSystem
         {
             if (commandConfigs[cmdReference].commandId == response.command)
             {
+                serial.sendUartCommand(commandConfigs[cmdReference].logTag, response.command);
                 ESP_LOGI(TAG, "Sending command: %s", commandConfigs[cmdReference].logTag);
                 return;
             }

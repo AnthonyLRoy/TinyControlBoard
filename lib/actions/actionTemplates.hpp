@@ -39,15 +39,11 @@ namespace actions
         {
             actionResponse response;
                 response.command = CMD_ROTARY_ACTION;
-                response.parameters[0] = ROTATE_DIRECTION;
+                response.parameters[0] = IsLeft ? 0 : 1; // 0 for left, 1 for right
             return response;
         }
     };
 
-    /**
-     * Momentary button that only sends a command when pressed.
-     * CMD: Command to send
-     */
     template <commandID CMD>
     class MomentaryAction : public ButtonAction
     {
