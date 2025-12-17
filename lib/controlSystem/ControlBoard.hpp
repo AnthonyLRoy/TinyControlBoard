@@ -55,8 +55,8 @@ namespace controlSystem
         static constexpr uint8_t BTN_TOGGLE_DAC = 10;
         static constexpr uint8_t BTN_TOGGLE_DISPLAY = 11;
         static constexpr uint8_t BTN_TOGGLE_METER = 12;
-        static constexpr uint8_t BTN_ROTARY_EVENT_1 = 13;
-        static constexpr uint8_t BTN_ROTARY_EVENT_2 = 14;
+        static constexpr uint8_t BTN_ROTARY_EVENT_LEFT = 13;
+        static constexpr uint8_t BTN_ROTARY_EVENT_RIGHT = 14;
         
         static constexpr uint8_t NUM_BUTTONS = 15;
     };

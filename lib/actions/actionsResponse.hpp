@@ -9,7 +9,7 @@ namespace actions
        
         bool active = false;
         commandID  command = CMD_NO_ACTION;
-        char parameters[10]{};  
+        uint16_t parameters[5]{0,0,0,0,0};  
         uint16_t releaseTimeMilliSecs = 0;
         bool KeepLedActive= false;
 

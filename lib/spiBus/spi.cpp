@@ -3,7 +3,7 @@
 static const char *TAG = "SPI";
 
 
-// we can remove this is class as its been replaced with thw SpiLedDriver we are not going to use spi for anything else
+//TODO  we can remove this is class as its been replaced with thw SpiLedDriver we are not going to use spi for anything else
 namespace spibus
 {
 

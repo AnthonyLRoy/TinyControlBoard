@@ -144,16 +144,21 @@ void Serial::deinit_uart()
     }
 }
 
-bool Serial::send_data(const char *message)
+void Serial::sendUartMessage(const char *logTag,  UARTMessage &message)
 {
-    if (!message || !initialized)
+    uint8_t tx_buffer[UART_PACKET_SIZE];
+    serialize_message(message, tx_buffer);
+
+    ESP_LOGI(logTag, "Sending %s message (cmd=0x%04X)", logTag, message.command_id);
+
+    if (!send_data(tx_buffer, UART_PACKET_SIZE))
     {
-        ESP_LOGW(TAG, "Invalid send attempt.");
-        return false;
+        ESP_LOGE(logTag, "Failed to send %s message", logTag);
     }
-    ESP_LOGI(TAG, "Sending message: %s", message);
-    int written = uart_write_bytes(uart_number, message, strlen(message));
-    return written > 0;
+    else
+    {
+        ESP_LOGI(logTag, "%s message sent successfully", logTag);
+    }
 }
 
 bool Serial::send_data(const uint8_t *data, size_t len)
@@ -182,18 +187,9 @@ bool Serial::send_data(const uint8_t *data, size_t len)
 
 void Serial::sendUartCommand(const char *logTag, uint32_t commandId)
 {
-    UARTMessage message;
-    message.command_id = commandId;
-    
-    uint8_t tx_buffer[UART_PACKET_SIZE];
-    serialize_message(message, tx_buffer);
-    ESP_LOGI(logTag, "Sending %s Message", logTag);
-    
-    if (!send_data(tx_buffer, UART_PACKET_SIZE)) {
-        ESP_LOGI(logTag, "Failed to send %s message", logTag);
-    } else {
-        ESP_LOGI(logTag, "%s message sent successfully", logTag);
-    }
+    UARTMessage msg{};
+    msg.command_id = commandId;
+    sendUartMessage(logTag, msg);
 }
 
 void IRAM_ATTR Serial::gpio_isr_handler(void *arg)

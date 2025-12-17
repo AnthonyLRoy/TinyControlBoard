@@ -162,42 +162,43 @@ namespace controlSystem
         indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
 
-    void ControlBoard::handleButtonPressed(uint8_t pin)
+    void ControlBoard::handleButtonPressed(uint8_t buttonPressedId)
     {
-        ESP_LOGI(TAG, "Button pressed on pin %u", pin);
+        ESP_LOGI(TAG, "Button pressed on pin %u", buttonPressedId);
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-        spiPintActiveBitMap |= (1 << pin);
-        indicators::getSpiLedDriver().setLed(pin, true);
+        spiPintActiveBitMap |= (1 << buttonPressedId);
+        indicators::getSpiLedDriver().setLed(buttonPressedId, true);
 
-        if (buttonActions[pin]) {
-            actions::actionResponse result = buttonActions[pin]->execute(true);
+        if (buttonActions[buttonPressedId]) {
+            actions::actionResponse result = buttonActions[buttonPressedId]->execute(true);
             responseProcessor->process(result);
         }
     }
 
-    void ControlBoard::handleButtonReleased(uint8_t pin)
+    void ControlBoard::handleButtonReleased(uint8_t buttonReleasedId)
     {
-        ESP_LOGI(TAG, "Button released on pin %u", pin);
+        ESP_LOGI(TAG, "Button released on pin %u", buttonReleasedId);
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
 
-        if (buttonActions[pin]) {
-            actions::actionResponse result = buttonActions[pin]->execute(false);
+        if (buttonActions[buttonReleasedId]) {
+            actions::actionResponse result = buttonActions[buttonReleasedId]->execute(false);
             responseProcessor->process(result);
 
             if (!result.KeepLedActive) {
-                spiPintActiveBitMap &= ~(1 << pin);
-                indicators::getSpiLedDriver().setLed(pin, false);
+                spiPintActiveBitMap &= ~(1 << buttonReleasedId);
+                indicators::getSpiLedDriver().setLed(buttonReleasedId, false);
             }
         }
     }
 
-    void ControlBoard::handleRotaryMovement(int movement)
+
+    void ControlBoard::handleRotaryMovement(int direction)
     {
-        ESP_LOGI(TAG, "Rotary movement: %s", (movement > 0 ? "RIGHT" : "LEFT"));
+        ESP_LOGI(TAG, "Rotary movement: %s", (direction > 0 ? "RIGHT" : "LEFT"));
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-        
-        if (buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_1]) {
-            actions::actionResponse result = buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_1]->execute(movement > 0);
+        // this if statement assumes both left and right rotary events are handled by the same action
+        if (buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT]) {
+            actions::actionResponse result = buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT]->execute(direction > 0);
             responseProcessor->process(result);
         }
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
@@ -218,8 +219,8 @@ namespace controlSystem
         buttonActions[ControlBoardConfig::BTN_TOGGLE_DAC] = &actions::ToggleDacInstance;
         buttonActions[ControlBoardConfig::BTN_TOGGLE_DISPLAY] = &actions::ToggleDisplayInstance;
         buttonActions[ControlBoardConfig::BTN_TOGGLE_METER] = &actions::ToggleMeterDisplayInstance;
-        buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_1] = &actions::RotaryEventInstance;
-        buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_2] = &actions::RotaryEventInstance;
+        buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT] = &actions::RotaryEventInstance;
+        buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_RIGHT] = &actions::RotaryEventInstance;
     }
     void ControlBoard::handleSerialRxMessage(const UARTMessage &msg)
 
