@@ -221,6 +221,7 @@ namespace controlSystem
         buttonActions[ControlBoardConfig::BTN_TOGGLE_METER] = &actions::ToggleMeterDisplayInstance;
         buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT] = &actions::RotaryEventInstance;
         buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_RIGHT] = &actions::RotaryEventInstance;
+        buttonActions[ControlBoardConfig::BTN_CYCLE_BRIGHTNESS] = &actions::CycleBrightnessInstance;
     }
     void ControlBoard::handleSerialRxMessage(const UARTMessage &msg)
 

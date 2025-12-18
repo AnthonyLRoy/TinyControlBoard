@@ -25,4 +25,5 @@ namespace actions
     extern ButtonAction &PreviousMenuInstance;
     extern ButtonAction &NextMenuInstance;
     extern ButtonAction &MenuSelectInstance;
+    extern ButtonAction &CycleBrightnessInstance;
 }

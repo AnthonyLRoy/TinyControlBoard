@@ -27,6 +27,10 @@ namespace controlSystem
         {"METEROFF", CMD_TOGGLE_METER_OFF},
         {"DISPLAYON", CMD_DISPLAY_ON},
         {"ROTARY", CMD_ROTARY_ACTION},
+        {"TOGGLEDAC", CMD_TOGGLE_DAC},
+        {"TOGGLEDISPLAY", CMD_TOGGLE_DISPLAY},
+        {"TOGGLEMETER", CMD_TOGGLE_METER},
+        {"CYCLEBRIGHTNESS", CMD_CYCLE_BRIGHTNESS}
 
     };
 
@@ -68,21 +72,40 @@ namespace controlSystem
             return;
         }
 
-        if (response.command == CMD_TOGGLE_DAC_ON)
-        {
-            relayController->HandleToggleDac(true);
-            return;
-        }
 
-        if (response.command == CMD_TOGGLE_DAC_OFF)
-        {
-            relayController->HandleToggleDac(false);
-            return;
-        }
 
         if (response.command == CMD_EXIT_ITEM)
         {
             ESP_LOGI(TAG, "Sending Exit Item Message");
+            return;
+        }
+
+        if (response.command == CMD_TOGGLE_DAC_ON || response.command == CMD_TOGGLE_DAC_OFF)
+        {
+            relayController->HandleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
+            return;
+        }
+        
+        if(response.command  == CMD_DISPLAY_OFF || response.command == CMD_DISPLAY_ON)
+        {
+            ESP_LOGI(TAG, "Processing Display Toggle Command (%s)",
+                     response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
+            
+                UARTMessage message;
+                message.command_id = CMD_TOGGLE_DISPLAY;
+                message.params[0] = (response.command == CMD_DISPLAY_ON) ? 1 : 0;
+                serial.sendUartMessage("DISPLAY", message);
+            return;
+        }
+
+         if(response.command == CMD_TOGGLE_METER_ON || response.command == CMD_TOGGLE_METER_OFF)
+        {
+            ESP_LOGI(TAG, "Processing Meter Toggle Command (%s)",
+                     response.command == CMD_TOGGLE_METER_ON ? "ON" : "OFF");
+                UARTMessage message;
+                message.command_id = CMD_TOGGLE_METER;
+                message.params[0] = (response.command == CMD_TOGGLE_METER_ON) ? 1 : 0;
+                serial.sendUartMessage("METER", message);
             return;
         }
 

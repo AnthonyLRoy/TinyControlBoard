@@ -57,6 +57,7 @@ namespace controlSystem
         static constexpr uint8_t BTN_TOGGLE_METER = 12;
         static constexpr uint8_t BTN_ROTARY_EVENT_LEFT = 13;
         static constexpr uint8_t BTN_ROTARY_EVENT_RIGHT = 14;
+        static constexpr uint8_t BTN_CYCLE_BRIGHTNESS = 15;
         
         static constexpr uint8_t NUM_BUTTONS = 15;
     };
