@@ -26,7 +26,7 @@ namespace controlSystem
         
         // Heartbeat Configuration
         static constexpr uint32_t HEARTBEAT_TIMEOUT_MS = 15000;
-        static constexpr uint32_t INIT_DELAY_MS = 12000;  // Power LED transition delay
+        static constexpr uint32_t INIT_DELAY_MS = 5000;  // Power LED transition delay
         
         // Pin Configuration
         static constexpr gpio_num_t PIN_SERIAL_TX = GPIO_NUM_2;

@@ -16,18 +16,21 @@ GPIO.setup(DRDY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 # === UART SETUP ===
 ser = serial.Serial(UART_PORT, BAUD_RATE, timeout=0.01)
 
-# === PROTOCOL ===
+# === do not change this format  ===
 # start_byte(1B) | version(1B) | src_app(1B) | msg_type(1B) |
 # sequence(1B) | command_id(2B) | params[5] (2B each) | checksum(1B)
 PACKET_SIZE = 18
 PACKET_FORMAT = "<BBBBBH5HB"  # little-endian
 UART_START_BYTE = 0xAA  # match C++ start byte
 
+
+last_brightness_value = 0   # define at module level
+
 # === FUNCTIONS ===
 
 def compute_checksum_cpp_style(packet_bytes):
     """
-    Compute checksum like the C++ sender:
+    Compute checksum in the same wayn that the c++  C++ sender works in the UartMEssage class.:
     sum of bytes 1..16 (skip start_byte), modulo 256
     """
     return sum(packet_bytes[1:17]) % 256
@@ -44,21 +47,36 @@ def read_full_packet():
     return bytes(data)
 
 def handle_command(command_id, params):
-    """Execute Moode commands based on command_id."""
+     global last_brightness_value = 0
+
     print(f"Handling Command ID: {command_id}, Params: {params}", flush=True)
-    if command_id == 0x0102:
+    if command_id == 0x0002:            # Shutdown command
+        os.system("sudo shutdown now")  
+    elif command_id == 0x0100:          # Next track command
+        os.system("mpc next")  
+    elif command_id == 0x0101:          # Previous track command
+        os.system("mpc prev")
+    elif command_id ==  0x0102:         # Play/Pause toggle
         os.system("mpc toggle")
-    elif command_id == 0x0100:
-        os.system("mpc next")
-    elif command_id ==  0x0102:
-        os.system("mpc toggle")
-    elif command_id == 0x0103:
+    elif command_id == 0x0103:          # Stop command
         os.system("mpc stop")
-    elif command_id == 0x0104:
-        os.system("mpc +10")
-    elif command_id == 0x0105:
-        os.system("mpc -10")
-  
+    elif command_id == 0x0104:          # skip forward 10 seconds
+        os.system("mpc seek +10")
+    elif command_id == 0x0105:          # skip backward 10 seconds
+        os.system("mpc seek -10")
+    # elif command_id == 0x0115:          #toggle meter display
+    #     # waiting for Moode 10.0.2 os.system("moode-meter-toggle")
+    elif command_id  == 0x0116:          # cycle display brightness
+        if last_brightness_value >= 100:
+            last_brightness_value = 10
+        else:   
+            last_brightness_value += 10
+        os.system("ddcutil setvcp 10 " +str(last_brightness_value))
+    elif command_id == 0x010E:   # toggle display on/off
+        if params[0] == 1:
+            os.system("ddcutil setvcp d6 1")  # turn on display  
+        else:
+            os.system("ddcutil setvcp d6 5")  # turn off display  
     else:
         print("Unknown command", flush=True)
 

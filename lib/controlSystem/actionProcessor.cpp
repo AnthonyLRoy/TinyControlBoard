@@ -2,7 +2,6 @@
 #include "powerLed.hpp"
 #include <inttypes.h>
 
-
 namespace controlSystem
 {
     // Constants for power state transitions
@@ -64,16 +63,15 @@ namespace controlSystem
             ESP_LOGI(TAG, "Ignoring command %u as system is not ON", response.command);
             return;
         }
-//todo remove as handled in power state change
+        
+        // todo remove as handled in power state change
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
             relayController->ShutDownRPI(true);
             return;
         }
-
-
-
+//todo no longer needed
         if (response.command == CMD_EXIT_ITEM)
         {
             ESP_LOGI(TAG, "Sending Exit Item Message");
@@ -85,27 +83,27 @@ namespace controlSystem
             relayController->HandleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
             return;
         }
-        
-        if(response.command  == CMD_DISPLAY_OFF || response.command == CMD_DISPLAY_ON)
+
+        if (response.command == CMD_DISPLAY_OFF || response.command == CMD_DISPLAY_ON)
         {
             ESP_LOGI(TAG, "Processing Display Toggle Command (%s)",
                      response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
-            
-                UARTMessage message;
-                message.command_id = CMD_TOGGLE_DISPLAY;
-                message.params[0] = (response.command == CMD_DISPLAY_ON) ? 1 : 0;
-                serial.sendUartMessage("DISPLAY", message);
+
+            UARTMessage message;
+            message.command_id = CMD_TOGGLE_DISPLAY;
+            message.params[0] = (response.command == CMD_DISPLAY_ON) ? 1 : 0;
+            serial.sendUartMessage("DISPLAY", message);
             return;
         }
 
-         if(response.command == CMD_TOGGLE_METER_ON || response.command == CMD_TOGGLE_METER_OFF)
+        if (response.command == CMD_TOGGLE_METER_ON || response.command == CMD_TOGGLE_METER_OFF)
         {
             ESP_LOGI(TAG, "Processing Meter Toggle Command (%s)",
                      response.command == CMD_TOGGLE_METER_ON ? "ON" : "OFF");
-                UARTMessage message;
-                message.command_id = CMD_TOGGLE_METER;
-                message.params[0] = (response.command == CMD_TOGGLE_METER_ON) ? 1 : 0;
-                serial.sendUartMessage("METER", message);
+            UARTMessage message;
+            message.command_id = CMD_TOGGLE_METER;
+            message.params[0] = (response.command == CMD_TOGGLE_METER_ON) ? 1 : 0;
+            serial.sendUartMessage("METER", message);
             return;
         }
 
@@ -114,7 +112,7 @@ namespace controlSystem
             UARTMessage message;
             message.command_id = response.command;
             message.params[0] = (response.parameters[0]);
-            serial.sendUartMessage("ROTARY", message);          
+            serial.sendUartMessage("ROTARY", message);
             ESP_LOGI(TAG, "Processing Rotary Action Command (%s)",
                      response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
             return;
@@ -196,7 +194,7 @@ namespace controlSystem
         // 1) sleep keeps switches of power to the RPI and the Screenn but  leaves the power to the DAC and pre amplifiers
         // 2)  (press for 3 seconds or more) switches off the power to the screen ,
         // the RPI and the DACS and output preamps , but leves the 3.3v to the reclock-crystal boards //long press = deep sleep
-        ESP_LOGI(TAG, "Release Time MS: %" PRIu16 "", response.releaseTimeMilliSecs );
+        ESP_LOGI(TAG, "Release Time MS: %" PRIu16 "", response.releaseTimeMilliSecs);
         if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs < LONG_PRESS_THRESHOLD_MS)
         {
             // Sleep sequence

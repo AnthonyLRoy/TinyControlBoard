@@ -60,7 +60,9 @@ namespace controlSystem
 
         ESP_LOGI(TAG, "ControlBoard init complete.");
         ESP_LOGI(TAG, "Transitioning Power LED to Sleep state...");
+        
         vTaskDelay(pdMS_TO_TICKS(ControlBoardConfig::INIT_DELAY_MS));
+
         indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
 
         return true;
