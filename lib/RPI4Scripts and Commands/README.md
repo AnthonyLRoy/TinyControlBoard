@@ -159,13 +159,14 @@ journalctl -u uart5_listener.service -f
 create the file 
 
 ```bash
-/usr/local/bin/heartbeat_sender.py
+  /usr/local/bin/heartbeat_sender.py
 
 ```
 
 Add execute permisions 
 ```bash
 
+  sudo chmod +x /usr/local/bin/heartbeat_sender.py
 
 ```
 copy the contents from the file heartbeat_sender.py located in this folder and save
@@ -173,17 +174,22 @@ copy the contents from the file heartbeat_sender.py located in this folder and s
 ### 1 Create the service 
 
 ```bash
+
  sudo nano /etc/systemd/system/heartbeat.service
+
 ```
 ensure that the file is Executable 
 
 
 ```bash
+
 sudo chmod +x heartbeat_sender.py
+
 ```
 ### 2 paste the following code and save
 
 ```bash
+
 [Unit]
 Description=UART5 Heartbeat Sender
 After=network.target multi-user.target
@@ -197,17 +203,24 @@ WorkingDirectory=/home/antho
 [Install]
 WantedBy=multi-user.target
 
+
 ```
 
 ### 3 Enable the service
 
 ```bash
+
   sudo systemctl daemon-reload
   sudo systemctl enable heartbeat.service
-  sudo systemctl start heartbeat.service
+  sudo systemctl restart heartbeat.service
+
 ```
-### 4 Check the logs 
+### 4 Check the status and  logs 
+
  ```bash
+
+  systemctl status heartbeat.service
+
   journalctl -u heartbeat.service -f
 
  ```
