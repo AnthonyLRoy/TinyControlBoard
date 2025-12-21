@@ -8,6 +8,8 @@ namespace controlSystem
     constexpr uint32_t POWER_SETTLE_DELAY_MS = 1500;
     constexpr uint32_t SCREEN_ON_DELAY_MS = 1000;
     constexpr uint32_t LONG_PRESS_THRESHOLD_MS = 3000;
+    constexpr uint32_t RPI_BOOT_TIMEOUT_MS = 60000;
+    constexpr uint32_t RPI_SHUTDOWN_TIMEOUT_MS = 60000;
 
     // Array of command configurations
     const actionProcessor::CommandConfig commandConfigs[] = {
@@ -46,6 +48,7 @@ namespace controlSystem
     void actionProcessor::process(actions::actionResponse response)
     {
         ESP_LOGI(TAG, "Action Processor received command: 0x%04X", response.command);
+        
         if (response.command == CMD_NO_ACTION)
         {
             return;
@@ -63,7 +66,7 @@ namespace controlSystem
             ESP_LOGI(TAG, "Ignoring command %u as system is not ON", response.command);
             return;
         }
-        
+
         // todo remove as handled in power state change
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
@@ -71,7 +74,7 @@ namespace controlSystem
             relayController->ShutDownRPI(true);
             return;
         }
-//todo no longer needed
+        // todo no longer needed
         if (response.command == CMD_EXIT_ITEM)
         {
             ESP_LOGI(TAG, "Sending Exit Item Message");
@@ -176,6 +179,7 @@ namespace controlSystem
             indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP ||
             indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
         {
+            indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
             // Power on sequence
             ESP_LOGI(TAG, "Initiating Power ON sequence");
 
@@ -184,7 +188,7 @@ namespace controlSystem
             relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
             relayController->setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
 
-            bool booted = WaitForRpiToBoot(60000);
+            bool booted = WaitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Active);
             return true && booted;
@@ -202,7 +206,7 @@ namespace controlSystem
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
 
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
-            waitForPiShutdown(60000);
+            waitForPiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             relayController->ShutDownRPI(true);
             vTaskDelay(pdMS_TO_TICKS(500));
             relayController->ShutDownScreen(false);
@@ -217,7 +221,7 @@ namespace controlSystem
             ESP_LOGI(TAG, "Initiating Deep Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
-            waitForPiShutdown(60000);
+            waitForPiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             relayController->ShutDownRPI(true);
             vTaskDelay(pdMS_TO_TICKS(500));
             relayController->ShutDownScreen(false);

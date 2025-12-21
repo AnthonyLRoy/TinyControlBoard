@@ -151,6 +151,56 @@ journalctl -u uart5_listener.service -f
 
 ---
 
+# create the heatbeat sender service
+
+
+### 0 Copy the code to the directory
+
+create the file 
+
+```bash
+/usr/local/bin/heartbeat_sender.py
+
+```
+copy the contents from the file heartbeat_sender.py located in this folder and save
+
+### 1 Create the service 
+
+```bash
+ sudo nano /etc/systemd/system/heartbeat.service
+```
+
+### 2 paste the following code and save
+
+```bash
+[Unit]
+Description=UART5 Heartbeat Sender
+After=network.target multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/antho/heartbeat_sender.py
+Restart=always
+WorkingDirectory=/home/antho
+
+[Install]
+WantedBy=multi-user.target
+
+```
+
+### 3 Enable the service
+
+```bash
+  sudo systemctl daemon-reload
+  sudo systemctl enable heartbeat.service
+  sudo systemctl start heartbeat.service
+```
+### 4 Check the logs 
+ ```bash
+  journalctl -u heartbeat.service -f
+
+ ```
+
 # File Locations Summary
 
 | Purpose                          | File Path                                   | Notes                                |
@@ -163,6 +213,28 @@ journalctl -u uart5_listener.service -f
 | Python interpreter used by systemd | `/usr/bin/python3`                         | Ensure correct version                |
 
 ---
+
+
+# Set audo password login on local console
+
+```bash
+sudo raspi-config
+```
+
+Use the arrow keys to navigate to System Options and press Enter.
+
+Select Boot / Auto Login and press Enter.
+
+Choose the appropriate option for your needs:
+  B2 Console Autologin to boot to the command line without requiring a login.
+  B4 Desktop Autologin to boot directly into the desktop environment without a login prompt.
+Press Enter to confirm your selection.
+
+Use the right arrow key to select and press Enter.
+
+The tool will ask if you want to reboot. Select Yes and press Enter for the changes to take effect. 
+
+After rebooting, the Raspberry Pi will automatically log in with the selected user account. 
 
 # Troubleshooting
 
@@ -263,3 +335,6 @@ sudo reboot
 ```
 
 ---
+
+
+
