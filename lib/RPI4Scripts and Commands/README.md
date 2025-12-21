@@ -162,6 +162,12 @@ create the file
 /usr/local/bin/heartbeat_sender.py
 
 ```
+
+Add execute permisions 
+```bash
+
+
+```
 copy the contents from the file heartbeat_sender.py located in this folder and save
 
 ### 1 Create the service 
@@ -169,7 +175,12 @@ copy the contents from the file heartbeat_sender.py located in this folder and s
 ```bash
  sudo nano /etc/systemd/system/heartbeat.service
 ```
+ensure that the file is Executable 
 
+
+```bash
+sudo chmod +x heartbeat_sender.py
+```
 ### 2 paste the following code and save
 
 ```bash
