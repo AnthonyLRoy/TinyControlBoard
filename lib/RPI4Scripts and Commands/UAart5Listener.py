@@ -56,8 +56,8 @@ def handle_command(command_id, params):
 
     print(f"Handling Command ID: {command_id:#06x}, Params: {params}", flush=True)
 
-    if command_id == 0x0002:            # Shutdown
-        os.system("sudo shutdown now")
+    if command_id == 0x0002:   
+        os.system("moodeutl --shutdown")         # Shutdown
 
     elif command_id == 0x0100:          # Next track
         os.system("mpc next")
@@ -76,8 +76,14 @@ def handle_command(command_id, params):
 
     elif command_id == 0x0105:          # Seek -10s
         os.system("mpc seek -10")
+    
+    elif command_id == 0x0115:
+        if params[0] == 1:
+            os.system("sudo moodeutl --setdisplay peppy")
+        else:
+            os.system("sudo moodeutl --setdisplay webui")          
 
-    elif command_id == 0x0116:          # Cycle display brightness
+    elif command_id == 0x0116:          
         if last_brightness_value >= 100:
             last_brightness_value = 10
         else:

@@ -178,17 +178,12 @@ copy the contents from the file heartbeat_sender.py located in this folder and s
  sudo nano /etc/systemd/system/heartbeat.service
 
 ```
-ensure that the file is Executable 
 
 
-```bash
 
-sudo chmod +x heartbeat_sender.py
-
-```
 ### 2 paste the following code and save
 
-```bash
+```ini
 
 [Unit]
 Description=UART5 Heartbeat Sender
