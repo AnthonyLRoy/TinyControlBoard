@@ -18,6 +18,7 @@ namespace actions
     static SimpleCommandAction PreviousMenuCmd(CMD_PREV_MENU_ITEM);
     static SimpleCommandAction NextMenuCmd(CMD_NEXT_MENU_ITEM);
     static SimpleCommandAction MenuSelectCmd(CMD_ITEM_SELECT);
+    static SimpleCommandAction CycleBrightnessCmd(CMD_CYCLE_BRIGHTNESS);
 
     ButtonAction& PreviousTrackInstance = PreviousTrackCmd;
     ButtonAction& NextTrackInstance     = NextTrackCmd;
@@ -28,4 +29,5 @@ namespace actions
     ButtonAction& PreviousMenuInstance  = PreviousMenuCmd;
     ButtonAction& NextMenuInstance      = NextMenuCmd;
     ButtonAction& MenuSelectInstance    = MenuSelectCmd;
+    ButtonAction& CycleBrightnessInstance = CycleBrightnessCmd;     
 }

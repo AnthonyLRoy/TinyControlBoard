@@ -209,12 +209,12 @@ void Serial::handle_uart_rx()
 {
     if (initialized)
     {
-        int len = uart_read_bytes(uart_number, tmp_buffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
+        int receivedDataLength = uart_read_bytes(uart_number, tmp_buffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
 
-        if (len > 0)
+        if (receivedDataLength > 0)
         {
             // ESP_LOGI(TAG, "UART RX: Read %d bytes", len);
-            rx_buffer.push_bytes(tmp_buffer, len);
+            rx_buffer.push_bytes(tmp_buffer, receivedDataLength);
 
             UARTMessage msg;
             while (rx_buffer.get_next_message(msg))

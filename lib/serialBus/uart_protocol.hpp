@@ -56,10 +56,11 @@ enum  commandID : uint16_t
     CMD_ROTARY_LEFT = 0x0110,
     CMD_ROTARY_RIGHT = 0x0111,
     CMD_ROTARY_ACTION = 0x0112,
- 
-
-
-};
+    CMD_TOGGLE_DAC = 0x0113,
+    CMD_TOGGLE_DISPLAY = 0x0114,
+    CMD_TOGGLE_METER = 0x0115,
+    CMD_CYCLE_BRIGHTNESS = 0x0116
+ };
 
 enum PowerCommand : uint8_t
 {

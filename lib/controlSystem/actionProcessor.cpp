@@ -2,13 +2,14 @@
 #include "powerLed.hpp"
 #include <inttypes.h>
 
-
 namespace controlSystem
 {
     // Constants for power state transitions
     constexpr uint32_t POWER_SETTLE_DELAY_MS = 1500;
     constexpr uint32_t SCREEN_ON_DELAY_MS = 1000;
     constexpr uint32_t LONG_PRESS_THRESHOLD_MS = 3000;
+    constexpr uint32_t RPI_BOOT_TIMEOUT_MS = 60000;
+    constexpr uint32_t RPI_SHUTDOWN_TIMEOUT_MS = 60000;
 
     // Array of command configurations
     const actionProcessor::CommandConfig commandConfigs[] = {
@@ -27,6 +28,10 @@ namespace controlSystem
         {"METEROFF", CMD_TOGGLE_METER_OFF},
         {"DISPLAYON", CMD_DISPLAY_ON},
         {"ROTARY", CMD_ROTARY_ACTION},
+        {"TOGGLEDAC", CMD_TOGGLE_DAC},
+        {"TOGGLEDISPLAY", CMD_TOGGLE_DISPLAY},
+        {"TOGGLEMETER", CMD_TOGGLE_METER},
+        {"CYCLEBRIGHTNESS", CMD_CYCLE_BRIGHTNESS}
 
     };
 
@@ -43,6 +48,7 @@ namespace controlSystem
     void actionProcessor::process(actions::actionResponse response)
     {
         ESP_LOGI(TAG, "Action Processor received command: 0x%04X", response.command);
+        
         if (response.command == CMD_NO_ACTION)
         {
             return;
@@ -60,29 +66,47 @@ namespace controlSystem
             ESP_LOGI(TAG, "Ignoring command %u as system is not ON", response.command);
             return;
         }
-//todo remove as handled in power state change
+
+        // todo remove as handled in power state change
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
             relayController->ShutDownRPI(true);
             return;
         }
-
-        if (response.command == CMD_TOGGLE_DAC_ON)
-        {
-            relayController->HandleToggleDac(true);
-            return;
-        }
-
-        if (response.command == CMD_TOGGLE_DAC_OFF)
-        {
-            relayController->HandleToggleDac(false);
-            return;
-        }
-
+        // todo no longer needed
         if (response.command == CMD_EXIT_ITEM)
         {
             ESP_LOGI(TAG, "Sending Exit Item Message");
+            return;
+        }
+
+        if (response.command == CMD_TOGGLE_DAC_ON || response.command == CMD_TOGGLE_DAC_OFF)
+        {
+            relayController->HandleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
+            return;
+        }
+
+        if (response.command == CMD_DISPLAY_OFF || response.command == CMD_DISPLAY_ON)
+        {
+            ESP_LOGI(TAG, "Processing Display Toggle Command (%s)",
+                     response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
+
+            UARTMessage message;
+            message.command_id = CMD_TOGGLE_DISPLAY;
+            message.params[0] = (response.command == CMD_DISPLAY_ON) ? 1 : 0;
+            serial.sendUartMessage("DISPLAY", message);
+            return;
+        }
+
+        if (response.command == CMD_TOGGLE_METER_ON || response.command == CMD_TOGGLE_METER_OFF)
+        {
+            ESP_LOGI(TAG, "Processing Meter Toggle Command (%s)",
+                     response.command == CMD_TOGGLE_METER_ON ? "ON" : "OFF");
+            UARTMessage message;
+            message.command_id = CMD_TOGGLE_METER;
+            message.params[0] = (response.command == CMD_TOGGLE_METER_ON) ? 1 : 0;
+            serial.sendUartMessage("METER", message);
             return;
         }
 
@@ -91,7 +115,7 @@ namespace controlSystem
             UARTMessage message;
             message.command_id = response.command;
             message.params[0] = (response.parameters[0]);
-            serial.sendUartMessage("ROTARY", message);          
+            serial.sendUartMessage("ROTARY", message);
             ESP_LOGI(TAG, "Processing Rotary Action Command (%s)",
                      response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
             return;
@@ -155,6 +179,7 @@ namespace controlSystem
             indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP ||
             indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
         {
+            indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
             // Power on sequence
             ESP_LOGI(TAG, "Initiating Power ON sequence");
 
@@ -163,7 +188,7 @@ namespace controlSystem
             relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
             relayController->setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
 
-            bool booted = WaitForRpiToBoot(60000);
+            bool booted = WaitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Active);
             return true && booted;
@@ -173,7 +198,7 @@ namespace controlSystem
         // 1) sleep keeps switches of power to the RPI and the Screenn but  leaves the power to the DAC and pre amplifiers
         // 2)  (press for 3 seconds or more) switches off the power to the screen ,
         // the RPI and the DACS and output preamps , but leves the 3.3v to the reclock-crystal boards //long press = deep sleep
-        ESP_LOGI(TAG, "Release Time MS: %" PRIu16 "", response.releaseTimeMilliSecs );
+        ESP_LOGI(TAG, "Release Time MS: %" PRIu16 "", response.releaseTimeMilliSecs);
         if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs < LONG_PRESS_THRESHOLD_MS)
         {
             // Sleep sequence
@@ -181,7 +206,7 @@ namespace controlSystem
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
 
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
-            waitForPiShutdown(60000);
+            waitForPiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             relayController->ShutDownRPI(true);
             vTaskDelay(pdMS_TO_TICKS(500));
             relayController->ShutDownScreen(false);
@@ -196,7 +221,7 @@ namespace controlSystem
             ESP_LOGI(TAG, "Initiating Deep Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
             serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
-            waitForPiShutdown(60000);
+            waitForPiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             relayController->ShutDownRPI(true);
             vTaskDelay(pdMS_TO_TICKS(500));
             relayController->ShutDownScreen(false);
