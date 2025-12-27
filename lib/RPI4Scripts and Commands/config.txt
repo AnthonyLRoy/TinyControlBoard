@@ -1,6 +1,21 @@
+#########################################
+# This file is managed by moOde
+#########################################
+
+# Device filters
+[cm4]
+otg_mode=1
+[pi4]
+hdmi_force_hotplug:0=1
+hdmi_force_hotplug:1=1
+hdmi_enable_4kp60=0
+[all]
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+display_auto_detect=1
 disable_fw_kms_setup=1
 arm_64bit=1
-
+dtoverlay=uart5
 # General settings
 arm_boost=0
 disable_splash=1
@@ -16,10 +31,10 @@ dtparam=audio=on
 
 # Do not alter this section
 # Integrated adapters
-#dtoverlay=disable-bt
-#dtoverlay=disable-wifi
+dtoverlay=disable-bt
+dtoverlay=disable-wifi
 # Audio overlays
-#dtoverlay=none
+dtoverlay=i2s-dac
 #dtoverlay=force_eeprom_read=0
 # PCI Express
 #dtparam=pciex1

@@ -1,0 +1,19 @@
+[big-Danblue]
+meter.type = circular
+channels = 2
+ui.refresh.period = 0.033
+bgr.filename = big-danblue-bgr.png
+fgr.filename = big-danblue-fgr.png
+indicator.filename = big-danblue-needle.png
+steps.per.degree = 2
+start.angle = 38
+stop.angle = -38
+#distance = 178
+distance = 184
+left.origin.x = 403
+left.origin.y = 585
+right.origin.x = 1170
+right.origin.y = 585
+meter.x = 0
+meter.y = 0
+screen.bgr =

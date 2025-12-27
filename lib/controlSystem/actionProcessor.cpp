@@ -183,10 +183,10 @@ namespace controlSystem
             // Power on sequence
             ESP_LOGI(TAG, "Initiating Power ON sequence");
 
-            relayController->setRelayWithDelay(PIN_RELAY_SCREEN, true, SCREEN_ON_DELAY_MS);
-            relayController->setRelayWithDelay(PIN_RELAY_DAC, true, POWER_SETTLE_DELAY_MS);
-            relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, true, POWER_SETTLE_DELAY_MS);
-            relayController->setRelayWithDelay(PIN_RELAY_RPI, true, SCREEN_ON_DELAY_MS);
+            relayController->setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, SCREEN_ON_DELAY_MS);
+            relayController->setRelayWithDelay(PIN_RELAY_DAC_POWER, true, POWER_SETTLE_DELAY_MS);
+            relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, true, POWER_SETTLE_DELAY_MS);
+            relayController->setRelayWithDelay(PIN_RELAY_RPI_POWER, true, SCREEN_ON_DELAY_MS);
 
             bool booted = WaitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
@@ -225,8 +225,8 @@ namespace controlSystem
             relayController->ShutDownRPI(true);
             vTaskDelay(pdMS_TO_TICKS(500));
             relayController->ShutDownScreen(false);
-            relayController->setRelayWithDelay(PIN_RELAY_DAC, false, 0);
-            relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE, false, 0);
+            relayController->setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
+            relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::sleeping);
         }
