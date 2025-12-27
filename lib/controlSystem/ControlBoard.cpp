@@ -86,7 +86,7 @@ namespace controlSystem
         relays::StandardRelay::init(PIN_RELAY_RPI_POWER);
         relays::StandardRelay::init(PIN_RELAY_DAC_POWER);
         relays::StandardRelay::init(PIN_RELAY_OUTPUT_STAGE_POWER);
-        relays::StandardRelay::init(PIN_RELAY_TOGGLE_DAC);
+        relays::StandardRelay::init(PIN_RELAY_PROTO_DAC_ENABLED);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_1);
         relays::StandardRelay::init(PIN_RELAY_GENERAL_2);
 
@@ -95,7 +95,7 @@ namespace controlSystem
         relays::StandardRelay::setRelayState(PIN_RELAY_RPI_POWER, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_DAC_POWER, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_OUTPUT_STAGE_POWER, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_TOGGLE_DAC, false);
+        relays::StandardRelay::setRelayState(PIN_RELAY_PROTO_DAC_ENABLED, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_1, false);
 
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);

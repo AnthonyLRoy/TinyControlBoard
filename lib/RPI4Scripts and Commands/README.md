@@ -82,6 +82,91 @@ sudo apt install python3-serial
 
 ---
 
+## 4.5 install PIGPIO
+
+first install the make files as we need to compile an build
+```bash
+  sudo apt update
+  sudo apt install -y git make gcc
+
+```
+download the source code into a temp directory
+```bash
+cd /tmp
+git clone https://github.com/joan2937/pigpio.git
+cd pigpio
+```
+
+run the make command in the dirctory
+```bash
+  Make
+```
+run sudo make install  install
+
+/usr/local/bin/pigpiod
+
+Python module pigpio
+
+Command-line tools (pigs, etc.)
+
+```bash
+sudo make install
+
+```
+
+Start the service 
+
+```bash
+sudo systemctl enable pigpiod
+sudo systemctl start pigpiod
+
+```
+make sure then service exists   
+
+```bash
+  which pigpiod
+```
+
+you should see
+```swift
+ /usr/local/bin/pigpiod 
+```
+create the system command file
+
+```bash
+sudo nano /etc/systemd/system/pigpiod.service
+```
+
+Past the following code into the file and save 
+
+```ini
+[Unit]
+Description=Pigpio daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/pigpiod -l
+ExecStop=/bin/kill -s TERM $MAINPID
+Type=forking
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+reload the system and start the service
+
+```bash
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable pigpiod
+sudo systemctl start pigpiod
+```
+now verify that pigpiod is running, each time you run the command you should see a increasing number
+
+```bash
+pigs t
+```
+
 ## 5. Create the UART Listener Systemd Service
 
 Create the service file:
@@ -232,6 +317,8 @@ WantedBy=multi-user.target
 | Python interpreter used by systemd | `/usr/bin/python3`                         | Ensure correct version                |
 
 ---
+
+
 
 
 # Set audo password login on local console
