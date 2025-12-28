@@ -14,17 +14,19 @@ namespace indicators
 
         bool started = false;
         void init();
-        void setLed(uint16_t index, bool on);
+        void setLed(uint8_t buttonId, bool on);
         void update();
 
     private:
+
         static constexpr const char *TAG = "spiLedDriver";
         spi_device_handle_t spiHandle;
         spi_host_device_t host;
         gpio_num_t mosiPin;
         gpio_num_t clkPin;
         gpio_num_t latch;
-        uint16_t ledState = 0;
+        uint16_t ledBitState = 0;
         uint8_t txBuf[2];
+        void print_u16_binary(uint16_t v);
     };
 }

@@ -70,10 +70,8 @@ namespace controlSystem
         actionProcessor& getActionProcessor() { return *responseProcessor; }
 
     private:
-        // Initialization helpers
-        uint16_t spiPintActiveBitMap = 0x0000; // Bitmap to track active SPI pins
-        
-        bool setupRelays();
+
+    bool setupRelays();
         bool setupSerial();
         bool setupMCPHandler();
         void setupMCPCallbacks();

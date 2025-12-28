@@ -168,7 +168,6 @@ namespace controlSystem
     {
         ESP_LOGI(TAG, "Button pressed on pin %u", buttonPressedId);
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-        spiPintActiveBitMap |= (1 << buttonPressedId);
         indicators::getSpiLedDriver().setLed(buttonPressedId, true);
 
         if (buttonActions[buttonPressedId]) {
@@ -185,14 +184,11 @@ namespace controlSystem
         if (buttonActions[buttonReleasedId]) {
             actions::actionResponse result = buttonActions[buttonReleasedId]->execute(false);
             responseProcessor->process(result);
-
             if (!result.KeepLedActive) {
-                spiPintActiveBitMap &= ~(1 << buttonReleasedId);
                 indicators::getSpiLedDriver().setLed(buttonReleasedId, false);
             }
         }
     }
-
 
     void ControlBoard::handleRotaryMovement(int direction)
     {
