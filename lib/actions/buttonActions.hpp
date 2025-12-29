@@ -9,12 +9,14 @@ namespace actions
     using ToggleMeterDisplay = ToggleAction<CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF>;
     using RotaryEvent = RotaryAction<CMD_ROTARY_ACTION>;
     using PowerButton = TimedAction<CMD_SYS_POWER>;
+    using CoverView = ToggleAction<CMD_COVER_VIEW_OFF, CMD_COVER_VIEW_OFF>;
 
     extern ToggleDac ToggleDacInstance;
     extern ToggleDisplay ToggleDisplayInstance;
     extern ToggleMeterDisplay ToggleMeterDisplayInstance;
     extern PowerButton PowerButtonInstance;
     extern RotaryEvent RotaryEventInstance;
+    extern CoverView CoverViewInstance;
 
     extern ButtonAction &PreviousTrackInstance;
     extern ButtonAction &NextTrackInstance;

@@ -211,7 +211,7 @@ namespace controlSystem
         buttonActions[ControlBoardConfig::BTN_SKIP_BACK] = &actions::SkipBackInstance;
         buttonActions[ControlBoardConfig::BTN_PLAY_PAUSE] = &actions::PlayPauseInstance;
         buttonActions[ControlBoardConfig::BTN_STOP] = &actions::StopInstance;
-        buttonActions[ControlBoardConfig::BTN_PREV_MENU] = &actions::PreviousMenuInstance;
+        buttonActions[ControlBoardConfig::BTN_COVER] = &actions::CoverViewInstance;
         buttonActions[ControlBoardConfig::BTN_NEXT_MENU] = &actions::NextMenuInstance;
         buttonActions[ControlBoardConfig::BTN_MENU_SELECT] = &actions::MenuSelectInstance;
         buttonActions[ControlBoardConfig::BTN_TOGGLE_DAC] = &actions::ToggleDacInstance;

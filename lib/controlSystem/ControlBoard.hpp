@@ -49,7 +49,7 @@ namespace controlSystem
         static constexpr uint8_t BTN_SKIP_BACK = 4;
         static constexpr uint8_t BTN_PLAY_PAUSE = 5;
         static constexpr uint8_t BTN_STOP = 6;
-        static constexpr uint8_t BTN_PREV_MENU = 7;
+        static constexpr uint8_t BTN_COVER = 7;
         static constexpr uint8_t BTN_NEXT_MENU = 8;
         static constexpr uint8_t BTN_MENU_SELECT = 9;
         static constexpr uint8_t BTN_TOGGLE_DAC = 10;
