@@ -34,7 +34,7 @@ if not pi.connected:
 
 pi.set_mode(PWM_PIN, pigpio.OUTPUT)
 
-# === WAVEFORM PWM FUNCTIONS ===
+# a bit upset about this need a pwm signal for the backlight
 def create_pwm_wave(duty_percent):
     global wave_id
 
@@ -69,7 +69,7 @@ def set_brightness_pwm(percent):
 # Set initial brightness
 set_brightness_pwm(last_brightness_value)
 
-# === FUNCTIONS ===
+# calculate the checksum to ensure data not currupted 
 
 def compute_checksum_cpp_style(packet_bytes):
     return sum(packet_bytes[1:17]) & 0xFF

@@ -132,7 +132,7 @@ namespace controlSystem
             return;
         }
 
-        // Handle commands requiring UART message
+        // Handle simple commands requiring UART message
         for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; cmdReference++)
         {
             if (commandConfigs[cmdReference].commandId == response.command)
@@ -144,7 +144,7 @@ namespace controlSystem
         }
     }
 
-    // Delegation methods for RPI boot management
+    // handler methods for RPI boot management
     void actionProcessor::onHeartbeatReceived()
     {
         if (rpiBootManager)
@@ -184,7 +184,7 @@ namespace controlSystem
 
         // if power is OFF or SLEEP, turn ON
         // we do this by switching on all necessary relays with delays
-        // then wait for the RPI to start , if it has not already started
+        // then wait for the RPI to start  if it has not already started
 
         if (indicators::getPowerLed().getState() == ControlBoardPowerState::OFF ||
             indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP ||
