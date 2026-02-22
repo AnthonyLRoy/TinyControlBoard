@@ -20,7 +20,7 @@ namespace controlSystem
         {"STOP", CMD_STOP_TRACK},
         {"SKIPFORWARD", CMD_SKIP_FORWARD},
         {"SKIPBACK", CMD_SKIP_BACK},
-        {"PREVMENU", CMD_PREV_MENU_ITEM},
+        {"COVER", CMD_TOGGLE_COVER_VIEW},
         {"NEXTMENU", CMD_NEXT_MENU_ITEM},
         {"ITEMSELECT", CMD_ITEM_SELECT},
         {"DISPLAYOFF", CMD_DISPLAY_OFF},
@@ -86,6 +86,17 @@ namespace controlSystem
             relayController->HandleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
             return;
         }
+        if (response.command == CMD_COVER_VIEW_ON || response.command == CMD_COVER_VIEW_OFF)
+        {
+            ESP_LOGI(TAG, "Processing Cover View Toggle Command (%s)",
+                     response.command == CMD_COVER_VIEW_ON ? "ON" : "OFF");
+
+            UARTMessage message;
+            message.command_id = CMD_TOGGLE_COVER_VIEW;
+            message.params[0] = (response.command == CMD_COVER_VIEW_ON) ? 1 : 0;
+            serial.sendUartMessage("COVERVIEW", message);
+            return;
+        }   
 
         if (response.command == CMD_DISPLAY_OFF || response.command == CMD_DISPLAY_ON)
         {
@@ -121,7 +132,7 @@ namespace controlSystem
             return;
         }
 
-        // Handle commands requiring UART message
+        // Handle simple commands requiring UART message
         for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; cmdReference++)
         {
             if (commandConfigs[cmdReference].commandId == response.command)
@@ -133,7 +144,7 @@ namespace controlSystem
         }
     }
 
-    // Delegation methods for RPI boot management
+    // handler methods for RPI boot management
     void actionProcessor::onHeartbeatReceived()
     {
         if (rpiBootManager)
@@ -173,7 +184,7 @@ namespace controlSystem
 
         // if power is OFF or SLEEP, turn ON
         // we do this by switching on all necessary relays with delays
-        // then wait for the RPI to start , if it has not already started
+        // then wait for the RPI to start  if it has not already started
 
         if (indicators::getPowerLed().getState() == ControlBoardPowerState::OFF ||
             indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP ||

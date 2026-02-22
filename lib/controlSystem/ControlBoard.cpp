@@ -38,7 +38,7 @@ namespace controlSystem
 
         responseProcessor = new actionProcessor(*serialHandler, *relays);
 
-        // Setup hardware components with error checking
+        // Setup hardware components 
         if (!setupRelays()) {
             ESP_LOGE(TAG, "Failed to setup relays");
             return false;
@@ -163,12 +163,12 @@ namespace controlSystem
 
         indicators::getButtonLed().SetStatus(ControlBoardWorkingStatus::Idle);
     }
-
+    /// @brief todo modify some commands to activate on release for timed button presses
+    /// @param buttonPressedId 
     void ControlBoard::handleButtonPressed(uint8_t buttonPressedId)
     {
         ESP_LOGI(TAG, "Button pressed on pin %u", buttonPressedId);
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-        spiPintActiveBitMap |= (1 << buttonPressedId);
         indicators::getSpiLedDriver().setLed(buttonPressedId, true);
 
         if (buttonActions[buttonPressedId]) {
@@ -185,20 +185,18 @@ namespace controlSystem
         if (buttonActions[buttonReleasedId]) {
             actions::actionResponse result = buttonActions[buttonReleasedId]->execute(false);
             responseProcessor->process(result);
-
             if (!result.KeepLedActive) {
-                spiPintActiveBitMap &= ~(1 << buttonReleasedId);
                 indicators::getSpiLedDriver().setLed(buttonReleasedId, false);
             }
         }
     }
 
-
     void ControlBoard::handleRotaryMovement(int direction)
     {
         ESP_LOGI(TAG, "Rotary movement: %s", (direction > 0 ? "RIGHT" : "LEFT"));
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-        // this if statement assumes both left and right rotary events are handled by the same action
+        // this if statement assumes both left and right rotary events are handled by the same action, only a parameter changes1 for right 2 for left, why is this seperate from Handle button pressed and released? To lazy to refactor now
+        // and this is c++ not c#sharp after all, An every time i try to use references i get lost in pointer land, so sue me
         if (buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT]) {
             actions::actionResponse result = buttonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT]->execute(direction > 0);
             responseProcessor->process(result);
@@ -215,7 +213,7 @@ namespace controlSystem
         buttonActions[ControlBoardConfig::BTN_SKIP_BACK] = &actions::SkipBackInstance;
         buttonActions[ControlBoardConfig::BTN_PLAY_PAUSE] = &actions::PlayPauseInstance;
         buttonActions[ControlBoardConfig::BTN_STOP] = &actions::StopInstance;
-        buttonActions[ControlBoardConfig::BTN_PREV_MENU] = &actions::PreviousMenuInstance;
+        buttonActions[ControlBoardConfig::BTN_COVER] = &actions::CoverViewInstance;
         buttonActions[ControlBoardConfig::BTN_NEXT_MENU] = &actions::NextMenuInstance;
         buttonActions[ControlBoardConfig::BTN_MENU_SELECT] = &actions::MenuSelectInstance;
         buttonActions[ControlBoardConfig::BTN_TOGGLE_DAC] = &actions::ToggleDacInstance;
@@ -235,7 +233,7 @@ namespace controlSystem
         // (This is handled by Serial class updating last_rx_time_us)
 
         // Check if this is a heartbeat message from RPI
-        const uint16_t CMD_ID_HEARTBEAT = 0x9999;
+        const uint16_t CMD_ID_HEARTBEAT = 0x9999;  //todo move this to message definitions
         if (msg.command_id == CMD_ID_HEARTBEAT) {
             //ESP_LOGI(TAG, "Heartbeat message received from RPI");
             if (responseProcessor) {
@@ -244,7 +242,7 @@ namespace controlSystem
             return;
         }
 
-        // Process other messages through the action processor
+        // can't rememebr why this is here should remove serves no purpose 
         if (responseProcessor) {
             // Convert UART message to action response or handle as needed
             // This depends on your message format and action system

@@ -8,6 +8,7 @@ namespace actions
     ToggleMeterDisplay ToggleMeterDisplayInstance;
     PowerButton PowerButtonInstance;
     RotaryEvent RotaryEventInstance;
+    CoverView CoverViewInstance;
 
     static SimpleCommandAction PreviousTrackCmd(CMD_PREVIOUS_TRACK);
     static SimpleCommandAction NextTrackCmd(CMD_NEXT_TRACK);

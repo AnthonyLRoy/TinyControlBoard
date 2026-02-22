@@ -10,7 +10,7 @@ BAUD_RATE = 115200
 DRDY_PIN = 24  # ESP32 data ready/busy line
 BLIP_TIME = 0.002  # 2 ms "data ready" pulse
 
-# === PROTOCOL ===
+# === PROTOCOL === with default definitions matching controlBoard.cpp
 PACKET_FORMAT = "<BBBBBH5HB"
 UART_START_BYTE = 0xAA
 VERSION = 0x01
@@ -19,7 +19,7 @@ MSG_TYPE = 0x01
 CMD_ID_HEARTBEAT = 0x9999
 PARAMS = [0, 0, 0, 0, 0]
 
-# === SETUP ===
+# === GPIO SETUP ===
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(DRDY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 

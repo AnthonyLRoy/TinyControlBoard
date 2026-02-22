@@ -34,7 +34,7 @@ if not pi.connected:
 
 pi.set_mode(PWM_PIN, pigpio.OUTPUT)
 
-# === WAVEFORM PWM FUNCTIONS ===
+# a bit upset about this need a pwm signal for the backlight
 def create_pwm_wave(duty_percent):
     global wave_id
 
@@ -69,7 +69,7 @@ def set_brightness_pwm(percent):
 # Set initial brightness
 set_brightness_pwm(last_brightness_value)
 
-# === FUNCTIONS ===
+# calculate the checksum to ensure data not currupted 
 
 def compute_checksum_cpp_style(packet_bytes):
     return sum(packet_bytes[1:17]) & 0xFF
@@ -114,8 +114,12 @@ def handle_command(command_id, params):
             os.system("sudo moodeutl --setdisplay peppy")
         else:
             os.system("sudo moodeutl --setdisplay webui")
-
-    # === Brightness cycle (PWM) ===
+    elif command_id == 0x0112:
+        if params[0] == 1:
+            os.system("mpc next")
+        else:
+            os.system("mpc prev")
+        # === Brightness cycle (PWM) ===
     elif command_id == 0x0116:
         if last_brightness_value >= 100:
             last_brightness_value = 10
@@ -133,6 +137,11 @@ def handle_command(command_id, params):
         else:
             set_brightness_pwm(0)
             print("🔴 Display OFF", flush=True)
+    elif command_id == 0x0119:
+        if params[0] == 1:
+            os.system("/var/www/util/coverview.php -on")
+        else:
+            os.system("/var/www/util/coverview.php -off")
     else:
         print("⚠️ Unknown command", flush=True)
 

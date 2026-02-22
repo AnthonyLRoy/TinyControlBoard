@@ -23,7 +23,7 @@ namespace controlSystem
     {
         if (rpi_boot_event_group != nullptr) {
             xEventGroupSetBits(rpi_boot_event_group, RPI_HEARTBEAT_BIT);
-            //ESP_LOGI(TAG, "Heartbeat received from RPI - boot complete");
+            //ESP_LOGI(TAG, "Heartbeat received from RPI - boot complete or still active");
         }
     }
 
@@ -31,7 +31,7 @@ namespace controlSystem
     {
         if (rpi_boot_event_group != nullptr) {
             xEventGroupSetBits(rpi_boot_event_group, RPI_SHUTDOWN_BIT);
-            ESP_LOGI(TAG, "Heartbeat timeout detected - RPI has shut down");
+            ESP_LOGI(TAG, "Heartbeat timeout detected - RPI has shut down, or not avaialble ");
         }
     }
 

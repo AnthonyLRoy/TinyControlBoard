@@ -23,7 +23,7 @@ namespace actions
                 response.command = state_ ? CMD_ON : CMD_OFF;
                 response.KeepLedActive = state_;
             }
-            const char* commandName = controlSystem::getCommandNameById(response.command);
+            const char *commandName = controlSystem::getCommandNameById(response.command);
             ESP_LOGI("ToggleAction", "Executed toggle action: %s, New State: %s", commandName, state_ ? "ON" : "OFF");
             return response;
         }
@@ -38,8 +38,8 @@ namespace actions
         actionResponse execute(bool IsLeft) override
         {
             actionResponse response;
-                response.command = CMD_ROTARY_ACTION;
-                response.parameters[0] = IsLeft ? 0 : 1; // 0 for left, 1 for right
+            response.command = CMD_ROTARY_ACTION;
+            response.parameters[0] = IsLeft ? 0 : 1; // 0 for left, 1 for right
             return response;
         }
     };
@@ -59,7 +59,6 @@ namespace actions
         }
     };
 
-  
     template <commandID CMD>
     class TimedAction : public ButtonAction
     {
@@ -72,13 +71,12 @@ namespace actions
             if (pressed)
             {
                 pressStartUs_ = esp_timer_get_time();
-                ESP_LOGI("TimedAction", "inital value at %" PRIi64 " us", pressStartUs_ );   
-                
+                ESP_LOGI("TimedAction", "inital value at %" PRIi64 " us", pressStartUs_);
             }
             else
             {
-                 ESP_LOGI("TimedAction", "Validate at %" PRIi64 " us", pressStartUs_ );   
-                 const int64_t durationUs = esp_timer_get_time() - pressStartUs_;
+                ESP_LOGI("TimedAction", "Validate at %" PRIi64 " us", pressStartUs_);
+                const int64_t durationUs = esp_timer_get_time() - pressStartUs_;
                 ESP_LOGI("TimedAction", "Button was pressed for %" PRIu64 " us", durationUs);
                 response.releaseTimeMilliSecs = static_cast<uint32_t>(durationUs / 1000);
                 response.command = CMD;

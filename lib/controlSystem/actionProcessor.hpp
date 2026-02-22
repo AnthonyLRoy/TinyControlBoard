@@ -29,7 +29,7 @@ namespace controlSystem
         void process(actions::actionResponse response);
         const char *getCommandNameForPin(uint8_t pin);
         
-        // RPI boot synchronization - delegated to RPIBootManager
+        // RPI boot synchronization methods
         void onHeartbeatReceived();
         void onHeartbeatTimeout();
         bool WaitForRpiToBoot(uint32_t timeoutMs = 60000);

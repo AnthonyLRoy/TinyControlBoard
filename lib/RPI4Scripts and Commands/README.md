@@ -1,12 +1,18 @@
 # UART5 Listener Setup on Moode (Raspberry Pi)
 
-This guide explains how to enable UART5 on a Raspberry Pi, install required Python serial packages, and configure a `systemd` service to automatically run a UART listener script on boot.
+This guide explains how to enable UART5 on a Raspberry Pi running **Moode**, install required dependencies, build and install **pigpio**, and configure **systemd services** to automatically run:
+
+- A UART5 listener
+- A UART heartbeat sender
+
+It also covers auto-login configuration and troubleshooting.
 
 ---
 
 ## 1. Install Moode Using Raspberry Pi Imager
 
-Use the official Raspberry Pi Imager to flash Moode onto your SD card.  
+Use the official **Raspberry Pi Imager** to flash Moode onto your SD card.
+
 Once Moode is running, update the system:
 
 ```bash
@@ -19,7 +25,7 @@ sudo apt upgrade -y
 ## 2. Install Required Packages
 
 ```bash
-sudo apt install ddcutil
+sudo apt install -y ddcutil
 ```
 
 ---
@@ -48,7 +54,7 @@ sudo reboot
 
 ## 4. Install Python Serial Support
 
-### A. Preferred Installation (pip)
+### 4.1 Preferred Installation (pip)
 
 ```bash
 sudo python3 -m pip install pyserial
@@ -62,82 +68,80 @@ python3 -c "import serial; print(serial.__version__)"
 
 ---
 
-### B. If pip is missing
+### 4.2 If `pip` Is Missing
 
 ```bash
-sudo apt install python3-pip
+sudo apt install -y python3-pip
 sudo python3 -m pip install pyserial
 ```
 
 ---
 
-### C. If you encounter:
-`error: externally-managed-environment`
+### 4.3 If You Encounter `externally-managed-environment`
 
-Install the apt-managed version:
+Install the distro-managed version instead:
 
 ```bash
-sudo apt install python3-serial
+sudo apt install -y python3-serial
 ```
 
 ---
 
-## 4.5 install PIGPIO
+## 5. Install pigpio
 
-first install the make files as we need to compile an build
+### 5.1 Install Build Tools
+
 ```bash
-  sudo apt update
-  sudo apt install -y git make gcc
-
+sudo apt update
+sudo apt install -y git make gcc
 ```
-download the source code into a temp directory
+
+---
+
+### 5.2 Download and Build pigpio
+
 ```bash
 cd /tmp
 git clone https://github.com/joan2937/pigpio.git
 cd pigpio
-```
-
-run the make command in the dirctory
-```bash
-  Make
-```
-run sudo make install  install
-
-/usr/local/bin/pigpiod
-
-Python module pigpio
-
-Command-line tools (pigs, etc.)
-
-```bash
+make
 sudo make install
-
 ```
 
-Start the service 
+This installs:
+
+- `/usr/local/bin/pigpiod`
+- Python module `pigpio`
+- Command-line tools (`pigs`, etc.)
+
+---
+
+### 5.3 Enable and Start pigpiod
 
 ```bash
 sudo systemctl enable pigpiod
 sudo systemctl start pigpiod
-
 ```
-make sure then service exists   
+
+Verify installation:
 
 ```bash
-  which pigpiod
+which pigpiod
 ```
 
-you should see
-```swift
- /usr/local/bin/pigpiod 
+Expected output:
+
+```text
+/usr/local/bin/pigpiod
 ```
-create the system command file
+
+---
+
+### 5.4 Create pigpiod systemd Service (Manual)
 
 ```bash
 sudo nano /etc/systemd/system/pigpiod.service
 ```
-
-Past the following code into the file and save 
 
 ```ini
 [Unit]
@@ -145,15 +149,16 @@ Description=Pigpio daemon
 After=network.target
 
 [Service]
+Type=forking
 ExecStart=/usr/local/bin/pigpiod -l
 ExecStop=/bin/kill -s TERM $MAINPID
-Type=forking
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 ```
-reload the system and start the service
+
+Reload and start:
 
 ```bash
 sudo systemctl daemon-reexec
@@ -161,21 +166,20 @@ sudo systemctl daemon-reload
 sudo systemctl enable pigpiod
 sudo systemctl start pigpiod
 ```
-now verify that pigpiod is running, each time you run the command you should see a increasing number
+
+Verify it is running (number increments each run):
 
 ```bash
 pigs t
 ```
 
-## 5. Create the UART Listener Systemd Service
+---
 
-Create the service file:
+## 6. Create the UART Listener systemd Service
 
 ```bash
 sudo nano /etc/systemd/system/uart_listener.service
 ```
-
-Paste:
 
 ```ini
 [Unit]
@@ -198,15 +202,13 @@ WantedBy=multi-user.target
 
 ---
 
-## 6. Create the UART Listener Script
-
-Create the script file:
+## 7. Create the UART Listener Script
 
 ```bash
 nano /home/antho/uart5_listener.py
 ```
 
-Paste the contents of your `UArt5Listener.py` script.
+Paste the contents of your UART listener script.
 
 Set permissions:
 
@@ -217,59 +219,43 @@ sudo chown antho:antho /home/antho/uart5_listener.py
 
 ---
 
-## 7. Enable and Start the Service
+## 8. Enable and Start the UART Listener Service
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable uart5_listener.service
-sudo systemctl start uart5_listener.service
-sudo systemctl status uart5_listener.service
+sudo systemctl enable uart_listener.service
+sudo systemctl start uart_listener.service
+sudo systemctl status uart_listener.service
+```
+
+View logs:
+
+```bash
+journalctl -u uart_listener.service -f
 ```
 
 ---
 
-## 8. View Logs
+## 9. Create the Heartbeat Sender Service
+
+### 9.1 Create the Script
 
 ```bash
-journalctl -u uart5_listener.service -f
+sudo nano /usr/local/bin/heartbeat_sender.py
+sudo chmod +x /usr/local/bin/heartbeat_sender.py
 ```
+
+Paste the contents of `heartbeat_sender.py` and save.
 
 ---
 
-# create the heatbeat sender service
-
-
-### 0 Copy the code to the directory
-
-create the file 
+### 9.2 Create the systemd Service
 
 ```bash
-  /usr/local/bin/heartbeat_sender.py
-
+sudo nano /etc/systemd/system/heartbeat.service
 ```
-
-Add execute permisions 
-```bash
-
-  sudo chmod +x /usr/local/bin/heartbeat_sender.py
-
-```
-copy the contents from the file heartbeat_sender.py located in this folder and save
-
-### 1 Create the service 
-
-```bash
-
- sudo nano /etc/systemd/system/heartbeat.service
-
-```
-
-
-
-### 2 paste the following code and save
 
 ```ini
-
 [Unit]
 Description=UART5 Heartbeat Sender
 After=network.target multi-user.target
@@ -282,158 +268,99 @@ WorkingDirectory=/home/antho
 
 [Install]
 WantedBy=multi-user.target
-
-
 ```
-
-### 3 Enable the service
-
-```bash
-
-  sudo systemctl daemon-reload
-  sudo systemctl enable heartbeat.service
-  sudo systemctl restart heartbeat.service
-
-```
-### 4 Check the status and  logs 
-
- ```bash
-
-  systemctl status heartbeat.service
-
-  journalctl -u heartbeat.service -f
-
- ```
-
-# File Locations Summary
-
-| Purpose                          | File Path                                   | Notes                                |
-|----------------------------------|---------------------------------------------|--------------------------------------|
-| UART5 overlay configuration      | `/boot/firmware/config.txt`                 | Must contain `dtoverlay=uart5`       |
-| UART listener Python script      | `/home/antho/uart5_listener.py`             | Must be executable                    |
-| Systemd service file             | `/etc/systemd/system/uart_listener.service` | Controls auto-start on boot          |
-| Systemd journal logs             | Managed via `journalctl`                    | `journalctl -u uart5_listener.service -f` |
-| Python site-packages (pip)       | `/usr/local/lib/python3.x/dist-packages/`   | Version may vary                      |
-| Python interpreter used by systemd | `/usr/bin/python3`                         | Ensure correct version                |
 
 ---
 
+### 9.3 Enable and Start the Service
 
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable heartbeat.service
+sudo systemctl restart heartbeat.service
+```
 
+Check logs:
 
-# Set audo password login on local console
+```bash
+journalctl -u heartbeat.service -f
+```
+
+---
+
+## 10. File Locations Summary
+
+| Purpose | File Path | Notes |
+|-------|-----------|-------|
+| UART5 overlay configuration | `/boot/firmware/config.txt` | Must contain `dtoverlay=uart5` |
+| UART listener script | `/home/antho/uart5_listener.py` | Must be executable |
+| UART listener service | `/etc/systemd/system/uart_listener.service` | Auto-start on boot |
+| Heartbeat service | `/etc/systemd/system/heartbeat.service` | Periodic UART TX |
+| pigpiod binary | `/usr/local/bin/pigpiod` | Built from source |
+| Logs | `journalctl` | `journalctl -u <service> -f` |
+
+---
+
+## 11. Enable Auto-Login on Local Console
 
 ```bash
 sudo raspi-config
 ```
 
-Use the arrow keys to navigate to System Options and press Enter.
+Navigate to:
 
-Select Boot / Auto Login and press Enter.
+System Options → Boot / Auto Login
 
-Choose the appropriate option for your needs:
-  B2 Console Autologin to boot to the command line without requiring a login.
-  B4 Desktop Autologin to boot directly into the desktop environment without a login prompt.
-Press Enter to confirm your selection.
+Choose one:
 
-Use the right arrow key to select and press Enter.
+- **B2** Console Autologin
+- **B4** Desktop Autologin
 
-The tool will ask if you want to reboot. Select Yes and press Enter for the changes to take effect. 
+Reboot when prompted.
 
-After rebooting, the Raspberry Pi will automatically log in with the selected user account. 
+---
 
-# Troubleshooting
+## 12. Troubleshooting
 
-### 1. UART5 not working
+### 12.1 UART5 Not Working
 
-**Symptoms:**
-- No data received  
-- UART device missing (`/dev/ttyAMA*` / `/dev/ttyS*`)  
-- Serial port busy  
-
-**Fixes:**
-Check overlay is active:
+Check overlay:
 
 ```bash
 grep uart5 /boot/firmware/config.txt
 ```
 
-Ensure the UART5 device exists:
+Check devices:
 
 ```bash
 ls -l /dev/ttyAMA* /dev/ttyS* 2>/dev/null
 ```
 
-Make sure no console is attached to serial:
+Ensure no serial console is enabled:
 
 ```bash
 sudo nano /boot/firmware/cmdline.txt
 ```
 
-Ensure no `console=` argument references UART.
+Remove any `console=` entry referencing UART.
 
 ---
 
-### 2. Service not starting
-
-Check:
+### 12.2 Service Not Starting
 
 ```bash
-sudo systemctl status uart5_listener.service
+sudo systemctl status uart_listener.service
 ```
 
-**Fixes:**
-- Wrong script path → correct `ExecStart`
-- Permissions:
-
-  ```bash
-  sudo chown antho:antho /home/antho/uart5_listener.py
-  sudo chmod +x /home/antho/uart5_listener.py
-  ```
-
-- Reload systemd:
-
-  ```bash
-  sudo systemctl daemon-reload
-  ```
-
----
-
-### 3. Python import error: `serial` module not found
-
-Install:
+Reload systemd if needed:
 
 ```bash
-sudo python3 -m pip install pyserial
-```
-
-Or:
-
-```bash
-sudo apt install python3-serial
+sudo systemctl daemon-reload
 ```
 
 ---
 
-### 4. `externally-managed-environment` pip error
-
-Install pyserial via apt:
-
-```bash
-sudo apt install python3-serial
-```
-
----
-
-### 5. Permission denied accessing UART
-
-Check:
-
-```bash
-ls -l /dev/ttyAMA*
-```
-
-Add user to dialout group:
+### 12.3 Permission Denied Accessing UART
 
 ```bash
 sudo usermod -a -G dialout antho
@@ -442,5 +369,16 @@ sudo reboot
 
 ---
 
+### 12.4 Python `serial` Module Not Found
 
+```bash
+sudo apt install python3-serial
+```
 
+or
+
+```bash
+sudo python3 -m pip install pyserial
+```
+
+---
