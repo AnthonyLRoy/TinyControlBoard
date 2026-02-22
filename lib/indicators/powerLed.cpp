@@ -37,7 +37,7 @@ void PowerLed::init()
     timer.clk_cfg = LEDC_AUTO_CLK;
     ledc_timer_config(&timer);
 
-    // Active LED
+    // Monitor  LED
     ledc_channel_config_t activeCfg = {};
     activeCfg.channel = activeChannel;
     activeCfg.duty = 0;

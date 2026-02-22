@@ -2,6 +2,7 @@
 #include "activeLed.hpp"
 #include "powerLed.hpp"
 #include "spiLedDriver.hpp" 
+#include "monitorBrightnessController.hpp"
 
 namespace indicators
 {
@@ -9,5 +10,6 @@ namespace indicators
     indicators::PowerLed& getPowerLed();
     indicators::ActiveLed& getButtonLed();
     indicators::SpiLedDriver& getSpiLedDriver();
+    indicators::MonitorBrightnessController& getMonitorBrightnessController();
 
 }

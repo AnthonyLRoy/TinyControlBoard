@@ -132,6 +132,14 @@ namespace controlSystem
             return;
         }
 
+        if (response.command == CMD_CYCLE_BRIGHTNESS)
+        {
+            indicators::getMonitorBrightnessController().cycleBrightness();
+            
+            ESP_LOGI(TAG, "Setting Cycle Brightness Command");
+            return;
+        }
+
         // Handle simple commands requiring UART message
         for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; cmdReference++)
         {
