@@ -15,7 +15,7 @@ namespace indicators {
     static ActiveLed buttonLeds(STP_LEDS_BRIGHTNESS_LEVEL,LEDC_CHANNEL_1);
     static PowerLed powerLed(PIN_APP_ACTIVE_LED,LEDC_CHANNEL_ON, PIN_APP_STANDBY_LED,LEDC_CHANNEL_STANDBY);
     static SpiLedDriver spiLedDriver(SPI_HOST,PIN_SPI_DATA,PIN_SPI_CLK,PIN_SPI_LATCH);
-    static MonitorBrightnessController monitorBrightnessController(GPIO_NUM_1,LEDC_CHANNEL_3);
+    static MonitorBrightnessController monitorBrightnessController(GPIO_NUM_1,LEDC_CHANNEL_MONITOR_BRIGHTNESS);
 
 
     MonitorBrightnessController& getMonitorBrightnessController() {

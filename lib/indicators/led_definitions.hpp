@@ -6,6 +6,7 @@
 #define LEDC_CHANNEL_ON LEDC_CHANNEL_3
 #define LEDC_CHANNEL_STANDBY LEDC_CHANNEL_4 // Define a second channel for standby LED
 #define LEDC_CHANNEL_WORKSTATUS LEDC_CHANNEL_2 // Define a third channel for active LED
+#define LEDC_CHANNEL_MONITOR_BRIGHTNESS LEDC_CHANNEL_5
 #define LEDC_DUTY_RES LEDC_TIMER_13_BIT     // Set duty resolution to 13 bits
 #define LEDC_DUTY (4096)                    // Set duty to 50%. (2 ** 13) * 50% = 4096
 #define LEDC_FREQUENCY (4000)
