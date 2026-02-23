@@ -16,6 +16,8 @@ namespace controlSystem
 
         // Set initial power state
         indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
+        //make the monitor brightness start at 50% so it's not blinding when we turn it on
+        indicators::getMonitorBrightnessController().ChangeBrightnessLevel(5);
 
         // Initialize serial handler and heartbeat monitor
         serialHandler = &serialBus::Serial::instance();
