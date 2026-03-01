@@ -21,6 +21,7 @@ namespace controlSystem
 
         // Initialize serial handler and heartbeat monitor
         mpSerialHandler = &serialBus::Serial::getInstance();
+        mpRelays = &relays::StandardRelay::getInstance();
         
         // Register UART RX callback
         mpSerialHandler->setRxCallback([this](const UartMessage &rMsg) {

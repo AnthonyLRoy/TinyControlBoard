@@ -17,10 +17,10 @@ namespace relays
     {
     public:
         // Singleton instance accessor
-        static StandardRelay getInstance() {
+        static StandardRelay &getInstance() {
             static StandardRelay sInstance;
             return sInstance;
-    }
+        }
         // Initialize the relays
         static void init(gpio_num_t pinRelay);
         static void setRelayState(gpio_num_t relay, bool state);
