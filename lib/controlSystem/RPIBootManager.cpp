@@ -1,88 +1,88 @@
-#include "RPIBootManager.hpp"
+#include "rpiBootManager.hpp"
 #include <inttypes.h>
 
 namespace controlSystem
 {
-    RPIBootManager::RPIBootManager()
+    RpiBootManager::RpiBootManager()
     {
-        rpi_boot_event_group = xEventGroupCreate();
-        if (rpi_boot_event_group == nullptr) {
-            ESP_LOGE(TAG, "Failed to create RPI boot event group");
+        mpRpiBootEventGroup = xEventGroupCreate();
+        if (mpRpiBootEventGroup == nullptr) {
+            ESP_LOGE(mspTag, "Failed to create RPI boot event group");
         }
     }
 
-    RPIBootManager::~RPIBootManager()
+    RpiBootManager::~RpiBootManager()
     {
-        if (rpi_boot_event_group != nullptr) {
-            vEventGroupDelete(rpi_boot_event_group);
-            rpi_boot_event_group = nullptr;
+        if (mpRpiBootEventGroup != nullptr) {
+            vEventGroupDelete(mpRpiBootEventGroup);
+            mpRpiBootEventGroup = nullptr;
         }
     }
 
-    void RPIBootManager::onHeartbeatReceived()
+    void RpiBootManager::handleHeartbeatReceived()
     {
-        if (rpi_boot_event_group != nullptr) {
-            xEventGroupSetBits(rpi_boot_event_group, RPI_HEARTBEAT_BIT);
+        if (mpRpiBootEventGroup != nullptr) {
+            xEventGroupSetBits(mpRpiBootEventGroup, msRpiHeartbeatBit);
             //ESP_LOGI(TAG, "Heartbeat received from RPI - boot complete or still active");
         }
     }
 
-    void RPIBootManager::onHeartbeatTimeout()
+    void RpiBootManager::handleHeartbeatTimeout()
     {
-        if (rpi_boot_event_group != nullptr) {
-            xEventGroupSetBits(rpi_boot_event_group, RPI_SHUTDOWN_BIT);
-            ESP_LOGI(TAG, "Heartbeat timeout detected - RPI has shut down, or not avaialble ");
+        if (mpRpiBootEventGroup != nullptr) {
+            xEventGroupSetBits(mpRpiBootEventGroup, msRpiShutdownBit);
+            ESP_LOGI(mspTag, "Heartbeat timeout detected - RPI has shut down, or not avaialble ");
         }
     }
 
-    bool RPIBootManager::WaitForRpiToBoot(uint32_t timeoutMs)
+    bool RpiBootManager::waitForRpiToBoot(uint32_t timeoutMs)
     {
-        if (rpi_boot_event_group == nullptr) {
-            ESP_LOGE(TAG, "Event group not initialized");
+        if (mpRpiBootEventGroup == nullptr) {
+            ESP_LOGE(mspTag, "Event group not initialized");
             return false;
         }
 
-        ESP_LOGI(TAG, "Waiting for RPI heartbeat (timeout: %" PRIu32 " ms)...", timeoutMs);
+        ESP_LOGI(mspTag, "Waiting for RPI heartbeat (timeout: %" PRIu32 " ms)...", timeoutMs);
 
         EventBits_t bits = xEventGroupWaitBits(
-            rpi_boot_event_group,
-            RPI_HEARTBEAT_BIT,
+            mpRpiBootEventGroup,
+            msRpiHeartbeatBit,
             pdTRUE,  // Clear bits on exit
             pdFALSE, // Don't wait for all bits
             pdMS_TO_TICKS(timeoutMs)
         );
 
-        if (bits & RPI_HEARTBEAT_BIT) {
-            ESP_LOGI(TAG, "RPI heartbeat detected - boot successful");
+        if (bits & msRpiHeartbeatBit) {
+            ESP_LOGI(mspTag, "RPI heartbeat detected - boot successful");
             return true;
         } else {
-            ESP_LOGW(TAG, "Timeout waiting for RPI heartbeat after %" PRIu32 " ms", timeoutMs);
+            ESP_LOGW(mspTag, "Timeout waiting for RPI heartbeat after %" PRIu32 " ms", timeoutMs);
             return false;
         }
     }
 
-    bool RPIBootManager::waitForPiShutdown(uint32_t timeoutMs)
+    bool RpiBootManager::waitForRpiShutdown(uint32_t timeoutMs)
     {
-        if (rpi_boot_event_group == nullptr) {
-            ESP_LOGE(TAG, "Event group not initialized");
+        if (mpRpiBootEventGroup == nullptr) {
+            ESP_LOGE(mspTag, "Event group not initialized");
             return false;
         }
 
-        ESP_LOGI(TAG, "Waiting for RPI shutdown confirmation (timeout: %" PRIu32 " ms)...", timeoutMs);
+        ESP_LOGI(mspTag, "Waiting for RPI shutdown confirmation (timeout: %" PRIu32 " ms)...", timeoutMs);
 
         EventBits_t bits = xEventGroupWaitBits(
-            rpi_boot_event_group,
-            RPI_SHUTDOWN_BIT,
+            mpRpiBootEventGroup,
+            msRpiShutdownBit,
             pdTRUE,  // Clear bits on exit
             pdFALSE, // Don't wait for all bits
             pdMS_TO_TICKS(timeoutMs)
         );
 
-        if (bits & RPI_SHUTDOWN_BIT) {
-            ESP_LOGI(TAG, "RPI shutdown confirmed - heartbeat timeout detected");
+        if (bits & msRpiShutdownBit) {
+            ESP_LOGI(mspTag, "RPI shutdown confirmed - heartbeat timeout detected");
             return true;
         } else {
-            ESP_LOGW(TAG, "Timeout waiting for RPI shutdown after %" PRIu32 " ms", timeoutMs);
+            ESP_LOGW(mspTag, "Timeout waiting for RPI shutdown after %" PRIu32 " ms", timeoutMs);
             return false;
         }
     }

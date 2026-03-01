@@ -12,44 +12,44 @@
 #define SPI_HOST spi_host_device_t::SPI2_HOST
 namespace indicators {
 
-    static ActiveLed activeLed(PIN_WORKING_STATUS_LED,LEDC_CHANNEL_0);
-    static ActiveLed buttonLeds(STP_LEDS_BRIGHTNESS_LEVEL,LEDC_CHANNEL_1);
-    static PowerLed powerLed(PIN_APP_ACTIVE_LED,LEDC_CHANNEL_ON, PIN_APP_STANDBY_LED,LEDC_CHANNEL_STANDBY);
-    static SpiLedDriver spiLedDriver(SPI_HOST,PIN_SPI_DATA,PIN_SPI_CLK,PIN_SPI_LATCH);
-    static MonitorBrightnessController monitorBrightnessController(PIN_MONITOR_BRIGHTNESS,LEDC_CHANNEL_MONITOR_BRIGHTNESS);
+    static ActiveLed sActiveLed(PIN_WORKING_STATUS_LED, LEDC_CHANNEL_0);
+    static ActiveLed sButtonLeds(STP_LEDS_BRIGHTNESS_LEVEL, LEDC_CHANNEL_1);
+    static PowerLed sPowerLed(PIN_APP_ACTIVE_LED, LEDC_CHANNEL_ON, PIN_APP_STANDBY_LED, LEDC_CHANNEL_STANDBY);
+    static SpiLedDriver sSpiLedDriver(SPI_HOST, PIN_SPI_DATA, PIN_SPI_CLK, PIN_SPI_LATCH);
+    static MonitorBrightnessController sMonitorBrightnessController(PIN_MONITOR_BRIGHTNESS, LEDC_CHANNEL_MONITOR_BRIGHTNESS);
 
 
     MonitorBrightnessController& getMonitorBrightnessController() {
-        if (!monitorBrightnessController.started)
+        if (!sMonitorBrightnessController.mStarted)
         {
-            monitorBrightnessController.init();
-            monitorBrightnessController.started = true;
+            sMonitorBrightnessController.init();
+            sMonitorBrightnessController.mStarted = true;
         }
-        return monitorBrightnessController;
+        return sMonitorBrightnessController;
     }
     
     ActiveLed& getActiveLed() {
-        return activeLed;
+        return sActiveLed;
     }
 
     PowerLed& getPowerLed() {
-        if (!powerLed.started)
+        if (!sPowerLed.mStarted)
         {
-            powerLed.init();
-            powerLed.started = true;
+            sPowerLed.init();
+            sPowerLed.mStarted = true;
         }
-        return powerLed;
+        return sPowerLed;
     }
 
     ActiveLed& getButtonLed() {
-        return buttonLeds;
+        return sButtonLeds;
     }
     SpiLedDriver& getSpiLedDriver() {
-               if (!spiLedDriver.started)
+               if (!sSpiLedDriver.mStarted)
         {
-            spiLedDriver.init();
-            spiLedDriver.started = true;
+            sSpiLedDriver.init();
+            sSpiLedDriver.mStarted = true;
         }
-        return spiLedDriver;
+        return sSpiLedDriver;
     }
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "ButtonAction.hpp"
+#include "buttonAction.hpp"
 #include "actionsResponse.hpp"
 #include <esp_timer.h>
 #include "controlSytemHelpers.hpp"
@@ -7,84 +7,84 @@
 namespace actions
 {
 
-    template <commandID CMD_ON, commandID CMD_OFF>
+    template <CommandId CMD_ON, CommandId CMD_OFF>
     class ToggleAction : public ButtonAction
     {
 
     public:
-        ToggleAction() : state_(false) {}
+        ToggleAction() : mState(false) {}
 
-        actionResponse execute(bool pressed) override
+        ActionResponse execute(bool isPressed) override
         {
-            actionResponse response;
-            if (pressed)
+            ActionResponse response;
+            if (isPressed)
             {
-                state_ = !state_;
-                response.command = state_ ? CMD_ON : CMD_OFF;
-                response.KeepLedActive = state_;
+                mState = !mState;
+                response.command = mState ? CMD_ON : CMD_OFF;
+                response.keepLedActive = mState;
             }
-            const char *commandName = controlSystem::getCommandNameById(response.command);
-            ESP_LOGI("ToggleAction", "Executed toggle action: %s, New State: %s", commandName, state_ ? "ON" : "OFF");
+            const char *pCommandName = controlSystem::getCommandNameById(response.command);
+            ESP_LOGI("ToggleAction", "Executed toggle action: %s, New State: %s", pCommandName, mState ? "ON" : "OFF");
             return response;
         }
 
     private:
-        bool state_;
+        bool mState;
     };
 
-    template <commandID ROTATE_DIRECTION>
+    template <CommandId ROTATE_DIRECTION>
     class RotaryAction : public ButtonAction
     {
-        actionResponse execute(bool IsLeft) override
+        ActionResponse execute(bool isLeft) override
         {
-            actionResponse response;
+            ActionResponse response;
             response.command = CMD_ROTARY_ACTION;
-            response.parameters[0] = IsLeft ? 0 : 1; // 0 for left, 1 for right
+            response.parameters[0] = isLeft ? 0 : 1; // 0 for left, 1 for right
             return response;
         }
     };
 
-    template <commandID CMD>
+    template <CommandId CMD>
     class MomentaryAction : public ButtonAction
     {
     public:
         MomentaryAction() = default;
 
-        actionResponse execute(bool pressed) override
+        ActionResponse execute(bool isPressed) override
         {
-            actionResponse response;
-            if (pressed)
+            ActionResponse response;
+            if (isPressed)
                 response.command = CMD;
             return response;
         }
     };
 
-    template <commandID CMD>
+    template <CommandId CMD>
     class TimedAction : public ButtonAction
     {
     public:
-        TimedAction() : pressStartUs_(0) {}
+        TimedAction() : mPressStartUs(0) {}
 
-        actionResponse execute(bool pressed) override
+        ActionResponse execute(bool isPressed) override
         {
-            actionResponse response;
-            if (pressed)
+            ActionResponse response;
+            if (isPressed)
             {
-                pressStartUs_ = esp_timer_get_time();
-                ESP_LOGI("TimedAction", "inital value at %" PRIi64 " us", pressStartUs_);
+                mPressStartUs = esp_timer_get_time();
+                ESP_LOGI("TimedAction", "inital value at %" PRIi64 " us", mPressStartUs);
             }
             else
             {
-                ESP_LOGI("TimedAction", "Validate at %" PRIi64 " us", pressStartUs_);
-                const int64_t durationUs = esp_timer_get_time() - pressStartUs_;
+                ESP_LOGI("TimedAction", "Validate at %" PRIi64 " us", mPressStartUs);
+                const int64_t durationUs = esp_timer_get_time() - mPressStartUs;
                 ESP_LOGI("TimedAction", "Button was pressed for %" PRIu64 " us", durationUs);
-                response.releaseTimeMilliSecs = static_cast<uint32_t>(durationUs / 1000);
+                response.releaseTimeMillis = static_cast<uint32_t>(durationUs / 1000);
                 response.command = CMD;
             }
             return response;
         }
 
     private:
-        int64_t pressStartUs_;
+        int64_t mPressStartUs;
     };
 }

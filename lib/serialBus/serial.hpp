@@ -4,7 +4,7 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "uart_protocol.hpp"
-#include "UartReceiver.hpp"
+#include "uartReceiver.hpp"
 #include <functional>
 
 namespace serialBus
@@ -13,60 +13,60 @@ namespace serialBus
     class Serial
     {
     public:
-        static Serial &instance();
+        static Serial &getInstance();
 
-        static void IRAM_ATTR gpio_isr_handler(void *arg);
+        static void IRAM_ATTR gpioIsrHandler(void *pArg);
 
-        bool init_uart(uart_port_t uart_num,
-                       int baud_rate,
-                       gpio_num_t tx_pin,
-                       gpio_num_t rx_pin,
-                       size_t buffer_size = 1024,
-                       uart_parity_t parity = UART_PARITY_DISABLE,
-                       uart_stop_bits_t stop_bits = UART_STOP_BITS_1,
-                       uart_hw_flowcontrol_t flow_ctrl = UART_HW_FLOWCTRL_DISABLE);
+        bool initUart(uart_port_t uartNum,
+                  int baudRate,
+                  gpio_num_t txPin,
+                  gpio_num_t rxPin,
+                  size_t bufferSize = 1024,
+                  uart_parity_t parity = UART_PARITY_DISABLE,
+                  uart_stop_bits_t stopBits = UART_STOP_BITS_1,
+                  uart_hw_flowcontrol_t flowCtrl = UART_HW_FLOWCTRL_DISABLE);
 
-        void deinit_uart();
+        void deinitUart();
 
-        bool send_data(const uint8_t *data, size_t len);
-        bool send_data(const char *message);
-        void sendUartCommand(const char *logTag, uint32_t commandId);
-        void sendUartMessage(const char *logTag,  UARTMessage &message);
-        void set_rx_callback(std::function<void(const UARTMessage &)> callback);
+        bool sendData(const uint8_t *pData, size_t len);
+        bool sendData(const char *pMessage);
+        void sendUartCommand(const char *pLogTag, uint32_t commandId);
+        void sendUartMessage(const char *pLogTag, UartMessage &rMessage);
+        void setRxCallback(std::function<void(const UartMessage &)> callback);
 
 
         // Heartbeat monitoring
-        uint64_t get_last_rx_time_us() const { return last_rx_time_us; }
+        uint64_t getLastRxTimeUs() const { return mLastRxTimeUs; }
 
-        void start_heartbeat_monitor(uint32_t timeout_ms,
-                                     std::function<void()> on_timeout);
+        void startHeartbeatMonitor(uint32_t timeoutMs,
+                       std::function<void()> onTimeout);
 
-        void stop_heartbeat_monitor();
+        void stopHeartbeatMonitor();
 
     private:
         Serial();
         ~Serial();
 
         // Heartbeat monitoring
-        volatile uint64_t last_rx_time_us = 0;
-        uint32_t heartbeat_timeout_ms = 0;
-        TaskHandle_t heartbeat_task_handle = nullptr;
-        std::function<void()> heartbeat_timeout_callback = nullptr;
+        volatile uint64_t mLastRxTimeUs = 0;
+        uint32_t mHeartbeatTimeoutMs = 0;
+        TaskHandle_t mpHeartbeatTaskHandle = nullptr;
+        std::function<void()> mHeartbeatTimeoutCallback = nullptr;
 
-        uart_port_t uart_number;
-        bool initialized;
-        TaskHandle_t task_handle = nullptr;
+        uart_port_t mUartNumber;
+        bool mInitialized;
+        TaskHandle_t mpTaskHandle = nullptr;
 
         static constexpr size_t TMP_BUFFER_SIZE = 64;
-        uint8_t tmp_buffer[TMP_BUFFER_SIZE];
-        void init_data_ready_pin();
-        void init_piData_ready_pin();
-        UartReceiver rx_buffer;
-        std::function<void(const UARTMessage &)> rx_callback;
+        uint8_t mTmpBuffer[TMP_BUFFER_SIZE];
+        void initDataReadyPin();
+        void initPiDataReadyPin();
+        UartReceiver mRxBuffer;
+        std::function<void(const UartMessage &)> mRxCallback;
 
-        void uart_rx_task();
-        void handle_uart_rx();
-        void on_message_received(const UARTMessage &msg);
+        void runUartRxTask();
+        void handleUartRx();
+        void onMessageReceived(const UartMessage &rMsg);
     };
 
     // GPIO from Raspberry Pi indicating data available

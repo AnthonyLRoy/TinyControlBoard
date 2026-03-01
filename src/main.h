@@ -9,12 +9,12 @@
 #include "esp_timer.h"
 #include "serial.hpp"
 #include "uart_protocol.hpp"
-class main
+class MainApp
 {
 public:
-    void app_main(void);
+    void runAppMain(void);
     void run();
 private:
-    void PerformStartupTasks();
+    void performStartupTasks();
 
 };

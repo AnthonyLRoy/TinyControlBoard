@@ -20,25 +20,25 @@ public:
     ActiveLed(gpio_num_t pin,ledc_channel_t channel);
     ~ActiveLed();
 
-    void SetStatus(ControlBoardWorkingStatus newStatus);
+    void setStatus(ControlBoardWorkingStatus newStatus);
     void sendStatus(ControlBoardWorkingStatus status);
     void init();
 private:
-    gpio_num_t pin;
-    ledc_channel_t channel;
-    ControlBoardWorkingStatus currentStatus;
-    bool ledOn = true;
-    QueueHandle_t statusQueue = nullptr;
-    TimerHandle_t blinkTimer = nullptr;
-    TaskHandle_t breatheTaskHandle = nullptr;
+    gpio_num_t mPin;
+    ledc_channel_t mChannel;
+    ControlBoardWorkingStatus mCurrentStatus;
+    bool mLedOn = true;
+    QueueHandle_t mpStatusQueue = nullptr;
+    TimerHandle_t mpBlinkTimer = nullptr;
+    TaskHandle_t mpBreatheTaskHandle = nullptr;
 
-    TaskHandle_t ledTaskHandle = nullptr;
-    static void ledTask(void* param);
+    TaskHandle_t mpLedTaskHandle = nullptr;
+    static void runLedTask(void *pParam);
     void updateDuty(uint32_t duty);
-    static void TimerCallback(TimerHandle_t xTimer);
+    static void handleTimer(TimerHandle_t timerHandle);
     void handleBlink();
 
-    static void BreatheTask(void *pvParameter);
+    static void runBreatheTask(void *pParameter);
     void startBreatheEffect();
     void stopBreatheEffect();
 

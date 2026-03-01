@@ -1,55 +1,55 @@
 #include "uart_protocol.hpp"
 
-uint8_t calculate_checksum(const uint8_t *data)
+uint8_t calculateChecksum(const uint8_t *pData)
 {
     uint16_t sum = 0;
 
     // Sum bytes 1..16 exactly like Python otherwise we are fucked (skip start byte, skip checksum)
     for (int i = 1; i <= 16; i++)
     {
-        sum += data[i];
+        sum += pData[i];
     }
 
     return sum % 256;
 }
 
-void serialize_message(UARTMessage &msg, uint8_t *buffer)
+void serializeMessage(UartMessage &rMsg, uint8_t *pBuffer)
 {
-    buffer[0] = msg.start_byte;
-    buffer[1] = msg.version;
-    buffer[2] = msg.src_app;
-    buffer[3] = msg.msg_type;
-    buffer[4] = msg.sequence;
-    buffer[5] = msg.command_id & 0xFF;
-    buffer[6] = msg.command_id >> 8;
+    pBuffer[0] = rMsg.startByte;
+    pBuffer[1] = rMsg.version;
+    pBuffer[2] = rMsg.srcApp;
+    pBuffer[3] = rMsg.msgType;
+    pBuffer[4] = rMsg.sequence;
+    pBuffer[5] = rMsg.commandId & 0xFF;
+    pBuffer[6] = rMsg.commandId >> 8;
 
     for (int i = 0; i < 5; ++i)
     {
-        buffer[7 + i * 2] = msg.params[i] & 0xFF;
-        buffer[8 + i * 2] = msg.params[i] >> 8;
+        pBuffer[7 + i * 2] = rMsg.params[i] & 0xFF;
+        pBuffer[8 + i * 2] = rMsg.params[i] >> 8;
     }
 
-    buffer[17] = calculate_checksum(buffer);
-    msg.checksum = buffer[17];
+    pBuffer[17] = calculateChecksum(pBuffer);
+    rMsg.checksum = pBuffer[17];
 }
 
-bool deserialize_message(const uint8_t *buffer, UARTMessage &msg)
+bool deserializeMessage(const uint8_t *pBuffer, UartMessage &rMsg)
 {
-    if (buffer[0] != UART_START_BYTE)
+    if (pBuffer[0] != UART_START_BYTE)
         return false;
 
-    msg.start_byte = buffer[0];
-    msg.version = buffer[1];
-    msg.src_app = buffer[2];
-    msg.msg_type = buffer[3];
-    msg.sequence = buffer[4];
-    msg.command_id = buffer[5] | (buffer[6] << 8);
+    rMsg.startByte = pBuffer[0];
+    rMsg.version = pBuffer[1];
+    rMsg.srcApp = pBuffer[2];
+    rMsg.msgType = pBuffer[3];
+    rMsg.sequence = pBuffer[4];
+    rMsg.commandId = pBuffer[5] | (pBuffer[6] << 8);
 
     for (int i = 0; i < 5; ++i)
     {
-        msg.params[i] = buffer[7 + i * 2] | (buffer[8 + i * 2] << 8);
+        rMsg.params[i] = pBuffer[7 + i * 2] | (pBuffer[8 + i * 2] << 8);
     }
 
-    msg.checksum = buffer[17];
-    return msg.checksum == calculate_checksum(buffer);
+    rMsg.checksum = pBuffer[17];
+    return rMsg.checksum == calculateChecksum(pBuffer);
 }

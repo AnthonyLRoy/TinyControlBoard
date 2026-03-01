@@ -5,7 +5,7 @@
 #include "activeLed.hpp"
 #include "relay.hpp"
 #include "mcpInputHandler.hpp"
-#include "Serial.hpp"
+#include "serial.hpp"
 #include "spi.hpp"
 #include "buttonActions.hpp"
 #include "actionsResponse.hpp"
@@ -67,14 +67,14 @@ namespace controlSystem
     public:
         bool init();            // returns true if everything initialized successfully
         void deinit();          // optional cleanup
-        actionProcessor& getActionProcessor() { return *responseProcessor; }
+        ActionProcessor& getActionProcessor() { return *mpResponseProcessor; }
 
     private:
 
-    bool setupRelays();
+        bool setupRelays();
         bool setupSerial();
-        bool setupMCPHandler();
-        void setupMCPCallbacks();
+        bool setupMcpHandler();
+        void setupMcpCallbacks();
         void createButtonActionMap();
         
         // MCP Callback handlers
@@ -83,15 +83,15 @@ namespace controlSystem
         void handleRotaryMovement(int movement);
         
         // Serial/UART Callback handler
-        void handleSerialRxMessage(const UARTMessage &msg);
+        void handleSerialRxMessage(const UartMessage &rMsg);
 
         // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
-        serialBus::Serial* serialHandler = nullptr;
-        relays::StandardRelay* relays = nullptr;
-        actionProcessor* responseProcessor = nullptr;
+        serialBus::Serial *mpSerialHandler = nullptr;
+        relays::StandardRelay *mpRelays = nullptr;
+        ActionProcessor *mpResponseProcessor = nullptr;
 
         //declare handler and button action fucntions
-        buttons::MCPInputHandler mcpHandler{ControlBoardConfig::MCP_ADDRESS, I2C_NUM_0};
-        actions::ButtonAction* buttonActions[ControlBoardConfig::NUM_BUTTONS] = {nullptr};
+        buttons::McpInputHandler mMcpHandler{ControlBoardConfig::MCP_ADDRESS, I2C_NUM_0};
+        actions::ButtonAction *mpButtonActions[ControlBoardConfig::NUM_BUTTONS] = {nullptr};
     };
 }

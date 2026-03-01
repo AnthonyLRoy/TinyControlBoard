@@ -2,7 +2,7 @@
 #include <cmath>
 #include <algorithm>
 
-#define TAG "MonitorBrightnessController"
+static const char *spTag = "MonitorBrightnessController";
 
 namespace indicators
 {
@@ -12,8 +12,8 @@ namespace indicators
 
     void MonitorBrightnessController::init()
     {
-        ESP_LOGI(TAG, "Initializing MonitorBrightnessController hardware");
-        ESP_LOGI(TAG, "monitorPin: %d, pwmChannel: %d", monitorPin, pwmChannel);
+        ESP_LOGI(spTag, "Initializing MonitorBrightnessController hardware");
+        ESP_LOGI(spTag, "monitorPin: %d, pwmChannel: %d", mMonitorPin, mPwmChannel);
 
         // LEDC timer
         ledc_timer_config_t timer = {};
@@ -23,41 +23,41 @@ namespace indicators
         timer.freq_hz = 4000;
         timer.clk_cfg = LEDC_AUTO_CLK;
         if (ledc_timer_config(&timer) != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to configure LEDC timer");
+            ESP_LOGE(spTag, "Failed to configure LEDC timer");
         }
 
         // Active LED
         ledc_channel_config_t activeCfg = {};
-        activeCfg.channel = pwmChannel;
+        activeCfg.channel = mPwmChannel;
         activeCfg.duty = 0;
-        activeCfg.gpio_num = monitorPin;
+        activeCfg.gpio_num = mMonitorPin;
         activeCfg.speed_mode = LEDC_MODE;
         activeCfg.hpoint = 0;
         activeCfg.timer_sel = LEDC_TIMER_0;
         if (ledc_channel_config(&activeCfg) != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to configure LEDC channel");
+            ESP_LOGE(spTag, "Failed to configure LEDC channel");
         }
 
         // Init PWM wrappers
-        monitorLed.init(timer, activeCfg);
+        mMonitorLed.init(timer, activeCfg);
 
-        started = true;
+        mStarted = true;
     }
 
-    void MonitorBrightnessController::ChangeBrightnessLevel(int change)
+    void MonitorBrightnessController::changeBrightnessLevel(int change)
     {
-        ESP_LOGI(TAG, "Changing brightness level by %d", change);
-       currentBrightnessLevel = std::clamp(currentBrightnessLevel, 0, 9);
-        monitorLed.setDuty(BrightnessLevels[currentBrightnessLevel]);
-        monitorLed.updateDuty();
+        ESP_LOGI(spTag, "Changing brightness level by %d", change);
+        mCurrentBrightnessLevel = std::clamp(mCurrentBrightnessLevel, 0, 9);
+        mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
+        mMonitorLed.updateDuty();
 
     }
 
     void MonitorBrightnessController::cycleBrightness()
     {
-        currentBrightnessLevel = (currentBrightnessLevel + 1) % 10;
-        monitorLed.setDuty(BrightnessLevels[currentBrightnessLevel]);
-        monitorLed.updateDuty();
+        mCurrentBrightnessLevel = (mCurrentBrightnessLevel + 1) % 10;
+        mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
+        mMonitorLed.updateDuty();
     }
 
 

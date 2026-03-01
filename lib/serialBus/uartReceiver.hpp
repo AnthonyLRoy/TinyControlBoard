@@ -12,13 +12,13 @@ public:
     UartReceiver();
 
     // Feed incoming raw UART data
-    void push_bytes(const uint8_t* data, int len);
+    void pushBytes(const uint8_t *pData, int len);
 
-    // Try to extract a valid UARTMessage
+    // Try to extract a valid UartMessage
     // Returns true if a complete, valid message was parsed
-    bool get_next_message(UARTMessage& out_msg);
+    bool getNextMessage(UartMessage& rOutMsg);
 
 private:
-    uint8_t buffer[BUFFER_SIZE];
-    int buffer_len;
+    uint8_t mBuffer[BUFFER_SIZE];
+    int mBufferLen;
 };

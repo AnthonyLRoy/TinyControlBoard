@@ -27,7 +27,7 @@ enum MessageType : uint8_t
 
 #define UART_PACKET_SIZE 18
 
-enum  commandID : uint16_t
+enum CommandId : uint16_t
 {
 
     // system
@@ -73,31 +73,31 @@ enum PowerCommand : uint8_t
 };
 
 // Source application IDs
-enum AppID : uint8_t
+enum AppId : uint8_t
 {
     APP_ESP32 = 0x01,
     APP_PI = 0x02
 };
 
-struct UARTMessage
+struct UartMessage
 {
-    uint8_t start_byte;
+    uint8_t startByte;
     uint8_t version;
-    uint8_t src_app;
-    uint8_t msg_type;
+    uint8_t srcApp;
+    uint8_t msgType;
     uint8_t sequence;
-    uint16_t command_id;
+    uint16_t commandId;
     uint16_t params[5];
     uint8_t checksum;
 
-    UARTMessage()
-        : start_byte(UART_START_BYTE), version(UART_PROTOCOL_VERSION), src_app(APP_ESP32),
-          msg_type(MSG_COMMAND), sequence(0), command_id(0), checksum(0)
+    UartMessage()
+        : startByte(UART_START_BYTE), version(UART_PROTOCOL_VERSION), srcApp(APP_ESP32),
+          msgType(MSG_COMMAND), sequence(0), commandId(0), checksum(0)
     {
         memset(params, 0, sizeof(params));
     }
 };
 
-uint8_t calculate_checksum(const uint8_t *data);
-void serialize_message(UARTMessage &msg, uint8_t *buffer);
-bool deserialize_message(const uint8_t *buffer, UARTMessage &msg);
+uint8_t calculateChecksum(const uint8_t *pData);
+void serializeMessage(UartMessage &rMsg, uint8_t *pBuffer);
+bool deserializeMessage(const uint8_t *pBuffer, UartMessage &rMsg);

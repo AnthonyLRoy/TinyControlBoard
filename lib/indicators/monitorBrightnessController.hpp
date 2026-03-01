@@ -13,7 +13,7 @@ namespace indicators
     {
     public:
         MonitorBrightnessController(gpio_num_t monitorPin, ledc_channel_t pwmChannel)
-            : monitorPin(monitorPin), pwmChannel(pwmChannel)
+            : mMonitorPin(monitorPin), mPwmChannel(pwmChannel)
         {
             // Just store values; do not create timers here
         }
@@ -21,25 +21,25 @@ namespace indicators
 
         // Must be called after app_main() starts
         void init();
-        bool started = false;
+        bool mStarted = false;
         void setState(ControlBoardPowerState state);
-        ControlBoardPowerState getState() const { return currentPowerState; }
+        ControlBoardPowerState getState() const { return mCurrentPowerState; }
         void setBrightness(int brightness);
 
-        void ChangeBrightnessLevel(int change);
+        void changeBrightnessLevel(int change);
         void cycleBrightness();
 
     private:
-        led::LEDPWM monitorLed;
-        int BrightnessLevels[10] = {0, 500, 750, 1000, 1250, 1500, 2000, 3000, 3500, 4000};
-        int currentBrightnessLevel = 5; // Start at medium brightness
+        led::LedPwm mMonitorLed;
+        int mBrightnessLevels[10] = {0, 500, 750, 1000, 1250, 1500, 2000, 3000, 3500, 4000};
+        int mCurrentBrightnessLevel = 5; // Start at medium brightness
 
         // LEDs
 
-        ControlBoardPowerState currentPowerState = ControlBoardPowerState::OFF;
+        ControlBoardPowerState mCurrentPowerState = ControlBoardPowerState::OFF;
 
         // Store pin/channel info for init
-        gpio_num_t monitorPin;
-        ledc_channel_t pwmChannel;
+        gpio_num_t mMonitorPin;
+        ledc_channel_t mPwmChannel;
     };
 }

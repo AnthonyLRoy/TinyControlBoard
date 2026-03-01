@@ -5,11 +5,11 @@
 namespace controlSystem
 {
 
-const char* getCommandNameById(commandID commandId)
+const char *getCommandNameById(CommandId commandId)
 {
     for (size_t i = 0; i < NUM_COMMANDS; ++i) {
         if (commandConfigs[i].commandId == commandId)
-            return commandConfigs[i].logTag;
+            return commandConfigs[i].pLogTag;
     }
     return "UNKNOWN";
 }

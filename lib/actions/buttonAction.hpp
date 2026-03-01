@@ -4,11 +4,11 @@
 namespace actions
 {
 
-    struct actionResponse;
+    struct ActionResponse;
     class ButtonAction
     {
     public:
         virtual ~ButtonAction() = default;
-        virtual actionResponse execute(bool pressed) = 0;
+        virtual ActionResponse execute(bool isPressed) = 0;
     };
 }

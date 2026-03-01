@@ -8,30 +8,30 @@
 
 namespace spibus {
 
-class SPI {
+class Spi {
 public:
-    static SPI& instance(spi_host_device_t spi_host = SPI2_HOST);
+    static Spi& getInstance(spi_host_device_t spiHost = SPI2_HOST);
 
-    void init(gpio_num_t serial_data_out, gpio_num_t data_clock_out, int mhz = 1);
+    void init(gpio_num_t serialDataOut, gpio_num_t dataClockOut, int mhz = 1);
     void send(uint16_t data);
-    void send_bulk(const uint16_t* data, size_t word_count);
-    void pulse_latch(gpio_num_t latch_pin);
+    void sendBulk(const uint16_t *pData, size_t wordCount);
+    void pulseLatch(gpio_num_t latchPin);
 
 private:
     // Singleton pattern
-    SPI(spi_host_device_t spi_host);
-    ~SPI();
+    Spi(spi_host_device_t spiHost);
+    ~Spi();
 
     // Delete copy and move
-    SPI(const SPI&) = delete;
-    SPI& operator=(const SPI&) = delete;
-    SPI(SPI&&) = delete;
-    SPI& operator=(SPI&&) = delete;
+    Spi(const Spi&) = delete;
+    Spi& operator=(const Spi&) = delete;
+    Spi(Spi&&) = delete;
+    Spi& operator=(Spi&&) = delete;
 
-    spi_host_device_t host;
-    spi_device_handle_t spi = nullptr;
-    gpio_num_t serialDataOutPin;
-    gpio_num_t serialDataClockPin    ;
+    spi_host_device_t mHost;
+    spi_device_handle_t mpSpi = nullptr;
+    gpio_num_t mSerialDataOutPin;
+    gpio_num_t mSerialDataClockPin;
 };
 
 } // namespace spibus
