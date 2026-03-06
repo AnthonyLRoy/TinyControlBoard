@@ -12,14 +12,15 @@ namespace indicators
         SpiLedDriver(spi_host_device_t spiHost, gpio_num_t mosiPin, gpio_num_t clkPin, gpio_num_t latchPin);
         ~SpiLedDriver();
 
-        bool mStarted = false;
-        void init();
+        bool init();
+        bool isStarted() const { return mStarted; }
         void setLed(uint8_t buttonId, bool on);
         void update();
 
     private:
 
         static constexpr const char *mspTag = "SpiLedDriver";
+        static constexpr uint8_t LED_COUNT = 16;
         spi_device_handle_t mpSpiHandle;
         spi_host_device_t mHost;
         gpio_num_t mMosiPin;
@@ -27,6 +28,7 @@ namespace indicators
         gpio_num_t mLatchPin;
         uint16_t mLedBitState = 0;
         uint8_t mTxBuf[2];
+        bool mStarted = false;
         void printU16Binary(uint16_t value);
     };
 }

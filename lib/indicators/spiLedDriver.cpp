@@ -1,5 +1,6 @@
 #include "spiLedDriver.hpp"
 #include "driver/gpio.h"
+#include "esp_err.h"
 #include "esp_log.h"
 #include "esp_rom_sys.h"
 
@@ -14,7 +15,7 @@ namespace indicators
     SpiLedDriver::~SpiLedDriver()
     {
     }
-    void SpiLedDriver::init()
+    bool SpiLedDriver::init()
     {
         ESP_LOGW(mspTag, "Initializing LED Driver on SPI host %d with latch pin %d", mHost, mLatchPin);
 
@@ -26,7 +27,12 @@ namespace indicators
         buscfg.quadhd_io_num = -1;
         buscfg.max_transfer_sz = 4096;
 
-        spi_bus_initialize(mHost, &buscfg, SPI_DMA_CH_AUTO);
+        esp_err_t err = spi_bus_initialize(mHost, &buscfg, SPI_DMA_CH_AUTO);
+        if (err != ESP_OK)
+        {
+            ESP_LOGE(mspTag, "spi_bus_initialize failed: %d", err);
+            return false;
+        }
 
         spi_device_interface_config_t devcfg = {};
         devcfg.mode = 0;
@@ -34,7 +40,12 @@ namespace indicators
         devcfg.spics_io_num = -1;
         devcfg.queue_size = 1;
 
-        spi_bus_add_device(mHost, &devcfg, &mpSpiHandle);
+        err = spi_bus_add_device(mHost, &devcfg, &mpSpiHandle);
+        if (err != ESP_OK)
+        {
+            ESP_LOGE(mspTag, "spi_bus_add_device failed: %d", err);
+            return false;
+        }
 
         gpio_config_t latch_config = {};
         latch_config.pin_bit_mask = 1ULL << mLatchPin;
@@ -42,21 +53,39 @@ namespace indicators
         latch_config.pull_up_en = GPIO_PULLUP_DISABLE;
         latch_config.pull_down_en = GPIO_PULLDOWN_DISABLE;
         latch_config.intr_type = GPIO_INTR_DISABLE;
-        gpio_config(&latch_config);
+        err = gpio_config(&latch_config);
+        if (err != ESP_OK)
+        {
+            ESP_LOGE(mspTag, "gpio_config failed: %d", err);
+            return false;
+        }
 
         gpio_set_level(mLatchPin, 0);
+        mStarted = true;
+        return true;
     }
 
     void SpiLedDriver::setLed(uint8_t buttonId, bool on)
     {
+        if (!mStarted)
+        {
+            ESP_LOGW(mspTag, "setLed called before init");
+            return;
+        }
+        if (buttonId >= LED_COUNT)
+        {
+            ESP_LOGW(mspTag, "setLed out of range: %u", buttonId);
+            return;
+        }
+
+        const uint16_t mask = static_cast<uint16_t>(1U << buttonId);
         if (on)
         {
-            mLedBitState |= (1 << buttonId);
+            mLedBitState |= mask;
         }
         else
         {
-
-            mLedBitState &= ~(1 << buttonId);
+            mLedBitState &= static_cast<uint16_t>(~mask);
         }
 
         update();
@@ -64,6 +93,11 @@ namespace indicators
 
     void SpiLedDriver::update()
     {
+        if (!mStarted)
+        {
+            ESP_LOGW(mspTag, "update called before init");
+            return;
+        }
         mTxBuf[0] = (uint8_t)(mLedBitState & 0xFF);
         mTxBuf[1] = (uint8_t)(mLedBitState >> 8);
 

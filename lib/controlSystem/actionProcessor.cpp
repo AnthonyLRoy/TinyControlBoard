@@ -45,7 +45,7 @@ namespace controlSystem
         mpRelayController = std::make_unique<RelayController>(mrSerial, mrRelays);
     }
 
-    void ActionProcessor::process(actions::ActionResponse response)
+    void ActionProcessor::process(const actions::ActionResponse &response)
     {
         ESP_LOGI(mspTag, "Action Processor received command: 0x%04X", response.command);
         
@@ -61,7 +61,8 @@ namespace controlSystem
             return;
         }
 
-        if (indicators::getPowerLed().getState() != ControlBoardPowerState::ON)
+        const auto powerState = indicators::getPowerLed().getState();
+        if (powerState != ControlBoardPowerState::ON)
         {
             ESP_LOGI(mspTag, "Ignoring command %u as system is not ON", response.command);
             return;
@@ -128,7 +129,7 @@ namespace controlSystem
             message.params[0] = (response.parameters[0]);
             mrSerial.sendUartMessage("ROTARY", message);
             ESP_LOGI(mspTag, "Processing Rotary Action Command (%s)",
-                     response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
+                     response.parameters[0] == 0 ? "LEFT" : "RIGHT");
             return;
         }
 
@@ -187,16 +188,14 @@ namespace controlSystem
         return false;
     }
 
-    bool ActionProcessor::handleCommandPowerStateChange(actions::ActionResponse response)
+    bool ActionProcessor::handleCommandPowerStateChange(const actions::ActionResponse &response)
     {
-
-        // if power is OFF or SLEEP, turn ON
-        // we do this by switching on all necessary relays with delays
-        // then wait for the RPI to start  if it has not already started
-
-        if (indicators::getPowerLed().getState() == ControlBoardPowerState::OFF ||
-            indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP ||
-            indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
+        // Handle power button action based on current power state and press duration.
+        // Sequences are relay-driven with delays and optional RPI boot/shutdown waits.
+        const auto powerState = indicators::getPowerLed().getState();
+        if (powerState == ControlBoardPowerState::OFF ||
+            powerState == ControlBoardPowerState::SLEEP ||
+            powerState == ControlBoardPowerState::DEEPSLEEP)
         {
             indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
             // Power on sequence
@@ -210,15 +209,15 @@ namespace controlSystem
             bool booted = waitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
             indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Active);
-            return true && booted;
+            return booted;
         }
 
-        // switching off sequence    short press = sleep
-        // 1) sleep keeps switches of power to the RPI and the Screenn but  leaves the power to the DAC and pre amplifiers
-        // 2)  (press for 3 seconds or more) switches off the power to the screen ,
-        // the RPI and the DACS and output preamps , but leves the 3.3v to the reclock-crystal boards //long press = deep sleep
+        // Power-down paths from ON:
+        // - Short press: sleep keeps DAC/output stage powered but turns off RPI and screen.
+        // - Long press: deep sleep removes RPI/screen/DAC/output stage power while keeping 3.3V rails.
         ESP_LOGI(mspTag, "Release Time MS: %" PRIu16 "", response.releaseTimeMillis);
-        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMillis < LONG_PRESS_THRESHOLD_MS)
+        if (powerState == ControlBoardPowerState::ON &&
+            response.releaseTimeMillis < LONG_PRESS_THRESHOLD_MS)
         {
             // Sleep sequence
             ESP_LOGI(mspTag, "Initiating Sleep Sequence");
@@ -235,7 +234,8 @@ namespace controlSystem
             return true;
         }
         // Deep sleep if long press exceeds threshold
-        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMillis > LONG_PRESS_THRESHOLD_MS)
+        if (powerState == ControlBoardPowerState::ON &&
+            response.releaseTimeMillis >= LONG_PRESS_THRESHOLD_MS)
         {
             ESP_LOGI(mspTag, "Initiating Deep Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);

@@ -39,23 +39,20 @@ namespace controlSystem
 
         // Initialize SPI and action processor
 
-        mpResponseProcessor = new ActionProcessor(*mpSerialHandler, *mpRelays);
+        mpResponseProcessor = std::make_unique<ActionProcessor>(*mpSerialHandler, *mpRelays);
 
-        // Setup hardware components 
+        // Setup hardware components
         if (!setupRelays()) {
-            ESP_LOGE(spTag, "Failed to setup relays");
             return false;
         }
 
         if (!setupMcpHandler()) {
-            ESP_LOGE(spTag, "Failed to setup MCP handler");
             return false;
         }
 
         setupMcpCallbacks();
 
         if (!setupSerial()) {
-            ESP_LOGE(spTag, "Failed to setup serial");
             return false;
         }
 
@@ -78,8 +75,7 @@ namespace controlSystem
             mpSerialHandler->deinitUart();
             mpSerialHandler = nullptr;
         }
-        delete mpResponseProcessor;
-        mpResponseProcessor = nullptr;
+        mpResponseProcessor.reset();
     }
 
     bool ControlBoard::setupRelays()
@@ -174,6 +170,11 @@ namespace controlSystem
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
         indicators::getSpiLedDriver().setLed(buttonPressedId, true);
 
+        if (buttonPressedId >= ControlBoardConfig::NUM_BUTTONS || !mpResponseProcessor)
+        {
+            return;
+        }
+
         if (mpButtonActions[buttonPressedId]) {
             actions::ActionResponse result = mpButtonActions[buttonPressedId]->execute(true);
             mpResponseProcessor->process(result);
@@ -184,6 +185,11 @@ namespace controlSystem
     {
         ESP_LOGI(spTag, "Button released on pin %u", buttonReleasedId);
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
+
+        if (buttonReleasedId >= ControlBoardConfig::NUM_BUTTONS || !mpResponseProcessor)
+        {
+            return;
+        }
 
         if (mpButtonActions[buttonReleasedId]) {
             actions::ActionResponse result = mpButtonActions[buttonReleasedId]->execute(false);
@@ -200,6 +206,11 @@ namespace controlSystem
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
         // this if statement assumes both left and right rotary events are handled by the same action, only a parameter changes1 for right 2 for left, why is this seperate from Handle button pressed and released? To lazy to refactor now
         // and this is c++ not c#sharp after all, An every time i try to use references i get lost in pointer land, so sue me
+        if (!mpResponseProcessor)
+        {
+            return;
+        }
+
         if (mpButtonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT]) {
             actions::ActionResponse result = mpButtonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT]->execute(direction > 0);
             mpResponseProcessor->process(result);

@@ -36,8 +36,6 @@ private:
     static void runLedTask(void *pParam);
     void updateDuty(uint32_t duty);
     static void handleTimer(TimerHandle_t timerHandle);
-    void handleBlink();
-
     static void runBreatheTask(void *pParameter);
     void startBreatheEffect();
     void stopBreatheEffect();

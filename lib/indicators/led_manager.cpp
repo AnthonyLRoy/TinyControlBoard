@@ -45,10 +45,9 @@ namespace indicators {
         return sButtonLeds;
     }
     SpiLedDriver& getSpiLedDriver() {
-               if (!sSpiLedDriver.mStarted)
+        if (!sSpiLedDriver.isStarted())
         {
             sSpiLedDriver.init();
-            sSpiLedDriver.mStarted = true;
         }
         return sSpiLedDriver;
     }

@@ -8,6 +8,8 @@ using namespace indicators;
 static const char *spTag = "ActiveLed";
 
 static constexpr uint32_t MAX_DUTY = 8191; // 13-bit resolution
+static constexpr uint32_t BREATHE_STEP = 64;
+static constexpr uint32_t BREATHE_DELAY_MS = 20;
 
 ActiveLed::ActiveLed(gpio_num_t pin, ledc_channel_t channel)
         : mPin(pin),
@@ -103,10 +105,15 @@ void ActiveLed::runLedTask(void *pParam)
             // Stop any previous effect
             xTimerStop(pSelf->mpBlinkTimer, 0);
             pSelf->stopBreatheEffect();
+            pSelf->mLedOn = false;
+            pSelf->updateDuty(0);
 
             switch (receivedStatus)
             {
             case ControlBoardWorkingStatus::doingWork:
+                pSelf->mLedOn = true;
+                pSelf->updateDuty(MAX_DUTY);
+                break;
             case ControlBoardWorkingStatus::Idle:
             case ControlBoardWorkingStatus::MaintenanceMode:
             case ControlBoardWorkingStatus::Active:
@@ -144,6 +151,10 @@ void ActiveLed::handleTimer(TimerHandle_t timerHandle)
 }
 void ActiveLed::startBreatheEffect()
 {
+    if (mpBreatheTaskHandle)
+    {
+        return;
+    }
     xTaskCreate(runBreatheTask, "BreatheTask", 2048, this, 5, &mpBreatheTaskHandle);
 }
 
@@ -153,6 +164,7 @@ void ActiveLed::stopBreatheEffect()
     {
         vTaskDelete(mpBreatheTaskHandle);
         mpBreatheTaskHandle = nullptr;
+        updateDuty(0);
     }
 }
 
@@ -168,17 +180,29 @@ void ActiveLed::runBreatheTask(void *pParameter)
 
         if (increasing)
         {
-            duty += 64;
-            if (duty >= MAX_DUTY)
+            if (duty + BREATHE_STEP >= MAX_DUTY)
+            {
+                duty = MAX_DUTY;
                 increasing = false;
+            }
+            else
+            {
+                duty += BREATHE_STEP;
+            }
         }
         else
         {
-            duty -= 64;
-            if (duty == 0)
+            if (duty <= BREATHE_STEP)
+            {
+                duty = 0;
                 increasing = true;
+            }
+            else
+            {
+                duty -= BREATHE_STEP;
+            }
         }
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(BREATHE_DELAY_MS));
     }
 }
 

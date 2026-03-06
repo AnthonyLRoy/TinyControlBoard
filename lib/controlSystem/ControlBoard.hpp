@@ -11,6 +11,8 @@
 #include "actionsResponse.hpp"
 #include "actionProcessor.hpp"
 #include "PowerStateManager.hpp"
+#include <array>
+#include <memory>
 
 namespace actions {
     class ButtonAction;
@@ -59,7 +61,7 @@ namespace controlSystem
         static constexpr uint8_t BTN_ROTARY_EVENT_RIGHT = 14;
         static constexpr uint8_t BTN_CYCLE_BRIGHTNESS = 15;
         
-        static constexpr uint8_t NUM_BUTTONS = 15;
+        static constexpr uint8_t NUM_BUTTONS = 16;
     };
 
     class ControlBoard
@@ -88,10 +90,10 @@ namespace controlSystem
         // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
         serialBus::Serial *mpSerialHandler = nullptr;
         relays::StandardRelay *mpRelays = nullptr;
-        ActionProcessor *mpResponseProcessor = nullptr;
+        std::unique_ptr<ActionProcessor> mpResponseProcessor;
 
         //declare handler and button action fucntions
         buttons::McpInputHandler mMcpHandler{ControlBoardConfig::MCP_ADDRESS, I2C_NUM_0};
-        actions::ButtonAction *mpButtonActions[ControlBoardConfig::NUM_BUTTONS] = {nullptr};
+        std::array<actions::ButtonAction *, ControlBoardConfig::NUM_BUTTONS> mpButtonActions{};
     };
 }
