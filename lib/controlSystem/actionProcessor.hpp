@@ -5,12 +5,12 @@
 #include "relay.hpp"
 #include "actionsResponse.hpp"
 #include "esp_log.h"
-#include "PowerStateManager.hpp"
+#include "power/powerState.hpp"
 #include <driver/gpio.h>
-#include "led_Manager.hpp"
+#include "led_manager.hpp"
 #include "rpiBootManager.hpp"
 #include "relayController.hpp"
-#include "uart_protocol.hpp"
+#include "protocol/uartProtocol.hpp"
 #include <memory>
 
 namespace controlSystem

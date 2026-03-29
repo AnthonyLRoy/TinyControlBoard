@@ -23,7 +23,7 @@ namespace controlSystem
     {
         if (mpRpiBootEventGroup != nullptr) {
             xEventGroupSetBits(mpRpiBootEventGroup, msRpiHeartbeatBit);
-            //ESP_LOGI(TAG, "Heartbeat received from RPI - boot complete or system still active");
+            ESP_LOGI(mspTag, "Heartbeat received from RPI - boot complete or system still active");
         }
     }
 

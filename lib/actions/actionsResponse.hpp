@@ -1,6 +1,5 @@
-
 #pragma once
-#include "uart_protocol.hpp"
+#include "protocol/uartProtocol.hpp"
 
 namespace actions
 {

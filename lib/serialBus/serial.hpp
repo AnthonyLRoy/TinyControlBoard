@@ -3,7 +3,8 @@
 #include "driver/uart.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
-#include "uart_protocol.hpp"
+#include "board/boardConfig.hpp"
+#include "protocol/uartProtocol.hpp"
 #include "uartReceiver.hpp"
 #include <functional>
 
@@ -72,9 +73,9 @@ namespace serialBus
     // GPIO from Raspberry Pi indicating data available
 
     // Fires when Pi sets this pin HIGH
-    static constexpr gpio_num_t PIN_RPI_DATA_READY = GPIO_NUM_42;
+    inline constexpr gpio_num_t PIN_RPI_DATA_READY = board::serial::kRpiDataReadyPin;
 
     // GPIO from ESP32 indicating data available raised High by ESP32 //
-    static constexpr gpio_num_t PIN_ESP32_DATA_READY = GPIO_NUM_41;
+    inline constexpr gpio_num_t PIN_ESP32_DATA_READY = board::serial::kEsp32DataReadyPin;
 
 } // namespace serialBus

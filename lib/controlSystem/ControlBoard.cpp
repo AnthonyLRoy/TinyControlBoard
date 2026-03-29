@@ -1,6 +1,6 @@
 #include "ControlBoard.hpp"
-#include "led_Manager.hpp"
-#include "uart_protocol.hpp"
+#include "led_manager.hpp"
+#include "protocol/uartProtocol.hpp"
 #include "actionProcessor.hpp"
 #include "serial.hpp"
 #include "spi.hpp"
@@ -9,6 +9,7 @@
 namespace controlSystem
 {
     static const char *spTag = "CONTROL_BOARD";
+    static constexpr uint16_t kLegacyHeartbeatCommandId = 0x9999;
 
     bool ControlBoard::init()
     {
@@ -28,9 +29,9 @@ namespace controlSystem
             this->handleSerialRxMessage(rMsg);
         });
 
-        mpSerialHandler->startHeartbeatMonitor(ControlBoardConfig::HEARTBEAT_TIMEOUT_MS, [this]() {
+        mpSerialHandler->startHeartbeatMonitor(board::timing::kHeartbeatTimeoutMs, [this]() {
             ESP_LOGE(spTag, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
-                     ControlBoardConfig::HEARTBEAT_TIMEOUT_MS);
+                     board::timing::kHeartbeatTimeoutMs);
             // Notify action processor that heartbeat timeout occurred (RPI is offline)
             if (mpResponseProcessor) {
                 mpResponseProcessor->handleHeartbeatTimeout();
@@ -61,7 +62,7 @@ namespace controlSystem
         ESP_LOGI(spTag, "ControlBoard init complete.");
         ESP_LOGI(spTag, "Transitioning Power LED to Sleep state...");
         
-        vTaskDelay(pdMS_TO_TICKS(ControlBoardConfig::INIT_DELAY_MS));
+        vTaskDelay(pdMS_TO_TICKS(board::timing::kInitDelayMs));
 
         indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
 
@@ -105,11 +106,11 @@ namespace controlSystem
     bool ControlBoard::setupSerial()
     {
         ESP_LOGI(spTag, "Initializing serial...");
-        bool ok = mpSerialHandler->initUart(ControlBoardConfig::UART_NUM,
-                                           ControlBoardConfig::UART_BOARD_RATE,
-                                           ControlBoardConfig::PIN_SERIAL_TX,
-                                           ControlBoardConfig::PIN_SERIAL_RX,
-                                           256,
+        bool ok = mpSerialHandler->initUart(board::serial::kPort,
+                           board::serial::kBaudRate,
+                           board::serial::kTxPin,
+                           board::serial::kRxPin,
+                           board::serial::kBufferSize,
                                            UART_PARITY_DISABLE,
                                            UART_STOP_BITS_1,
                                            UART_HW_FLOWCTRL_DISABLE);
@@ -126,15 +127,15 @@ namespace controlSystem
     bool ControlBoard::setupMcpHandler()
     {
         ESP_LOGI(spTag, "Initializing MCP handler...");
-        esp_err_t err = mMcpHandler.begin(ControlBoardConfig::PIN_I2C_SDA,
-                                         ControlBoardConfig::PIN_I2C_SCL,
-                                         ControlBoardConfig::PIN_I2C_INT);
+        esp_err_t err = mMcpHandler.begin(board::i2c::kSdaPin,
+                                         board::i2c::kSclPin,
+                                         board::i2c::kInterruptPin);
         if (err != ESP_OK)
         {
             ESP_LOGE(spTag, "Failed MCPHandler begin: %d", err);
             return false;
         }
-        mMcpHandler.setTimeout(ControlBoardConfig::MCP_TIMEOUT_MS);
+        mMcpHandler.setTimeout(board::i2c::kMcpTimeoutMs);
         mMcpHandler.enableI2c(true);
 #ifdef DEBUG_MCP_SCAN
         mMcpHandler.scanI2c();
@@ -170,7 +171,7 @@ namespace controlSystem
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
         indicators::getSpiLedDriver().setLed(buttonPressedId, true);
 
-        if (buttonPressedId >= ControlBoardConfig::NUM_BUTTONS || !mpResponseProcessor)
+        if (buttonPressedId >= board::buttons::kCount || !mpResponseProcessor)
         {
             return;
         }
@@ -186,7 +187,7 @@ namespace controlSystem
         ESP_LOGI(spTag, "Button released on pin %u", buttonReleasedId);
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
 
-        if (buttonReleasedId >= ControlBoardConfig::NUM_BUTTONS || !mpResponseProcessor)
+        if (buttonReleasedId >= board::buttons::kCount || !mpResponseProcessor)
         {
             return;
         }
@@ -211,8 +212,8 @@ namespace controlSystem
             return;
         }
 
-        if (mpButtonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT]) {
-            actions::ActionResponse result = mpButtonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT]->execute(direction > 0);
+        if (mpButtonActions[board::buttons::kRotaryEventLeft]) {
+            actions::ActionResponse result = mpButtonActions[board::buttons::kRotaryEventLeft]->execute(direction > 0);
             mpResponseProcessor->process(result);
         }
         indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
@@ -220,47 +221,46 @@ namespace controlSystem
 
     void ControlBoard::createButtonActionMap()
     {
-        mpButtonActions[ControlBoardConfig::BTN_POWER] = &actions::PowerButtonInstance;
-        mpButtonActions[ControlBoardConfig::BTN_PREV_TRACK] = &actions::PreviousTrackInstance;
-        mpButtonActions[ControlBoardConfig::BTN_NEXT_TRACK] = &actions::NextTrackInstance;
-        mpButtonActions[ControlBoardConfig::BTN_SKIP_FORWARD] = &actions::SkipForwardInstance;
-        mpButtonActions[ControlBoardConfig::BTN_SKIP_BACK] = &actions::SkipBackInstance;
-        mpButtonActions[ControlBoardConfig::BTN_PLAY_PAUSE] = &actions::PlayPauseInstance;
-        mpButtonActions[ControlBoardConfig::BTN_STOP] = &actions::StopInstance;
-        mpButtonActions[ControlBoardConfig::BTN_COVER] = &actions::CoverViewInstance;
-        mpButtonActions[ControlBoardConfig::BTN_NEXT_MENU] = &actions::NextMenuInstance;
-        mpButtonActions[ControlBoardConfig::BTN_MENU_SELECT] = &actions::MenuSelectInstance;
-        mpButtonActions[ControlBoardConfig::BTN_TOGGLE_DAC] = &actions::ToggleDacInstance;
-        mpButtonActions[ControlBoardConfig::BTN_TOGGLE_DISPLAY] = &actions::ToggleDisplayInstance;
-        mpButtonActions[ControlBoardConfig::BTN_TOGGLE_METER] = &actions::ToggleMeterDisplayInstance;
-        mpButtonActions[ControlBoardConfig::BTN_ROTARY_EVENT_LEFT] = &actions::RotaryEventInstance;
-        mpButtonActions[ControlBoardConfig::BTN_ROTARY_EVENT_RIGHT] = &actions::RotaryEventInstance;
-        mpButtonActions[ControlBoardConfig::BTN_CYCLE_BRIGHTNESS] = &actions::CycleBrightnessInstance;
+        mpButtonActions[board::buttons::kPower] = &actions::PowerButtonInstance;
+        mpButtonActions[board::buttons::kPrevTrack] = &actions::PreviousTrackInstance;
+        mpButtonActions[board::buttons::kNextTrack] = &actions::NextTrackInstance;
+        mpButtonActions[board::buttons::kSkipForward] = &actions::SkipForwardInstance;
+        mpButtonActions[board::buttons::kSkipBack] = &actions::SkipBackInstance;
+        mpButtonActions[board::buttons::kPlayPause] = &actions::PlayPauseInstance;
+        mpButtonActions[board::buttons::kStop] = &actions::StopInstance;
+        mpButtonActions[board::buttons::kCover] = &actions::CoverViewInstance;
+        mpButtonActions[board::buttons::kNextMenu] = &actions::NextMenuInstance;
+        mpButtonActions[board::buttons::kMenuSelect] = &actions::MenuSelectInstance;
+        mpButtonActions[board::buttons::kToggleDac] = &actions::ToggleDacInstance;
+        mpButtonActions[board::buttons::kToggleDisplay] = &actions::ToggleDisplayInstance;
+        mpButtonActions[board::buttons::kToggleMeter] = &actions::ToggleMeterDisplayInstance;
+        mpButtonActions[board::buttons::kRotaryEventLeft] = &actions::RotaryEventInstance;
+        mpButtonActions[board::buttons::kRotaryEventRight] = &actions::RotaryEventInstance;
+        mpButtonActions[board::buttons::kCycleBrightness] = &actions::CycleBrightnessInstance;
     }
     void ControlBoard::handleSerialRxMessage(const UartMessage &rMsg)
 
     {
-        //ESP_LOGI(TAG, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
-        //         msg.command_id, msg.sequence, msg.msg_type);
+        ESP_LOGI(spTag, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
+                 rMsg.commandId, rMsg.sequence, rMsg.msgType);
 
         // Reset heartbeat timer on message reception
         // (This is handled by Serial class updating last_rx_time_us)
 
         // Check if this is a heartbeat message from RPI
-        const uint16_t CMD_ID_HEARTBEAT = 0x9999;  //todo move this to message definitions
-        if (rMsg.commandId == CMD_ID_HEARTBEAT) {
-            //ESP_LOGI(TAG, "Heartbeat message received from RPI");
+        if (rMsg.commandId == CMD_SYS_HEARTBEAT || rMsg.commandId == kLegacyHeartbeatCommandId) {
+            if (rMsg.commandId == kLegacyHeartbeatCommandId) {
+                ESP_LOGW(spTag, "Received legacy heartbeat command 0x%04X; update the RPI heartbeat sender to CMD_SYS_HEARTBEAT (0x%04X)",
+                         rMsg.commandId, CMD_SYS_HEARTBEAT);
+            }
             if (mpResponseProcessor) {
                 mpResponseProcessor->handleHeartbeatReceived();
             }
             return;
         }
 
-        // can't rememebr why this is here should remove serves no purpose 
         if (mpResponseProcessor) {
-            // Convert UART message to action response or handle as needed
-            // This depends on your message format and action system
-            ESP_LOGI(spTag, "Processing UART message through action processor");
+            ESP_LOGI(spTag, "Processing UART message through action processor (cmd=0x%04X)", rMsg.commandId);
         }
     }
 }

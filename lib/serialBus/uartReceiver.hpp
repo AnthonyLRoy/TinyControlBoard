@@ -1,6 +1,6 @@
 #pragma once
 
-#include "uart_protocol.hpp"
+#include "protocol/uartProtocol.hpp"
 #include <esp_log.h>
 #include <cstring>
 

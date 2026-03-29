@@ -1,17 +1,11 @@
 #pragma once
 
+#include "indicators/activityStatus.hpp"
 #include "driver/ledc.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-enum class ControlBoardWorkingStatus {
-    doingWork,
-    Idle,
-    sleeping,
-    MaintenanceMode,
-    Active
-};
 
 namespace indicators {
 

@@ -1,15 +1,16 @@
 #pragma once
 #include <driver/gpio.h>
+#include "board/boardConfig.hpp"
 #include "esp_log.h"
 
 // relay pinout mapping
-#define PIN_RELAY_SCREEN_POWER GPIO_NUM_13            // GPIO for screen power relay
-#define PIN_RELAY_DAC_POWER GPIO_NUM_12               //  5V and 3.3
-#define PIN_RELAY_RPI_POWER GPIO_NUM_11               //  Raspbury Pi
-#define PIN_RELAY_OUTPUT_STAGE_POWER GPIO_NUM_9       //  Output stage power relay
-#define PIN_RELAY_PROTO_DAC_ENABLED GPIO_NUM_10         //  redirect Audio from ProtoDAC to output 
-#define PIN_RELAY_GENERAL_1 GPIO_NUM_47         //  General purpose relay
-#define PIN_RELAY_GENERAL_2 GPIO_NUM_39          //  General purpose relay
+inline constexpr gpio_num_t PIN_RELAY_SCREEN_POWER = board::relays::kScreenPower;
+inline constexpr gpio_num_t PIN_RELAY_DAC_POWER = board::relays::kDacPower;
+inline constexpr gpio_num_t PIN_RELAY_RPI_POWER = board::relays::kRpiPower;
+inline constexpr gpio_num_t PIN_RELAY_OUTPUT_STAGE_POWER = board::relays::kOutputStagePower;
+inline constexpr gpio_num_t PIN_RELAY_PROTO_DAC_ENABLED = board::relays::kProtoDacEnabled;
+inline constexpr gpio_num_t PIN_RELAY_GENERAL_1 = board::relays::kGeneral1;
+inline constexpr gpio_num_t PIN_RELAY_GENERAL_2 = board::relays::kGeneral2;
 
 namespace relays
 {

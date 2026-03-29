@@ -2,8 +2,8 @@
 
 #include "driver/ledc.h"
 #include "esp_timer.h"
+#include "power/powerState.hpp"
 #include "pwmLed.hpp"
-#include "PowerStateManager.hpp"
 #include "led_definitions.hpp"
 #include "esp_log.h"
 

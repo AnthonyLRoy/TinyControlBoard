@@ -9,6 +9,7 @@
 #include "freertos/timers.h"
 #include "esp_Check.h"
 #include <esp_log.h>
+#include "board/boardConfig.hpp"
 #include "project_cfg.hpp"
 
 
@@ -36,14 +37,14 @@ constexpr uint8_t MCP_GPIOB    = 0x13;
  // Rotary movement detection On device Index
 
 
-constexpr uint8_t ROTARY_A_PIN = 13;  // Rotary A pin
-constexpr uint8_t ROTARY_B_PIN = 14;  // Rotary B pin 
-constexpr uint8_t ROTARY_ACTION = 13;  // Combined Rotary pin for detection 
+inline constexpr uint8_t ROTARY_A_PIN = board::buttons::kRotaryEventLeft;
+inline constexpr uint8_t ROTARY_B_PIN = board::buttons::kRotaryEventRight;
+inline constexpr uint8_t ROTARY_ACTION = board::buttons::kRotaryEventLeft;
 
 // I2C constants
-constexpr uint32_t I2C_CLK_SPEED_HZ = 50000;
-constexpr uint8_t ALL_INPUTS        = 0xFF;
-constexpr gpio_num_t PIN_I2C_ENABLE = GPIO_NUM_17;
+inline constexpr uint32_t I2C_CLK_SPEED_HZ = board::i2c::kClockSpeedHz;
+inline constexpr uint8_t ALL_INPUTS = 0xFF;
+inline constexpr gpio_num_t PIN_I2C_ENABLE = board::i2c::kEnablePin;
 
 namespace buttons {
 
