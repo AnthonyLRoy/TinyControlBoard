@@ -6,6 +6,7 @@ import RPi.GPIO as GPIO
 # === CONFIG ===
 UART_PORT = "/dev/ttyAMA5"
 BAUD_RATE = 115200
+HEARTBEAT_INTERVAL_S = 10.0
 
 DRDY_PIN = 24  # ESP32 data ready/busy line
 BLIP_TIME = 0.002  # 2 ms "data ready" pulse
@@ -73,14 +74,15 @@ seq = 0
 try:
     while True:
         wait_until_low()          # Wait until ESP32 is idle
-        blip()                    # Notify ESP32 a packet is coming
 
         pkt = build_heartbeat(seq)
         ser.write(pkt)
+        ser.flush()
+        blip()                    # Notify ESP32 after the packet is queued on UART
         print(f"Heartbeat sent (seq={seq})", flush=True)
 
         seq = (seq + 1) & 0xFF
-        time.sleep(1.0)
+        time.sleep(HEARTBEAT_INTERVAL_S)
 
 except KeyboardInterrupt:
     print("Exiting heartbeat sender...")

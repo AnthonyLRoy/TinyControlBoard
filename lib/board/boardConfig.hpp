@@ -10,7 +10,7 @@
 namespace board {
 
 namespace timing {
-inline constexpr uint32_t kHeartbeatTimeoutMs = 15000;
+inline constexpr uint32_t kHeartbeatTimeoutMs = 30000;
 inline constexpr uint32_t kInitDelayMs = 5000;
 } // namespace timing
 
