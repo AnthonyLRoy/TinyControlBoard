@@ -11,7 +11,7 @@ namespace indicators {
 
 class ActiveLed {
 public:
-    ActiveLed(gpio_num_t pin,ledc_channel_t channel);
+    ActiveLed(gpio_num_t pin, ledc_channel_t channel, uint32_t idleDuty = 8191 / 4);
     ~ActiveLed();
 
     void setStatus(ControlBoardWorkingStatus newStatus);
@@ -20,6 +20,7 @@ public:
 private:
     gpio_num_t mPin;
     ledc_channel_t mChannel;
+    uint32_t mIdleDuty;
     ControlBoardWorkingStatus mCurrentStatus;
     bool mLedOn = true;
     QueueHandle_t mpStatusQueue = nullptr;

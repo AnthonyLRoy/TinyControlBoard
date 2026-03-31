@@ -11,9 +11,10 @@ static constexpr uint32_t MAX_DUTY = 8191; // 13-bit resolution
 static constexpr uint32_t BREATHE_STEP = 64;
 static constexpr uint32_t BREATHE_DELAY_MS = 20;
 
-ActiveLed::ActiveLed(gpio_num_t pin, ledc_channel_t channel)
+ActiveLed::ActiveLed(gpio_num_t pin, ledc_channel_t channel, uint32_t idleDuty)
         : mPin(pin),
             mChannel(channel),
+            mIdleDuty(idleDuty),
             mCurrentStatus(ControlBoardWorkingStatus::Idle),
             mLedOn(false),
             mpStatusQueue(nullptr),
@@ -228,7 +229,7 @@ uint32_t ActiveLed::getBlinkDuty(ControlBoardWorkingStatus status)
     switch (status)
     {
     case ControlBoardWorkingStatus::Idle:
-        return MAX_DUTY / 4; // Dim blink for idle
+        return mIdleDuty;
     case ControlBoardWorkingStatus::MaintenanceMode:
         return MAX_DUTY / 2;
     case ControlBoardWorkingStatus::Active:

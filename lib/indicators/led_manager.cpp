@@ -5,7 +5,9 @@
 namespace indicators {
 
     static ActiveLed sActiveLed(board::indicators::kWorkingStatusLed, LEDC_CHANNEL_0);
-    static ActiveLed sButtonLeds(board::indicators::kButtonLedBrightness, LEDC_CHANNEL_1);
+    static ActiveLed sButtonLeds(board::indicators::kButtonLedPwmPin,
+                                 LEDC_CHANNEL_1,
+                                 board::indicators::kButtonLedDefaultDuty);
     static PowerLed sPowerLed(board::indicators::kAppActiveLed, LEDC_CHANNEL_ON, board::indicators::kAppStandbyLed, LEDC_CHANNEL_STANDBY);
     static SpiLedDriver sSpiLedDriver(SPI_HOST, board::indicators::kSpiData, board::indicators::kSpiClock, board::indicators::kSpiLatch);
     static MonitorBrightnessController sMonitorBrightnessController(board::indicators::kMonitorBrightness, LEDC_CHANNEL_MONITOR_BRIGHTNESS);
