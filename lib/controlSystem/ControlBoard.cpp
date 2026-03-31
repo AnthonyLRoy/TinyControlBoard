@@ -161,7 +161,7 @@ namespace controlSystem
             this->handleRotaryMovement(movement);
         });
 
-        indicators::getButtonLed().setStatus(ControlBoardWorkingStatus::Idle);
+        indicators::getButtonLed().setStatus(ControlBoardWorkingStatus::SolidIdle);
     }
     /// @brief todo modify some commands to activate on release for timed button presses
     /// @param buttonPressedId 

@@ -7,9 +7,9 @@
 
 namespace indicators
 {
-    indicators::ActiveLed &getActiveLed();
+    indicators::StatusLed &getActiveLed();
     indicators::PowerLed &getPowerLed();
-    indicators::ActiveLed &getButtonLed();
+    indicators::StatusLed &getButtonLed();
     indicators::SpiLedDriver &getSpiLedDriver();
     indicators::MonitorBrightnessController &getMonitorBrightnessController();
 }

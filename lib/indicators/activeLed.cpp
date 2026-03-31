@@ -5,17 +5,21 @@
 
 using namespace indicators;
 
-static const char *spTag = "ActiveLed";
+static const char *spTag = "StatusLed";
 
 static constexpr uint32_t MAX_DUTY = 8191; // 13-bit resolution
 static constexpr uint32_t BREATHE_STEP = 64;
 static constexpr uint32_t BREATHE_DELAY_MS = 20;
 
-ActiveLed::ActiveLed(gpio_num_t pin, ledc_channel_t channel, uint32_t idleDuty)
+StatusLed::StatusLed(gpio_num_t pin,
+                     ledc_channel_t channel,
+                     uint32_t idleDuty,
+                     ControlBoardWorkingStatus defaultStatus)
         : mPin(pin),
             mChannel(channel),
             mIdleDuty(idleDuty),
-            mCurrentStatus(ControlBoardWorkingStatus::Idle),
+            mDefaultStatus(defaultStatus),
+            mCurrentStatus(defaultStatus),
             mLedOn(false),
             mpStatusQueue(nullptr),
             mpBlinkTimer(nullptr),
@@ -25,7 +29,7 @@ ActiveLed::ActiveLed(gpio_num_t pin, ledc_channel_t channel, uint32_t idleDuty)
     init();
 }
 
-ActiveLed::~ActiveLed()
+StatusLed::~StatusLed()
 {
     if (mpLedTaskHandle)
         vTaskDelete(mpLedTaskHandle);
@@ -37,7 +41,7 @@ ActiveLed::~ActiveLed()
         vQueueDelete(mpStatusQueue);
 }
 
-void ActiveLed::init()
+void StatusLed::init()
 {
     ledc_timer_config_t timerConfig = {
         .speed_mode = LEDC_LOW_SPEED_MODE,
@@ -59,6 +63,12 @@ void ActiveLed::init()
 
     ESP_ERROR_CHECK(ledc_channel_config(&channelConfig));
 
+    if (mDefaultStatus == ControlBoardWorkingStatus::SolidIdle)
+    {
+        mLedOn = true;
+        updateDuty(mIdleDuty);
+    }
+
     mpStatusQueue = xQueueCreate(1, sizeof(ControlBoardWorkingStatus));
 
     mpBlinkTimer = xTimerCreate("BlinkTimer", pdMS_TO_TICKS(100), pdTRUE, this, handleTimer);
@@ -66,12 +76,12 @@ void ActiveLed::init()
     xTaskCreate(runLedTask, "LED_Task", 4096, this, 5, &mpLedTaskHandle);
 }
 
-void ActiveLed::setStatus(ControlBoardWorkingStatus newStatus)
+void StatusLed::setStatus(ControlBoardWorkingStatus newStatus)
 {
     sendStatus(newStatus);
 }
 
-void ActiveLed::sendStatus(ControlBoardWorkingStatus status)
+void StatusLed::sendStatus(ControlBoardWorkingStatus status)
 {
     if (mpStatusQueue)
     {
@@ -90,9 +100,9 @@ void ActiveLed::sendStatus(ControlBoardWorkingStatus status)
     }
 }
 
-void ActiveLed::runLedTask(void *pParam)
+void StatusLed::runLedTask(void *pParam)
 {
-    auto *pSelf = static_cast<ActiveLed *>(pParam);
+    auto *pSelf = static_cast<StatusLed *>(pParam);
 
     ControlBoardWorkingStatus receivedStatus;
     ESP_LOGI(spTag, "LED Task started on pin %d", pSelf->mPin);
@@ -115,6 +125,10 @@ void ActiveLed::runLedTask(void *pParam)
                 pSelf->mLedOn = true;
                 pSelf->updateDuty(MAX_DUTY);
                 break;
+            case ControlBoardWorkingStatus::SolidIdle:
+                pSelf->mLedOn = true;
+                pSelf->updateDuty(pSelf->mIdleDuty);
+                break;
             case ControlBoardWorkingStatus::Idle:
             case ControlBoardWorkingStatus::MaintenanceMode:
             case ControlBoardWorkingStatus::Active:
@@ -135,22 +149,22 @@ void ActiveLed::runLedTask(void *pParam)
     }
 }
 
-void ActiveLed::updateDuty(uint32_t duty)
+void StatusLed::updateDuty(uint32_t duty)
 {
     ledc_set_duty(LEDC_LOW_SPEED_MODE, mChannel, duty);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, mChannel);
 }
 
-void ActiveLed::handleTimer(TimerHandle_t timerHandle)
+void StatusLed::handleTimer(TimerHandle_t timerHandle)
 {
-    auto *pSelf = static_cast<ActiveLed *>(pvTimerGetTimerID(timerHandle));
+    auto *pSelf = static_cast<StatusLed *>(pvTimerGetTimerID(timerHandle));
     pSelf->mLedOn = !pSelf->mLedOn;
     uint32_t duty = pSelf->mLedOn
                         ? pSelf->getBlinkDuty(pSelf->mCurrentStatus)
                         : 0;
     pSelf->updateDuty(duty);
 }
-void ActiveLed::startBreatheEffect()
+void StatusLed::startBreatheEffect()
 {
     if (mpBreatheTaskHandle)
     {
@@ -159,7 +173,7 @@ void ActiveLed::startBreatheEffect()
     xTaskCreate(runBreatheTask, "BreatheTask", 2048, this, 5, &mpBreatheTaskHandle);
 }
 
-void ActiveLed::stopBreatheEffect()
+void StatusLed::stopBreatheEffect()
 {
     if (mpBreatheTaskHandle)
     {
@@ -169,9 +183,9 @@ void ActiveLed::stopBreatheEffect()
     }
 }
 
-void ActiveLed::runBreatheTask(void *pParameter)
+void StatusLed::runBreatheTask(void *pParameter)
 {
-    auto *pSelf = static_cast<ActiveLed *>(pParameter);
+    auto *pSelf = static_cast<StatusLed *>(pParameter);
     uint32_t duty = 0;
     bool increasing = true;
 
@@ -207,7 +221,7 @@ void ActiveLed::runBreatheTask(void *pParameter)
     }
 }
 
-uint32_t ActiveLed::getBlinkInterval(ControlBoardWorkingStatus status)
+uint32_t StatusLed::getBlinkInterval(ControlBoardWorkingStatus status)
 {
     switch (status)
     {
@@ -218,16 +232,18 @@ uint32_t ActiveLed::getBlinkInterval(ControlBoardWorkingStatus status)
     case ControlBoardWorkingStatus::Active:
         return 500;
     case ControlBoardWorkingStatus::doingWork:
+    case ControlBoardWorkingStatus::SolidIdle:
         return 100; // Solid ON
     default:
         return 1000;
     }
 }
 
-uint32_t ActiveLed::getBlinkDuty(ControlBoardWorkingStatus status)
+uint32_t StatusLed::getBlinkDuty(ControlBoardWorkingStatus status)
 {
     switch (status)
     {
+    case ControlBoardWorkingStatus::SolidIdle:
     case ControlBoardWorkingStatus::Idle:
         return mIdleDuty;
     case ControlBoardWorkingStatus::MaintenanceMode:
