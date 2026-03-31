@@ -4,11 +4,11 @@
 #define SPI_HOST spi_host_device_t::SPI2_HOST
 namespace indicators {
 
-    static StatusLed sActiveLed(board::indicators::kWorkingStatusLed, LEDC_CHANNEL_0);
-    static StatusLed sButtonLeds(board::indicators::kButtonLedPwmPin,
-                                 LEDC_CHANNEL_1,
-                                 board::indicators::kButtonLedDefaultDuty,
-                                 ControlBoardWorkingStatus::SolidIdle);
+    static StatusLed sActivityStatusLed(board::indicators::kWorkingStatusLed, LEDC_CHANNEL_0);
+    static StatusLed sButtonStatusLed(board::indicators::kButtonLedPwmPin,
+                                      LEDC_CHANNEL_1,
+                                      board::indicators::kButtonLedDefaultDuty,
+                                      ControlBoardWorkingStatus::SolidIdle);
     static PowerLed sPowerLed(board::indicators::kAppActiveLed, LEDC_CHANNEL_ON, board::indicators::kAppStandbyLed, LEDC_CHANNEL_STANDBY);
     static SpiLedDriver sSpiLedDriver(SPI_HOST, board::indicators::kSpiData, board::indicators::kSpiClock, board::indicators::kSpiLatch);
     static MonitorBrightnessController sMonitorBrightnessController(board::indicators::kMonitorBrightness, LEDC_CHANNEL_MONITOR_BRIGHTNESS);
@@ -23,8 +23,8 @@ namespace indicators {
         return sMonitorBrightnessController;
     }
     
-    StatusLed& getActiveLed() {
-        return sActiveLed;
+    StatusLed& getActivityStatusLed() {
+        return sActivityStatusLed;
     }
 
     PowerLed& getPowerLed() {
@@ -36,8 +36,8 @@ namespace indicators {
         return sPowerLed;
     }
 
-    StatusLed& getButtonLed() {
-        return sButtonLeds;
+    StatusLed& getButtonStatusLed() {
+        return sButtonStatusLed;
     }
     SpiLedDriver& getSpiLedDriver() {
         if (!sSpiLedDriver.isStarted())

@@ -1,4 +1,4 @@
-#include "activeLed.hpp"
+#include "statusLed.hpp"
 #include "esp_log.h"
 #include "esp_err.h"
 #include "driver/ledc.h"
@@ -7,7 +7,7 @@ using namespace indicators;
 
 static const char *spTag = "StatusLed";
 
-static constexpr uint32_t MAX_DUTY = 8191; // 13-bit resolution
+static constexpr uint32_t MAX_DUTY = 8191;
 static constexpr uint32_t BREATHE_STEP = 64;
 static constexpr uint32_t BREATHE_DELAY_MS = 20;
 
@@ -113,7 +113,6 @@ void StatusLed::runLedTask(void *pParam)
             pSelf->mCurrentStatus = receivedStatus;
             ESP_LOGI(spTag, "LED status updated to %d", static_cast<int>(receivedStatus));
             ESP_LOGI(spTag, "Handling status change for pin %d", pSelf->mPin);
-            // Stop any previous effect
             xTimerStop(pSelf->mpBlinkTimer, 0);
             pSelf->stopBreatheEffect();
             pSelf->mLedOn = false;
@@ -132,7 +131,6 @@ void StatusLed::runLedTask(void *pParam)
             case ControlBoardWorkingStatus::Idle:
             case ControlBoardWorkingStatus::MaintenanceMode:
             case ControlBoardWorkingStatus::Active:
-                // Blink at the appropriate interval and brightness
                 xTimerChangePeriod(
                     pSelf->mpBlinkTimer,
                     pdMS_TO_TICKS(pSelf->getBlinkInterval(receivedStatus)),
@@ -164,6 +162,7 @@ void StatusLed::handleTimer(TimerHandle_t timerHandle)
                         : 0;
     pSelf->updateDuty(duty);
 }
+
 void StatusLed::startBreatheEffect()
 {
     if (mpBreatheTaskHandle)
@@ -226,14 +225,14 @@ uint32_t StatusLed::getBlinkInterval(ControlBoardWorkingStatus status)
     switch (status)
     {
     case ControlBoardWorkingStatus::Idle:
-        return 1000; // 1 second period
+        return 1000;
     case ControlBoardWorkingStatus::MaintenanceMode:
         return 3000;
     case ControlBoardWorkingStatus::Active:
         return 500;
     case ControlBoardWorkingStatus::doingWork:
     case ControlBoardWorkingStatus::SolidIdle:
-        return 100; // Solid ON
+        return 100;
     default:
         return 1000;
     }

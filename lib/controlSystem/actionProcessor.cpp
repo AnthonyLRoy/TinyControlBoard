@@ -208,7 +208,7 @@ namespace controlSystem
 
             bool booted = waitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
-            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Active);
+            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);
             return booted;
         }
 
@@ -230,7 +230,7 @@ namespace controlSystem
             mpRelayController->shutdownScreen(false);
             vTaskDelay(pdMS_TO_TICKS(5000));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
-            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
             return true;
         }
         // Deep sleep if long press exceeds threshold
@@ -247,7 +247,7 @@ namespace controlSystem
             mpRelayController->setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
             mpRelayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
-            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
         }
         return true;
     }

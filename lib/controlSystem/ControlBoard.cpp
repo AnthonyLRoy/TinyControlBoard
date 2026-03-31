@@ -98,7 +98,7 @@ namespace controlSystem
         relays::StandardRelay::setRelayState(PIN_RELAY_PROTO_DAC_ENABLED, false);
         relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_1, false);
 
-        indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
+        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
 
         return true;
     }
@@ -161,14 +161,14 @@ namespace controlSystem
             this->handleRotaryMovement(movement);
         });
 
-        indicators::getButtonLed().setStatus(ControlBoardWorkingStatus::SolidIdle);
+        indicators::getButtonStatusLed().setStatus(ControlBoardWorkingStatus::SolidIdle);
     }
     /// @brief todo modify some commands to activate on release for timed button presses
     /// @param buttonPressedId 
     void ControlBoard::handleButtonPressed(uint8_t buttonPressedId)
     {
         ESP_LOGI(spTag, "Button pressed on pin %u", buttonPressedId);
-        indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
+        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::doingWork);
         indicators::getSpiLedDriver().setLed(buttonPressedId, true);
 
         if (buttonPressedId >= board::buttons::kCount || !mpResponseProcessor)
@@ -185,7 +185,7 @@ namespace controlSystem
     void ControlBoard::handleButtonReleased(uint8_t buttonReleasedId)
     {
         ESP_LOGI(spTag, "Button released on pin %u", buttonReleasedId);
-        indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
+        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
 
         if (buttonReleasedId >= board::buttons::kCount || !mpResponseProcessor)
         {
@@ -204,7 +204,7 @@ namespace controlSystem
     void ControlBoard::handleRotaryMovement(int direction)
     {
         ESP_LOGI(spTag, "Rotary movement: %s", (direction > 0 ? "RIGHT" : "LEFT"));
-        indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::doingWork);
+        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::doingWork);
         // this if statement assumes both left and right rotary events are handled by the same action, only a parameter changes1 for right 2 for left, why is this seperate from Handle button pressed and released? To lazy to refactor now
         // and this is c++ not c#sharp after all, An every time i try to use references i get lost in pointer land, so sue me
         if (!mpResponseProcessor)
@@ -216,7 +216,7 @@ namespace controlSystem
             actions::ActionResponse result = mpButtonActions[board::buttons::kRotaryEventLeft]->execute(direction > 0);
             mpResponseProcessor->process(result);
         }
-        indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Idle);
+        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
     }
 
     void ControlBoard::createButtonActionMap()

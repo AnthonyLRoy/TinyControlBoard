@@ -39,7 +39,6 @@ private:
     void startBreatheEffect();
     void stopBreatheEffect();
 
-
     uint32_t getBlinkInterval(ControlBoardWorkingStatus status);
     uint32_t getBlinkDuty(ControlBoardWorkingStatus status);
 };
