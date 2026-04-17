@@ -14,7 +14,7 @@ namespace indicators
 
         bool init();
         bool isStarted() const { return mStarted; }
-        void setLed(uint8_t buttonId, bool on);
+        void setLed(uint8_t ledIndex, bool on);
         void update();
 
     private:

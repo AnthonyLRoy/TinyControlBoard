@@ -65,20 +65,20 @@ namespace indicators
         return true;
     }
 
-    void SpiLedDriver::setLed(uint8_t buttonId, bool on)
+    void SpiLedDriver::setLed(uint8_t ledIndex, bool on)
     {
         if (!mStarted)
         {
             ESP_LOGW(mspTag, "setLed called before init");
             return;
         }
-        if (buttonId >= LED_COUNT)
+        if (ledIndex >= LED_COUNT)
         {
-            ESP_LOGW(mspTag, "setLed out of range: %u", buttonId);
+            ESP_LOGW(mspTag, "setLed out of range: %u", ledIndex);
             return;
         }
 
-        const uint16_t mask = static_cast<uint16_t>(1U << buttonId);
+        const uint16_t mask = static_cast<uint16_t>(1U << ledIndex);
         if (on)
         {
             mLedBitState |= mask;

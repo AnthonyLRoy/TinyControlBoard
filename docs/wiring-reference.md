@@ -90,13 +90,16 @@ This is the same logical mapping documented in [docs/button-command-map.md](./bu
 | 12 | Toggle Meter | MCP input index 12 | bit 12 | `0x1000` | `0x00 0x10` | `0x010C` or `0x010D` | `CMD_TOGGLE_METER_ON` or `CMD_TOGGLE_METER_OFF` | normalized to `CMD_TOGGLE_METER` on UART |
 | 13 | Rotary Left | MCP input index 13 | none in current rotary path | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | sent with param `0`, no SPI LED write |
 | 14 | Rotary Right | MCP input index 14 | none in current rotary path | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | sent with param `1`, no SPI LED write |
-| 15 | Cycle Brightness | MCP input index 15 | bit 15 | `0x8000` | `0x00 0x80` | `0x0116` | `CMD_CYCLE_BRIGHTNESS` | local brightness control |
+| 15 | Cycle Brightness | MCP input index 15 | bit 14 | `0x4000` | `0x00 0x40` | `0x0116` | `CMD_CYCLE_BRIGHTNESS` | local brightness control |
 
 Important hardware interpretation:
 
+- the SPI LED driver accepts a zero-based `ledIndex` (0–15) and has no knowledge of button IDs,
+- `ControlBoard` maps button IDs to LED indices by subtracting 1: `ledIndex = buttonId - 1`,
+- button 0 (power) is skipped and does not drive any SPI LED bit,
 - the SPI LED driver shifts the 16-bit LED register low byte first, then high byte,
 - the values above assume an idle LED register before the button is pressed,
-- if another LED is already latched on, the transmitted SPI value is the OR-combination of active button bits,
+- if another LED is already latched on, the transmitted SPI value is the OR-combination of active LED bits,
 - rotary movement currently bypasses `setLed()` and therefore does not light a corresponding SPI LED bit.
 
 ### 1.6 Button Pin To LED Relationship
@@ -105,37 +108,39 @@ Looking at the schematic and the firmware together, the relationship is logical 
 
 - each button input arrives on a numbered `btn_in_x` net through the debouncer and MCP23016/23018 input expander,
 - the ESP32 converts that numbered input into a firmware button index,
-- when that button is pressed, firmware usually sets the same-numbered LED bit in the SPI LED register,
-- the SPI shift register then drives the corresponding numbered LED output.
+- `ControlBoard` maps the button index to an LED index by subtracting 1 (`ledIndex = buttonId - 1`),
+- button 0 (power) is skipped — it has no corresponding LED,
+- the SPI shift register then drives the corresponding LED output.
 
 So the normal pattern is:
 
-- `btn_in_1` drives firmware button index `0`, which lights SPI LED bit `0`,
-- `btn_in_2` drives firmware button index `1`, which lights SPI LED bit `1`,
+- `btn_in_1` drives firmware button index `0` (power), which has no LED,
+- `btn_in_2` drives firmware button index `1`, which lights SPI LED bit `0`,
+- `btn_in_3` drives firmware button index `2`, which lights SPI LED bit `1`,
 - and so on.
 
 The main exception is rotary movement: those inputs are still read as indices `13` and `14`, but the current firmware does not call `setLed()` for rotary events, so no SPI LED bit is written for them.
 
 | Schematic Input Net | Firmware Button Index | Firmware Name | Command Name | LED Relationship |
 |---|---:|---|---|---|
-| `btn_in_1` | 0 | `kPower` | `CMD_SYS_POWER` | lights SPI bit 0, register `0x0001`, LED output 1 |
-| `btn_in_2` | 1 | `kPrevTrack` | `CMD_PREVIOUS_TRACK` | lights SPI bit 1, register `0x0002`, LED output 2 |
-| `btn_in_3` | 2 | `kNextTrack` | `CMD_NEXT_TRACK` | lights SPI bit 2, register `0x0004`, LED output 3 |
-| `btn_in_4` | 3 | `kSkipForward` | `CMD_SKIP_FORWARD` | lights SPI bit 3, register `0x0008`, LED output 4 |
-| `btn_in_5` | 4 | `kSkipBack` | `CMD_SKIP_BACK` | lights SPI bit 4, register `0x0010`, LED output 5 |
-| `btn_in_6` | 5 | `kPlayPause` | `CMD_PLAY_PAUSE` | lights SPI bit 5, register `0x0020`, LED output 6 |
-| `btn_in_7` | 6 | `kStop` | `CMD_STOP_TRACK` | lights SPI bit 6, register `0x0040`, LED output 7 |
-| `btn_in_8` | 7 | `kCover` | `CMD_COVER_VIEW_ON` or `CMD_COVER_VIEW_OFF` | lights SPI bit 7, register `0x0080`, LED output 8 |
-| `btn_in_9` | 8 | `kNextMenu` | `CMD_NEXT_MENU_ITEM` | lights SPI bit 8, register `0x0100`, LED output 9 |
-| `btn_in_10` | 9 | `kMenuSelect` | `CMD_ITEM_SELECT` | lights SPI bit 9, register `0x0200`, LED output 10 |
-| `btn_in_11` | 10 | `kToggleDac` | `CMD_TOGGLE_DAC_ON` or `CMD_TOGGLE_DAC_OFF` | lights SPI bit 10, register `0x0400`, LED output 11 |
-| `btn_in_12` | 11 | `kToggleDisplay` | `CMD_DISPLAY_OFF` or `CMD_DISPLAY_ON` | lights SPI bit 11, register `0x0800`, LED output 12 |
-| `btn_in_13` | 12 | `kToggleMeter` | `CMD_TOGGLE_METER_ON` or `CMD_TOGGLE_METER_OFF` | lights SPI bit 12, register `0x1000`, LED output 13 |
+| `btn_in_1` | 0 | `kPower` | `CMD_SYS_POWER` | no LED (power button skipped) |
+| `btn_in_2` | 1 | `kPrevTrack` | `CMD_PREVIOUS_TRACK` | lights SPI bit 0, register `0x0001`, LED output 1 |
+| `btn_in_3` | 2 | `kNextTrack` | `CMD_NEXT_TRACK` | lights SPI bit 1, register `0x0002`, LED output 2 |
+| `btn_in_4` | 3 | `kSkipForward` | `CMD_SKIP_FORWARD` | lights SPI bit 2, register `0x0004`, LED output 3 |
+| `btn_in_5` | 4 | `kSkipBack` | `CMD_SKIP_BACK` | lights SPI bit 3, register `0x0008`, LED output 4 |
+| `btn_in_6` | 5 | `kPlayPause` | `CMD_PLAY_PAUSE` | lights SPI bit 4, register `0x0010`, LED output 5 |
+| `btn_in_7` | 6 | `kStop` | `CMD_STOP_TRACK` | lights SPI bit 5, register `0x0020`, LED output 6 |
+| `btn_in_8` | 7 | `kCover` | `CMD_COVER_VIEW_ON` or `CMD_COVER_VIEW_OFF` | lights SPI bit 6, register `0x0040`, LED output 7 |
+| `btn_in_9` | 8 | `kNextMenu` | `CMD_NEXT_MENU_ITEM` | lights SPI bit 7, register `0x0080`, LED output 8 |
+| `btn_in_10` | 9 | `kMenuSelect` | `CMD_ITEM_SELECT` | lights SPI bit 8, register `0x0100`, LED output 9 |
+| `btn_in_11` | 10 | `kToggleDac` | `CMD_TOGGLE_DAC_ON` or `CMD_TOGGLE_DAC_OFF` | lights SPI bit 9, register `0x0200`, LED output 10 |
+| `btn_in_12` | 11 | `kToggleDisplay` | `CMD_DISPLAY_OFF` or `CMD_DISPLAY_ON` | lights SPI bit 10, register `0x0400`, LED output 11 |
+| `btn_in_13` | 12 | `kToggleMeter` | `CMD_TOGGLE_METER_ON` or `CMD_TOGGLE_METER_OFF` | lights SPI bit 11, register `0x0800`, LED output 12 |
 | `btn_in_14` | 13 | `kRotaryEventLeft` | `CMD_ROTARY_ACTION` with param `0` | no LED update in current firmware |
 | `btn_in_15` | 14 | `kRotaryEventRight` | `CMD_ROTARY_ACTION` with param `1` | no LED update in current firmware |
-| `btn_in_16` | 15 | `kCycleBrightness` | `CMD_CYCLE_BRIGHTNESS` | lights SPI bit 15, register `0x8000`, LED output 16 |
+| `btn_in_16` | 15 | `kCycleBrightness` | `CMD_CYCLE_BRIGHTNESS` | lights SPI bit 14, register `0x4000`, LED output 15 |
 
-In short: for normal push buttons, input number `N` maps to LED number `N`. Firmware stores that as zero-based index `N-1`. Rotary left and right break that pattern because they are input-only events in the current code path.
+In short: button 0 (power) has no LED. For all other push buttons, input number `N` maps to LED bit `N-1`. Firmware stores the button as zero-based index and subtracts 1 to get the LED index. Rotary left and right break that pattern because they are input-only events in the current code path.
 
 ## 2. Raspberry Pi Side Wiring
 

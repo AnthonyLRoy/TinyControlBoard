@@ -169,7 +169,10 @@ namespace controlSystem
     {
         ESP_LOGI(spTag, "Button pressed on pin %u", buttonPressedId);
         indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-        indicators::getSpiLedDriver().setLed(buttonPressedId, true);
+        if (buttonPressedId > 0)
+        {
+            indicators::getSpiLedDriver().setLed(buttonPressedId - 1, true);
+        }
 
         if (buttonPressedId >= board::buttons::kCount || !mpResponseProcessor)
         {
@@ -195,8 +198,8 @@ namespace controlSystem
         if (mpButtonActions[buttonReleasedId]) {
             actions::ActionResponse result = mpButtonActions[buttonReleasedId]->execute(false);
             mpResponseProcessor->process(result);
-            if (!result.keepLedActive) {
-                indicators::getSpiLedDriver().setLed(buttonReleasedId, false);
+            if (!result.keepLedActive && buttonReleasedId > 0) {
+                indicators::getSpiLedDriver().setLed(buttonReleasedId - 1, false);
             }
         }
     }
