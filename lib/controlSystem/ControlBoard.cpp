@@ -171,7 +171,7 @@ namespace controlSystem
         indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::doingWork);
         if (buttonPressedId > 0)
         {
-            indicators::getSpiLedDriver().setLed(buttonPressedId - 1, true);
+            indicators::getSpiLedDriver().setLed(buttonPressedId , true);
         }
 
         if (buttonPressedId >= board::buttons::kCount || !mpResponseProcessor)
@@ -199,7 +199,7 @@ namespace controlSystem
             actions::ActionResponse result = mpButtonActions[buttonReleasedId]->execute(false);
             mpResponseProcessor->process(result);
             if (!result.keepLedActive && buttonReleasedId > 0) {
-                indicators::getSpiLedDriver().setLed(buttonReleasedId - 1, false);
+                indicators::getSpiLedDriver().setLed(buttonReleasedId , false);
             }
         }
     }
