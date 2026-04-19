@@ -9,6 +9,7 @@
 #include "freertos/timers.h"
 #include "esp_Check.h"
 #include <esp_log.h>
+#include "board/boardConfig.hpp"
 #include "project_cfg.hpp"
 
 
@@ -36,20 +37,20 @@ constexpr uint8_t MCP_GPIOB    = 0x13;
  // Rotary movement detection On device Index
 
 
-constexpr uint8_t ROTARY_A_PIN = 13;  // Rotary A pin
-constexpr uint8_t ROTARY_B_PIN = 14;  // Rotary B pin 
-constexpr uint8_t ROTARY_ACTION = 13;  // Combined Rotary pin for detection 
+inline constexpr uint8_t ROTARY_A_PIN = board::buttons::kRotaryEventLeft;
+inline constexpr uint8_t ROTARY_B_PIN = board::buttons::kRotaryEventRight;
+inline constexpr uint8_t ROTARY_ACTION = board::buttons::kRotaryEventLeft;
 
 // I2C constants
-constexpr uint32_t I2C_CLK_SPEED_HZ = 50000;
-constexpr uint8_t ALL_INPUTS        = 0xFF;
-constexpr gpio_num_t PIN_I2C_ENABLE = GPIO_NUM_17;
+inline constexpr uint32_t I2C_CLK_SPEED_HZ = board::i2c::kClockSpeedHz;
+inline constexpr uint8_t ALL_INPUTS = 0xFF;
+inline constexpr gpio_num_t PIN_I2C_ENABLE = board::i2c::kEnablePin;
 
 namespace buttons {
 
-class MCPInputHandler {
+class McpInputHandler {
 public:
-    MCPInputHandler(uint8_t address, i2c_port_t port);
+    McpInputHandler(uint8_t address, i2c_port_t port);
 
     esp_err_t begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin);
 
@@ -58,50 +59,50 @@ public:
     void setRotaryCallback(std::function<void(int)> cb);
 
     void setTimeout(uint32_t ms);
-    void I2CEnable(bool enable);
+    void enableI2c(bool enable);
 #ifdef DEBUG_MCP_SCAN
     void dumpRegisters() const;
     
-    void scanner() const;
+    void scanI2c() const;
     #endif
 
 private:
     // Setup helpers
-    esp_err_t initI2CBus(gpio_num_t sda, gpio_num_t scl);
-    esp_err_t initMCP23018();
+    esp_err_t initI2cBus(gpio_num_t sda, gpio_num_t scl);
+    esp_err_t initMcp23018();
     esp_err_t initInterruptPin();
     void      createInterruptTask();
     void      clearInitialInterrupts();
 
     // Interrupt handling
-    static void gpioISR(void *arg);
-    void        interruptTaskLoop();
+    static void gpioIsr(void *pArg);
+    void        runInterruptTaskLoop();
     void        handleInterrupt();
     void        decodeRotary(uint16_t state);
 
     // I2C helpers
-    esp_err_t i2cWrite(const uint8_t *data, size_t len) const;
-    esp_err_t i2cWriteRead(uint8_t reg, uint8_t *data, size_t len) const;
+    esp_err_t i2cWrite(const uint8_t *pData, size_t len) const;
+    esp_err_t i2cWriteRead(uint8_t reg, uint8_t *pData, size_t len) const;
     uint8_t   readRegister(uint8_t reg) const;
-    uint16_t  readGPIO16() const;
+    uint16_t  readGpio16() const;
     void      writeRegister(uint8_t reg, uint8_t val);
     void      writeRegisterPair(uint8_t baseReg, uint8_t a, uint8_t b);
 
 private:
-    const uint8_t    i2cAddr;
-    const i2c_port_t i2cPort;
-    gpio_num_t       interruptPin;
+    const uint8_t    mI2cAddr;
+    const i2c_port_t mI2cPort;
+    gpio_num_t       mInterruptPin;
 
-    uint16_t prevState;
-    uint8_t  rotaryLast;
-    TickType_t ticksToWait;
+    uint16_t mPrevState;
+    uint8_t  mRotaryLast;
+    TickType_t mTicksToWait;
 
-    TaskHandle_t interruptTaskHandle;
-    std::function<void(uint8_t, bool)> buttonCallback;
-    std::function<void(uint8_t, bool)> releaseCallback;
-    std::function<void(int)>           rotaryCallback;
+    TaskHandle_t mpInterruptTaskHandle;
+    std::function<void(uint8_t, bool)> mButtonCallback;
+    std::function<void(uint8_t, bool)> mReleaseCallback;
+    std::function<void(int)>           mRotaryCallback;
 
-    static constexpr int8_t ROTARY_TABLE[16] = {
+    static constexpr int8_t msRotaryTable[16] = {
         0, -1, 1, 0,
         1,  0, 0, -1,
        -1,  0, 0, 1,

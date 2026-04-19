@@ -3,11 +3,11 @@
 namespace relays
 {
 
-static const char *TAG = "RELAY";
+static const char *spTag = "RELAY";
 
 void StandardRelay::init(gpio_num_t pinRelay)
 {
-    ESP_LOGI(TAG, "Initializing relay on GPIO %d", pinRelay);
+    ESP_LOGI(spTag, "Initializing relay on GPIO %d", pinRelay);
     // Initialize the GPIO pin for the relay
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE; // Disable interrupts
@@ -22,7 +22,7 @@ void StandardRelay::init(gpio_num_t pinRelay)
 
 void StandardRelay::setRelayState(gpio_num_t relayPin, bool state)
 {
-    ESP_LOGI(TAG, "Setting relay on GPIO %d to %s", relayPin, state ? "ON" : "OFF");
+    ESP_LOGI(spTag, "Setting relay on GPIO %d to %s", relayPin, state ? "ON" : "OFF");
     // Set the GPIO state based on the relay state
     gpio_set_level(relayPin, state ? 1 : 0);
 }

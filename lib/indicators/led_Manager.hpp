@@ -1,13 +1,15 @@
 #pragma once
-#include "activeLed.hpp"
+
+#include "statusLed.hpp"
+#include "monitorBrightnessController.hpp"
 #include "powerLed.hpp"
-#include "spiLedDriver.hpp" 
+#include "spiLedDriver.hpp"
 
 namespace indicators
 {
-    indicators::ActiveLed& getActiveLed();
-    indicators::PowerLed& getPowerLed();
-    indicators::ActiveLed& getButtonLed();
-    indicators::SpiLedDriver& getSpiLedDriver();
-
+    indicators::StatusLed &getActivityStatusLed();
+    indicators::PowerLed &getPowerLed();
+    indicators::StatusLed &getButtonStatusLed();
+    indicators::SpiLedDriver &getSpiLedDriver();
+    indicators::MonitorBrightnessController &getMonitorBrightnessController();
 }

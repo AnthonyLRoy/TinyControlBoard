@@ -1,44 +1,49 @@
 #include "led_manager.hpp"
+#include "board/boardConfig.hpp"
 
-#define PIN_APP_ACTIVE_LED GPIO_NUM_3
-#define PIN_APP_STANDBY_LED GPIO_NUM_4
-#define PIN_WORKING_STATUS_LED GPIO_NUM_48
-#define STP_LEDS_BRIGHTNESS_LEVEL  GPIO_NUM_21
-
-#define PIN_SPI_DATA GPIO_NUM_7
-#define PIN_SPI_CLK GPIO_NUM_6 
-#define PIN_SPI_LATCH GPIO_NUM_5
 #define SPI_HOST spi_host_device_t::SPI2_HOST
 namespace indicators {
 
-    static ActiveLed activeLed(PIN_WORKING_STATUS_LED,LEDC_CHANNEL_0);
-    static ActiveLed buttonLeds(STP_LEDS_BRIGHTNESS_LEVEL,LEDC_CHANNEL_1);
-    static PowerLed powerLed(PIN_APP_ACTIVE_LED,LEDC_CHANNEL_ON, PIN_APP_STANDBY_LED,LEDC_CHANNEL_STANDBY);
-    static SpiLedDriver spiLedDriver(SPI_HOST,PIN_SPI_DATA,PIN_SPI_CLK,PIN_SPI_LATCH);
+    static StatusLed sActivityStatusLed(board::indicators::kWorkingStatusLed, LEDC_CHANNEL_0);
+    static StatusLed sButtonStatusLed(board::indicators::kButtonLedPwmPin,
+                                      LEDC_CHANNEL_1,
+                                      board::indicators::kButtonLedDefaultDuty,
+                                      ControlBoardWorkingStatus::SolidIdle);
+    static PowerLed sPowerLed(board::indicators::kAppActiveLed, LEDC_CHANNEL_ON, board::indicators::kAppStandbyLed, LEDC_CHANNEL_STANDBY);
+    static SpiLedDriver sSpiLedDriver(SPI_HOST, board::indicators::kSpiData, board::indicators::kSpiClock, board::indicators::kSpiLatch);
+    static MonitorBrightnessController sMonitorBrightnessController(board::indicators::kMonitorBrightness, LEDC_CHANNEL_MONITOR_BRIGHTNESS);
 
 
-    ActiveLed& getActiveLed() {
-        return activeLed;
+    MonitorBrightnessController& getMonitorBrightnessController() {
+        if (!sMonitorBrightnessController.mStarted)
+        {
+            sMonitorBrightnessController.init();
+            sMonitorBrightnessController.mStarted = true;
+        }
+        return sMonitorBrightnessController;
+    }
+    
+    StatusLed& getActivityStatusLed() {
+        return sActivityStatusLed;
     }
 
     PowerLed& getPowerLed() {
-        if (!powerLed.started)
+        if (!sPowerLed.mStarted)
         {
-            powerLed.init();
-            powerLed.started = true;
+            sPowerLed.init();
+            sPowerLed.mStarted = true;
         }
-        return powerLed;
+        return sPowerLed;
     }
 
-    ActiveLed& getButtonLed() {
-        return buttonLeds;
+    StatusLed& getButtonStatusLed() {
+        return sButtonStatusLed;
     }
     SpiLedDriver& getSpiLedDriver() {
-               if (!spiLedDriver.started)
+        if (!sSpiLedDriver.isStarted())
         {
-            spiLedDriver.init();
-            spiLedDriver.started = true;
+            sSpiLedDriver.init();
         }
-        return spiLedDriver;
+        return sSpiLedDriver;
     }
 }

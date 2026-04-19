@@ -14,25 +14,25 @@ namespace led
     * 100% duty cycle is not reachable (duty cannot be set to (2 ** SOC_LEDC_TIMER_BIT_WIDTH)).
     */
 
-   void LEDPWM::init(ledc_timer_config_t timerConfig, ledc_channel_config_t channelConfig)
+   void LedPwm::init(ledc_timer_config_t timerConfig, ledc_channel_config_t channelConfig)
    {
 
       ESP_LOGI("LEDPWM", "Initializing LEDPWM with channel: %d", channelConfig.channel);
       
-      ledc_timerConfig = timerConfig;
-      ledc_channelConfig = channelConfig;
+      mLedcTimerConfig = timerConfig;
+      mLedcChannelConfig = channelConfig;
 
-      ESP_ERROR_CHECK(ledc_timer_config(&ledc_timerConfig));
-      ESP_ERROR_CHECK(ledc_channel_config(&ledc_channelConfig));
+      ESP_ERROR_CHECK(ledc_timer_config(&mLedcTimerConfig));
+      ESP_ERROR_CHECK(ledc_channel_config(&mLedcChannelConfig));
    }
-   esp_err_t LEDPWM::setDuty(uint32_t duty)
+   esp_err_t LedPwm::setDuty(uint32_t duty)
    {
-      return ledc_set_duty(ledc_timerConfig.speed_mode, ledc_channelConfig.channel, duty);
+      return ledc_set_duty(mLedcTimerConfig.speed_mode, mLedcChannelConfig.channel, duty);
    }
 
-   esp_err_t LEDPWM::updateDuty()
+   esp_err_t LedPwm::updateDuty()
    {
-      return ledc_update_duty(ledc_timerConfig.speed_mode, ledc_channelConfig.channel);
+      return ledc_update_duty(mLedcTimerConfig.speed_mode, mLedcChannelConfig.channel);
    }
 }
 

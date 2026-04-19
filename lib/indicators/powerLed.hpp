@@ -2,8 +2,8 @@
 
 #include "driver/ledc.h"
 #include "esp_timer.h"
+#include "power/powerState.hpp"
 #include "pwmLed.hpp"
-#include "PowerStateManager.hpp"
 #include "led_definitions.hpp"
 #include "esp_log.h"
 
@@ -22,53 +22,53 @@ namespace indicators
 
         // Must be called after app_main() starts
         void init();
-        bool started = false;
+        bool mStarted = false;
         void setState(ControlBoardPowerState state);
-        ControlBoardPowerState getState() const { return currentPowerState; }
+        ControlBoardPowerState getState() const { return mCurrentPowerState; }
         void setBrightness(int brightness);
 
     private:
         void update();
-        static void timerCallback(void *arg);
+        static void handleTimer(void *pArg);
 
         // LEDs
-        led::LEDPWM activeLed;
-        led::LEDPWM standbyLed;
+        led::LedPwm mActiveLed;
+        led::LedPwm mStandbyLed;
 
         // Timer handle (created in init)
-        esp_timer_handle_t updateTimer = nullptr;
+        esp_timer_handle_t mpUpdateTimer = nullptr;
 
         // Power state
-        ControlBoardPowerState currentPowerState = ControlBoardPowerState::OFF;
+        ControlBoardPowerState mCurrentPowerState = ControlBoardPowerState::OFF;
 
         // Flashing
-        bool activeFlash = false;
-        bool standbyFlash = false;
-        bool flashState = false;
-        uint64_t lastFlashToggle = 0;
+        bool mActiveFlash = false;
+        bool mStandbyFlash = false;
+        bool mFlashState = false;
+        uint64_t mLastFlashToggle = 0;
 
         // Breathing effect
-        bool activeBreathing = false;
-        bool standbyBreathing = false;
-        uint64_t breathingStartTime = 0;
+        bool mActiveBreathing = false;
+        bool mStandbyBreathing = false;
+        uint64_t mBreathingStartTime = 0;
         const uint32_t BREATHING_PERIOD = 4000; // 2 seconds for full cycle
 
         // Blip effect (short pulse)
-        bool activeBlip = false;
-        bool standbyBlip = false;
-        uint64_t blipStartTime = 0;
+        bool mActiveBlip = false;
+        bool mStandbyBlip = false;
+        uint64_t mBlipStartTime = 0;
         const uint32_t BLIP_DURATION = 125;    // 1/8 second
         const uint32_t BLIP_PERIOD = 10000;    // every 10 seconds
 
         // LED duty levels
-        int dutyCycle = 4096;
-        int mediumDuty = 2048;
-        int offDuty = 0;
+        int mDutyCycle = 4096;
+        int mMediumDuty = 2048;
+        int mOffDuty = 0;
 
         // Store pin/channel info for init
-        gpio_num_t activePin;
-        ledc_channel_t activeChannel;
-        gpio_num_t standbyPin;
-        ledc_channel_t standbyChannel;
+        gpio_num_t mActivePin;
+        ledc_channel_t mActiveChannel;
+        gpio_num_t mStandbyPin;
+        ledc_channel_t mStandbyChannel;
     };
 }

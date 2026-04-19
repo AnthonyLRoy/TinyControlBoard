@@ -8,13 +8,13 @@
 #include "led_manager.hpp"
 #include "esp_timer.h"
 #include "serial.hpp"
-#include "uart_protocol.hpp"
-class main
+#include "protocol/uartProtocol.hpp"
+class MainApp
 {
 public:
-    void app_main(void);
+    void runAppMain(void);
     void run();
 private:
-    void PerformStartupTasks();
+    void performStartupTasks();
 
 };

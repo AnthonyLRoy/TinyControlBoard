@@ -2,15 +2,17 @@
 
 
 #include "powerLed.hpp"
-#include "activeLed.hpp"
+#include "statusLed.hpp"
 #include "relay.hpp"
 #include "mcpInputHandler.hpp"
-#include "Serial.hpp"
+#include "serial.hpp"
 #include "spi.hpp"
 #include "buttonActions.hpp"
 #include "actionsResponse.hpp"
 #include "actionProcessor.hpp"
-#include "PowerStateManager.hpp"
+#include "board/boardConfig.hpp"
+#include <array>
+#include <memory>
 
 namespace actions {
     class ButtonAction;
@@ -18,63 +20,19 @@ namespace actions {
 
 namespace controlSystem
 {
-    // Configuration constants
-    struct ControlBoardConfig
-    {
-        // UART Configuration
-        static constexpr uint32_t UART_BOARD_RATE = 115200;
-        
-        // Heartbeat Configuration
-        static constexpr uint32_t HEARTBEAT_TIMEOUT_MS = 15000;
-        static constexpr uint32_t INIT_DELAY_MS = 5000;  // Power LED transition delay
-        
-        // Pin Configuration
-        static constexpr gpio_num_t PIN_SERIAL_TX = GPIO_NUM_2;
-        static constexpr gpio_num_t PIN_SERIAL_RX = GPIO_NUM_1;
-       
-        static constexpr gpio_num_t PIN_I2C_SCL = GPIO_NUM_15;
-        static constexpr gpio_num_t PIN_I2C_SDA = GPIO_NUM_16;
-        static constexpr gpio_num_t PIN_I2C_INT = GPIO_NUM_18;
-        
-        // MCP Configuration
-        static constexpr uint8_t MCP_ADDRESS = 0x20;
-        static constexpr uart_port_t UART_NUM = UART_NUM_2;
-        static constexpr int MCP_TIMEOUT_MS = 10;
-        
-        // Button Action Indices
-        static constexpr uint8_t BTN_POWER = 0;
-        static constexpr uint8_t BTN_PREV_TRACK = 1;
-        static constexpr uint8_t BTN_NEXT_TRACK = 2;
-        static constexpr uint8_t BTN_SKIP_FORWARD = 3;
-        static constexpr uint8_t BTN_SKIP_BACK = 4;
-        static constexpr uint8_t BTN_PLAY_PAUSE = 5;
-        static constexpr uint8_t BTN_STOP = 6;
-        static constexpr uint8_t BTN_COVER = 7;
-        static constexpr uint8_t BTN_NEXT_MENU = 8;
-        static constexpr uint8_t BTN_MENU_SELECT = 9;
-        static constexpr uint8_t BTN_TOGGLE_DAC = 10;
-        static constexpr uint8_t BTN_TOGGLE_DISPLAY = 11;
-        static constexpr uint8_t BTN_TOGGLE_METER = 12;
-        static constexpr uint8_t BTN_ROTARY_EVENT_LEFT = 13;
-        static constexpr uint8_t BTN_ROTARY_EVENT_RIGHT = 14;
-        static constexpr uint8_t BTN_CYCLE_BRIGHTNESS = 15;
-        
-        static constexpr uint8_t NUM_BUTTONS = 15;
-    };
-
     class ControlBoard
     {
     public:
         bool init();            // returns true if everything initialized successfully
         void deinit();          // optional cleanup
-        actionProcessor& getActionProcessor() { return *responseProcessor; }
+        ActionProcessor& getActionProcessor() { return *mpResponseProcessor; }
 
     private:
 
-    bool setupRelays();
+        bool setupRelays();
         bool setupSerial();
-        bool setupMCPHandler();
-        void setupMCPCallbacks();
+        bool setupMcpHandler();
+        void setupMcpCallbacks();
         void createButtonActionMap();
         
         // MCP Callback handlers
@@ -83,15 +41,15 @@ namespace controlSystem
         void handleRotaryMovement(int movement);
         
         // Serial/UART Callback handler
-        void handleSerialRxMessage(const UARTMessage &msg);
+        void handleSerialRxMessage(const UartMessage &rMsg);
 
         // Members - raw pointers not using smart pointers a) because i don't understand them and don't need them because nothing is deleted 
-        serialBus::Serial* serialHandler = nullptr;
-        relays::StandardRelay* relays = nullptr;
-        actionProcessor* responseProcessor = nullptr;
+        serialBus::Serial *mpSerialHandler = nullptr;
+        relays::StandardRelay *mpRelays = nullptr;
+        std::unique_ptr<ActionProcessor> mpResponseProcessor;
 
         //declare handler and button action fucntions
-        buttons::MCPInputHandler mcpHandler{ControlBoardConfig::MCP_ADDRESS, I2C_NUM_0};
-        actions::ButtonAction* buttonActions[ControlBoardConfig::NUM_BUTTONS] = {nullptr};
+        buttons::McpInputHandler mMcpHandler{board::i2c::kMcpAddress, I2C_NUM_0};
+        std::array<actions::ButtonAction *, board::buttons::kCount> mpButtonActions{};
     };
 }

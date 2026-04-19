@@ -12,7 +12,7 @@ namespace controlSystem
     constexpr uint32_t RPI_SHUTDOWN_TIMEOUT_MS = 60000;
 
     // Array of command configurations
-    const actionProcessor::CommandConfig commandConfigs[] = {
+    const ActionProcessor::CommandConfig commandConfigs[] = {
         {"POWERCOMMAND", CMD_SYS_POWER},
         {"NEXTTRACK", CMD_NEXT_TRACK},
         {"PREVTRACK", CMD_PREVIOUS_TRACK},
@@ -37,17 +37,17 @@ namespace controlSystem
 
     const size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);
 
-    actionProcessor::actionProcessor(serialBus::Serial &serialBusRef, relays::StandardRelay &relaysRef)
-        : serial(serialBusRef), relays(relaysRef)
+    ActionProcessor::ActionProcessor(serialBus::Serial &rSerialBus, relays::StandardRelay &rRelays)
+        : mrSerial(rSerialBus), mrRelays(rRelays)
     {
         // Create component managers
-        rpiBootManager = std::make_unique<RPIBootManager>();
-        relayController = std::make_unique<RelayController>(serial, relays);
+        mpRpiBootManager = std::make_unique<RpiBootManager>();
+        mpRelayController = std::make_unique<RelayController>(mrSerial, mrRelays);
     }
 
-    void actionProcessor::process(actions::actionResponse response)
+    void ActionProcessor::process(const actions::ActionResponse &response)
     {
-        ESP_LOGI(TAG, "Action Processor received command: 0x%04X", response.command);
+        ESP_LOGI(mspTag, "Action Processor received command: 0x%04X", response.command);
         
         if (response.command == CMD_NO_ACTION)
         {
@@ -56,79 +56,88 @@ namespace controlSystem
 
         if (response.command == CMD_SYS_POWER)
         {
-            ESP_LOGI(TAG, "Processing Power State Change Command");
-            HandleCommandPowerStateChange(response);
+            ESP_LOGI(mspTag, "Processing Power State Change Command");
+            handleCommandPowerStateChange(response);
             return;
         }
 
-        if (indicators::getPowerLed().getState() != ControlBoardPowerState::ON)
+        const auto powerState = indicators::getPowerLed().getState();
+        if (powerState != ControlBoardPowerState::ON)
         {
-            ESP_LOGI(TAG, "Ignoring command %u as system is not ON", response.command);
+            ESP_LOGI(mspTag, "Ignoring command %u as system is not ON", response.command);
             return;
         }
 
         // todo remove as handled in power state change
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
-            serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
-            relayController->ShutDownRPI(true);
+            mrSerial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            mpRelayController->shutdownRpi(true);
             return;
         }
         // todo no longer needed
         if (response.command == CMD_EXIT_ITEM)
         {
-            ESP_LOGI(TAG, "Sending Exit Item Message");
+            ESP_LOGI(mspTag, "Sending Exit Item Message");
             return;
         }
 
         if (response.command == CMD_TOGGLE_DAC_ON || response.command == CMD_TOGGLE_DAC_OFF)
         {
-            relayController->HandleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
+            mpRelayController->handleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
             return;
         }
         if (response.command == CMD_COVER_VIEW_ON || response.command == CMD_COVER_VIEW_OFF)
         {
-            ESP_LOGI(TAG, "Processing Cover View Toggle Command (%s)",
+            ESP_LOGI(mspTag, "Processing Cover View Toggle Command (%s)",
                      response.command == CMD_COVER_VIEW_ON ? "ON" : "OFF");
 
-            UARTMessage message;
-            message.command_id = CMD_TOGGLE_COVER_VIEW;
+            UartMessage message;
+            message.commandId = CMD_TOGGLE_COVER_VIEW;
             message.params[0] = (response.command == CMD_COVER_VIEW_ON) ? 1 : 0;
-            serial.sendUartMessage("COVERVIEW", message);
+            mrSerial.sendUartMessage("COVERVIEW", message);
             return;
         }   
 
         if (response.command == CMD_DISPLAY_OFF || response.command == CMD_DISPLAY_ON)
         {
-            ESP_LOGI(TAG, "Processing Display Toggle Command (%s)",
+            ESP_LOGI(mspTag, "Processing Display Toggle Command (%s)",
                      response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
 
-            UARTMessage message;
-            message.command_id = CMD_TOGGLE_DISPLAY;
+            UartMessage message;
+            message.commandId = CMD_TOGGLE_DISPLAY;
             message.params[0] = (response.command == CMD_DISPLAY_ON) ? 1 : 0;
-            serial.sendUartMessage("DISPLAY", message);
+            mrSerial.sendUartMessage("DISPLAY", message);
             return;
         }
 
         if (response.command == CMD_TOGGLE_METER_ON || response.command == CMD_TOGGLE_METER_OFF)
         {
-            ESP_LOGI(TAG, "Processing Meter Toggle Command (%s)",
+            ESP_LOGI(mspTag, "Processing Meter Toggle Command (%s)",
                      response.command == CMD_TOGGLE_METER_ON ? "ON" : "OFF");
-            UARTMessage message;
-            message.command_id = CMD_TOGGLE_METER;
+            UartMessage message;
+            message.commandId = CMD_TOGGLE_METER;
             message.params[0] = (response.command == CMD_TOGGLE_METER_ON) ? 1 : 0;
-            serial.sendUartMessage("METER", message);
+            mrSerial.sendUartMessage("METER", message);
             return;
         }
 
         if (response.command == CMD_ROTARY_ACTION)
         {
-            UARTMessage message;
-            message.command_id = response.command;
+            UartMessage message;
+            message.commandId = response.command;
             message.params[0] = (response.parameters[0]);
-            serial.sendUartMessage("ROTARY", message);
-            ESP_LOGI(TAG, "Processing Rotary Action Command (%s)",
-                     response.command == CMD_ROTARY_LEFT ? "LEFT" : "RIGHT");
+            mrSerial.sendUartMessage("ROTARY", message);
+            ESP_LOGI(mspTag, "Processing Rotary Action Command (%s)",
+                     response.parameters[0] == 0 ? "LEFT" : "RIGHT");
+            return;
+        }
+
+        if (response.command == CMD_CYCLE_BRIGHTNESS)
+        {
+            indicators::getMonitorBrightnessController().cycleBrightness();
+            
+            ESP_LOGI(mspTag, "Setting Cycle Brightness Command");
             return;
         }
 
@@ -137,109 +146,108 @@ namespace controlSystem
         {
             if (commandConfigs[cmdReference].commandId == response.command)
             {
-                serial.sendUartCommand(commandConfigs[cmdReference].logTag, response.command);
-                ESP_LOGI(TAG, "Sending command: %s", commandConfigs[cmdReference].logTag);
+                mrSerial.sendUartCommand(commandConfigs[cmdReference].pLogTag, response.command);
+                ESP_LOGI(mspTag, "Sending command: %s", commandConfigs[cmdReference].pLogTag);
                 return;
             }
         }
     }
 
     // handler methods for RPI boot management
-    void actionProcessor::onHeartbeatReceived()
+    void ActionProcessor::handleHeartbeatReceived()
     {
-        if (rpiBootManager)
+        if (mpRpiBootManager)
         {
-            rpiBootManager->onHeartbeatReceived();
+            mpRpiBootManager->handleHeartbeatReceived();
         }
     }
 
-    void actionProcessor::onHeartbeatTimeout()
+    void ActionProcessor::handleHeartbeatTimeout()
     {
-        if (rpiBootManager)
+        if (mpRpiBootManager)
         {
-            rpiBootManager->onHeartbeatTimeout();
+            mpRpiBootManager->handleHeartbeatTimeout();
         }
     }
 
-    bool actionProcessor::WaitForRpiToBoot(uint32_t timeoutMs)
+    bool ActionProcessor::waitForRpiToBoot(uint32_t timeoutMs)
     {
-        if (rpiBootManager)
+        if (mpRpiBootManager)
         {
-            return rpiBootManager->WaitForRpiToBoot(timeoutMs);
-        }
-        return false;
-    }
-
-    bool actionProcessor::waitForPiShutdown(uint32_t timeoutMs)
-    {
-        if (rpiBootManager)
-        {
-            return rpiBootManager->waitForPiShutdown(timeoutMs);
+            return mpRpiBootManager->waitForRpiToBoot(timeoutMs);
         }
         return false;
     }
 
-    bool actionProcessor::HandleCommandPowerStateChange(actions::actionResponse response)
+    bool ActionProcessor::waitForRpiShutdown(uint32_t timeoutMs)
     {
+        if (mpRpiBootManager)
+        {
+            return mpRpiBootManager->waitForRpiShutdown(timeoutMs);
+        }
+        return false;
+    }
 
-        // if power is OFF or SLEEP, turn ON
-        // we do this by switching on all necessary relays with delays
-        // then wait for the RPI to start  if it has not already started
-
-        if (indicators::getPowerLed().getState() == ControlBoardPowerState::OFF ||
-            indicators::getPowerLed().getState() == ControlBoardPowerState::SLEEP ||
-            indicators::getPowerLed().getState() == ControlBoardPowerState::DEEPSLEEP)
+    bool ActionProcessor::handleCommandPowerStateChange(const actions::ActionResponse &response)
+    {
+        // Handle power button action based on current power state and press duration.
+        // Sequences are relay-driven with delays and optional RPI boot/shutdown waits.
+        const auto powerState = indicators::getPowerLed().getState();
+        if (powerState == ControlBoardPowerState::OFF ||
+            powerState == ControlBoardPowerState::SLEEP ||
+            powerState == ControlBoardPowerState::DEEPSLEEP)
         {
             indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
             // Power on sequence
-            ESP_LOGI(TAG, "Initiating Power ON sequence");
+            ESP_LOGI(mspTag, "Initiating Power ON sequence");
 
-            relayController->setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, SCREEN_ON_DELAY_MS);
-            relayController->setRelayWithDelay(PIN_RELAY_DAC_POWER, true, POWER_SETTLE_DELAY_MS);
-            relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, true, POWER_SETTLE_DELAY_MS);
-            relayController->setRelayWithDelay(PIN_RELAY_RPI_POWER, true, SCREEN_ON_DELAY_MS);
+            mpRelayController->setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, SCREEN_ON_DELAY_MS);
+            mpRelayController->setRelayWithDelay(PIN_RELAY_DAC_POWER, true, POWER_SETTLE_DELAY_MS);
+            mpRelayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, true, POWER_SETTLE_DELAY_MS);
+            mpRelayController->setRelayWithDelay(PIN_RELAY_RPI_POWER, true, SCREEN_ON_DELAY_MS);
 
-            bool booted = WaitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
+            bool booted = waitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
-            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::Active);
-            return true && booted;
+            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);
+            return booted;
         }
 
-        // switching off sequence    short press = sleep
-        // 1) sleep keeps switches of power to the RPI and the Screenn but  leaves the power to the DAC and pre amplifiers
-        // 2)  (press for 3 seconds or more) switches off the power to the screen ,
-        // the RPI and the DACS and output preamps , but leves the 3.3v to the reclock-crystal boards //long press = deep sleep
-        ESP_LOGI(TAG, "Release Time MS: %" PRIu16 "", response.releaseTimeMilliSecs);
-        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs < LONG_PRESS_THRESHOLD_MS)
+        // Power-down paths from ON:
+        // - Short press: sleep keeps DAC/output stage powered but turns off RPI and screen.
+        // - Long press: deep sleep removes RPI/screen/DAC/output stage power while keeping 3.3V rails.
+        ESP_LOGI(mspTag, "Release Time MS: %" PRIu16 "", response.releaseTimeMillis);
+        if (powerState == ControlBoardPowerState::ON &&
+            response.releaseTimeMillis < LONG_PRESS_THRESHOLD_MS)
         {
             // Sleep sequence
-            ESP_LOGI(TAG, "Initiating Sleep Sequence");
+            ESP_LOGI(mspTag, "Initiating Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
 
-            serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
-            waitForPiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
-            relayController->ShutDownRPI(true);
+            mrSerial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
+            mpRelayController->shutdownRpi(true);
             vTaskDelay(pdMS_TO_TICKS(500));
-            relayController->ShutDownScreen(false);
+            mpRelayController->shutdownScreen(false);
             vTaskDelay(pdMS_TO_TICKS(5000));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
-            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
             return true;
         }
         // Deep sleep if long press exceeds threshold
-        if (indicators::getPowerLed().getState() == ControlBoardPowerState::ON && response.releaseTimeMilliSecs > LONG_PRESS_THRESHOLD_MS)
+        if (powerState == ControlBoardPowerState::ON &&
+            response.releaseTimeMillis >= LONG_PRESS_THRESHOLD_MS)
         {
-            ESP_LOGI(TAG, "Initiating Deep Sleep Sequence");
+            ESP_LOGI(mspTag, "Initiating Deep Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-            serial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
-            waitForPiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
-            relayController->ShutDownRPI(true);
+            mrSerial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
+            mpRelayController->shutdownRpi(true);
             vTaskDelay(pdMS_TO_TICKS(500));
-            relayController->ShutDownScreen(false);
-            relayController->setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
-            relayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
+            mpRelayController->shutdownScreen(false);
+            mpRelayController->setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
+            mpRelayController->setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
-            indicators::getActiveLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
         }
         return true;
     }

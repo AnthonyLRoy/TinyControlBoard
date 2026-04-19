@@ -14,23 +14,23 @@ namespace controlSystem
     class RelayController
     {
     public:
-        RelayController(serialBus::Serial &serialRef, relays::StandardRelay &relaysRef);
+        RelayController(serialBus::Serial &rSerial, relays::StandardRelay &rRelays);
 
         // Set a relay with optional delay
         void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs);
 
         // Handle DAC toggle
-        bool HandleToggleDac(bool state);
+        bool handleToggleDac(bool state);
 
         // Shutdown RPI and optionally wait for confirmation
-        bool ShutDownRPI(bool wait);
+        bool shutdownRpi(bool wait);
 
         // Shutdown screen
-        bool ShutDownScreen(bool wait);
+        bool shutdownScreen(bool wait);
 
     private:
-        serialBus::Serial &serial;
-        relays::StandardRelay &relays;
-        static constexpr const char *TAG = "RelayController";
+        serialBus::Serial &mrSerial;
+        relays::StandardRelay &mrRelays;
+        static constexpr const char *mspTag = "RelayController";
     };
 }
