@@ -301,6 +301,60 @@ journalctl -u heartbeat.service -f
 
 ---
 
+
+## Set auto logging
+
+Create and open a new file
+
+```bash
+
+sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+sudo nano /etc/systemd/system/getty@tty1.service.d/autologin.conf
+
+```
+
+Add the following code
+
+```bash
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin pi --noclear %I $TERM
+```
+save the file this will enable auto login
+
+
+
+## Hide the login Text
+
+```bash
+sudo nano /boot/firmware/cmdline.txt
+```
+Add the following to the end of the line:
+
+quiet loglevel=0 vt.global_cursor_default=0
+
+
+## Add the splash Screen
+
+copy the splashscreen to the RPI
+
+- move into the folder where the splash screen is to be stored
+- make sure that the f copy the file from the location where you original stored the file
+
+ ```bash
+
+cd /opt
+sudo mv /home/antho/filename.png  splash.png
+sudo chmod +x splash.png
+
+``` 
+
+## add meters
+
+copy you meter configuration into opt/1024x600
+
+
+
 ## 11. Enable Auto-Login on Local Console
 
 ```bash

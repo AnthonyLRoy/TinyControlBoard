@@ -1,0 +1,2 @@
+dtoverlay=uart5
+dtoverlay=i2s-dac
