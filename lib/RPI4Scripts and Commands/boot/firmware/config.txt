@@ -33,8 +33,8 @@ include config-user.txt
 
 # Do not alter this section
 # Integrated adapters
-#dtoverlay=disable-bt
-#dtoverlay=disable-wifi
+dtoverlay=disable-bt
+dtoverlay=disable-wifi
 # Audio overlays
 #dtoverlay=none
 #dtoverlay=force_eeprom_read=0
