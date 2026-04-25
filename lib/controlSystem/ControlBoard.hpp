@@ -10,6 +10,8 @@
 #include "buttonActions.hpp"
 #include "actionsResponse.hpp"
 #include "actionProcessor.hpp"
+#include "ControlBoardInputDispatcher.hpp"
+#include "SerialHeartbeatRouter.hpp"
 #include "board/boardConfig.hpp"
 #include <array>
 #include <memory>
@@ -20,7 +22,9 @@ namespace actions {
 
 namespace controlSystem
 {
-    class ControlBoard
+    class ControlBoard : private IActionResponseSink,
+                         private IControlBoardIndicators,
+                         private IHeartbeatSink
     {
     public:
         bool init();            // returns true if everything initialized successfully
@@ -28,18 +32,17 @@ namespace controlSystem
         ActionProcessor& getActionProcessor() { return *mpResponseProcessor; }
 
     private:
+        void process(const actions::ActionResponse &response) override;
+        void setActivityStatus(ControlBoardWorkingStatus status) override;
+        void setButtonLed(uint8_t pin, bool enabled) override;
+        void handleHeartbeatReceived() override;
 
         bool setupRelays();
         bool setupSerial();
         bool setupMcpHandler();
         void setupMcpCallbacks();
         void createButtonActionMap();
-        
-        // MCP Callback handlers
-        void handleButtonPressed(uint8_t pin);
-        void handleButtonReleased(uint8_t pin);
-        void handleRotaryMovement(int movement);
-        
+
         // Serial/UART Callback handler
         void handleSerialRxMessage(const UartMessage &rMsg);
 
@@ -47,6 +50,8 @@ namespace controlSystem
         serialBus::Serial *mpSerialHandler = nullptr;
         relays::StandardRelay *mpRelays = nullptr;
         std::unique_ptr<ActionProcessor> mpResponseProcessor;
+        std::unique_ptr<ControlBoardInputDispatcher> mpInputDispatcher;
+        std::unique_ptr<SerialHeartbeatRouter> mpHeartbeatRouter;
 
         //declare handler and button action fucntions
         buttons::McpInputHandler mMcpHandler{board::i2c::kMcpAddress, I2C_NUM_0};

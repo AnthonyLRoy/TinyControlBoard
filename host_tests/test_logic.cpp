@@ -6,7 +6,11 @@
 #include <string>
 #include <vector>
 
+#include "activityStatus.hpp"
 #include "actions/SimpleCommandAction.hpp"
+#include "controlSystem/ControlBoardButtonIds.hpp"
+#include "controlSystem/ControlBoardInputDispatcher.hpp"
+#include "controlSystem/SerialHeartbeatRouter.hpp"
 #include "protocol/uartProtocol.hpp"
 
 namespace
@@ -165,6 +169,202 @@ void test_deserialize_message_rejects_invalid_checksum()
 
     expect_true(!deserializeMessage(buffer, parsed), "Invalid checksum should be rejected");
 }
+
+class FakeAction : public actions::ButtonAction
+{
+public:
+    explicit FakeAction(actions::ActionResponse response)
+        : mResponse(response)
+    {
+    }
+
+    actions::ActionResponse execute(bool isPressed) override
+    {
+        lastPressedArg = isPressed;
+        ++callCount;
+        return mResponse;
+    }
+
+    int callCount = 0;
+    bool lastPressedArg = false;
+
+private:
+    actions::ActionResponse mResponse;
+};
+
+class FakeResponseSink : public controlSystem::IActionResponseSink
+{
+public:
+    void process(const actions::ActionResponse &response) override
+    {
+        ++callCount;
+        lastResponse = response;
+    }
+
+    int callCount = 0;
+    actions::ActionResponse lastResponse;
+};
+
+class FakeIndicators : public controlSystem::IControlBoardIndicators
+{
+public:
+    void setActivityStatus(ControlBoardWorkingStatus status) override
+    {
+        activityHistory.push_back(status);
+    }
+
+    void setButtonLed(uint8_t pin, bool enabled) override
+    {
+        ++ledCallCount;
+        lastLedPin = pin;
+        lastLedState = enabled;
+    }
+
+    std::vector<ControlBoardWorkingStatus> activityHistory;
+    int ledCallCount = 0;
+    uint8_t lastLedPin = 0;
+    bool lastLedState = false;
+};
+
+class FakeHeartbeatSink : public controlSystem::IHeartbeatSink
+{
+public:
+    void handleHeartbeatReceived() override
+    {
+        ++receivedCount;
+    }
+
+    int receivedCount = 0;
+};
+
+actions::ActionResponse makeResponse(CommandId command, bool keepLedActive = false)
+{
+    actions::ActionResponse response;
+    response.command = command;
+    response.keepLedActive = keepLedActive;
+    return response;
+}
+
+void test_control_board_button_press_dispatches_action_and_led()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction action(makeResponse(CMD_PLAY_PAUSE));
+    actionMap[controlSystem::controlBoardButtons::kPlayPause] = &action;
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kPlayPause);
+
+    expect_equal(1, action.callCount, "Press should execute mapped action exactly once");
+    expect_true(action.lastPressedArg, "Press should execute action with true");
+    expect_equal(1, responseSink.callCount, "Press should forward ActionResponse");
+    expect_equal(CMD_PLAY_PAUSE, responseSink.lastResponse.command, "Press should forward returned command");
+    expect_equal(1, indicators.ledCallCount, "Press should update the nonzero button LED");
+    expect_equal(controlSystem::controlBoardButtons::kPlayPause, indicators.lastLedPin, "Press should target the correct button LED");
+    expect_true(indicators.lastLedState, "Press should turn the button LED on");
+    expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(), "Press should record one status update");
+    expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::doingWork,
+                "Press should set doingWork status");
+}
+
+void test_control_board_button_release_dispatches_action_and_keep_led_state()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction action(makeResponse(CMD_NO_ACTION, true));
+    actionMap[controlSystem::controlBoardButtons::kPlayPause] = &action;
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::kPlayPause);
+
+    expect_equal(1, action.callCount, "Release should execute mapped action exactly once");
+    expect_true(!action.lastPressedArg, "Release should execute action with false");
+    expect_equal(1, responseSink.callCount, "Release should forward ActionResponse");
+    expect_equal(1, indicators.ledCallCount, "Release should update the button LED");
+    expect_equal(controlSystem::controlBoardButtons::kPlayPause, indicators.lastLedPin, "Release should target the correct button LED");
+    expect_true(indicators.lastLedState, "Release should preserve keepLedActive state");
+    expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(), "Release should record one status update");
+    expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::Idle,
+                "Release should set Idle status");
+}
+
+void test_control_board_out_of_range_press_keeps_existing_status_ordering()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kCount);
+
+    expect_equal(0, responseSink.callCount, "Out-of-range press should not forward a response");
+    expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(),
+                 "Out-of-range press should preserve the current status-before-bounds-check behavior");
+    expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::doingWork,
+                "Out-of-range press should still set doingWork before returning");
+}
+
+void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction action(makeResponse(CMD_ROTARY_ACTION));
+    actionMap[controlSystem::controlBoardButtons::kRotaryEventLeft] = &action;
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    dispatcher.handleRotaryMovement(1);
+
+    expect_equal(1, action.callCount, "Rotary movement should execute the shared rotary action once");
+    expect_true(action.lastPressedArg, "Positive rotary movement should pass true to the action");
+    expect_equal(1, responseSink.callCount, "Rotary movement should forward ActionResponse");
+    expect_equal(static_cast<size_t>(2), indicators.activityHistory.size(), "Rotary movement should set status twice");
+    expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::doingWork,
+                "Rotary movement should enter doingWork first");
+    expect_true(indicators.activityHistory[1] == ControlBoardWorkingStatus::Idle,
+                "Rotary movement should return to Idle afterwards");
+}
+
+void test_serial_heartbeat_router_handles_current_heartbeat()
+{
+    FakeHeartbeatSink heartbeatSink;
+    controlSystem::SerialHeartbeatRouter router(&heartbeatSink);
+    UartMessage message;
+    message.commandId = CMD_SYS_HEARTBEAT;
+
+    const bool handled = router.route(message);
+
+    expect_true(handled, "Current heartbeat should be handled");
+    expect_equal(1, heartbeatSink.receivedCount, "Current heartbeat should notify the sink");
+}
+
+void test_serial_heartbeat_router_handles_legacy_heartbeat()
+{
+    FakeHeartbeatSink heartbeatSink;
+    controlSystem::SerialHeartbeatRouter router(&heartbeatSink);
+    UartMessage message;
+    message.commandId = controlSystem::SerialHeartbeatRouter::kLegacyHeartbeatCommandId;
+
+    const bool handled = router.route(message);
+
+    expect_true(handled, "Legacy heartbeat should be handled");
+    expect_equal(1, heartbeatSink.receivedCount, "Legacy heartbeat should notify the sink");
+}
+
+void test_serial_heartbeat_router_ignores_non_heartbeat_messages()
+{
+    FakeHeartbeatSink heartbeatSink;
+    controlSystem::SerialHeartbeatRouter router(&heartbeatSink);
+    UartMessage message;
+    message.commandId = CMD_PLAY_PAUSE;
+
+    const bool handled = router.route(message);
+
+    expect_true(!handled, "Non-heartbeat command should not be handled");
+    expect_equal(0, heartbeatSink.receivedCount, "Non-heartbeat command should not notify the sink");
+}
 } // namespace
 
 int main()
@@ -177,6 +377,13 @@ int main()
         {"test_deserialize_message_round_trips_serialized_message", test_deserialize_message_round_trips_serialized_message},
         {"test_deserialize_message_rejects_invalid_start_byte", test_deserialize_message_rejects_invalid_start_byte},
         {"test_deserialize_message_rejects_invalid_checksum", test_deserialize_message_rejects_invalid_checksum},
+        {"test_control_board_button_press_dispatches_action_and_led", test_control_board_button_press_dispatches_action_and_led},
+        {"test_control_board_button_release_dispatches_action_and_keep_led_state", test_control_board_button_release_dispatches_action_and_keep_led_state},
+        {"test_control_board_out_of_range_press_keeps_existing_status_ordering", test_control_board_out_of_range_press_keeps_existing_status_ordering},
+        {"test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle", test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle},
+        {"test_serial_heartbeat_router_handles_current_heartbeat", test_serial_heartbeat_router_handles_current_heartbeat},
+        {"test_serial_heartbeat_router_handles_legacy_heartbeat", test_serial_heartbeat_router_handles_legacy_heartbeat},
+        {"test_serial_heartbeat_router_ignores_non_heartbeat_messages", test_serial_heartbeat_router_ignores_non_heartbeat_messages},
     };
 
     int failures = 0;

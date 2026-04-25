@@ -11,11 +11,14 @@ enable_testing()
 add_executable(tiny_control_board_host_tests
     test_logic.cpp
     ../lib/protocol/uartProtocol.cpp
+    ../lib/controlSystem/ControlBoardInputDispatcher.cpp
 )
 
 target_include_directories(tiny_control_board_host_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../lib
     ${CMAKE_CURRENT_SOURCE_DIR}/../lib/actions
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lib/controlSystem
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lib/indicators
     ${CMAKE_CURRENT_SOURCE_DIR}/../lib/protocol
 )
 

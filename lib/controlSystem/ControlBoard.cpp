@@ -9,7 +9,6 @@
 namespace controlSystem
 {
     static const char *spTag = "CONTROL_BOARD";
-    static constexpr uint16_t kLegacyHeartbeatCommandId = 0x9999;
 
     bool ControlBoard::init()
     {
@@ -41,6 +40,11 @@ namespace controlSystem
         // Initialize SPI and action processor
 
         mpResponseProcessor = std::make_unique<ActionProcessor>(*mpSerialHandler, *mpRelays);
+        mpInputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
+            mpButtonActions,
+            static_cast<IActionResponseSink *>(this),
+            static_cast<IControlBoardIndicators *>(this));
+        mpHeartbeatRouter = std::make_unique<SerialHeartbeatRouter>(static_cast<IHeartbeatSink *>(this));
 
         // Setup hardware components
         if (!setupRelays()) {
@@ -76,7 +80,35 @@ namespace controlSystem
             mpSerialHandler->deinitUart();
             mpSerialHandler = nullptr;
         }
+        mpHeartbeatRouter.reset();
+        mpInputDispatcher.reset();
         mpResponseProcessor.reset();
+    }
+
+    void ControlBoard::process(const actions::ActionResponse &response)
+    {
+        if (mpResponseProcessor)
+        {
+            mpResponseProcessor->process(response);
+        }
+    }
+
+    void ControlBoard::setActivityStatus(ControlBoardWorkingStatus status)
+    {
+        indicators::getActivityStatusLed().sendStatus(status);
+    }
+
+    void ControlBoard::setButtonLed(uint8_t pin, bool enabled)
+    {
+        indicators::getSpiLedDriver().setLed(pin, enabled);
+    }
+
+    void ControlBoard::handleHeartbeatReceived()
+    {
+        if (mpResponseProcessor)
+        {
+            mpResponseProcessor->handleHeartbeatReceived();
+        }
     }
 
     bool ControlBoard::setupRelays()
@@ -149,77 +181,25 @@ namespace controlSystem
 
     void ControlBoard::setupMcpCallbacks()
     {
-        mMcpHandler.setButtonCallback([this](uint8_t pin, bool pressed) {
-            this->handleButtonPressed(pin);
+        mMcpHandler.setButtonCallback([this](uint8_t pin, bool) {
+            if (mpInputDispatcher) {
+                mpInputDispatcher->handleButtonPressed(pin);
+            }
         });
 
-        mMcpHandler.setReleaseCallback([this](uint8_t pin, bool released) {
-            this->handleButtonReleased(pin);
+        mMcpHandler.setReleaseCallback([this](uint8_t pin, bool) {
+            if (mpInputDispatcher) {
+                mpInputDispatcher->handleButtonReleased(pin);
+            }
         });
 
         mMcpHandler.setRotaryCallback([this](int movement) {
-            this->handleRotaryMovement(movement);
+            if (mpInputDispatcher) {
+                mpInputDispatcher->handleRotaryMovement(movement);
+            }
         });
 
         indicators::getButtonStatusLed().setStatus(ControlBoardWorkingStatus::SolidIdle);
-    }
-    /// @brief todo modify some commands to activate on release for timed button presses
-    /// @param buttonPressedId 
-    void ControlBoard::handleButtonPressed(uint8_t buttonPressedId)
-    {
-        ESP_LOGI(spTag, "Button pressed on pin %u", buttonPressedId);
-        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-        if (buttonPressedId > 0)
-        {
-            indicators::getSpiLedDriver().setLed(buttonPressedId , true);
-        }
-
-        if (buttonPressedId >= board::buttons::kCount || !mpResponseProcessor)
-        {
-            return;
-        }
-
-        if (mpButtonActions[buttonPressedId]) {
-            actions::ActionResponse result = mpButtonActions[buttonPressedId]->execute(true);
-            mpResponseProcessor->process(result);
-        }
-    }
-
-    void ControlBoard::handleButtonReleased(uint8_t buttonReleasedId)
-    {
-        ESP_LOGI(spTag, "Button released on pin %u", buttonReleasedId);
-        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
-
-        if (buttonReleasedId >= board::buttons::kCount || !mpResponseProcessor)
-        {
-            return;
-        }
-
-        if (mpButtonActions[buttonReleasedId]) {
-            actions::ActionResponse result = mpButtonActions[buttonReleasedId]->execute(false);
-            mpResponseProcessor->process(result);
-            if (buttonReleasedId > 0) {
-                indicators::getSpiLedDriver().setLed(buttonReleasedId , result.keepLedActive);
-            }
-        }
-    }
-
-    void ControlBoard::handleRotaryMovement(int direction)
-    {
-        ESP_LOGI(spTag, "Rotary movement: %s", (direction > 0 ? "RIGHT" : "LEFT"));
-        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::doingWork);
-        // this if statement assumes both left and right rotary events are handled by the same action, only a parameter changes1 for right 2 for left, why is this seperate from Handle button pressed and released? To lazy to refactor now
-        // and this is c++ not c#sharp after all, An every time i try to use references i get lost in pointer land, so sue me
-        if (!mpResponseProcessor)
-        {
-            return;
-        }
-
-        if (mpButtonActions[board::buttons::kRotaryEventLeft]) {
-            actions::ActionResponse result = mpButtonActions[board::buttons::kRotaryEventLeft]->execute(direction > 0);
-            mpResponseProcessor->process(result);
-        }
-        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
     }
 
     void ControlBoard::createButtonActionMap()
@@ -247,17 +227,10 @@ namespace controlSystem
         ESP_LOGI(spTag, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
                  rMsg.commandId, rMsg.sequence, rMsg.msgType);
 
-        // Reset heartbeat timer on message reception
-        // (This is handled by Serial class updating last_rx_time_us)
-
-        // Check if this is a heartbeat message from RPI
-        if (rMsg.commandId == CMD_SYS_HEARTBEAT || rMsg.commandId == kLegacyHeartbeatCommandId) {
-            if (rMsg.commandId == kLegacyHeartbeatCommandId) {
+        if (mpHeartbeatRouter && mpHeartbeatRouter->route(rMsg)) {
+            if (rMsg.commandId == SerialHeartbeatRouter::kLegacyHeartbeatCommandId) {
                 ESP_LOGW(spTag, "Received legacy heartbeat command 0x%04X; update the RPI heartbeat sender to CMD_SYS_HEARTBEAT (0x%04X)",
                          rMsg.commandId, CMD_SYS_HEARTBEAT);
-            }
-            if (mpResponseProcessor) {
-                mpResponseProcessor->handleHeartbeatReceived();
             }
             return;
         }
