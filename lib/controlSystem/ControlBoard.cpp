@@ -14,30 +14,23 @@ namespace controlSystem
     {
         ESP_LOGI(spTag, "Starting ControlBoard init...");
 
-        // Set initial power state
-        indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
-        //make the monitor brightness start at 50% so it's not blinding when we turn it on
-        indicators::getMonitorBrightnessController().changeBrightnessLevel(5);
+        mBootstrap.prepareStartupIndicators();
 
         // Initialize serial handler and heartbeat monitor
         mpSerialHandler = &serialBus::Serial::getInstance();
         mpRelays = &relays::StandardRelay::getInstance();
-        
-        // Register UART RX callback
-        mpSerialHandler->setRxCallback([this](const UartMessage &rMsg) {
-            this->handleSerialRxMessage(rMsg);
-        });
 
-        mpSerialHandler->startHeartbeatMonitor(board::timing::kHeartbeatTimeoutMs, [this]() {
+        mBootstrap.configureSerialCallbacks(*mpSerialHandler,
+                                            [this](const UartMessage &rMsg) {
+                                                this->handleSerialRxMessage(rMsg);
+                                            },
+                                            [this]() {
             ESP_LOGE(spTag, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
                      board::timing::kHeartbeatTimeoutMs);
-            // Notify action processor that heartbeat timeout occurred (RPI is offline)
             if (mpResponseProcessor) {
                 mpResponseProcessor->handleHeartbeatTimeout();
             }
         });
-
-        // Initialize SPI and action processor
 
         mpResponseProcessor = std::make_unique<ActionProcessor>(*mpSerialHandler, *mpRelays);
         mpInputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
@@ -46,29 +39,38 @@ namespace controlSystem
             static_cast<IControlBoardIndicators *>(this));
         mpHeartbeatRouter = std::make_unique<SerialHeartbeatRouter>(static_cast<IHeartbeatSink *>(this));
 
-        // Setup hardware components
-        if (!setupRelays()) {
+        if (!mBootstrap.setupRelays()) {
             return false;
         }
 
-        if (!setupMcpHandler()) {
+        if (!mBootstrap.setupMcpHandler(mMcpHandler)) {
             return false;
         }
 
-        setupMcpCallbacks();
+        mBootstrap.configureMcpCallbacks(mMcpHandler,
+                                         [this](uint8_t pin) {
+                                             if (mpInputDispatcher) {
+                                                 mpInputDispatcher->handleButtonPressed(pin);
+                                             }
+                                         },
+                                         [this](uint8_t pin) {
+                                             if (mpInputDispatcher) {
+                                                 mpInputDispatcher->handleButtonReleased(pin);
+                                             }
+                                         },
+                                         [this](int movement) {
+                                             if (mpInputDispatcher) {
+                                                 mpInputDispatcher->handleRotaryMovement(movement);
+                                             }
+                                         });
 
-        if (!setupSerial()) {
+        if (!mBootstrap.setupSerial(*mpSerialHandler)) {
             return false;
         }
 
         createButtonActionMap();
 
-        ESP_LOGI(spTag, "ControlBoard init complete.");
-        ESP_LOGI(spTag, "Transitioning Power LED to Sleep state...");
-        
-        vTaskDelay(pdMS_TO_TICKS(board::timing::kInitDelayMs));
-
-        indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
+        mBootstrap.finalizeStartupIndicators();
 
         return true;
     }
@@ -109,97 +111,6 @@ namespace controlSystem
         {
             mpResponseProcessor->handleHeartbeatReceived();
         }
-    }
-
-    bool ControlBoard::setupRelays()
-    {
-        ESP_LOGI(spTag, "Setting up relays...");
-        relays::StandardRelay::init(PIN_RELAY_SCREEN_POWER);
-        relays::StandardRelay::init(PIN_RELAY_RPI_POWER);
-        relays::StandardRelay::init(PIN_RELAY_DAC_POWER);
-        relays::StandardRelay::init(PIN_RELAY_OUTPUT_STAGE_POWER);
-        relays::StandardRelay::init(PIN_RELAY_PROTO_DAC_ENABLED);
-        relays::StandardRelay::init(PIN_RELAY_GENERAL_1);
-        relays::StandardRelay::init(PIN_RELAY_GENERAL_2);
-
-        relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_2, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_SCREEN_POWER, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_RPI_POWER, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_DAC_POWER, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_OUTPUT_STAGE_POWER, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_PROTO_DAC_ENABLED, false);
-        relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_1, false);
-
-        indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
-
-        return true;
-    }
-
-    bool ControlBoard::setupSerial()
-    {
-        ESP_LOGI(spTag, "Initializing serial...");
-        bool ok = mpSerialHandler->initUart(board::serial::kPort,
-                           board::serial::kBaudRate,
-                           board::serial::kTxPin,
-                           board::serial::kRxPin,
-                           board::serial::kBufferSize,
-                                           UART_PARITY_DISABLE,
-                                           UART_STOP_BITS_1,
-                                           UART_HW_FLOWCTRL_DISABLE);
-        if (!ok)
-        {
-            ESP_LOGE(spTag, "Failed to initialize UART");
-            return false;
-        }
-        ESP_LOGI(spTag, "UART initialized successfully");
-        return true;
-    }
-
-
-    bool ControlBoard::setupMcpHandler()
-    {
-        ESP_LOGI(spTag, "Initializing MCP handler...");
-        esp_err_t err = mMcpHandler.begin(board::i2c::kSdaPin,
-                                         board::i2c::kSclPin,
-                                         board::i2c::kInterruptPin);
-        if (err != ESP_OK)
-        {
-            ESP_LOGE(spTag, "Failed MCPHandler begin: %d", err);
-            return false;
-        }
-        mMcpHandler.setTimeout(board::i2c::kMcpTimeoutMs);
-        mMcpHandler.enableI2c(true);
-#ifdef DEBUG_MCP_SCAN
-        mMcpHandler.scanI2c();
-#endif
-        ESP_LOGI(spTag, "MCP Handler initialized successfully.");
-#ifdef DEBUG_MCP_SCAN
-        mMcpHandler.dumpRegisters();
-#endif
-        return true;
-    }
-
-    void ControlBoard::setupMcpCallbacks()
-    {
-        mMcpHandler.setButtonCallback([this](uint8_t pin, bool) {
-            if (mpInputDispatcher) {
-                mpInputDispatcher->handleButtonPressed(pin);
-            }
-        });
-
-        mMcpHandler.setReleaseCallback([this](uint8_t pin, bool) {
-            if (mpInputDispatcher) {
-                mpInputDispatcher->handleButtonReleased(pin);
-            }
-        });
-
-        mMcpHandler.setRotaryCallback([this](int movement) {
-            if (mpInputDispatcher) {
-                mpInputDispatcher->handleRotaryMovement(movement);
-            }
-        });
-
-        indicators::getButtonStatusLed().setStatus(ControlBoardWorkingStatus::SolidIdle);
     }
 
     void ControlBoard::createButtonActionMap()

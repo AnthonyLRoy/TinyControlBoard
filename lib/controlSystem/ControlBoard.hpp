@@ -10,6 +10,7 @@
 #include "buttonActions.hpp"
 #include "actionsResponse.hpp"
 #include "actionProcessor.hpp"
+#include "ControlBoardBootstrap.hpp"
 #include "ControlBoardInputDispatcher.hpp"
 #include "SerialHeartbeatRouter.hpp"
 #include "board/boardConfig.hpp"
@@ -37,10 +38,6 @@ namespace controlSystem
         void setButtonLed(uint8_t pin, bool enabled) override;
         void handleHeartbeatReceived() override;
 
-        bool setupRelays();
-        bool setupSerial();
-        bool setupMcpHandler();
-        void setupMcpCallbacks();
         void createButtonActionMap();
 
         // Serial/UART Callback handler
@@ -52,6 +49,7 @@ namespace controlSystem
         std::unique_ptr<ActionProcessor> mpResponseProcessor;
         std::unique_ptr<ControlBoardInputDispatcher> mpInputDispatcher;
         std::unique_ptr<SerialHeartbeatRouter> mpHeartbeatRouter;
+        ControlBoardBootstrap mBootstrap;
 
         //declare handler and button action fucntions
         buttons::McpInputHandler mMcpHandler{board::i2c::kMcpAddress, I2C_NUM_0};
