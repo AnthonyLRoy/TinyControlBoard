@@ -1,4 +1,5 @@
 #include "actionProcessor.hpp"
+#include "ActionCommandRoutingPolicy.hpp"
 #include "powerLed.hpp"
 #include <inttypes.h>
 
@@ -21,32 +22,43 @@ namespace controlSystem
     void ActionProcessor::process(const actions::ActionResponse &response)
     {
         ESP_LOGI(mspTag, "Action Processor received command: 0x%04X", response.command);
-        
-        if (response.command == CMD_NO_ACTION)
-        {
-            return;
-        }
 
-        if (response.command == CMD_SYS_POWER)
+        const auto powerState = indicators::getPowerLed().getState();
+        switch (ActionCommandRoutingPolicy::classify(response.command, powerState))
         {
+        case ActionCommandRoute::None:
+            return;
+
+        case ActionCommandRoute::PowerStateTransition:
             ESP_LOGI(mspTag, "Processing Power State Change Command");
             handleCommandPowerStateChange(response);
             return;
-        }
 
-        const auto powerState = indicators::getPowerLed().getState();
-        if (powerState != ControlBoardPowerState::ON)
-        {
+        case ActionCommandRoute::IgnoreWhileNotOn:
             ESP_LOGI(mspTag, "Ignoring command %u as system is not ON", response.command);
             return;
-        }
 
-        if (handleSystemCommand(response) ||
-            handleRelayCommand(response) ||
-            handleDisplayCommand(response) ||
-            handleBrightnessCommand(response) ||
-            (mpActionUartDispatcher && mpActionUartDispatcher->handle(response)))
-        {
+        case ActionCommandRoute::System:
+            handleSystemCommand(response);
+            return;
+
+        case ActionCommandRoute::Relay:
+            handleRelayCommand(response);
+            return;
+
+        case ActionCommandRoute::Display:
+            handleDisplayCommand(response);
+            return;
+
+        case ActionCommandRoute::Brightness:
+            handleBrightnessCommand(response);
+            return;
+
+        case ActionCommandRoute::UartDispatch:
+            if (mpActionUartDispatcher)
+            {
+                mpActionUartDispatcher->handle(response);
+            }
             return;
         }
     }

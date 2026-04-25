@@ -43,6 +43,7 @@ bool Serial::initUart(uart_port_t uartNum,
         .parity = parity,
         .stop_bits = stopBits,
         .flow_ctrl = flowCtrl,
+        .rx_flow_ctrl_thresh = 0,
         .source_clk = UART_SCLK_APB,
     };
 

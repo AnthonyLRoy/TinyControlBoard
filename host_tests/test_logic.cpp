@@ -8,6 +8,7 @@
 
 #include "activityStatus.hpp"
 #include "actions/SimpleCommandAction.hpp"
+#include "controlSystem/ActionCommandRoutingPolicy.hpp"
 #include "controlSystem/ActionUartDispatcher.hpp"
 #include "controlSystem/ControlBoardButtonIds.hpp"
 #include "controlSystem/ControlBoardInputDispatcher.hpp"
@@ -508,6 +509,38 @@ void test_power_state_transition_policy_returns_none_for_non_on_intermediate_sta
                     controlSystem::PowerTransitionAction::None,
                 "Intermediate states should not trigger a transition");
 }
+
+void test_action_command_routing_policy_handles_pre_on_routes()
+{
+    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_NO_ACTION, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::None,
+                "No action should short-circuit");
+    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_SYS_POWER, ControlBoardPowerState::OFF) ==
+                    controlSystem::ActionCommandRoute::PowerStateTransition,
+                "Power command should route to power transition handling");
+    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_PLAY_PAUSE, ControlBoardPowerState::OFF) ==
+                    controlSystem::ActionCommandRoute::IgnoreWhileNotOn,
+                "Non-power commands should be ignored while power is not ON");
+}
+
+void test_action_command_routing_policy_classifies_on_state_handlers()
+{
+    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_SYS_RPI_SHUTDOWN, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::System,
+                "Shutdown should use the system handler");
+    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_TOGGLE_DAC_ON, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::Relay,
+                "DAC toggle should use the relay handler");
+    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_DISPLAY_OFF, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::Display,
+                "Display toggle should use the display handler");
+    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_CYCLE_BRIGHTNESS, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::Brightness,
+                "Cycle brightness should use the brightness handler");
+    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_PLAY_PAUSE, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::UartDispatch,
+                "Remaining ON-state commands should fall through to UART dispatch");
+}
 } // namespace
 
 int main()
@@ -536,6 +569,8 @@ int main()
         {"test_power_state_transition_policy_selects_sleep_for_short_press", test_power_state_transition_policy_selects_sleep_for_short_press},
         {"test_power_state_transition_policy_selects_deep_sleep_for_long_press", test_power_state_transition_policy_selects_deep_sleep_for_long_press},
         {"test_power_state_transition_policy_returns_none_for_non_on_intermediate_states", test_power_state_transition_policy_returns_none_for_non_on_intermediate_states},
+        {"test_action_command_routing_policy_handles_pre_on_routes", test_action_command_routing_policy_handles_pre_on_routes},
+        {"test_action_command_routing_policy_classifies_on_state_handlers", test_action_command_routing_policy_classifies_on_state_handlers},
     };
 
     int failures = 0;
