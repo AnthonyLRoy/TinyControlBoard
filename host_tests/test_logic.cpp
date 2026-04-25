@@ -7,13 +7,13 @@
 #include <vector>
 
 #include "activityStatus.hpp"
-#include "actions/SimpleCommandAction.hpp"
-#include "controlSystem/ActionCommandRoutingPolicy.hpp"
-#include "controlSystem/ActionUartDispatcher.hpp"
-#include "controlSystem/ControlBoardButtonIds.hpp"
-#include "controlSystem/ControlBoardInputDispatcher.hpp"
-#include "controlSystem/PowerStateTransitionPolicy.hpp"
-#include "controlSystem/SerialHeartbeatRouter.hpp"
+#include "input/actions/SimpleCommandAction.hpp"
+#include "app/ActionCommandRoutingPolicy.hpp"
+#include "app/ActionUartDispatcher.hpp"
+#include "app/ControlBoardButtonIds.hpp"
+#include "app/ControlBoardInputDispatcher.hpp"
+#include "power/PowerStateTransitionPolicy.hpp"
+#include "app/SerialHeartbeatRouter.hpp"
 #include "protocol/uartProtocol.hpp"
 
 namespace

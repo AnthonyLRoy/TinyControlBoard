@@ -106,8 +106,8 @@ It does not directly control hardware. Instead, it waits for lifecycle signals:
 
 References:
 
-- [lib/controlSystem/rpiBootManager.hpp](../lib/controlSystem/rpiBootManager.hpp)
-- [lib/controlSystem/rpiBootManager.cpp](../lib/controlSystem/rpiBootManager.cpp)
+- [lib/power/RPIBootManager.hpp](../lib/power/RPIBootManager.hpp)
+- [lib/power/RPIBootManager.cpp](../lib/power/RPIBootManager.cpp)
 
 ### 3.5 `RelayController`
 
@@ -120,7 +120,8 @@ References:
 
 References:
 
-- [lib/controlSystem/relayController.cpp](../lib/controlSystem/relayController.cpp)
+- [lib/power/RelayController.hpp](../lib/power/RelayController.hpp)
+- [lib/power/RelayController.cpp](../lib/power/RelayController.cpp)
 
 ## 4. Input Flow
 
@@ -211,11 +212,12 @@ This is the practical ownership model for the current codebase.
 | `lib/board/` | board constants and identity |
 | `lib/actions/` | reusable button action objects and templates |
 | `lib/buttons/` | input expander and input capture |
-| `lib/controlSystem/` | orchestration and system behavior |
+| `lib/controlSystem/` | orchestration and integration layer while app rename is pending |
 | `lib/serialBus/` | UART transport and handshake logic |
 | `lib/protocol/` | wire format and command IDs |
 | `lib/indicators/` | LEDs, status behavior, brightness control |
-| `lib/relays/` | relay abstraction |
+| `lib/power/` | power state, relay sequencing, and Pi boot/shutdown coordination |
+| `lib/relays/` | low-level relay abstraction pending migration into power |
 | `lib/RPI4Scripts and Commands/` | Raspberry Pi listener, sender, and setup docs |
 
 ## 8. Notable Current Design Characteristics

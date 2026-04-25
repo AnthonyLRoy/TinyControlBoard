@@ -1,5 +1,1 @@
-#include "actionsResponse.hpp"
-namespace actions
-{
-
-}
+#include "input/actions/actionsResponse.cpp"

@@ -1,7 +1,6 @@
 #include "main.h"
-#include "ControlBoard.hpp"
 #include "spi.hpp"
-#include "buttonActions.hpp"
+#include "input/input.hpp"
 
 
 extern "C" void app_main(void)
