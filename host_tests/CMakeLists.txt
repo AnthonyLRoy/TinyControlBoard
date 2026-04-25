@@ -11,6 +11,7 @@ enable_testing()
 add_executable(tiny_control_board_host_tests
     test_logic.cpp
     ../lib/protocol/uartProtocol.cpp
+    ../lib/controlSystem/ActionUartDispatcher.cpp
     ../lib/controlSystem/ControlBoardInputDispatcher.cpp
 )
 

@@ -4,12 +4,15 @@
 #include "spi.hpp"
 #include "relay.hpp"
 #include "actionsResponse.hpp"
+#include "ActionUartDispatcher.hpp"
 #include "esp_log.h"
 #include "power/powerState.hpp"
 #include <driver/gpio.h>
 #include "led_manager.hpp"
+#include "PowerStateTransitionHandler.hpp"
 #include "rpiBootManager.hpp"
 #include "relayController.hpp"
+#include "SerialUartCommandSink.hpp"
 #include "protocol/uartProtocol.hpp"
 #include <memory>
 
@@ -17,13 +20,6 @@ namespace controlSystem
 {
     class ActionProcessor
     {
-    public:
-        struct CommandConfig
-        {
-            const char *pLogTag;
-            uint32_t commandId;
-        };
-
     public:
         ActionProcessor(serialBus::Serial &rSerialBus, relays::StandardRelay &rRelays);
         void process(const actions::ActionResponse &response);
@@ -37,10 +33,17 @@ namespace controlSystem
 
     private:
         bool handleCommandPowerStateChange(const actions::ActionResponse &response);
+        bool handleSystemCommand(const actions::ActionResponse &response);
+        bool handleRelayCommand(const actions::ActionResponse &response);
+        bool handleDisplayCommand(const actions::ActionResponse &response);
+        bool handleBrightnessCommand(const actions::ActionResponse &response);
         
         // Component managers
+        std::unique_ptr<ActionUartDispatcher> mpActionUartDispatcher;
+        std::unique_ptr<SerialUartCommandSink> mpSerialUartCommandSink;
         std::unique_ptr<RpiBootManager> mpRpiBootManager;
         std::unique_ptr<RelayController> mpRelayController;
+        std::unique_ptr<PowerStateTransitionHandler> mpPowerStateTransitionHandler;
         
         // References
         serialBus::Serial &mrSerial;
@@ -48,7 +51,4 @@ namespace controlSystem
         
         static constexpr const char *mspTag = "ActionProcessor";
     };
-
-    extern const ActionProcessor::CommandConfig commandConfigs[];
-    extern const size_t NUM_COMMANDS;
 }

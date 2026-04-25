@@ -68,7 +68,7 @@ namespace controlSystem
             return false;
         }
 
-        createButtonActionMap();
+        mActionRegistry.populate(mpButtonActions);
 
         mBootstrap.finalizeStartupIndicators();
 
@@ -113,25 +113,6 @@ namespace controlSystem
         }
     }
 
-    void ControlBoard::createButtonActionMap()
-    {
-        mpButtonActions[board::buttons::kPower] = &actions::PowerButtonInstance;
-        mpButtonActions[board::buttons::kPrevTrack] = &actions::PreviousTrackInstance;
-        mpButtonActions[board::buttons::kNextTrack] = &actions::NextTrackInstance;
-        mpButtonActions[board::buttons::kSkipForward] = &actions::SkipForwardInstance;
-        mpButtonActions[board::buttons::kSkipBack] = &actions::SkipBackInstance;
-        mpButtonActions[board::buttons::kPlayPause] = &actions::PlayPauseInstance;
-        mpButtonActions[board::buttons::kStop] = &actions::StopInstance;
-        mpButtonActions[board::buttons::kCover] = &actions::CoverViewInstance;
-        mpButtonActions[board::buttons::kNextMenu] = &actions::NextMenuInstance;
-        mpButtonActions[board::buttons::kMenuSelect] = &actions::MenuSelectInstance;
-        mpButtonActions[board::buttons::kToggleDac] = &actions::ToggleDacInstance;
-        mpButtonActions[board::buttons::kToggleDisplay] = &actions::ToggleDisplayInstance;
-        mpButtonActions[board::buttons::kToggleMeter] = &actions::ToggleMeterDisplayInstance;
-        mpButtonActions[board::buttons::kRotaryEventLeft] = &actions::RotaryEventInstance;
-        mpButtonActions[board::buttons::kRotaryEventRight] = &actions::RotaryEventInstance;
-        mpButtonActions[board::buttons::kCycleBrightness] = &actions::CycleBrightnessInstance;
-    }
     void ControlBoard::handleSerialRxMessage(const UartMessage &rMsg)
 
     {

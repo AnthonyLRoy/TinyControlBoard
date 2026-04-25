@@ -10,6 +10,7 @@
 #include "buttonActions.hpp"
 #include "actionsResponse.hpp"
 #include "actionProcessor.hpp"
+#include "ControlBoardActionRegistry.hpp"
 #include "ControlBoardBootstrap.hpp"
 #include "ControlBoardInputDispatcher.hpp"
 #include "SerialHeartbeatRouter.hpp"
@@ -38,8 +39,6 @@ namespace controlSystem
         void setButtonLed(uint8_t pin, bool enabled) override;
         void handleHeartbeatReceived() override;
 
-        void createButtonActionMap();
-
         // Serial/UART Callback handler
         void handleSerialRxMessage(const UartMessage &rMsg);
 
@@ -49,6 +48,7 @@ namespace controlSystem
         std::unique_ptr<ActionProcessor> mpResponseProcessor;
         std::unique_ptr<ControlBoardInputDispatcher> mpInputDispatcher;
         std::unique_ptr<SerialHeartbeatRouter> mpHeartbeatRouter;
+        ControlBoardActionRegistry mActionRegistry;
         ControlBoardBootstrap mBootstrap;
 
         //declare handler and button action fucntions

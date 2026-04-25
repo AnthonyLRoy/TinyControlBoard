@@ -8,8 +8,10 @@
 
 #include "activityStatus.hpp"
 #include "actions/SimpleCommandAction.hpp"
+#include "controlSystem/ActionUartDispatcher.hpp"
 #include "controlSystem/ControlBoardButtonIds.hpp"
 #include "controlSystem/ControlBoardInputDispatcher.hpp"
+#include "controlSystem/PowerStateTransitionPolicy.hpp"
 #include "controlSystem/SerialHeartbeatRouter.hpp"
 #include "protocol/uartProtocol.hpp"
 
@@ -237,6 +239,30 @@ public:
     int receivedCount = 0;
 };
 
+class FakeUartCommandSink : public controlSystem::IUartCommandSink
+{
+public:
+    void sendUartCommand(const char *pLogTag, uint32_t commandId) override
+    {
+        ++commandCount;
+        lastLogTag = pLogTag;
+        lastCommandId = commandId;
+    }
+
+    void sendUartMessage(const char *pLogTag, UartMessage &rMessage) override
+    {
+        ++messageCount;
+        lastLogTag = pLogTag;
+        lastMessage = rMessage;
+    }
+
+    int commandCount = 0;
+    int messageCount = 0;
+    std::string lastLogTag;
+    uint32_t lastCommandId = 0;
+    UartMessage lastMessage;
+};
+
 actions::ActionResponse makeResponse(CommandId command, bool keepLedActive = false)
 {
     actions::ActionResponse response;
@@ -365,6 +391,123 @@ void test_serial_heartbeat_router_ignores_non_heartbeat_messages()
     expect_true(!handled, "Non-heartbeat command should not be handled");
     expect_equal(0, heartbeatSink.receivedCount, "Non-heartbeat command should not notify the sink");
 }
+
+void test_action_uart_dispatcher_routes_simple_command()
+{
+    FakeUartCommandSink uartSink;
+    controlSystem::ActionUartDispatcher dispatcher(uartSink);
+    const actions::ActionResponse response = makeResponse(CMD_PLAY_PAUSE);
+
+    const bool handled = dispatcher.handle(response);
+
+    expect_true(handled, "Simple UART command should be handled");
+    expect_equal(1, uartSink.commandCount, "Simple UART command should send one command");
+    expect_equal(0, uartSink.messageCount, "Simple UART command should not send a structured message");
+    expect_equal(std::string("PLAYPAUSE"), uartSink.lastLogTag, "Simple UART command should use configured log tag");
+    expect_equal(static_cast<uint32_t>(CMD_PLAY_PAUSE), uartSink.lastCommandId, "Simple UART command should forward command id");
+}
+
+void test_action_uart_dispatcher_routes_cover_view_message()
+{
+    FakeUartCommandSink uartSink;
+    controlSystem::ActionUartDispatcher dispatcher(uartSink);
+    const actions::ActionResponse response = makeResponse(CMD_COVER_VIEW_ON);
+
+    const bool handled = dispatcher.handle(response);
+
+    expect_true(handled, "Cover view command should be handled");
+    expect_equal(0, uartSink.commandCount, "Cover view should not use simple command path");
+    expect_equal(1, uartSink.messageCount, "Cover view should send one structured message");
+    expect_equal(std::string("COVERVIEW"), uartSink.lastLogTag, "Cover view should use COVERVIEW log tag");
+    expect_equal(static_cast<uint16_t>(CMD_TOGGLE_COVER_VIEW), uartSink.lastMessage.commandId,
+                 "Cover view should normalize to toggle cover command");
+    expect_equal(static_cast<uint16_t>(1), uartSink.lastMessage.params[0],
+                 "Cover view ON should map to parameter 1");
+}
+
+void test_action_uart_dispatcher_routes_meter_message()
+{
+    FakeUartCommandSink uartSink;
+    controlSystem::ActionUartDispatcher dispatcher(uartSink);
+    const actions::ActionResponse response = makeResponse(CMD_TOGGLE_METER_OFF);
+
+    const bool handled = dispatcher.handle(response);
+
+    expect_true(handled, "Meter command should be handled");
+    expect_equal(0, uartSink.commandCount, "Meter command should not use simple command path");
+    expect_equal(1, uartSink.messageCount, "Meter command should send one structured message");
+    expect_equal(std::string("METER"), uartSink.lastLogTag, "Meter command should use METER log tag");
+    expect_equal(static_cast<uint16_t>(CMD_TOGGLE_METER), uartSink.lastMessage.commandId,
+                 "Meter command should normalize to toggle meter command");
+    expect_equal(static_cast<uint16_t>(0), uartSink.lastMessage.params[0],
+                 "Meter OFF should map to parameter 0");
+}
+
+void test_action_uart_dispatcher_routes_rotary_message()
+{
+    FakeUartCommandSink uartSink;
+    controlSystem::ActionUartDispatcher dispatcher(uartSink);
+    actions::ActionResponse response = makeResponse(CMD_ROTARY_ACTION);
+    response.parameters[0] = 1;
+
+    const bool handled = dispatcher.handle(response);
+
+    expect_true(handled, "Rotary command should be handled");
+    expect_equal(0, uartSink.commandCount, "Rotary command should not use simple command path");
+    expect_equal(1, uartSink.messageCount, "Rotary command should send one structured message");
+    expect_equal(std::string("ROTARY"), uartSink.lastLogTag, "Rotary command should use ROTARY log tag");
+    expect_equal(static_cast<uint16_t>(CMD_ROTARY_ACTION), uartSink.lastMessage.commandId,
+                 "Rotary command should preserve command id");
+    expect_equal(static_cast<uint16_t>(1), uartSink.lastMessage.params[0],
+                 "Rotary command should preserve direction parameter");
+}
+
+void test_action_uart_dispatcher_ignores_unknown_command()
+{
+    FakeUartCommandSink uartSink;
+    controlSystem::ActionUartDispatcher dispatcher(uartSink);
+    const actions::ActionResponse response = makeResponse(CMD_NO_ACTION);
+
+    const bool handled = dispatcher.handle(response);
+
+    expect_true(!handled, "Unknown command should not be handled by UART dispatcher");
+    expect_equal(0, uartSink.commandCount, "Unknown command should not send a command");
+    expect_equal(0, uartSink.messageCount, "Unknown command should not send a message");
+}
+
+void test_power_state_transition_policy_selects_power_on_for_sleeping_states()
+{
+    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::OFF, 0) ==
+                    controlSystem::PowerTransitionAction::PowerOn,
+                "OFF should transition to PowerOn");
+    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::SLEEP, 100) ==
+                    controlSystem::PowerTransitionAction::PowerOn,
+                "SLEEP should transition to PowerOn");
+    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::DEEPSLEEP, 100) ==
+                    controlSystem::PowerTransitionAction::PowerOn,
+                "DEEPSLEEP should transition to PowerOn");
+}
+
+void test_power_state_transition_policy_selects_sleep_for_short_press()
+{
+    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::ON, 2999) ==
+                    controlSystem::PowerTransitionAction::Sleep,
+                "Short press while ON should transition to Sleep");
+}
+
+void test_power_state_transition_policy_selects_deep_sleep_for_long_press()
+{
+    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::ON, 3000) ==
+                    controlSystem::PowerTransitionAction::DeepSleep,
+                "Threshold press while ON should transition to DeepSleep");
+}
+
+void test_power_state_transition_policy_returns_none_for_non_on_intermediate_states()
+{
+    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::TURNING_ON, 100) ==
+                    controlSystem::PowerTransitionAction::None,
+                "Intermediate states should not trigger a transition");
+}
 } // namespace
 
 int main()
@@ -384,6 +527,15 @@ int main()
         {"test_serial_heartbeat_router_handles_current_heartbeat", test_serial_heartbeat_router_handles_current_heartbeat},
         {"test_serial_heartbeat_router_handles_legacy_heartbeat", test_serial_heartbeat_router_handles_legacy_heartbeat},
         {"test_serial_heartbeat_router_ignores_non_heartbeat_messages", test_serial_heartbeat_router_ignores_non_heartbeat_messages},
+        {"test_action_uart_dispatcher_routes_simple_command", test_action_uart_dispatcher_routes_simple_command},
+        {"test_action_uart_dispatcher_routes_cover_view_message", test_action_uart_dispatcher_routes_cover_view_message},
+        {"test_action_uart_dispatcher_routes_meter_message", test_action_uart_dispatcher_routes_meter_message},
+        {"test_action_uart_dispatcher_routes_rotary_message", test_action_uart_dispatcher_routes_rotary_message},
+        {"test_action_uart_dispatcher_ignores_unknown_command", test_action_uart_dispatcher_ignores_unknown_command},
+        {"test_power_state_transition_policy_selects_power_on_for_sleeping_states", test_power_state_transition_policy_selects_power_on_for_sleeping_states},
+        {"test_power_state_transition_policy_selects_sleep_for_short_press", test_power_state_transition_policy_selects_sleep_for_short_press},
+        {"test_power_state_transition_policy_selects_deep_sleep_for_long_press", test_power_state_transition_policy_selects_deep_sleep_for_long_press},
+        {"test_power_state_transition_policy_returns_none_for_non_on_intermediate_states", test_power_state_transition_policy_returns_none_for_non_on_intermediate_states},
     };
 
     int failures = 0;
