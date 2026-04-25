@@ -104,10 +104,7 @@ namespace controlSystem
             ESP_LOGI(mspTag, "Processing Display Toggle Command (%s)",
                      response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
 
-            UartMessage message;
-            message.commandId = CMD_TOGGLE_DISPLAY;
-            message.params[0] = (response.command == CMD_DISPLAY_ON) ? 1 : 0;
-            mrSerial.sendUartMessage("DISPLAY", message);
+            indicators::getMonitorBrightnessController().setBlanked(response.command == CMD_DISPLAY_OFF);
             return;
         }
 

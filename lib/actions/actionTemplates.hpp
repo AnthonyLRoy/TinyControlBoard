@@ -14,9 +14,10 @@ namespace actions
     public:
         ToggleAction() : mState(false) {}
 
-        ActionResponse execute(bool isPressed) override
+        ActionResponse  execute(bool isPressed) override
         {
             ActionResponse response;
+            response.keepLedActive = mState;
             if (isPressed)
             {
                 mState = !mState;

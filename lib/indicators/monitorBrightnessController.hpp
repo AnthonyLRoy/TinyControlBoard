@@ -25,6 +25,8 @@ namespace indicators
         void setState(ControlBoardPowerState state);
         ControlBoardPowerState getState() const { return mCurrentPowerState; }
         void setBrightness(int brightness);
+        void setBlanked(bool blanked);
+        bool isBlanked() const { return mBlanked; }
 
         void changeBrightnessLevel(int change);
         void cycleBrightness();
@@ -33,6 +35,7 @@ namespace indicators
         led::LedPwm mMonitorLed;
         int mBrightnessLevels[10] = {0, 500, 750, 1000, 1250, 1500, 2000, 3000, 3500, 4000};
         int mCurrentBrightnessLevel = 5; // Start at medium brightness
+        bool mBlanked = false;
 
         // LEDs
 

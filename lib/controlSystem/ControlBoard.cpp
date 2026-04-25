@@ -198,8 +198,8 @@ namespace controlSystem
         if (mpButtonActions[buttonReleasedId]) {
             actions::ActionResponse result = mpButtonActions[buttonReleasedId]->execute(false);
             mpResponseProcessor->process(result);
-            if (!result.keepLedActive && buttonReleasedId > 0) {
-                indicators::getSpiLedDriver().setLed(buttonReleasedId , false);
+            if (buttonReleasedId > 0) {
+                indicators::getSpiLedDriver().setLed(buttonReleasedId , result.keepLedActive);
             }
         }
     }
