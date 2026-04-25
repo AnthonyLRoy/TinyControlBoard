@@ -15,7 +15,7 @@ max_framebuffers=2
 display_auto_detect=1
 disable_fw_kms_setup=1
 arm_64bit=1
-dtoverlay=uart5
+
 # General settings
 arm_boost=0
 disable_splash=1
@@ -29,12 +29,14 @@ dtparam=i2c_arm=on
 dtparam=i2s=on
 dtparam=audio=on
 
+include config-user.txt
+
 # Do not alter this section
 # Integrated adapters
 dtoverlay=disable-bt
 dtoverlay=disable-wifi
 # Audio overlays
-dtoverlay=i2s-dac
+#dtoverlay=none
 #dtoverlay=force_eeprom_read=0
 # PCI Express
 #dtparam=pciex1
@@ -43,6 +45,3 @@ dtoverlay=i2s-dac
 #dtoverlay=vc4-kms-dsi-7inch,invx,invy
 # Fan speed
 #dtparam=fan_temp0=50000,fan_temp0_hyst=5000,fan_temp0_speed=75
-
-[All]
-dtoverlay=uart5
