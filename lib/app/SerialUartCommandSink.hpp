@@ -4,7 +4,7 @@
 
 namespace transport::uart
 {
-    class Serial;
+    class UartTransport;
 }
 
 namespace controlSystem
@@ -12,12 +12,12 @@ namespace controlSystem
     class SerialUartCommandSink : public IUartCommandSink
     {
     public:
-        explicit SerialUartCommandSink(transport::uart::Serial &rSerial);
+        explicit SerialUartCommandSink(transport::uart::UartTransport &rSerial);
 
         void sendUartCommand(const char *pLogTag, uint32_t commandId) override;
         void sendUartMessage(const char *pLogTag, UartMessage &rMessage) override;
 
     private:
-        transport::uart::Serial &mrSerial;
+        transport::uart::UartTransport &mrSerial;
     };
 }

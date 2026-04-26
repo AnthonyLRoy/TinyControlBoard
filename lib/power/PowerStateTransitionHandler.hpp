@@ -10,14 +10,14 @@ namespace controlSystem
     class PowerStateTransitionHandler
     {
     public:
-        PowerStateTransitionHandler(transport::uart::Serial &rSerial,
+        PowerStateTransitionHandler(transport::uart::UartTransport &rSerial,
                                     RelayController &rRelayController,
                                     RpiBootManager &rRpiBootManager);
 
         bool handle(const actions::ActionResponse &response);
 
     private:
-        transport::uart::Serial &mrSerial;
+        transport::uart::UartTransport &mrSerial;
         RelayController &mrRelayController;
         RpiBootManager &mrRpiBootManager;
 

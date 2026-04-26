@@ -21,7 +21,7 @@ namespace controlSystem
     class ActionProcessor
     {
     public:
-        ActionProcessor(transport::uart::Serial &rSerialBus, relays::StandardRelay &rRelays);
+        ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays);
         void process(const actions::ActionResponse &response);
         const char *getCommandNameForPin(uint8_t pin);
 
@@ -43,7 +43,7 @@ namespace controlSystem
         std::unique_ptr<RelayController> mpRelayController;
         std::unique_ptr<PowerStateTransitionHandler> mpPowerStateTransitionHandler;
 
-        transport::uart::Serial &mrSerial;
+        transport::uart::UartTransport &mrSerial;
         relays::StandardRelay &mrRelays;
 
         static constexpr const char *mspTag = "ActionProcessor";

@@ -4,7 +4,7 @@
 
 namespace controlSystem
 {
-    SerialUartCommandSink::SerialUartCommandSink(transport::uart::Serial &rSerial)
+    SerialUartCommandSink::SerialUartCommandSink(transport::uart::UartTransport &rSerial)
         : mrSerial(rSerial)
     {
     }

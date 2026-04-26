@@ -16,7 +16,7 @@ namespace controlSystem
 
         mBootstrap.prepareStartupIndicators();
 
-        mpSerialHandler = &transport::uart::Serial::getInstance();
+        mpSerialHandler = &transport::uart::UartTransport::getInstance();
         mpRelays = &relays::StandardRelay::getInstance();
 
         mBootstrap.configureSerialCallbacks(*mpSerialHandler,

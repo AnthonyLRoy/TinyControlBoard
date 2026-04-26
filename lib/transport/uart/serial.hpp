@@ -11,10 +11,10 @@
 
 namespace transport::uart
 {
-    class Serial
+    class UartTransport
     {
     public:
-        static Serial &getInstance();
+        static UartTransport &getInstance();
 
         static void IRAM_ATTR gpioIsrHandler(void *pArg);
 
@@ -43,8 +43,8 @@ namespace transport::uart
         void stopHeartbeatMonitor();
 
     private:
-        Serial();
-        ~Serial();
+        UartTransport();
+        ~UartTransport();
 
         volatile uint64_t mLastRxTimeUs = 0;
         uint32_t mHeartbeatTimeoutMs = 0;

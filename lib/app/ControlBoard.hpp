@@ -38,7 +38,7 @@ namespace controlSystem
         void handleHeartbeatReceived() override;
         void handleSerialRxMessage(const UartMessage &rMsg);
 
-        transport::uart::Serial *mpSerialHandler = nullptr;
+        transport::uart::UartTransport *mpSerialHandler = nullptr;
         relays::StandardRelay *mpRelays = nullptr;
         std::unique_ptr<ActionProcessor> mpResponseProcessor;
         std::unique_ptr<ControlBoardInputDispatcher> mpInputDispatcher;

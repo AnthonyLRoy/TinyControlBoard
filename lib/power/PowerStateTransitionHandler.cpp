@@ -15,7 +15,7 @@ namespace controlSystem
         constexpr uint32_t RPI_SHUTDOWN_TIMEOUT_MS = 60000;
     }
 
-    PowerStateTransitionHandler::PowerStateTransitionHandler(transport::uart::Serial &rSerial,
+    PowerStateTransitionHandler::PowerStateTransitionHandler(transport::uart::UartTransport &rSerial,
                                                              RelayController &rRelayController,
                                                              RpiBootManager &rRpiBootManager)
         : mrSerial(rSerial),

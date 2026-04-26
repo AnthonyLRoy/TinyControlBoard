@@ -7,20 +7,20 @@ using namespace transport::uart;
 
 static const char *spTag = "SERIAL";
 
-Serial &Serial::getInstance()
+UartTransport &UartTransport::getInstance()
 {
-    static Serial sInstance;
+    static UartTransport sInstance;
     return sInstance;
 }
 
-Serial::Serial() : mUartNumber(UART_NUM_0), mInitialized(false) {}
+UartTransport::UartTransport() : mUartNumber(UART_NUM_0), mInitialized(false) {}
 
-Serial::~Serial()
+UartTransport::~UartTransport()
 {
     deinitUart();
 }
 
-bool Serial::initUart(uart_port_t uartNum,
+bool UartTransport::initUart(uart_port_t uartNum,
                       int baudRate,
                       gpio_num_t txPin,
                       gpio_num_t rxPin,
@@ -61,7 +61,7 @@ bool Serial::initUart(uart_port_t uartNum,
     if (!mInitialized)
     {
         xTaskCreate([](void *arg)
-                    { static_cast<Serial *>(arg)->runUartRxTask(); },
+                    { static_cast<UartTransport *>(arg)->runUartRxTask(); },
                     "uart_rx_task",
                     4096,
                     this,
@@ -101,7 +101,7 @@ bool Serial::initUart(uart_port_t uartNum,
     return true;
 }
 
-void Serial::initDataReadyPin()
+void UartTransport::initDataReadyPin()
 {
     gpio_config_t io_conf = {
         .pin_bit_mask = 1ULL << PIN_ESP32_DATA_READY,
@@ -113,7 +113,7 @@ void Serial::initDataReadyPin()
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
 }
 
-void Serial::deinitUart()
+void UartTransport::deinitUart()
 {
     if (mInitialized)
     {
@@ -123,7 +123,7 @@ void Serial::deinitUart()
     }
 }
 
-void Serial::sendUartMessage(const char *pLogTag, UartMessage &rMessage)
+void UartTransport::sendUartMessage(const char *pLogTag, UartMessage &rMessage)
 {
     uint8_t txBuffer[UART_PACKET_SIZE];
     serializeMessage(rMessage, txBuffer);
@@ -140,7 +140,7 @@ void Serial::sendUartMessage(const char *pLogTag, UartMessage &rMessage)
     }
 }
 
-bool Serial::sendData(const uint8_t *pData, size_t len)
+bool UartTransport::sendData(const uint8_t *pData, size_t len)
 {
     if (!pData || len == 0 || !mInitialized)
     {
@@ -164,17 +164,17 @@ bool Serial::sendData(const uint8_t *pData, size_t len)
     return written == len;
 }
 
-void Serial::sendUartCommand(const char *pLogTag, uint32_t commandId)
+void UartTransport::sendUartCommand(const char *pLogTag, uint32_t commandId)
 {
     UartMessage msg{};
     msg.commandId = commandId;
     sendUartMessage(pLogTag, msg);
 }
 
-void IRAM_ATTR Serial::gpioIsrHandler(void *pArg)
+void IRAM_ATTR UartTransport::gpioIsrHandler(void *pArg)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    auto *pSelf = static_cast<Serial *>(pArg);
+    auto *pSelf = static_cast<UartTransport *>(pArg);
 
     if (pSelf->mpTaskHandle)
     {
@@ -183,7 +183,7 @@ void IRAM_ATTR Serial::gpioIsrHandler(void *pArg)
     }
 }
 
-void Serial::handleUartRx()
+void UartTransport::handleUartRx()
 {
     if (mInitialized)
     {
@@ -214,7 +214,7 @@ void Serial::handleUartRx()
     }
 }
 
-void Serial::startHeartbeatMonitor(uint32_t timeoutMs,
+void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
                                    std::function<void()> onTimeout)
 {
     mHeartbeatTimeoutMs = timeoutMs;
@@ -226,7 +226,7 @@ void Serial::startHeartbeatMonitor(uint32_t timeoutMs,
         xTaskCreate(
             [](void *arg)
             {
-                Serial *pSelf = static_cast<Serial *>(arg);
+                UartTransport *pSelf = static_cast<UartTransport *>(arg);
                 const TickType_t delay = pdMS_TO_TICKS(100);
 
                 while (true)
@@ -260,7 +260,7 @@ void Serial::startHeartbeatMonitor(uint32_t timeoutMs,
     }
 }
 
-void Serial::stopHeartbeatMonitor()
+void UartTransport::stopHeartbeatMonitor()
 {
     if (mpHeartbeatTaskHandle)
     {
@@ -269,7 +269,7 @@ void Serial::stopHeartbeatMonitor()
     }
 }
 
-void Serial::runUartRxTask()
+void UartTransport::runUartRxTask()
 {
     while (true)
     {
@@ -278,7 +278,7 @@ void Serial::runUartRxTask()
     }
 }
 
-void Serial::setRxCallback(std::function<void(const UartMessage &)> callback)
+void UartTransport::setRxCallback(std::function<void(const UartMessage &)> callback)
 {
     mRxCallback = callback;
 }

@@ -20,12 +20,12 @@ namespace controlSystem
         void prepareStartupIndicators() const;
         void finalizeStartupIndicators() const;
 
-        void configureSerialCallbacks(transport::uart::Serial &rSerial,
+        void configureSerialCallbacks(transport::uart::UartTransport &rSerial,
                                       SerialRxCallback onSerialRx,
                                       VoidCallback onHeartbeatTimeout) const;
 
         bool setupRelays() const;
-        bool setupSerial(transport::uart::Serial &rSerial) const;
+        bool setupSerial(transport::uart::UartTransport &rSerial) const;
         bool setupMcpHandler(buttons::McpInputHandler &rMcpHandler) const;
 
         void configureMcpCallbacks(buttons::McpInputHandler &rMcpHandler,

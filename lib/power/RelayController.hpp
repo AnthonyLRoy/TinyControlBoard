@@ -10,7 +10,7 @@ namespace controlSystem
     class RelayController
     {
     public:
-        RelayController(transport::uart::Serial &rSerial, relays::StandardRelay &rRelays);
+        RelayController(transport::uart::UartTransport &rSerial, relays::StandardRelay &rRelays);
 
         void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs);
         bool handleToggleDac(bool state);
@@ -18,7 +18,7 @@ namespace controlSystem
         bool shutdownScreen(bool wait);
 
     private:
-        transport::uart::Serial &mrSerial;
+        transport::uart::UartTransport &mrSerial;
         relays::StandardRelay &mrRelays;
         static constexpr const char *mspTag = "RelayController";
     };
