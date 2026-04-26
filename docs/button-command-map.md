@@ -5,11 +5,11 @@ This document maps the current firmware button indices to action objects and the
 The source of truth for the current mapping is:
 
 - [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
-- [lib/actions/buttonActions.hpp](../lib/actions/buttonActions.hpp)
-- [lib/actions/buttonActions.cpp](../lib/actions/buttonActions.cpp)
-- [lib/actions/actionTemplates.hpp](../lib/actions/actionTemplates.hpp)
-- [lib/controlSystem/actionProcessor.cpp](../lib/controlSystem/actionProcessor.cpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
+- [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
+- [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
+- [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
+- [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
 - [lib/indicators/spiLedDriver.cpp](../lib/indicators/spiLedDriver.cpp)
 
 ## 1. How To Read This Map
@@ -85,7 +85,7 @@ For toggle-backed buttons, the action can emit one of two raw command IDs depend
 | 8 | Next Menu | simple command | `0x0100` | `0000 0001 0000 0000` | `0x00 0x01` | `0x0107` | `CMD_NEXT_MENU_ITEM` | `0x0107 CMD_NEXT_MENU_ITEM` | UART command to Pi |
 | 9 | Menu Select | simple command | `0x0200` | `0000 0010 0000 0000` | `0x00 0x02` | `0x0108` | `CMD_ITEM_SELECT` | `0x0108 CMD_ITEM_SELECT` | UART command to Pi |
 | 10 | Toggle DAC | `ToggleAction<CMD_TOGGLE_DAC_ON, CMD_TOGGLE_DAC_OFF>` | `0x0400` | `0000 0100 0000 0000` | `0x00 0x04` | `0x010A / 0x010F` | `CMD_TOGGLE_DAC_ON / CMD_TOGGLE_DAC_OFF` | local-only relay toggle, no normalized UART command | toggles DAC power relay |
-| 11 | Toggle Display | `ToggleAction<CMD_DISPLAY_OFF, CMD_DISPLAY_ON>` | `0x0800` | `0000 1000 0000 0000` | `0x00 0x08` | `0x010B / 0x010E` | `CMD_DISPLAY_OFF / CMD_DISPLAY_ON` | `0x0114 CMD_TOGGLE_DISPLAY` with param `0` or `1` | Pi display mode change |
+| 11 | Toggle Display | `ToggleAction<CMD_DISPLAY_OFF, CMD_DISPLAY_ON>` | `0x0800` | `0000 1000 0000 0000` | `0x00 0x08` | `0x010B / 0x010E` | `CMD_DISPLAY_OFF / CMD_DISPLAY_ON` | local monitor PWM blank/unblank | blanks or restores the display backlight |
 | 12 | Toggle Meter | `ToggleAction<CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF>` | `0x1000` | `0001 0000 0000 0000` | `0x00 0x10` | `0x010C / 0x010D` | `CMD_TOGGLE_METER_ON / CMD_TOGGLE_METER_OFF` | `0x0115 CMD_TOGGLE_METER` with param `1` or `0` | Pi meter display change |
 | 13 | Rotary Left | `RotaryAction<CMD_ROTARY_ACTION>` | n/a | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | `0x0112 CMD_ROTARY_ACTION` with param `0` | Pi interprets as previous/left |
 | 14 | Rotary Right | `RotaryAction<CMD_ROTARY_ACTION>` | n/a | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | `0x0112 CMD_ROTARY_ACTION` with param `1` | Pi interprets as next/right |
@@ -108,8 +108,8 @@ Current threshold:
 
 References:
 
-- [lib/actions/actionTemplates.hpp](../lib/actions/actionTemplates.hpp)
-- [lib/controlSystem/actionProcessor.cpp](../lib/controlSystem/actionProcessor.cpp)
+- [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
+- [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
 
 ### 4.2 Toggle Buttons
 
@@ -137,7 +137,7 @@ The display toggle is currently defined as:
 
 Because the toggle state starts as `false`, the first press emits `CMD_DISPLAY_OFF`.
 
-That may be intentional if the display is assumed to start enabled, but it is worth keeping in mind when debugging behavior.
+That is now handled locally on the ESP32 by setting the monitor PWM duty to `0` for blank and restoring the saved brightness level for unblank.
 
 ### 4.4 Rotary Events
 
@@ -193,7 +193,6 @@ These actions send a UART command or message to the Raspberry Pi:
 - next menu
 - menu select
 - cover view toggle
-- display toggle
 - meter toggle
 - rotary action
 - Raspberry Pi shutdown in power-down paths
@@ -204,6 +203,7 @@ These actions currently stay local:
 
 - power sequencing,
 - DAC relay toggle,
+- display blanking via monitor PWM,
 - brightness cycling,
 - relay shutdown sequencing,
 - heartbeat wait and timeout handling.

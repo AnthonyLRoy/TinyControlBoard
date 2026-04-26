@@ -6,6 +6,16 @@ static const char *spTag = "MonitorBrightnessController";
 
 namespace indicators
 {
+    namespace
+    {
+        uint32_t getDutyForBrightnessLevel(int brightnessLevel)
+        {
+            const int clampedLevel = std::clamp(brightnessLevel, 0, 9);
+            constexpr uint32_t kBrightnessDuties[10] = {0, 500, 750, 1000, 1250, 1500, 2000, 3000, 3500, 4000};
+            return kBrightnessDuties[clampedLevel];
+        }
+    }
+
     MonitorBrightnessController::~MonitorBrightnessController()
     {
     }
@@ -47,7 +57,8 @@ namespace indicators
     void MonitorBrightnessController::changeBrightnessLevel(int change)
     {
         ESP_LOGI(spTag, "Changing brightness level by %d", change);
-        mCurrentBrightnessLevel = std::clamp(mCurrentBrightnessLevel, 0, 9);
+        mCurrentBrightnessLevel = std::clamp(mCurrentBrightnessLevel + change, 0, 9);
+        mBlanked = false;
         mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
         mMonitorLed.updateDuty();
 
@@ -56,7 +67,17 @@ namespace indicators
     void MonitorBrightnessController::cycleBrightness()
     {
         mCurrentBrightnessLevel = (mCurrentBrightnessLevel + 1) % 10;
+        mBlanked = false;
         mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
+        mMonitorLed.updateDuty();
+    }
+
+    void MonitorBrightnessController::setBlanked(bool blanked)
+    {
+        mBlanked = blanked;
+        const uint32_t duty = blanked ? 0 : getDutyForBrightnessLevel(mCurrentBrightnessLevel);
+        ESP_LOGI(spTag, "%s monitor backlight", blanked ? "Blanking" : "Restoring");
+        mMonitorLed.setDuty(duty);
         mMonitorLed.updateDuty();
     }
 

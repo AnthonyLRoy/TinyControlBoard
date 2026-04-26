@@ -1,6 +1,6 @@
 #include "controlSystemHelpers.hpp"
 
-#include "actionProcessor.hpp"
+#include "app/ActionUartDispatcher.hpp"
 
 namespace controlSystem
 {

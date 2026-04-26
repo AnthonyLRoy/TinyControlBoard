@@ -11,6 +11,7 @@ Use this page as the overview, then jump into the focused reference docs as need
 Core documents:
 
 - [docs/architecture.md](./architecture.md)
+- [docs/add-button-how-to.md](./add-button-how-to.md)
 - [docs/button-command-map.md](./button-command-map.md)
 - [docs/power-sequencing.md](./power-sequencing.md)
 - [docs/wiring-reference.md](./wiring-reference.md)
@@ -45,8 +46,8 @@ The main runtime flow is:
 Primary entry point:
 
 - [src/main.cpp](../src/main.cpp)
-- [lib/controlSystem/ControlBoard.hpp](../lib/controlSystem/ControlBoard.hpp)
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
+- [lib/app/ControlBoard.hpp](../lib/app/ControlBoard.hpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
 
 ## 3. Core Runtime Pieces
 
@@ -74,8 +75,8 @@ Responsibilities include:
 
 References:
 
-- [lib/controlSystem/ControlBoard.hpp](../lib/controlSystem/ControlBoard.hpp)
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
+- [lib/app/ControlBoard.hpp](../lib/app/ControlBoard.hpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
 
 ### 3.3 `ActionProcessor`
 
@@ -88,7 +89,7 @@ References:
 
 References:
 
-- [lib/controlSystem/actionProcessor.hpp](../lib/controlSystem/actionProcessor.hpp)
+- [lib/app/actionProcessor.hpp](../lib/app/actionProcessor.hpp)
 
 ### 3.4 Serial Bus
 
@@ -105,8 +106,8 @@ Main responsibilities:
 
 References:
 
-- [lib/serialBus/serial.hpp](../lib/serialBus/serial.hpp)
-- [lib/serialBus/serial.cpp](../lib/serialBus/serial.cpp)
+- [lib/transport/uart/serial.hpp](../lib/transport/uart/serial.hpp)
+- [lib/transport/uart/serial.cpp](../lib/transport/uart/serial.cpp)
 
 ### 3.5 Protocol Layer
 
@@ -134,8 +135,8 @@ User input appears to come primarily from an MCP23018-based input expander and r
 
 Relevant code:
 
-- [lib/buttons/mcpInputHandler.hpp](../lib/buttons/mcpInputHandler.hpp)
-- [lib/buttons/mcpInputHandler.cpp](../lib/buttons/mcpInputHandler.cpp)
+- [lib/input/buttons/mcpInputHandler.hpp](../lib/input/buttons/mcpInputHandler.hpp)
+- [lib/input/buttons/mcpInputHandler.cpp](../lib/input/buttons/mcpInputHandler.cpp)
 
 The button index mapping currently lives in:
 
@@ -159,8 +160,8 @@ The current relay pin assignments live in:
 Related code:
 
 - [lib/relays/relay.hpp](../lib/relays/relay.hpp)
-- [lib/controlSystem/relayController.hpp](../lib/controlSystem/relayController.hpp)
-- [lib/controlSystem/rpiBootManager.hpp](../lib/controlSystem/rpiBootManager.hpp)
+- [lib/power/RelayController.hpp](../lib/power/RelayController.hpp)
+- [lib/power/RPIBootManager.hpp](../lib/power/RPIBootManager.hpp)
 
 ### 4.3 Indicators
 
@@ -210,9 +211,9 @@ Important wiring summary:
 
 Raspberry Pi companion references:
 
-- [lib/RPI4Scripts and Commands/UAart5Listener.py](../lib/RPI4Scripts%20and%20Commands/UAart5Listener.py)
-- [lib/RPI4Scripts and Commands/heartbeat_sender.py](../lib/RPI4Scripts%20and%20Commands/heartbeat_sender.py)
-- [lib/RPI4Scripts and Commands/README.md](../lib/RPI4Scripts%20and%20Commands/README.md)
+- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
+- [scripts/rpi/README.md](../scripts/rpi/README.md)
 
 ## 6. UART Protocol Summary
 
@@ -268,9 +269,9 @@ Current behavior in the code:
 
 Relevant references:
 
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
-- [lib/serialBus/serial.hpp](../lib/serialBus/serial.hpp)
-- [lib/RPI4Scripts and Commands/heartbeat_sender.py](../lib/RPI4Scripts%20and%20Commands/heartbeat_sender.py)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
+- [lib/transport/uart/serial.hpp](../lib/transport/uart/serial.hpp)
+- [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
 
 ## 8. Build And Test Reference
 
@@ -312,21 +313,22 @@ This is a simple description of the current project layout.
 |---|---|
 | `src/` | firmware entry point |
 | `lib/board/` | board-specific constants and identity |
-| `lib/buttons/` | button and input-expander handling |
-| `lib/actions/` | action definitions and action results |
-| `lib/controlSystem/` | orchestration, relay control, boot/shutdown coordination |
-| `lib/serialBus/` | UART transport and handshake handling |
+| `lib/app/` | orchestration and top-level runtime composition |
+| `lib/input/buttons/` | button and input-expander handling |
+| `lib/input/actions/` | action definitions and action results |
+| `lib/transport/uart/` | UART transport and handshake handling |
 | `lib/protocol/` | packet definitions and command IDs |
 | `lib/indicators/` | LED/status/brightness behavior |
+| `lib/power/` | power lifecycle and shutdown coordination |
 | `lib/relays/` | relay abstraction |
-| `lib/RPI4Scripts and Commands/` | Raspberry Pi listener, sender, and setup docs |
+| `scripts/rpi/` | Raspberry Pi listener, sender, and setup docs |
 | `docs/` | project documentation |
 | `host_tests/` | host-based test project |
 | `test/` | embedded/unit-oriented test directories |
 
 Also relevant:
 
-- [docs/project-structure-plan.md](./project-structure-plan.md) describes a possible future cleanup and reorganization direction.
+- [docs/project-structure-plan.md](./project-structure-plan.md) describes the remaining cleanup after the transport and script migration work.
 
 ## 10. Documentation Roadmap
 
@@ -363,4 +365,4 @@ If you only need the shortest summary:
 - `ActionProcessor` converts those responses into hardware actions and UART commands.
 - `Serial` moves packets between the ESP32 and Raspberry Pi.
 - `uartProtocol.hpp` defines what those packets look like.
-- Raspberry Pi scripts in `lib/RPI4Scripts and Commands/` implement the current Pi-side listener and heartbeat sender.
+- Raspberry Pi scripts in `scripts/rpi/` implement the current Pi-side listener and heartbeat sender.

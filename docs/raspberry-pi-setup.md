@@ -4,12 +4,12 @@ This document condenses the current Raspberry Pi side setup and companion script
 
 Primary source:
 
-- [lib/RPI4Scripts and Commands/README.md](../lib/RPI4Scripts%20and%20Commands/README.md)
+- [scripts/rpi/README.md](../scripts/rpi/README.md)
 
 Companion scripts:
 
-- [lib/RPI4Scripts and Commands/UAart5Listener.py](../lib/RPI4Scripts%20and%20Commands/UAart5Listener.py)
-- [lib/RPI4Scripts and Commands/heartbeat_sender.py](../lib/RPI4Scripts%20and%20Commands/heartbeat_sender.py)
+- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
 
 ## 1. What Runs On The Pi
 
@@ -41,7 +41,7 @@ Current handled actions include:
 
 Reference:
 
-- [lib/RPI4Scripts and Commands/UAart5Listener.py](../lib/RPI4Scripts%20and%20Commands/UAart5Listener.py)
+- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
 
 ## 3. Heartbeat Sender Role
 
@@ -54,7 +54,7 @@ The heartbeat script:
 
 Reference:
 
-- [lib/RPI4Scripts and Commands/heartbeat_sender.py](../lib/RPI4Scripts%20and%20Commands/heartbeat_sender.py)
+- [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
 
 ## 4. Required Pi Configuration
 
@@ -69,7 +69,7 @@ The config file included in the repo also shows `dtoverlay=uart5`.
 
 Reference:
 
-- [lib/RPI4Scripts and Commands/config.txt](../lib/RPI4Scripts%20and%20Commands/config.txt)
+- [scripts/rpi/boot/firmware/config.txt](../scripts/rpi/boot/firmware/config.txt)
 
 ## 5. Service Summary
 

@@ -16,8 +16,8 @@ At runtime, the system does four main jobs:
 Core entry points:
 
 - [src/main.cpp](../src/main.cpp)
-- [lib/controlSystem/ControlBoard.hpp](../lib/controlSystem/ControlBoard.hpp)
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
+- [lib/app/ControlBoard.hpp](../lib/app/ControlBoard.hpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
 
 ## 2. Startup Flow
 
@@ -40,7 +40,7 @@ Current startup sequence:
 References:
 
 - [src/main.cpp](../src/main.cpp)
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
 - [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
 
 ## 3. Main Components
@@ -60,8 +60,8 @@ Main responsibilities:
 
 References:
 
-- [lib/controlSystem/ControlBoard.hpp](../lib/controlSystem/ControlBoard.hpp)
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
+- [lib/app/ControlBoard.hpp](../lib/app/ControlBoard.hpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
 
 ### 3.2 `ActionProcessor`
 
@@ -77,8 +77,8 @@ That can include:
 
 Reference:
 
-- [lib/controlSystem/actionProcessor.hpp](../lib/controlSystem/actionProcessor.hpp)
-- [lib/controlSystem/actionProcessor.cpp](../lib/controlSystem/actionProcessor.cpp)
+- [lib/app/actionProcessor.hpp](../lib/app/actionProcessor.hpp)
+- [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
 
 ### 3.3 `Serial`
 
@@ -92,8 +92,8 @@ It does three distinct jobs:
 
 References:
 
-- [lib/serialBus/serial.hpp](../lib/serialBus/serial.hpp)
-- [lib/serialBus/serial.cpp](../lib/serialBus/serial.cpp)
+- [lib/transport/uart/serial.hpp](../lib/transport/uart/serial.hpp)
+- [lib/transport/uart/serial.cpp](../lib/transport/uart/serial.cpp)
 
 ### 3.4 `RpiBootManager`
 
@@ -106,8 +106,8 @@ It does not directly control hardware. Instead, it waits for lifecycle signals:
 
 References:
 
-- [lib/controlSystem/rpiBootManager.hpp](../lib/controlSystem/rpiBootManager.hpp)
-- [lib/controlSystem/rpiBootManager.cpp](../lib/controlSystem/rpiBootManager.cpp)
+- [lib/power/RPIBootManager.hpp](../lib/power/RPIBootManager.hpp)
+- [lib/power/RPIBootManager.cpp](../lib/power/RPIBootManager.cpp)
 
 ### 3.5 `RelayController`
 
@@ -120,7 +120,8 @@ References:
 
 References:
 
-- [lib/controlSystem/relayController.cpp](../lib/controlSystem/relayController.cpp)
+- [lib/power/RelayController.hpp](../lib/power/RelayController.hpp)
+- [lib/power/RelayController.cpp](../lib/power/RelayController.cpp)
 
 ## 4. Input Flow
 
@@ -134,12 +135,12 @@ The current input path is:
 
 Related files:
 
-- [lib/buttons/mcpInputHandler.hpp](../lib/buttons/mcpInputHandler.hpp)
-- [lib/buttons/mcpInputHandler.cpp](../lib/buttons/mcpInputHandler.cpp)
-- [lib/actions/buttonActions.hpp](../lib/actions/buttonActions.hpp)
-- [lib/actions/buttonActions.cpp](../lib/actions/buttonActions.cpp)
-- [lib/actions/actionTemplates.hpp](../lib/actions/actionTemplates.hpp)
-- [lib/actions/actionsResponse.hpp](../lib/actions/actionsResponse.hpp)
+- [lib/input/buttons/mcpInputHandler.hpp](../lib/input/buttons/mcpInputHandler.hpp)
+- [lib/input/buttons/mcpInputHandler.cpp](../lib/input/buttons/mcpInputHandler.cpp)
+- [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
+- [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
+- [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
+- [lib/input/actions/actionsResponse.hpp](../lib/input/actions/actionsResponse.hpp)
 
 ## 5. UART Flow
 
@@ -165,8 +166,8 @@ Important current limitation:
 
 References:
 
-- [lib/serialBus/serial.cpp](../lib/serialBus/serial.cpp)
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
+- [lib/transport/uart/serial.cpp](../lib/transport/uart/serial.cpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
 - [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp)
 
 ## 6. State And Status Model
@@ -209,14 +210,15 @@ This is the practical ownership model for the current codebase.
 |---|---|
 | `src/` | firmware entry point |
 | `lib/board/` | board constants and identity |
-| `lib/actions/` | reusable button action objects and templates |
-| `lib/buttons/` | input expander and input capture |
-| `lib/controlSystem/` | orchestration and system behavior |
-| `lib/serialBus/` | UART transport and handshake logic |
+| `lib/app/` | orchestration and integration layer |
+| `lib/input/actions/` | reusable button action objects and templates |
+| `lib/input/buttons/` | input expander and input capture |
+| `lib/transport/uart/` | UART transport and handshake logic |
 | `lib/protocol/` | wire format and command IDs |
 | `lib/indicators/` | LEDs, status behavior, brightness control |
-| `lib/relays/` | relay abstraction |
-| `lib/RPI4Scripts and Commands/` | Raspberry Pi listener, sender, and setup docs |
+| `lib/power/` | power state, relay sequencing, and Pi boot/shutdown coordination |
+| `lib/relays/` | low-level relay abstraction |
+| `scripts/rpi/` | Raspberry Pi listener, sender, and setup docs |
 
 ## 8. Notable Current Design Characteristics
 

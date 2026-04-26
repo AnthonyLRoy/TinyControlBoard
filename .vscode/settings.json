@@ -49,5 +49,10 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp"
     },
-    "idf.currentSetup": "c:\\espidf\\v5.3.1\\esp-idf"
+    "idf.currentSetup": "c:\\espidf\\v5.3.1\\esp-idf",
+    "chat.tools.terminal.autoApprove": {
+        "cmake": true,
+        "ctest": true,
+        "&": true
+    }
 }
