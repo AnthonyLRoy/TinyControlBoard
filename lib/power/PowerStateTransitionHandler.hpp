@@ -3,21 +3,21 @@
 #include "input/actions/actionsResponse.hpp"
 #include "power/RelayController.hpp"
 #include "power/RPIBootManager.hpp"
-#include "serial.hpp"
+#include "transport/uart/serial.hpp"
 
 namespace controlSystem
 {
     class PowerStateTransitionHandler
     {
     public:
-        PowerStateTransitionHandler(serialBus::Serial &rSerial,
+        PowerStateTransitionHandler(transport::uart::Serial &rSerial,
                                     RelayController &rRelayController,
                                     RpiBootManager &rRpiBootManager);
 
         bool handle(const actions::ActionResponse &response);
 
     private:
-        serialBus::Serial &mrSerial;
+        transport::uart::Serial &mrSerial;
         RelayController &mrRelayController;
         RpiBootManager &mrRpiBootManager;
 

@@ -6,7 +6,7 @@
 
 namespace controlSystem
 {
-    RelayController::RelayController(serialBus::Serial &rSerial, relays::StandardRelay &rRelays)
+    RelayController::RelayController(transport::uart::Serial &rSerial, relays::StandardRelay &rRelays)
         : mrSerial(rSerial), mrRelays(rRelays)
     {
     }

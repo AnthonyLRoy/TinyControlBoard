@@ -4,7 +4,7 @@
 #include "statusLed.hpp"
 #include "relay.hpp"
 #include "input/input.hpp"
-#include "serial.hpp"
+#include "transport/uart/serial.hpp"
 #include "spi.hpp"
 #include "input/actions/actionsResponse.hpp"
 #include "app/actionProcessor.hpp"
@@ -38,7 +38,7 @@ namespace controlSystem
         void handleHeartbeatReceived() override;
         void handleSerialRxMessage(const UartMessage &rMsg);
 
-        serialBus::Serial *mpSerialHandler = nullptr;
+        transport::uart::Serial *mpSerialHandler = nullptr;
         relays::StandardRelay *mpRelays = nullptr;
         std::unique_ptr<ActionProcessor> mpResponseProcessor;
         std::unique_ptr<ControlBoardInputDispatcher> mpInputDispatcher;

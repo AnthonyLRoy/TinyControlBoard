@@ -7,8 +7,8 @@
 #include "app/ControlBoard.hpp"
 #include "indicators/ledManager.hpp"
 #include "esp_timer.h"
-#include "serial.hpp"
 #include "protocol/uartProtocol.hpp"
+#include "transport/uart/serial.hpp"
 class MainApp
 {
 public:

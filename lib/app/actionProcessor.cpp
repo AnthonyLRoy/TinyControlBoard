@@ -6,7 +6,7 @@
 
 namespace controlSystem
 {
-    ActionProcessor::ActionProcessor(serialBus::Serial &rSerialBus, relays::StandardRelay &rRelays)
+    ActionProcessor::ActionProcessor(transport::uart::Serial &rSerialBus, relays::StandardRelay &rRelays)
         : mrSerial(rSerialBus), mrRelays(rRelays)
     {
         mpSerialUartCommandSink = std::make_unique<SerialUartCommandSink>(mrSerial);

@@ -2,8 +2,8 @@
 
 #include "indicators/ledManager.hpp"
 #include "protocol/uartProtocol.hpp"
-#include "serial.hpp"
 #include "spi.hpp"
+#include "transport/uart/serial.hpp"
 #include <inttypes.h>
 
 namespace controlSystem
@@ -16,7 +16,7 @@ namespace controlSystem
 
         mBootstrap.prepareStartupIndicators();
 
-        mpSerialHandler = &serialBus::Serial::getInstance();
+        mpSerialHandler = &transport::uart::Serial::getInstance();
         mpRelays = &relays::StandardRelay::getInstance();
 
         mBootstrap.configureSerialCallbacks(*mpSerialHandler,

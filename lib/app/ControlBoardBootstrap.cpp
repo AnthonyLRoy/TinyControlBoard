@@ -27,7 +27,7 @@ namespace controlSystem
         indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
     }
 
-    void ControlBoardBootstrap::configureSerialCallbacks(serialBus::Serial &rSerial,
+    void ControlBoardBootstrap::configureSerialCallbacks(transport::uart::Serial &rSerial,
                                                          SerialRxCallback onSerialRx,
                                                          VoidCallback onHeartbeatTimeout) const
     {
@@ -58,7 +58,7 @@ namespace controlSystem
         return true;
     }
 
-    bool ControlBoardBootstrap::setupSerial(serialBus::Serial &rSerial) const
+    bool ControlBoardBootstrap::setupSerial(transport::uart::Serial &rSerial) const
     {
         ESP_LOGI(spTag, "Initializing serial...");
         const bool ok = rSerial.initUart(board::serial::kPort,

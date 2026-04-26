@@ -96,8 +96,6 @@ lib/
       serial.hpp
       uartReceiver.cpp
       uartReceiver.hpp
-      uart_protocol.cpp
-      uart_protocol.hpp
 
   support/
     controlSystemHelpers.cpp
@@ -182,40 +180,36 @@ Owns small shared helpers that are not themselves a subsystem.
 
 ### Implemented In This Pass
 
-These files are now canonically owned by power and should be included from there in new code:
+These ownership moves are now complete and new code should include the canonical locations directly:
 
 | Old location | Canonical location | Status |
 |---|---|---|
-| `lib/controlSystem/RelayController.hpp` | `lib/power/RelayController.hpp` | implemented with compatibility shim |
-| `lib/controlSystem/RelayController.cpp` | `lib/power/RelayController.cpp` | implemented with compatibility shim |
-| `lib/controlSystem/RPIBootManager.hpp` | `lib/power/RPIBootManager.hpp` | implemented with compatibility shim |
-| `lib/controlSystem/RPIBootManager.cpp` | `lib/power/RPIBootManager.cpp` | implemented with compatibility shim |
-| `lib/controlSystem/PowerStateTransitionHandler.hpp` | `lib/power/PowerStateTransitionHandler.hpp` | implemented with compatibility shim |
-| `lib/controlSystem/PowerStateTransitionHandler.cpp` | `lib/power/PowerStateTransitionHandler.cpp` | implemented with compatibility shim |
-| `lib/controlSystem/PowerStateTransitionPolicy.hpp` | `lib/power/PowerStateTransitionPolicy.hpp` | implemented with compatibility shim |
+| `lib/controlSystem/RelayController.hpp` | `lib/power/RelayController.hpp` | wrapper removed |
+| `lib/controlSystem/RelayController.cpp` | `lib/power/RelayController.cpp` | wrapper removed |
+| `lib/controlSystem/RPIBootManager.hpp` | `lib/power/RPIBootManager.hpp` | wrapper removed |
+| `lib/controlSystem/RPIBootManager.cpp` | `lib/power/RPIBootManager.cpp` | wrapper removed |
+| `lib/controlSystem/PowerStateTransitionHandler.hpp` | `lib/power/PowerStateTransitionHandler.hpp` | wrapper removed |
+| `lib/controlSystem/PowerStateTransitionHandler.cpp` | `lib/power/PowerStateTransitionHandler.cpp` | wrapper removed |
+| `lib/controlSystem/PowerStateTransitionPolicy.hpp` | `lib/power/PowerStateTransitionPolicy.hpp` | wrapper removed |
+| `lib/controlSystem/actionProcessor.*` | `lib/app/actionProcessor.*` | wrapper removed |
+| `lib/controlSystem/ActionUartDispatcher.*` | `lib/app/ActionUartDispatcher.*` | wrapper removed |
+| `lib/controlSystem/ControlBoard*` | `lib/app/ControlBoard*` | wrapper removed |
+| `lib/controlSystem/SerialUartCommandSink.*` | `lib/app/SerialUartCommandSink.*` | wrapper removed |
+| `lib/actions/*` | `lib/input/actions/` | wrapper removed |
+| `lib/buttons/*` | `lib/input/buttons/` | wrapper removed |
 
-Compatibility note:
+Current note:
 
-- The legacy `lib/controlSystem/*.cpp` files currently remain as thin wrappers because PlatformIO still discovers and links that slice as part of the existing controlSystem library boundary.
-- New includes should prefer `power/...` headers.
+- The firmware build now compiles the canonical `lib/app`, `lib/input`, `lib/power`, `lib/protocol`, `lib/support`, and `lib/transport/uart` sources directly.
+- The remaining migration work is any deliberate cleanup of still-unused legacy helpers and any naming cleanup you still want to do.
 
 ### Next File Moves
 
 | Current file or folder | Target | Reason |
 |---|---|---|
-| `lib/controlSystem/actionProcessor.*` | keep in `app/` or `controlSystem/` temporarily | orchestration, not domain behavior |
-| `lib/controlSystem/ActionUartDispatcher.*` | `lib/app/` | routing logic |
-| `lib/controlSystem/ControlBoard*` | `lib/app/` | top-level composition |
-| `lib/controlSystem/SerialUartCommandSink.*` | `lib/app/` or `lib/transport/uart/` | depends on whether it remains orchestration or transport-specific |
-| `lib/actions/*` | `lib/input/actions/` | group input mapping with actions |
-| `lib/buttons/*` | `lib/input/buttons/` | make input behavior discoverable |
-| `lib/led/*` | `lib/indicators/pwm/` | fold all visual output under indicators |
-| `lib/serialBus/serial.*` | `lib/transport/uart/` | transport ownership |
-| `lib/serialBus/uartReceiver.*` | `lib/transport/uart/` | transport ownership |
-| `lib/serialBus/uart_protocol.*` | evaluate for deletion or wrapper to `lib/protocol/uartProtocol.*` | remove duplicate protocol surfaces |
-| `lib/common/boardConfig.hpp` | wrapper to `lib/board/boardConfig.hpp` only | avoid dual ownership |
-| `lib/common/GlobalDefines.hpp` | split into `board/`, `protocol/`, or subsystem headers | remove catch-all constants |
-| `lib/RPI4Scripts and Commands/` | `scripts/rpi/` or `docs/` | not firmware library code |
+| `legacy helper headers if reintroduced` | subsystem-owned canonical headers | avoid recreating compatibility layers |
+| `new transport aliases` | `lib/transport/uart/` only | keep one transport surface |
+| `new Pi deployment notes` | `scripts/rpi/README.md` | keep deployment guidance close to the tracked assets |
 
 ## Migration Sequence
 
@@ -230,7 +224,6 @@ Compatibility note:
 These are worthwhile, but should happen after ownership cleanup rather than during it:
 
 - consider `controlSystem/` -> `app/`
-- consider `serialBus/` -> `transport/uart/`
 
 ## Test Layout Recommendation
 
@@ -250,7 +243,8 @@ The folder cleanup is done when all of the following are true:
 
 - every subsystem has exactly one canonical folder,
 - `common/` contains only temporary wrappers or is gone,
-- `controlSystem/` contains orchestration only or has been renamed to `app/`,
-- `serialBus/uart_protocol.*` is no longer a second protocol surface,
+- `app/` remains the only orchestration folder,
+- `transport/uart/` remains the only transport surface,
+- `lib/protocol/uartProtocol.*` remains the only protocol surface,
 - visual code is entirely under `indicators/`,
 - Pi helper scripts are no longer stored under `lib/`.

@@ -5,11 +5,11 @@ This document maps the current firmware button indices to action objects and the
 The source of truth for the current mapping is:
 
 - [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
-- [lib/actions/buttonActions.hpp](../lib/actions/buttonActions.hpp)
-- [lib/actions/buttonActions.cpp](../lib/actions/buttonActions.cpp)
-- [lib/actions/actionTemplates.hpp](../lib/actions/actionTemplates.hpp)
-- [lib/controlSystem/actionProcessor.cpp](../lib/controlSystem/actionProcessor.cpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
+- [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
+- [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
+- [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
+- [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
 - [lib/indicators/spiLedDriver.cpp](../lib/indicators/spiLedDriver.cpp)
 
 ## 1. How To Read This Map
@@ -108,8 +108,8 @@ Current threshold:
 
 References:
 
-- [lib/actions/actionTemplates.hpp](../lib/actions/actionTemplates.hpp)
-- [lib/controlSystem/actionProcessor.cpp](../lib/controlSystem/actionProcessor.cpp)
+- [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
+- [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
 
 ### 4.2 Toggle Buttons
 

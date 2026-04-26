@@ -4,7 +4,7 @@
 #include "input/buttons/mcpInputHandler.hpp"
 #include "powerLed.hpp"
 #include "relay.hpp"
-#include "serial.hpp"
+#include "transport/uart/serial.hpp"
 #include <functional>
 
 namespace controlSystem
@@ -20,12 +20,12 @@ namespace controlSystem
         void prepareStartupIndicators() const;
         void finalizeStartupIndicators() const;
 
-        void configureSerialCallbacks(serialBus::Serial &rSerial,
+        void configureSerialCallbacks(transport::uart::Serial &rSerial,
                                       SerialRxCallback onSerialRx,
                                       VoidCallback onHeartbeatTimeout) const;
 
         bool setupRelays() const;
-        bool setupSerial(serialBus::Serial &rSerial) const;
+        bool setupSerial(transport::uart::Serial &rSerial) const;
         bool setupMcpHandler(buttons::McpInputHandler &rMcpHandler) const;
 
         void configureMcpCallbacks(buttons::McpInputHandler &rMcpHandler,

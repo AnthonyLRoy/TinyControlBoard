@@ -7,6 +7,23 @@ This guide explains how to enable UART5 on a Raspberry Pi running **Moode**, ins
 
 It also covers auto-login configuration and troubleshooting.
 
+## Repo Layout
+
+This repo keeps Raspberry Pi companion assets under `scripts/rpi/`.
+
+Important tracked files:
+
+- `scripts/rpi/home/antho/UAart5Listener.py`: Pi-side UART listener
+- `scripts/rpi/home/antho/heartbeat_sender.py`: Pi-side heartbeat sender
+- `scripts/rpi/boot/firmware/config.txt`: example firmware config with `dtoverlay=uart5`
+- `scripts/rpi/boot/firmware/config-user.txt`: example user overlay additions
+- `scripts/rpi/boot/firmware/cmdline.txt`: example boot command line
+
+Deployment note:
+
+- These files are source-controlled examples, not their final runtime locations on the Pi.
+- Copy the scripts and config fragments from this folder into the deployment paths referenced below when setting up a Pi.
+
 ---
 
 ## 1. Install Moode Using Raspberry Pi Imager

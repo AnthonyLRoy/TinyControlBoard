@@ -4,9 +4,9 @@ This document explains the current power-state behavior implemented in the firmw
 
 Source files:
 
-- [lib/controlSystem/actionProcessor.cpp](../lib/controlSystem/actionProcessor.cpp)
-- [lib/controlSystem/rpiBootManager.cpp](../lib/controlSystem/rpiBootManager.cpp)
-- [lib/controlSystem/relayController.cpp](../lib/controlSystem/relayController.cpp)
+- [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
+- [lib/power/RPIBootManager.cpp](../lib/power/RPIBootManager.cpp)
+- [lib/power/RelayController.cpp](../lib/power/RelayController.cpp)
 - [lib/power/powerState.hpp](../lib/power/powerState.hpp)
 
 ## 1. Current Power States
@@ -32,7 +32,7 @@ In practice, the code paths currently used most clearly are:
 
 ## 2. Timing Constants Used Today
 
-Current power-related timing constants in [lib/controlSystem/actionProcessor.cpp](../lib/controlSystem/actionProcessor.cpp):
+Current power-related timing constants in [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp):
 
 | Constant | Value | Meaning |
 |---|---:|---|
@@ -55,7 +55,7 @@ Behavior:
 
 Reference:
 
-- [lib/actions/actionTemplates.hpp](../lib/actions/actionTemplates.hpp)
+- [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
 
 ## 4. Power-On Sequence
 

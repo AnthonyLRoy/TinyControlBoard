@@ -1,6 +1,5 @@
 #pragma once
 
-#include "serial.hpp"
 #include "spi.hpp"
 #include "relay.hpp"
 #include "input/actions/actionsResponse.hpp"
@@ -14,6 +13,7 @@
 #include <driver/gpio.h>
 #include "indicators/ledManager.hpp"
 #include "protocol/uartProtocol.hpp"
+#include "transport/uart/serial.hpp"
 #include <memory>
 
 namespace controlSystem
@@ -21,7 +21,7 @@ namespace controlSystem
     class ActionProcessor
     {
     public:
-        ActionProcessor(serialBus::Serial &rSerialBus, relays::StandardRelay &rRelays);
+        ActionProcessor(transport::uart::Serial &rSerialBus, relays::StandardRelay &rRelays);
         void process(const actions::ActionResponse &response);
         const char *getCommandNameForPin(uint8_t pin);
 
@@ -43,7 +43,7 @@ namespace controlSystem
         std::unique_ptr<RelayController> mpRelayController;
         std::unique_ptr<PowerStateTransitionHandler> mpPowerStateTransitionHandler;
 
-        serialBus::Serial &mrSerial;
+        transport::uart::Serial &mrSerial;
         relays::StandardRelay &mrRelays;
 
         static constexpr const char *mspTag = "ActionProcessor";

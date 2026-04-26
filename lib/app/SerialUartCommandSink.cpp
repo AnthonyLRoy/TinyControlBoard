@@ -1,10 +1,10 @@
 #include "app/SerialUartCommandSink.hpp"
 
-#include "serial.hpp"
+#include "transport/uart/serial.hpp"
 
 namespace controlSystem
 {
-    SerialUartCommandSink::SerialUartCommandSink(serialBus::Serial &rSerial)
+    SerialUartCommandSink::SerialUartCommandSink(transport::uart::Serial &rSerial)
         : mrSerial(rSerial)
     {
     }

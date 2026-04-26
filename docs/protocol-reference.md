@@ -8,9 +8,9 @@ Primary source:
 
 Related implementations:
 
-- [lib/serialBus/serial.cpp](../lib/serialBus/serial.cpp)
-- [lib/RPI4Scripts and Commands/UAart5Listener.py](../lib/RPI4Scripts%20and%20Commands/UAart5Listener.py)
-- [lib/RPI4Scripts and Commands/heartbeat_sender.py](../lib/RPI4Scripts%20and%20Commands/heartbeat_sender.py)
+- [lib/transport/uart/serial.cpp](../lib/transport/uart/serial.cpp)
+- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
 
 ## 1. Packet Format
 
@@ -124,7 +124,7 @@ Current Python expression:
 
 Reference:
 
-- [lib/RPI4Scripts and Commands/UAart5Listener.py](../lib/RPI4Scripts%20and%20Commands/UAart5Listener.py)
+- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
 
 ## 7. Current Pi Script Expectations
 
@@ -160,7 +160,7 @@ Current firmware compatibility note:
 
 Reference:
 
-- [lib/controlSystem/ControlBoard.cpp](../lib/controlSystem/ControlBoard.cpp)
+- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
 
 ## 9. Current Practical Limitations
 

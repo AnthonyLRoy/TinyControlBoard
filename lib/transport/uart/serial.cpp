@@ -1,8 +1,9 @@
-#include "serial.hpp"
+#include "transport/uart/serial.hpp"
+
 #include <cstring>
 #include <esp_timer.h>
 
-using namespace serialBus;
+using namespace transport::uart;
 
 static const char *spTag = "SERIAL";
 
@@ -49,29 +50,25 @@ bool Serial::initUart(uart_port_t uartNum,
 
     ESP_LOGI(spTag, "Configuring UART%d: %d baud, TX=%d, RX=%d", mUartNumber, baudRate, txPin, rxPin);
 
-    // -------------------------
-    // 1. Configure RPi Data Ready pin (input with interrupt)
-    // -------------------------
     gpio_config_t io_conf = {};
-    io_conf.intr_type = GPIO_INTR_POSEDGE; // Rising edge
+    io_conf.intr_type = GPIO_INTR_POSEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = (1ULL << PIN_RPI_DATA_READY);
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE; // Depends on wiring
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
     gpio_config(&io_conf);
 
-    // -------------------------
-    // 2. Create RX task BEFORE adding ISR
-    // -------------------------
     if (!mInitialized)
     {
         xTaskCreate([](void *arg)
-                    { static_cast<Serial *>(arg)->runUartRxTask(); }, "uart_rx_task", 4096, this, 10, &this->mpTaskHandle);
+                    { static_cast<Serial *>(arg)->runUartRxTask(); },
+                    "uart_rx_task",
+                    4096,
+                    this,
+                    10,
+                    &this->mpTaskHandle);
     }
 
-    // -------------------------
-    // 3. Install ISR service (only once globally)
-    // -------------------------
     static bool sIsrServiceInstalled = false;
     if (!sIsrServiceInstalled)
     {
@@ -84,14 +81,8 @@ bool Serial::initUart(uart_port_t uartNum,
         sIsrServiceInstalled = true;
     }
 
-    // -------------------------
-    // 4. Attach ISR handler
-    // -------------------------
     ESP_ERROR_CHECK(gpio_isr_handler_add(PIN_RPI_DATA_READY, gpioIsrHandler, (void *)this));
 
-    // -------------------------
-    // 5. Initialize ESP32 Data Ready pin (output, signaling to RPi)
-    // -------------------------
     gpio_config_t io_conf_out = {};
     io_conf_out.pin_bit_mask = (1ULL << PIN_ESP32_DATA_READY);
     io_conf_out.mode = GPIO_MODE_OUTPUT;
@@ -101,25 +92,12 @@ bool Serial::initUart(uart_port_t uartNum,
     gpio_config(&io_conf_out);
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
 
-    // -------------------------
-    // 6. UART driver setup
-    // -------------------------
     ESP_ERROR_CHECK(uart_driver_install(mUartNumber, bufferSize * 2, 0, 0, nullptr, 0));
     ESP_ERROR_CHECK(uart_param_config(mUartNumber, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(mUartNumber, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
     ESP_LOGI(spTag, "UART%d initialized at %d baud.", mUartNumber, baudRate);
     mInitialized = true;
-
-    // Optional: set RX callback
-    // setRxCallback([this](const UartMessage &msg)
-    //                 {
-                              
-
-
-    //                      ESP_LOGI(TAG, "Received message: cmd=0x%04X", msg.command_id);
-    //                 });
-
     return true;
 }
 
@@ -180,8 +158,8 @@ bool Serial::sendData(const uint8_t *pData, size_t len)
     int written = uart_write_bytes(mUartNumber, pData, len);
 
     ESP_LOGI(spTag, "Data sent, signaling Raspberry Pi.");
-    ESP_ERROR_CHECK(gpio_set_level(PIN_ESP32_DATA_READY, 1)); // Indicate data is ready
-    vTaskDelay(pdMS_TO_TICKS(10));                            // Small delay
+    ESP_ERROR_CHECK(gpio_set_level(PIN_ESP32_DATA_READY, 1));
+    vTaskDelay(pdMS_TO_TICKS(10));
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
     return written == len;
 }
@@ -200,7 +178,6 @@ void IRAM_ATTR Serial::gpioIsrHandler(void *pArg)
 
     if (pSelf->mpTaskHandle)
     {
-        // Notify RX task from ISR
         vTaskNotifyGiveFromISR(pSelf->mpTaskHandle, &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
@@ -214,7 +191,6 @@ void Serial::handleUartRx()
 
         if (receivedDataLength > 0)
         {
-            // ESP_LOGI(TAG, "UART RX: Read %d bytes", len);
             mRxBuffer.pushBytes(mTmpBuffer, receivedDataLength);
 
             UartMessage msg;
@@ -243,8 +219,6 @@ void Serial::startHeartbeatMonitor(uint32_t timeoutMs,
 {
     mHeartbeatTimeoutMs = timeoutMs;
     mHeartbeatTimeoutCallback = onTimeout;
-
-    // Initialize last_rx_time_us to current time so timeout begins immediately
     mLastRxTimeUs = esp_timer_get_time();
 
     if (mpHeartbeatTaskHandle == nullptr)
@@ -264,7 +238,6 @@ void Serial::startHeartbeatMonitor(uint32_t timeoutMs,
 
                     if (last == 0)
                     {
-                        // No messages yet — do nothing
                         continue;
                     }
 
@@ -272,11 +245,9 @@ void Serial::startHeartbeatMonitor(uint32_t timeoutMs,
 
                     if (diff_ms > pSelf->mHeartbeatTimeoutMs)
                     {
-                        // Trigger callback ONCE
                         if (pSelf->mHeartbeatTimeoutCallback)
                             pSelf->mHeartbeatTimeoutCallback();
 
-                        // Reset timestamp so callback fires only once
                         pSelf->mLastRxTimeUs = now;
                     }
                 }
