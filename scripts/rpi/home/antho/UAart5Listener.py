@@ -8,6 +8,7 @@ import subprocess
 UART_PORT = "/dev/ttyAMA5"   # UART5
 BAUD_RATE = 115200
 DRDY_PIN = 23
+DEFAULT_METER_ENABLED = False
 # ==========  command IDs ==========
 CMD_SYS_RPI_SHUTDOWN = 0x0002
 CMD_NEXT_TRACK = 0x0100
@@ -44,11 +45,14 @@ def run_command(args):
     if result.returncode != 0:
         print(f"Command failed with exit code {result.returncode}: {args}", flush=True)
 
-def toggle_meter_display(params):
-    if params[0] == PARAM_ENABLED:
+def set_meter_display(enabled):
+    if enabled:
         run_command(["sudo", "moodeutl", "--setdisplay", "peppy"])
     else:
         run_command(["sudo", "moodeutl", "--setdisplay", "webui"])
+
+def toggle_meter_display(params):
+    set_meter_display(params[0] == PARAM_ENABLED)
 
 def handle_rotary_action(params):
     if params[0] == ROTARY_ACTION_NEXT:
@@ -133,6 +137,7 @@ def main():
     try:
         setup_gpio()
         ser = serial.Serial(UART_PORT, BAUD_RATE, timeout=0.01)
+        set_meter_display(DEFAULT_METER_ENABLED)
         print("🎧 UART5 listener started", flush=True)
 
         while True:

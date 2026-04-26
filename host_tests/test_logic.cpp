@@ -444,6 +444,24 @@ void test_action_uart_dispatcher_routes_meter_message()
                  "Meter OFF should map to parameter 0");
 }
 
+void test_action_uart_dispatcher_routes_meter_on_message()
+{
+    FakeUartCommandSink uartSink;
+    controlSystem::ActionUartDispatcher dispatcher(uartSink);
+    const actions::ActionResponse response = makeResponse(CMD_TOGGLE_METER_ON);
+
+    const bool handled = dispatcher.handle(response);
+
+    expect_true(handled, "Meter ON command should be handled");
+    expect_equal(0, uartSink.commandCount, "Meter ON command should not use simple command path");
+    expect_equal(1, uartSink.messageCount, "Meter ON command should send one structured message");
+    expect_equal(std::string("METER"), uartSink.lastLogTag, "Meter ON command should use METER log tag");
+    expect_equal(static_cast<uint16_t>(CMD_TOGGLE_METER), uartSink.lastMessage.commandId,
+                 "Meter ON command should normalize to toggle meter command");
+    expect_equal(static_cast<uint16_t>(1), uartSink.lastMessage.params[0],
+                 "Meter ON should map to parameter 1");
+}
+
 void test_action_uart_dispatcher_routes_rotary_message()
 {
     FakeUartCommandSink uartSink;
@@ -563,6 +581,7 @@ int main()
         {"test_action_uart_dispatcher_routes_simple_command", test_action_uart_dispatcher_routes_simple_command},
         {"test_action_uart_dispatcher_routes_cover_view_message", test_action_uart_dispatcher_routes_cover_view_message},
         {"test_action_uart_dispatcher_routes_meter_message", test_action_uart_dispatcher_routes_meter_message},
+        {"test_action_uart_dispatcher_routes_meter_on_message", test_action_uart_dispatcher_routes_meter_on_message},
         {"test_action_uart_dispatcher_routes_rotary_message", test_action_uart_dispatcher_routes_rotary_message},
         {"test_action_uart_dispatcher_ignores_unknown_command", test_action_uart_dispatcher_ignores_unknown_command},
         {"test_power_state_transition_policy_selects_power_on_for_sleeping_states", test_power_state_transition_policy_selects_power_on_for_sleeping_states},

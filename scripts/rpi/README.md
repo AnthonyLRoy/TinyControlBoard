@@ -24,6 +24,10 @@ Deployment note:
 - These files are source-controlled examples, not their final runtime locations on the Pi.
 - Copy the scripts and config fragments from this folder into the deployment paths referenced below when setting up a Pi.
 
+Current listener behavior note:
+
+- On startup, the UART listener forces the display to the firmware default meter-off state (`webui`) before processing incoming commands.
+
 ---
 
 ## 1. Install Moode Using Raspberry Pi Imager
