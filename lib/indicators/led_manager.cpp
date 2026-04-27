@@ -18,7 +18,6 @@ namespace indicators {
         if (!sMonitorBrightnessController.mStarted)
         {
             sMonitorBrightnessController.init();
-            sMonitorBrightnessController.mStarted = true;
         }
         return sMonitorBrightnessController;
     }

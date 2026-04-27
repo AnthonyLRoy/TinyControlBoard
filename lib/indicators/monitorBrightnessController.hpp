@@ -33,7 +33,7 @@ namespace indicators
 
     private:
         led::LedPwm mMonitorLed;
-        int mBrightnessLevels[10] = {0, 500, 750, 1000, 1250, 1500, 2000, 3000, 3500, 4000};
+        int mBrightnessLevels[12] = {50, 95, 155, 240, 360, 530, 770, 1110, 1590, 2270, 3230, 4000};
         int mCurrentBrightnessLevel = 5; // Start at medium brightness
         bool mBlanked = false;
 
