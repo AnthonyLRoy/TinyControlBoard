@@ -20,6 +20,7 @@ CMD_SKIP_BACK = 0x0105
 CMD_ROTARY_ACTION = 0x0112
 CMD_TOGGLE_METER = 0x0115
 CMD_TOGGLE_COVER_VIEW = 0x0119
+CMD_TOGGLE_REPEAT = 0x011C
 
 # === PARAMETER VALUES ===
 PARAM_DISABLED = 0
@@ -66,6 +67,12 @@ def toggle_cover_view(params):
     else:
         run_command(["/var/www/util/coverview.php", "-off"])
 
+def toggle_repeat(params):
+    if params[0] == PARAM_ENABLED:
+        run_command(["mpc", "repeat", "on"])
+    else:
+        run_command(["mpc", "repeat", "off"])
+
 COMMAND_HANDLERS = {
     CMD_SYS_RPI_SHUTDOWN: lambda params: run_command(["sudo", "moodeutl", "--shutdown"]),
     CMD_NEXT_TRACK: lambda params: run_command(["mpc", "next"]),
@@ -77,6 +84,7 @@ COMMAND_HANDLERS = {
     CMD_ROTARY_ACTION: handle_rotary_action,
     CMD_TOGGLE_METER: toggle_meter_display,
     CMD_TOGGLE_COVER_VIEW: toggle_cover_view,
+    CMD_TOGGLE_REPEAT: toggle_repeat,
 }
 
 def setup_gpio():

@@ -4,7 +4,7 @@
 
 namespace controlSystem
 {
-    struct CommandConfig
+    struct SimpleCommandEntry
     {
         const char *pLogTag;
         uint32_t commandId;
@@ -28,6 +28,7 @@ namespace controlSystem
         bool handleCoverViewCommand(const actions::ActionResponse &response);
         bool handleMeterCommand(const actions::ActionResponse &response);
         bool handleRotaryCommand(const actions::ActionResponse &response);
+        bool handleRepeatCommand(const actions::ActionResponse &response);
         bool handleSimpleCommand(const actions::ActionResponse &response);
 
         IUartCommandSink &mrUartCommandSink;
@@ -35,6 +36,6 @@ namespace controlSystem
         static constexpr const char *mspTag = "ActionUartDispatcher";
     };
 
-    extern const CommandConfig commandConfigs[];
-    extern const size_t NUM_COMMANDS;
+    extern const SimpleCommandEntry sSimpleCommands[];
+    extern const size_t kSimpleCommandCount;
 }

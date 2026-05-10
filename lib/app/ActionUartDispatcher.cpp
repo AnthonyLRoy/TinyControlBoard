@@ -8,29 +8,17 @@
 
 namespace controlSystem
 {
-    const CommandConfig commandConfigs[] = {
-        {"POWERCOMMAND", CMD_SYS_POWER},
+    const SimpleCommandEntry sSimpleCommands[] = {
         {"NEXTTRACK", CMD_NEXT_TRACK},
         {"PREVTRACK", CMD_PREVIOUS_TRACK},
         {"PLAYPAUSE", CMD_PLAY_PAUSE},
         {"STOP", CMD_STOP_TRACK},
         {"SKIPFORWARD", CMD_SKIP_FORWARD},
         {"SKIPBACK", CMD_SKIP_BACK},
-        {"COVER", CMD_TOGGLE_COVER_VIEW},
-        {"NEXTMENU", CMD_NEXT_MENU_ITEM},
         {"ITEMSELECT", CMD_ITEM_SELECT},
-        {"DISPLAYOFF", CMD_DISPLAY_OFF},
-        {"METERON", CMD_TOGGLE_METER_ON},
-        {"METEROFF", CMD_TOGGLE_METER_OFF},
-        {"DISPLAYON", CMD_DISPLAY_ON},
-        {"ROTARY", CMD_ROTARY_ACTION},
-        {"TOGGLEDAC", CMD_TOGGLE_DAC},
-        {"TOGGLEDISPLAY", CMD_TOGGLE_DISPLAY},
-        {"TOGGLEMETER", CMD_TOGGLE_METER},
-        {"CYCLEBRIGHTNESS", CMD_CYCLE_BRIGHTNESS}
     };
 
-    const size_t NUM_COMMANDS = sizeof(commandConfigs) / sizeof(commandConfigs[0]);
+    const size_t kSimpleCommandCount = sizeof(sSimpleCommands) / sizeof(sSimpleCommands[0]);
 
     ActionUartDispatcher::ActionUartDispatcher(IUartCommandSink &rUartCommandSink)
         : mrUartCommandSink(rUartCommandSink)
@@ -42,6 +30,7 @@ namespace controlSystem
         return handleCoverViewCommand(response) ||
                handleMeterCommand(response) ||
                handleRotaryCommand(response) ||
+               handleRepeatCommand(response) ||
                handleSimpleCommand(response);
     }
 
@@ -94,14 +83,30 @@ namespace controlSystem
         return true;
     }
 
+    bool ActionUartDispatcher::handleRepeatCommand(const actions::ActionResponse &response)
+    {
+        if (response.command != CMD_REPEAT_ON && response.command != CMD_REPEAT_OFF)
+        {
+            return false;
+        }
+
+        ESP_LOGI(mspTag, "Processing Repeat Toggle Command (%s)",
+                 response.command == CMD_REPEAT_ON ? "ON" : "OFF");
+        UartMessage message;
+        message.commandId = CMD_TOGGLE_REPEAT;
+        message.params[0] = (response.command == CMD_REPEAT_ON) ? 1 : 0;
+        mrUartCommandSink.sendUartMessage("REPEAT", message);
+        return true;
+    }
+
     bool ActionUartDispatcher::handleSimpleCommand(const actions::ActionResponse &response)
     {
-        for (size_t cmdReference = 0; cmdReference < NUM_COMMANDS; cmdReference++)
+        for (size_t cmdReference = 0; cmdReference < kSimpleCommandCount; cmdReference++)
         {
-            if (commandConfigs[cmdReference].commandId == response.command)
+            if (sSimpleCommands[cmdReference].commandId == response.command)
             {
-                mrUartCommandSink.sendUartCommand(commandConfigs[cmdReference].pLogTag, response.command);
-                ESP_LOGI(mspTag, "Sending command: %s", commandConfigs[cmdReference].pLogTag);
+                mrUartCommandSink.sendUartCommand(sSimpleCommands[cmdReference].pLogTag, response.command);
+                ESP_LOGI(mspTag, "Sending command: %s", sSimpleCommands[cmdReference].pLogTag);
                 return true;
             }
         }
