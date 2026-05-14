@@ -5,7 +5,7 @@
 
 using namespace indicators;
 
-static const char *spTag = "StatusLed";
+static const char *spTag = "Status_Led      ";
 
 static constexpr uint32_t MAX_DUTY = 8191;
 static constexpr uint32_t BREATHE_STEP = 64;

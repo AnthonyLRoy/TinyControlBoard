@@ -8,7 +8,7 @@
 
 namespace controlSystem
 {
-    static const char *spTag = "CONTROL_BOARD";
+    static const char *spTag = "Control_Board   ";
 
     bool ControlBoard::init()
     {

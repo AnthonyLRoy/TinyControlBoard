@@ -2,7 +2,7 @@
 
 namespace buttons {
 
-static const char *spTag = "MCP";
+static const char *spTag = "MCP             ";
 
 McpInputHandler::McpInputHandler(uint8_t address, i2c_port_t port)
         : mI2cAddr(address),

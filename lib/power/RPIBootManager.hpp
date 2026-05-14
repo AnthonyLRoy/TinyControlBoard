@@ -22,6 +22,6 @@ namespace controlSystem
         EventGroupHandle_t mpRpiBootEventGroup = nullptr;
         static constexpr int msRpiHeartbeatBit = (1 << 0);
         static constexpr int msRpiShutdownBit = (1 << 1);
-        static constexpr const char *mspTag = "RpiBootManager";
+        static constexpr const char *mspTag = "RPI_Boot_Manager";
     };
 }

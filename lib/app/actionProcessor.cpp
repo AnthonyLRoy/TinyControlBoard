@@ -67,7 +67,7 @@ namespace controlSystem
     {
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
-            mrSerial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mpRelayController->shutdownRpi(true);
             return true;
         }

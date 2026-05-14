@@ -21,6 +21,6 @@ namespace controlSystem
         RelayController &mrRelayController;
         RpiBootManager &mrRpiBootManager;
 
-        static constexpr const char *mspTag = "PowerStateTransitionHandler";
+        static constexpr const char *mspTag = "Power_State_Hdlr";
     };
 }

@@ -5,7 +5,7 @@
 
 using namespace transport::uart;
 
-static const char *spTag = "SERIAL";
+static const char *spTag = "Serial          ";
 
 UartTransport &UartTransport::getInstance()
 {

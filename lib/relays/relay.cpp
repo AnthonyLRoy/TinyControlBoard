@@ -3,7 +3,7 @@
 namespace relays
 {
 
-static const char *spTag = "RELAY";
+static const char *spTag = "Relay           ";
 
 void StandardRelay::init(gpio_num_t pinRelay)
 {

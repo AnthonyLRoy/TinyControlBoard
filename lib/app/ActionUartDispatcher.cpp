@@ -9,13 +9,13 @@
 namespace controlSystem
 {
     const SimpleCommandEntry sSimpleCommands[] = {
-        {"NEXTTRACK", CMD_NEXT_TRACK},
-        {"PREVTRACK", CMD_PREVIOUS_TRACK},
-        {"PLAYPAUSE", CMD_PLAY_PAUSE},
-        {"STOP", CMD_STOP_TRACK},
-        {"SKIPFORWARD", CMD_SKIP_FORWARD},
-        {"SKIPBACK", CMD_SKIP_BACK},
-        {"ITEMSELECT", CMD_ITEM_SELECT},
+        {"Next_Track", CMD_NEXT_TRACK},
+        {"Prev_Track", CMD_PREVIOUS_TRACK},
+        {"Play_Pause", CMD_PLAY_PAUSE},
+        {"Stop", CMD_STOP_TRACK},
+        {"Skip_Forward", CMD_SKIP_FORWARD},
+        {"Skip_Back", CMD_SKIP_BACK},
+        {"Item_Select", CMD_ITEM_SELECT},
     };
 
     const size_t kSimpleCommandCount = sizeof(sSimpleCommands) / sizeof(sSimpleCommands[0]);
@@ -47,7 +47,7 @@ namespace controlSystem
         UartMessage message;
         message.commandId = CMD_TOGGLE_COVER_VIEW;
         message.params[0] = (response.command == CMD_COVER_VIEW_ON) ? 1 : 0;
-        mrUartCommandSink.sendUartMessage("COVERVIEW", message);
+        mrUartCommandSink.sendUartMessage("Cover_View", message);
         return true;
     }
 
@@ -63,7 +63,7 @@ namespace controlSystem
         UartMessage message;
         message.commandId = CMD_TOGGLE_METER;
         message.params[0] = (response.command == CMD_TOGGLE_METER_ON) ? 1 : 0;
-        mrUartCommandSink.sendUartMessage("METER", message);
+        mrUartCommandSink.sendUartMessage("Meter", message);
         return true;
     }
 
@@ -77,7 +77,7 @@ namespace controlSystem
         UartMessage message;
         message.commandId = response.command;
         message.params[0] = response.parameters[0];
-        mrUartCommandSink.sendUartMessage("ROTARY", message);
+        mrUartCommandSink.sendUartMessage("Rotary", message);
         ESP_LOGI(mspTag, "Processing Rotary Action Command (%s)",
                  response.parameters[0] == 0 ? "LEFT" : "RIGHT");
         return true;
@@ -95,10 +95,10 @@ namespace controlSystem
         UartMessage message;
         message.commandId = CMD_TOGGLE_REPEAT;
         message.params[0] = (response.command == CMD_REPEAT_ON) ? 1 : 0;
-        mrUartCommandSink.sendUartMessage("REPEAT", message);
+        mrUartCommandSink.sendUartMessage("Repeat", message);
         return true;
     }
-
+//simple commands are those that can be directly mapped to a single UART command without needing additional parameters or special handling
     bool ActionUartDispatcher::handleSimpleCommand(const actions::ActionResponse &response)
     {
         for (size_t cmdReference = 0; cmdReference < kSimpleCommandCount; cmdReference++)

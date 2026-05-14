@@ -46,6 +46,6 @@ namespace controlSystem
         transport::uart::UartTransport &mrSerial;
         relays::StandardRelay &mrRelays;
 
-        static constexpr const char *mspTag = "ActionProcessor";
+        static constexpr const char *mspTag = "Action_Processor";
     };
 }

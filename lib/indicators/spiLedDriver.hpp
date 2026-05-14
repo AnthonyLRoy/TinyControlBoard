@@ -19,7 +19,7 @@ namespace indicators
 
     private:
 
-        static constexpr const char *mspTag = "SpiLedDriver";
+        static constexpr const char *mspTag = "SPI_Led_Driver  ";
         static constexpr uint8_t LED_COUNT = 16;
         spi_device_handle_t mpSpiHandle;
         spi_host_device_t mHost;

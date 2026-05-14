@@ -2,7 +2,7 @@
 #include <cmath>
 #include <algorithm>
 
-static const char *spTag = "MonitorBrightnessController";
+static const char *spTag = "Monitor_Bright  ";
 
 namespace indicators
 {

@@ -51,7 +51,7 @@ namespace controlSystem
             ESP_LOGI(mspTag, "Initiating Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
 
-            mrSerial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mrRpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             mrRelayController.shutdownRpi(true);
             vTaskDelay(pdMS_TO_TICKS(500));
@@ -66,7 +66,7 @@ namespace controlSystem
         {
             ESP_LOGI(mspTag, "Initiating Deep Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-            mrSerial.sendUartCommand("RPISHUTDOWN", CMD_SYS_RPI_SHUTDOWN);
+            mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mrRpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             mrRelayController.shutdownRpi(true);
             vTaskDelay(pdMS_TO_TICKS(500));

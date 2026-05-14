@@ -1,7 +1,7 @@
 #include "powerLed.hpp"
 #include <cmath>
 
-static const char *spTag = "PowerLed";
+static const char *spTag = "Power_Led       ";
 
 namespace indicators
 {

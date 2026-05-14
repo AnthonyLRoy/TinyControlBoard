@@ -1,6 +1,6 @@
 #include "spi.hpp"
 
-static const char *spTag = "SPI";
+static const char *spTag = "SPI             ";
 
 
 //TODO  we can remove this is class as its been replaced with thw SpiLedDriver we are not going to use spi for anything else

@@ -8,7 +8,7 @@ namespace controlSystem
 {
     namespace
     {
-        constexpr const char *spTag = "CONTROL_BOARD";
+        constexpr const char *spTag = "Control_Board   ";
     }
 
     void ControlBoardBootstrap::prepareStartupIndicators() const

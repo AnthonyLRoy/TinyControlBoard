@@ -33,7 +33,7 @@ namespace controlSystem
 
         IUartCommandSink &mrUartCommandSink;
 
-        static constexpr const char *mspTag = "ActionUartDispatcher";
+        static constexpr const char *mspTag = "Uart_Dispatcher ";
     };
 
     extern const SimpleCommandEntry sSimpleCommands[];

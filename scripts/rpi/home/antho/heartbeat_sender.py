@@ -11,7 +11,7 @@ HEARTBEAT_INTERVAL_S = 10.0
 DRDY_PIN = 24  # ESP32 data ready/busy line
 BLIP_TIME = 0.002  # 2 ms "data ready" pulse
 
-# === PROTOCOL === with default definitions matching controlBoard.cpp
+# === PROTOCOL === with default definitions matching the control board on the  controlBoard.cpp class on the ESP32 side
 PACKET_FORMAT = "<BBBBBH5HB"
 UART_START_BYTE = 0xAA
 VERSION = 0x01
