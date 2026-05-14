@@ -14,7 +14,7 @@ namespace controlSystem
     void ControlBoardBootstrap::prepareStartupIndicators() const
     {
         indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
-        indicators::getMonitorBrightnessController().changeBrightnessLevel(5);
+        // Brightness level is restored from NVS inside MonitorBrightnessController::init()
     }
 
     void ControlBoardBootstrap::finalizeStartupIndicators() const

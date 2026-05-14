@@ -32,13 +32,14 @@ namespace indicators
         void cycleBrightness();
 
     private:
+        void saveToNvs();
+
         led::LedPwm mMonitorLed;
         int mBrightnessLevels[10] = {5, 10, 19, 37, 70, 134, 255, 486, 961, 2000};
 
         int mCurrentBrightnessLevel = 2; // Start at medium brightness
+        int mSavedBrightnessLevel = 2;   // Saved before sleep/off, restored on wake/on
         bool mBlanked = false;
-
-        // LEDs
 
         ControlBoardPowerState mCurrentPowerState = ControlBoardPowerState::OFF;
 

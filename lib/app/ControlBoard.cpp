@@ -4,6 +4,7 @@
 #include "protocol/uartProtocol.hpp"
 #include "spi.hpp"
 #include "transport/uart/serial.hpp"
+#include "nvs_flash.h"
 #include <inttypes.h>
 
 namespace controlSystem
@@ -13,6 +14,18 @@ namespace controlSystem
     bool ControlBoard::init()
     {
         ESP_LOGI(spTag, "Starting ControlBoard init...");
+
+        // Initialise NVS flash (required before any nvs_open call)
+        esp_err_t nvsErr = nvs_flash_init();
+        if (nvsErr == ESP_ERR_NVS_NO_FREE_PAGES || nvsErr == ESP_ERR_NVS_NEW_VERSION_FOUND)
+        {
+            nvs_flash_erase();
+            nvsErr = nvs_flash_init();
+        }
+        if (nvsErr != ESP_OK)
+        {
+            ESP_LOGW(spTag, "NVS flash init failed (0x%x) — brightness will not persist", nvsErr);
+        }
 
         mBootstrap.prepareStartupIndicators();
 

@@ -32,6 +32,7 @@ namespace controlSystem
         if (transitionAction == PowerTransitionAction::PowerOn)
         {
             indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
+            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::TURNING_ON);
             ESP_LOGI(mspTag, "Initiating Power ON sequence");
 
             mrRelayController.setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, SCREEN_ON_DELAY_MS);
@@ -41,6 +42,7 @@ namespace controlSystem
 
             const bool booted = mrRpiBootManager.waitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
+            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
             indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);
             return booted;
         }
@@ -50,6 +52,7 @@ namespace controlSystem
         {
             ESP_LOGI(mspTag, "Initiating Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
+            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::GOING_TO_SLEEP);
 
             mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mrRpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
@@ -58,6 +61,7 @@ namespace controlSystem
             mrRelayController.shutdownScreen(false);
             vTaskDelay(pdMS_TO_TICKS(5000));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
+            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
             indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
             return true;
         }
@@ -66,6 +70,7 @@ namespace controlSystem
         {
             ESP_LOGI(mspTag, "Initiating Deep Sleep Sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
+            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::GOING_TO_SLEEP);
             mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mrRpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             mrRelayController.shutdownRpi(true);
@@ -74,6 +79,7 @@ namespace controlSystem
             mrRelayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
             mrRelayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
+            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::DEEPSLEEP);
             indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
         }
 
