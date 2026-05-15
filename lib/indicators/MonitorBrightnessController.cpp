@@ -1,13 +1,10 @@
 #include "monitorBrightnessController.hpp"
 #include <cmath>
 #include <algorithm>
-#include "nvs_flash.h"
-#include "nvs.h"
 
 namespace
 {
-    constexpr const char *kNvsNamespace = "brightness";
-    constexpr const char *kNvsKeyLevel  = "level";
+    constexpr const char *kNvsKeyLevel = "level";
 }
 
 static const char *spTag = "Monitor_Bright  ";
@@ -60,24 +57,17 @@ namespace indicators
         mMonitorLed.init(timer, activeCfg);
 
         // Load persisted brightness level from NVS
-        nvs_handle_t handle;
-        if (nvs_open(kNvsNamespace, NVS_READWRITE, &handle) == ESP_OK)
+        int8_t savedLevel = static_cast<int8_t>(mCurrentBrightnessLevel);
+        if (mNvsStorage.readInt8(kNvsKeyLevel, savedLevel))
         {
-            int8_t savedLevel = static_cast<int8_t>(mCurrentBrightnessLevel);
-            esp_err_t err = nvs_get_i8(handle, kNvsKeyLevel, &savedLevel);
-            if (err == ESP_OK)
-            {
-                mCurrentBrightnessLevel = std::clamp(static_cast<int>(savedLevel), 0, 9);
-                ESP_LOGI(spTag, "Restored brightness level %d from NVS", mCurrentBrightnessLevel);
-            }
-            else
-            {
-                // First boot — write the default so it exists next time
-                nvs_set_i8(handle, kNvsKeyLevel, static_cast<int8_t>(mCurrentBrightnessLevel));
-                nvs_commit(handle);
-                ESP_LOGI(spTag, "NVS: first boot, wrote default brightness %d", mCurrentBrightnessLevel);
-            }
-            nvs_close(handle);
+            mCurrentBrightnessLevel = std::clamp(static_cast<int>(savedLevel), 0, 9);
+            ESP_LOGI(spTag, "Restored brightness level %d from NVS", mCurrentBrightnessLevel);
+        }
+        else
+        {
+            // First boot — write the default so it exists next time
+            mNvsStorage.writeInt8(kNvsKeyLevel, static_cast<int8_t>(mCurrentBrightnessLevel));
+            ESP_LOGI(spTag, "NVS: first boot, wrote default brightness %d", mCurrentBrightnessLevel);
         }
         mSavedBrightnessLevel = mCurrentBrightnessLevel;
 
@@ -95,7 +85,8 @@ namespace indicators
         mBlanked = false;
         mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
         mMonitorLed.updateDuty();
-        saveToNvs();
+        mNvsStorage.writeInt8(kNvsKeyLevel, static_cast<int8_t>(mCurrentBrightnessLevel));
+        ESP_LOGI(spTag, "Saved brightness level %d to NVS", mCurrentBrightnessLevel);
     }
 
     void MonitorBrightnessController::cycleBrightness()
@@ -104,7 +95,8 @@ namespace indicators
         mBlanked = false;
         mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
         mMonitorLed.updateDuty();
-        saveToNvs();
+        mNvsStorage.writeInt8(kNvsKeyLevel, static_cast<int8_t>(mCurrentBrightnessLevel));
+        ESP_LOGI(spTag, "Saved brightness level %d to NVS", mCurrentBrightnessLevel);
     }
 
     void MonitorBrightnessController::setState(ControlBoardPowerState state)
@@ -131,18 +123,6 @@ namespace indicators
             break;
         default:
             break;
-        }
-    }
-
-    void MonitorBrightnessController::saveToNvs()
-    {
-        nvs_handle_t handle;
-        if (nvs_open(kNvsNamespace, NVS_READWRITE, &handle) == ESP_OK)
-        {
-            nvs_set_i8(handle, kNvsKeyLevel, static_cast<int8_t>(mCurrentBrightnessLevel));
-            nvs_commit(handle);
-            nvs_close(handle);
-            ESP_LOGI(spTag, "Saved brightness level %d to NVS", mCurrentBrightnessLevel);
         }
     }
 

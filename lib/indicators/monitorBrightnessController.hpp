@@ -6,6 +6,7 @@
 #include "indicators/pwm/pwmLed.hpp"
 #include "led_definitions.hpp"
 #include "esp_log.h"
+#include "support/nvsStorage.hpp"
 
 namespace indicators
 {
@@ -32,8 +33,7 @@ namespace indicators
         void cycleBrightness();
 
     private:
-        void saveToNvs();
-
+        support::NvsStorage mNvsStorage{"brightness"};
         led::LedPwm mMonitorLed;
         int mBrightnessLevels[10] = {5, 10, 19, 37, 70, 134, 255, 486, 961, 2000};
 

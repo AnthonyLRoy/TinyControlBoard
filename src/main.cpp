@@ -10,7 +10,7 @@ extern "C" void app_main(void)
     controlSystem::ControlBoard board;
     board.init();
 
-    // loop to  keep the app alive, do not put anything here 
+    // loop to  keep the app alive, do not put anything here as it will block the main thread and fuck everything up
     while (true)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
