@@ -32,17 +32,19 @@ namespace controlSystem
         mpSerialHandler = &transport::uart::UartTransport::getInstance();
         mpRelays = &relays::StandardRelay::getInstance();
 
-        mBootstrap.configureSerialCallbacks(*mpSerialHandler,
-                                            [this](const UartMessage &rMsg) {
-                                                this->handleSerialRxMessage(rMsg);
-                                            },
-                                            [this]() {
-            ESP_LOGE(spTag, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
-                     board::timing::kHeartbeatTimeoutMs);
-            if (mpResponseProcessor) {
-                mpResponseProcessor->handleHeartbeatTimeout();
-            }
-        });
+        mBootstrap.configureSerialCallbacks(
+            *mpSerialHandler,
+            [this](const UartMessage &rMsg) {
+                handleSerialRxMessage(rMsg);
+            },
+            [this]() {
+                ESP_LOGE(spTag, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
+                         board::timing::kHeartbeatTimeoutMs);
+                if (mpResponseProcessor)
+                {
+                    mpResponseProcessor->handleHeartbeatTimeout();
+                }
+            });
 
         mpResponseProcessor = std::make_unique<ActionProcessor>(*mpSerialHandler, *mpRelays);
         mpInputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
@@ -51,32 +53,39 @@ namespace controlSystem
             static_cast<IControlBoardIndicators *>(this));
         mpHeartbeatRouter = std::make_unique<SerialHeartbeatRouter>(static_cast<IHeartbeatSink *>(this));
 
-        if (!mBootstrap.setupRelays()) {
+        if (!mBootstrap.setupRelays())
+        {
             return false;
         }
 
-        if (!mBootstrap.setupMcpHandler(mMcpHandler)) {
+        if (!mBootstrap.setupMcpHandler(mMcpHandler))
+        {
             return false;
         }
 
-        mBootstrap.configureMcpCallbacks(mMcpHandler,
-                                         [this](uint8_t pin) {
-                                             if (mpInputDispatcher) {
-                                                 mpInputDispatcher->handleButtonPressed(pin);
-                                             }
-                                         },
-                                         [this](uint8_t pin) {
-                                             if (mpInputDispatcher) {
-                                                 mpInputDispatcher->handleButtonReleased(pin);
-                                             }
-                                         },
-                                         [this](int movement) {
-                                             if (mpInputDispatcher) {
-                                                 mpInputDispatcher->handleRotaryMovement(movement);
-                                             }
-                                         });
+        mBootstrap.configureMcpCallbacks(
+            mMcpHandler,
+            [this](uint8_t pin) {
+                if (mpInputDispatcher)
+                {
+                    mpInputDispatcher->handleButtonPressed(pin);
+                }
+            },
+            [this](uint8_t pin) {
+                if (mpInputDispatcher)
+                {
+                    mpInputDispatcher->handleButtonReleased(pin);
+                }
+            },
+            [this](int movement) {
+                if (mpInputDispatcher)
+                {
+                    mpInputDispatcher->handleRotaryMovement(movement);
+                }
+            });
 
-        if (!mBootstrap.setupSerial(*mpSerialHandler)) {
+        if (!mBootstrap.setupSerial(*mpSerialHandler))
+        {
             return false;
         }
 
@@ -130,15 +139,18 @@ namespace controlSystem
         ESP_LOGI(spTag, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
                  rMsg.commandId, rMsg.sequence, rMsg.msgType);
 
-        if (mpHeartbeatRouter && mpHeartbeatRouter->route(rMsg)) {
-            if (rMsg.commandId == SerialHeartbeatRouter::kLegacyHeartbeatCommandId) {
+        if (mpHeartbeatRouter && mpHeartbeatRouter->route(rMsg))
+        {
+            if (rMsg.commandId == SerialHeartbeatRouter::kLegacyHeartbeatCommandId)
+            {
                 ESP_LOGW(spTag, "Received legacy heartbeat command 0x%04X; update the RPI heartbeat sender to CMD_SYS_HEARTBEAT (0x%04X)",
                          rMsg.commandId, CMD_SYS_HEARTBEAT);
             }
             return;
         }
 
-        if (mpResponseProcessor) {
+        if (mpResponseProcessor)
+        {
             ESP_LOGI(spTag, "Processing UART message through action processor (cmd=0x%04X)", rMsg.commandId);
         }
     }
