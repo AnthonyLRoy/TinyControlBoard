@@ -11,6 +11,7 @@ namespace actions
     using ToggleMeterDisplay = ToggleAction<CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF>;
     using CoverView = ToggleAction<CMD_COVER_VIEW_ON, CMD_COVER_VIEW_OFF>;
     using ToggleRepeat = ToggleAction<CMD_REPEAT_ON, CMD_REPEAT_OFF>;
+    using ToggleRandom = ToggleAction<CMD_RANDOM_ON, CMD_RANDOM_OFF>;
     using RotaryEvent = RotaryAction<CMD_ROTARY_ACTION>;
     using PowerButton = TimedAction<CMD_SYS_POWER>;
 
@@ -19,6 +20,7 @@ namespace actions
     extern ToggleMeterDisplay ToggleMeterDisplayInstance;
     extern CoverView CoverViewInstance;
     extern ToggleRepeat RepeatInstance;
+    extern ToggleRandom ToggleRandomInstance;
     extern RotaryEvent RotaryEventInstance;
     extern PowerButton PowerButtonInstance;
 

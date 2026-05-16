@@ -7,6 +7,7 @@ namespace actions
     ToggleMeterDisplay ToggleMeterDisplayInstance;
     CoverView CoverViewInstance;
     ToggleRepeat RepeatInstance;
+    ToggleRandom ToggleRandomInstance;
     RotaryEvent RotaryEventInstance;
     PowerButton PowerButtonInstance;
 

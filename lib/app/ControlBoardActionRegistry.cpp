@@ -15,7 +15,7 @@ namespace controlSystem
         rActionMap[controlBoardButtons::kStop] = &actions::StopInstance;
         rActionMap[controlBoardButtons::kCover] = &actions::CoverViewInstance;
         rActionMap[controlBoardButtons::kRepeat] = &actions::RepeatInstance;
-        rActionMap[controlBoardButtons::kMenuSelect] = &actions::MenuSelectInstance;
+        rActionMap[controlBoardButtons::kToggleRandom] = &actions::ToggleRandomInstance;
         rActionMap[controlBoardButtons::kToggleDac] = &actions::ToggleDacInstance;
         rActionMap[controlBoardButtons::kToggleDisplay] = &actions::ToggleDisplayInstance;
         rActionMap[controlBoardButtons::kToggleMeter] = &actions::ToggleMeterDisplayInstance;

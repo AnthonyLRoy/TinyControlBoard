@@ -29,6 +29,7 @@ namespace controlSystem
         bool handleMeterCommand(const actions::ActionResponse &response);
         bool handleRotaryCommand(const actions::ActionResponse &response);
         bool handleRepeatCommand(const actions::ActionResponse &response);
+        bool handleRandomCommand(const actions::ActionResponse &response);
         bool handleSimpleCommand(const actions::ActionResponse &response);
 
         IUartCommandSink &mrUartCommandSink;

@@ -73,7 +73,10 @@ enum CommandId : uint16_t
     CMD_TOGGLE_COVER_VIEW = 0x0119,
     CMD_REPEAT_ON = 0x011A,
     CMD_REPEAT_OFF = 0x011B,
-    CMD_TOGGLE_REPEAT = 0x011C
+    CMD_TOGGLE_REPEAT = 0x011C,
+    CMD_RANDOM_ON = 0x011D,
+    CMD_RANDOM_OFF = 0x011E,
+    CMD_TOGGLE_RANDOM = 0x011F
 };
 
 enum PowerCommand : uint8_t

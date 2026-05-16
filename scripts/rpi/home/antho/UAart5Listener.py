@@ -21,6 +21,7 @@ CMD_ROTARY_ACTION = 0x0112
 CMD_TOGGLE_METER = 0x0115
 CMD_TOGGLE_COVER_VIEW = 0x0119
 CMD_TOGGLE_REPEAT = 0x011C
+CMD_TOGGLE_RANDOM = 0x011F
 
 # === PARAMETER VALUES ===
 PARAM_DISABLED = 0
@@ -73,6 +74,12 @@ def toggle_repeat(params):
     else:
         run_command(["mpc", "repeat", "off"])
 
+def toggle_random(params):
+    if params[0] == PARAM_ENABLED:
+        run_command(["mpc", "random", "on"])
+    else:
+        run_command(["mpc", "random", "off"])
+
 COMMAND_HANDLERS = {
     CMD_SYS_RPI_SHUTDOWN: lambda params: run_command(["sudo", "moodeutl", "--shutdown"]),
     CMD_NEXT_TRACK: lambda params: run_command(["mpc", "next"]),
@@ -85,6 +92,7 @@ COMMAND_HANDLERS = {
     CMD_TOGGLE_METER: toggle_meter_display,
     CMD_TOGGLE_COVER_VIEW: toggle_cover_view,
     CMD_TOGGLE_REPEAT: toggle_repeat,
+    CMD_TOGGLE_RANDOM: toggle_random,
 }
 
 def setup_gpio():

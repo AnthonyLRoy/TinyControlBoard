@@ -31,6 +31,7 @@ namespace controlSystem
                handleMeterCommand(response) ||
                handleRotaryCommand(response) ||
                handleRepeatCommand(response) ||
+               handleRandomCommand(response) ||
                handleSimpleCommand(response);
     }
 
@@ -99,6 +100,22 @@ namespace controlSystem
         return true;
     }
 //simple commands are those that can be directly mapped to a single UART command without needing additional parameters or special handling
+    bool ActionUartDispatcher::handleRandomCommand(const actions::ActionResponse &response)
+    {
+        if (response.command != CMD_RANDOM_ON && response.command != CMD_RANDOM_OFF)
+        {
+            return false;
+        }
+
+        ESP_LOGI(mspTag, "Processing Random Toggle Command (%s)",
+                 response.command == CMD_RANDOM_ON ? "ON" : "OFF");
+        UartMessage message;
+        message.commandId = CMD_TOGGLE_RANDOM;
+        message.params[0] = (response.command == CMD_RANDOM_ON) ? 1 : 0;
+        mrUartCommandSink.sendUartMessage("Random", message);
+        return true;
+    }
+
     bool ActionUartDispatcher::handleSimpleCommand(const actions::ActionResponse &response)
     {
         for (size_t cmdReference = 0; cmdReference < kSimpleCommandCount; cmdReference++)
