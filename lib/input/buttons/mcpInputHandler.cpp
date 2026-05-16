@@ -1,3 +1,8 @@
+//this code is based on the mcphandler code from  the the internet but modified to fit the needs of this project. 
+//It is used to handle the input from the mcp23018 io expander and convert it to button presses and rotary encoder movements.
+
+
+
 #include "input/buttons/mcpInputHandler.hpp"
 
 namespace buttons {
@@ -48,7 +53,7 @@ void McpInputHandler::dumpRegisters() const {
 #endif
 
 #ifdef DEBUG_MCP_SCAN
-
+// Scans the I2C bus for devices and logs their addresses when found. Useful for debugging connectivity issues with the MCP23018.
 void McpInputHandler::scanI2c() const {
     int found = 0;
 

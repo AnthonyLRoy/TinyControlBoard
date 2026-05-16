@@ -35,7 +35,7 @@ namespace indicators
     private:
         support::NvsStorage mNvsStorage{"brightness"};
         led::LedPwm mMonitorLed;
-        int mBrightnessLevels[10] = {5, 10, 19, 37, 70, 134, 255, 486, 961, 2000};
+        int mBrightnessLevels[12] = {10, 109, 568, 1127, 1486, 1845, 2205, 2564, 2923, 3282, 3641, 4000};
 
         int mCurrentBrightnessLevel = 2; // Start at medium brightness
         int mSavedBrightnessLevel = 2;   // Saved before sleep/off, restored on wake/on
