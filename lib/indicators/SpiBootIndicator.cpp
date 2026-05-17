@@ -42,7 +42,7 @@ namespace indicators
         xTaskCreate(
             flashTask,
             "spi_boot_ind",
-            2048,
+            4096,
             this,
             tskIDLE_PRIORITY + 1,
             &mTask);

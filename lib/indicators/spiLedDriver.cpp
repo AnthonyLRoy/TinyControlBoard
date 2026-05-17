@@ -115,8 +115,6 @@ namespace indicators
         spi_transaction_t transaction = {};
         transaction.length = 16;
         transaction.tx_buffer = mTxBuf;
-        ESP_LOGI(mspTag, "Sending SPI_MESSAGE: 0x%04X", mLedBitState);
-        printU16Binary(mLedBitState);
         ESP_ERROR_CHECK(spi_device_transmit(mpSpiHandle, &transaction));
 
         esp_rom_delay_us(5);
