@@ -1,6 +1,6 @@
 #include "power/PowerStateTransitionHandler.hpp"
 
-#include "led_manager.hpp"
+#include "ledManager.hpp"
 #include "powerLed.hpp"
 #include "power/PowerStateTransitionPolicy.hpp"
 #include <inttypes.h>

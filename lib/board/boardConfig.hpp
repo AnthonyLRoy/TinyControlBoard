@@ -79,7 +79,7 @@ inline constexpr uint8_t kCount = 16;
 namespace debug {
     // Set to true to skip waiting for the RPi heartbeat during boot.
     // Useful for testing firmware locally without a connected Raspberry Pi.
-    inline constexpr bool kSimulateRpiBoot = false;
+    inline constexpr bool kSimulateRpiBoot = true;
 } // namespace debug
 
 } // namespace board
