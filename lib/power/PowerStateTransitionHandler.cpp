@@ -17,10 +17,12 @@ namespace controlSystem
 
     PowerStateTransitionHandler::PowerStateTransitionHandler(transport::uart::UartTransport &rSerial,
                                                              RelayController &rRelayController,
-                                                             RpiBootManager &rRpiBootManager)
+                                                             RpiBootManager &rRpiBootManager,
+                                                             IActivityStatusSink *pActivitySink)
         : mrSerial(rSerial),
           mrRelayController(rRelayController),
-          mrRpiBootManager(rRpiBootManager)
+          mrRpiBootManager(rRpiBootManager),
+          mpActivitySink(pActivitySink)
     {
     }
 
@@ -53,7 +55,10 @@ namespace controlSystem
 
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
-            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);
+            if (mpActivitySink)
+                mpActivitySink->setActivityStatus(ControlBoardWorkingStatus::Active);
+            else
+                indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);
             return booted;
         }
 
@@ -72,7 +77,10 @@ namespace controlSystem
             vTaskDelay(pdMS_TO_TICKS(5000));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
-            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            if (mpActivitySink)
+                mpActivitySink->setActivityStatus(ControlBoardWorkingStatus::sleeping);
+            else
+                indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
             return true;
         }
 
@@ -90,7 +98,10 @@ namespace controlSystem
             mrRelayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::DEEPSLEEP);
-            indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            if (mpActivitySink)
+                mpActivitySink->setActivityStatus(ControlBoardWorkingStatus::sleeping);
+            else
+                indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
         }
 
         return true;

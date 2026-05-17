@@ -6,7 +6,7 @@
 
 namespace controlSystem
 {
-    ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays)
+    ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, IActivityStatusSink *pActivitySink)
         : mrSerial(rSerialBus), mrRelays(rRelays)
     {
         mpSerialUartCommandSink = std::make_unique<SerialUartCommandSink>(mrSerial);
@@ -16,7 +16,8 @@ namespace controlSystem
         mpPowerStateTransitionHandler = std::make_unique<PowerStateTransitionHandler>(
             mrSerial,
             *mpRelayController,
-            *mpRpiBootManager);
+            *mpRpiBootManager,
+            pActivitySink);
     }
 
     void ActionProcessor::process(const actions::ActionResponse &response)

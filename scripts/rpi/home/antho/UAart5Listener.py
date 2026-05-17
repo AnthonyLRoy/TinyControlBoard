@@ -33,8 +33,8 @@ ROTARY_ACTION_NEXT = 1
 # [0] Start Byte (0xAA) 
 UART_START_BYTE = 0xAA
 PACKET_SIZE = 18
-PACKET_FORMAT = "<BBBBBH5HB"  # little-endian
-
+PACKET_FORMAT = "<BBBBBH5HB"  
+# little-endian
 
 
 # calculate the checksum to ensure data not currupted 

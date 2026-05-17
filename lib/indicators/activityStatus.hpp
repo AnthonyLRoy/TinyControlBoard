@@ -5,6 +5,11 @@ enum class ControlBoardWorkingStatus {
     Idle,
     SolidIdle,
     sleeping,
-    MaintenanceMode,
     Active
+};
+
+struct IActivityStatusSink
+{
+    virtual ~IActivityStatusSink() = default;
+    virtual void setActivityStatus(ControlBoardWorkingStatus status) = 0;
 };

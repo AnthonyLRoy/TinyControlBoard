@@ -4,6 +4,7 @@
 #include "power/RelayController.hpp"
 #include "power/RPIBootManager.hpp"
 #include "transport/uart/serial.hpp"
+#include "activityStatus.hpp"
 
 namespace controlSystem
 {
@@ -12,7 +13,8 @@ namespace controlSystem
     public:
         PowerStateTransitionHandler(transport::uart::UartTransport &rSerial,
                                     RelayController &rRelayController,
-                                    RpiBootManager &rRpiBootManager);
+                                    RpiBootManager &rRpiBootManager,
+                                    IActivityStatusSink *pActivitySink = nullptr);
 
         bool handle(const actions::ActionResponse &response);
 
@@ -20,6 +22,7 @@ namespace controlSystem
         transport::uart::UartTransport &mrSerial;
         RelayController &mrRelayController;
         RpiBootManager &mrRpiBootManager;
+        IActivityStatusSink *mpActivitySink;
 
         static constexpr const char *mspTag = "Power_State_Hdlr";
     };
