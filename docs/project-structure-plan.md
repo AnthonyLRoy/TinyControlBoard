@@ -61,10 +61,13 @@ lib/
     ledManager.hpp
     led_manager.cpp
     led_manager.hpp
+    library.json
     monitorBrightnessController.cpp
     monitorBrightnessController.hpp
     powerLed.cpp
     powerLed.hpp
+    SpiBootIndicator.cpp
+    SpiBootIndicator.hpp
     spiLedDriver.cpp
     spiLedDriver.hpp
     statusLed.cpp
@@ -229,8 +232,20 @@ These are worthwhile, but should happen after ownership cleanup rather than duri
 
 Keep both test areas, but make the distinction explicit:
 
-- `host_tests/` for host-side CMake logic tests,
-- `test/` for embedded or PlatformIO-targeted tests.
+- `host_tests/` for host-side CMake logic tests (pure C++, no ESP-IDF),
+- `test/` for PlatformIO device tests (compiled and run on the ESP32-S3).
+
+Current device test suites under `test/`:
+
+| Suite | What it covers |
+|---|---|
+| `test_power_led/` | `PowerLed` state defaults and brightness scaling |
+| `test_simple_command_action/` | `SimpleCommandAction` press/release behavior |
+| `test_uart_protocol/` | UART serialization, deserialization, checksum |
+| `test_spi_boot_indicator/` | `SpiBootIndicator` state machine (9 tests) |
+| `test_spi_led_driver/` | `SpiLedDriver` constructor state and guard paths (7 tests) |
+
+All five suites build cleanly against the ESP32-S3 toolchain.
 
 If you want the tree to read more cleanly later, move them to:
 

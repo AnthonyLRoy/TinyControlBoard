@@ -27,7 +27,8 @@ TinyControlBoard is an ESP32-S3-based control surface that:
 - controls relays and indicator outputs,
 - talks to a Raspberry Pi over UART,
 - reacts to Raspberry Pi heartbeat status,
-- translates user input into commands such as playback control, display control, DAC control, and power-state changes.
+- translates user input into commands such as playback control, display control, DAC control, and power-state changes,
+- visually signals boot progress and failure via SPI-driven button LEDs.
 
 In practical terms, the board is the hardware front end and the Raspberry Pi is the system it controls.
 
@@ -165,12 +166,17 @@ Related code:
 
 ### 4.3 Indicators
 
-The board also drives visual feedback hardware, including status LEDs, a power LED, button lighting, SPI LED driving, and monitor brightness control.
+The board drives several visual feedback outputs:
+
+- **Status LEDs** — activity and button status indicators.
+- **Power LED** — reflects the current power state (off, sleep, on, transitioning).
+- **SPI button LEDs** — 16 LEDs driven via SPI shift registers, used for per-button lighting.
+- **Monitor brightness controller** — PWM-controlled brightness for the attached display.
+- **SpiBootIndicator** — flashes all SPI LEDs during the Raspberry Pi boot wait. Slow flash (~1 Hz) while waiting; fast flash (~3.3 Hz) on timeout or firmware init failure. Stops and clears on successful boot.
 
 Relevant code lives mainly under:
 
 - [lib/indicators](../lib/indicators)
-- [lib/led](../lib/led)
 
 ## 5. Current Hardware Configuration Reference
 
@@ -297,13 +303,25 @@ Current note from repository context:
 - host tests can be run with CMake/MSVC on this machine,
 - PlatformIO native is not currently usable here without a GCC-compatible compiler in `PATH`.
 
-### 8.3 In-Repo Test Areas
+### 8.3 Device Tests
 
-Current test folders include:
+PlatformIO device tests live under `test/`. They are compiled for the ESP32-S3 and require a connected board to run:
 
-- [test/test_power_led](../test/test_power_led)
-- [test/test_simple_command_action](../test/test_simple_command_action)
-- [test/test_uart_protocol](../test/test_uart_protocol)
+```
+pio test
+```
+
+Current test suites:
+
+| Suite | What it covers |
+|---|---|
+| [test/test_power_led](../test/test_power_led) | `PowerLed` constructor defaults and brightness scaling |
+| [test/test_simple_command_action](../test/test_simple_command_action) | `SimpleCommandAction` press/release response |
+| [test/test_uart_protocol](../test/test_uart_protocol) | UART message serialization, deserialization, checksum |
+| [test/test_spi_boot_indicator](../test/test_spi_boot_indicator) | `SpiBootIndicator` state machine: start/success/failure/idempotency |
+| [test/test_spi_led_driver](../test/test_spi_led_driver) | `SpiLedDriver` constructor state and early-return guard paths |
+
+All five suites build and link cleanly against the ESP32-S3 toolchain.
 
 ## 9. Folder Guide
 
@@ -312,19 +330,20 @@ This is a simple description of the current project layout.
 | Area | Purpose |
 |---|---|
 | `src/` | firmware entry point |
-| `lib/board/` | board-specific constants and identity |
+| `lib/board/` | board-specific constants, identity, and debug flags |
 | `lib/app/` | orchestration and top-level runtime composition |
 | `lib/input/buttons/` | button and input-expander handling |
 | `lib/input/actions/` | action definitions and action results |
 | `lib/transport/uart/` | UART transport and handshake handling |
 | `lib/protocol/` | packet definitions and command IDs |
-| `lib/indicators/` | LED/status/brightness behavior |
+| `lib/indicators/` | LED, status, brightness behavior, and boot indication |
 | `lib/power/` | power lifecycle and shutdown coordination |
 | `lib/relays/` | relay abstraction |
+| `lib/support/` | NVS storage and shared utilities |
 | `scripts/rpi/` | Raspberry Pi listener, sender, and setup docs |
 | `docs/` | project documentation |
-| `host_tests/` | host-based test project |
-| `test/` | embedded/unit-oriented test directories |
+| `host_tests/` | host-based test project (pure C++, no ESP-IDF) |
+| `test/` | PlatformIO device test suites (run on ESP32-S3) |
 
 Also relevant:
 

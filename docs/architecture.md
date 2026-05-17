@@ -37,6 +37,8 @@ Current startup sequence:
 12. The button-to-action map is created.
 13. After `kInitDelayMs`, the power LED is moved to `SLEEP`.
 
+Note: if any critical init step fails (MCP handler or serial setup), `SpiBootIndicator::notifyFailure()` is called immediately, which flashes all SPI LEDs rapidly to signal the fault before the firmware aborts init.
+
 References:
 
 - [src/main.cpp](../src/main.cpp)
@@ -104,10 +106,55 @@ It does not directly control hardware. Instead, it waits for lifecycle signals:
 - heartbeat received means the Pi is alive or has finished booting,
 - heartbeat timeout is treated as shutdown/offline confirmation.
 
+Debug flag:
+
+- `board::debug::kSimulateRpiBoot` in [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp) can be set to `true` to skip the heartbeat wait entirely. This is useful when testing on the bench without a Raspberry Pi connected. The flag is evaluated at compile time (`if constexpr`) so there is zero overhead in release builds.
+
 References:
 
 - [lib/power/RPIBootManager.hpp](../lib/power/RPIBootManager.hpp)
 - [lib/power/RPIBootManager.cpp](../lib/power/RPIBootManager.cpp)
+- [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
+
+### 3.5 `SpiBootIndicator`
+
+`SpiBootIndicator` is a FreeRTOS-based visual boot indicator that flashes all 16 SPI-driven button LEDs to signal boot progress or failure.
+
+Behavior:
+
+- `startWaiting()` — starts a background FreeRTOS task that flashes all LEDs at 500 ms half-period (1 Hz) while the firmware waits for the Raspberry Pi heartbeat.
+- `notifySuccess()` — signals the task to stop and clears all LEDs. Called when the heartbeat is received within the timeout.
+- `notifyFailure()` — switches to a fast 150 ms half-period flash (~3.3 Hz). If the task is not yet running (firmware init failure), it starts the task directly in the failed state.
+
+Call sites:
+
+- `PowerStateTransitionHandler` calls `startWaiting()` just before `waitForRpiToBoot()`, then calls `notifySuccess()` or `notifyFailure()` based on the result.
+- `ControlBoard::init()` calls `notifyFailure()` before each early-return failure path.
+
+The singleton accessor is `indicators::getSpiBootIndicator()`, registered in `led_manager.cpp`.
+
+References:
+
+- [lib/indicators/SpiBootIndicator.hpp](../lib/indicators/SpiBootIndicator.hpp)
+- [lib/indicators/SpiBootIndicator.cpp](../lib/indicators/SpiBootIndicator.cpp)
+- [lib/indicators/ledManager.hpp](../lib/indicators/ledManager.hpp)
+- [lib/indicators/led_manager.cpp](../lib/indicators/led_manager.cpp)
+
+### 3.6 `SpiLedDriver`
+
+`SpiLedDriver` drives 16 button LEDs via SPI shift registers (SPI2_HOST, 1 MHz, GPIO 6/7/5 for clock/MOSI/latch).
+
+Key methods:
+
+- `init()` — sets up the SPI bus and device.
+- `setLed(index, on)` — sets a single LED by bit index (0–15).
+- `setAllLeds(on)` — atomically sets all 16 LEDs on or off. Used by `SpiBootIndicator` for whole-panel flashing.
+- `update()` — pushes the current 16-bit state to the shift register via SPI.
+
+References:
+
+- [lib/indicators/spiLedDriver.hpp](../lib/indicators/spiLedDriver.hpp)
+- [lib/indicators/spiLedDriver.cpp](../lib/indicators/spiLedDriver.cpp)
 
 ### 3.5 `RelayController`
 
@@ -209,16 +256,19 @@ This is the practical ownership model for the current codebase.
 | Area | Current Role |
 |---|---|
 | `src/` | firmware entry point |
-| `lib/board/` | board constants and identity |
+| `lib/board/` | board constants, identity, and debug flags |
 | `lib/app/` | orchestration and integration layer |
 | `lib/input/actions/` | reusable button action objects and templates |
 | `lib/input/buttons/` | input expander and input capture |
 | `lib/transport/uart/` | UART transport and handshake logic |
 | `lib/protocol/` | wire format and command IDs |
-| `lib/indicators/` | LEDs, status behavior, brightness control |
+| `lib/indicators/` | LEDs, status behavior, brightness control, boot indication |
 | `lib/power/` | power state, relay sequencing, and Pi boot/shutdown coordination |
 | `lib/relays/` | low-level relay abstraction |
+| `lib/support/` | NVS storage helper and other shared utilities |
 | `scripts/rpi/` | Raspberry Pi listener, sender, and setup docs |
+| `host_tests/` | pure C++ host-side tests (no ESP-IDF required) |
+| `test/` | PlatformIO device tests (run on connected ESP32-S3) |
 
 ## 8. Notable Current Design Characteristics
 
@@ -227,6 +277,8 @@ This is the practical ownership model for the current codebase.
 - Toggle actions maintain internal software state, so their first emitted command depends on the starting state in firmware.
 - Heartbeat is treated as the Raspberry Pi liveness signal for both boot completion and shutdown detection.
 - Non-heartbeat Pi-originated commands are not yet fully consumed on the ESP32 side.
+- Boot and init failures are signalled visually via `SpiBootIndicator`: slow flashing (~1 Hz) during normal boot wait, fast flashing (~3.3 Hz) on timeout or firmware init failure.
+- The `board::debug::kSimulateRpiBoot` compile-time flag allows full firmware testing without a connected Raspberry Pi. When `true`, the 60-second heartbeat wait is skipped instantly.
 
 ## 9. Related Docs
 
