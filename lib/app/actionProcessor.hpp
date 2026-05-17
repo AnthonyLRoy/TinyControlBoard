@@ -11,6 +11,7 @@
 #include "power/RelayController.hpp"
 #include <driver/gpio.h>
 #include "indicators/ledManager.hpp"
+#include "activityStatus.hpp"
 #include "protocol/uartProtocol.hpp"
 #include "transport/uart/serial.hpp"
 #include <memory>
@@ -20,7 +21,9 @@ namespace controlSystem
     class ActionProcessor
     {
     public:
-        ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays);
+        ActionProcessor(transport::uart::UartTransport &rSerialBus,
+                        relays::StandardRelay &rRelays,
+                        IActivityStatusSink *pActivitySink = nullptr);
         void process(const actions::ActionResponse &response);
         const char *getCommandNameForPin(uint8_t pin);
 

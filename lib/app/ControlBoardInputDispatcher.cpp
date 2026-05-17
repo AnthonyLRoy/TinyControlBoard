@@ -29,7 +29,7 @@ namespace controlSystem
     {
         if (mpIndicators)
         {
-            mpIndicators->setActivityStatus(ControlBoardWorkingStatus::Idle);
+            mpIndicators->setActivityStatus(mBackgroundStatus);
         }
 
         if (buttonReleasedId >= controlBoardButtons::kCount || !mpResponseSink)
@@ -65,7 +65,7 @@ namespace controlSystem
 
         if (mpIndicators)
         {
-            mpIndicators->setActivityStatus(ControlBoardWorkingStatus::Idle);
+            mpIndicators->setActivityStatus(mBackgroundStatus);
         }
     }
 }

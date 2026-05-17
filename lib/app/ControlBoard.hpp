@@ -44,6 +44,7 @@ namespace controlSystem
         std::unique_ptr<SerialHeartbeatRouter> mpHeartbeatRouter;
         ControlBoardActionRegistry mActionRegistry;
         ControlBoardBootstrap mBootstrap;
+        ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
 
         buttons::McpInputHandler mMcpHandler{board::i2c::kMcpAddress, I2C_NUM_0};
         std::array<actions::ButtonAction *, board::buttons::kCount> mpButtonActions{};

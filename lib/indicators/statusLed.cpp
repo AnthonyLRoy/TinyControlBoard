@@ -8,8 +8,11 @@ using namespace indicators;
 static const char *spTag = "Status_Led      ";
 
 static constexpr uint32_t MAX_DUTY = 8191;
+static constexpr uint32_t ACT_DUTY = 2000;
 static constexpr uint32_t BREATHE_STEP = 64;
 static constexpr uint32_t BREATHE_DELAY_MS = 20;
+static constexpr uint32_t BLIP_ON_MS = 50;
+static constexpr uint32_t BLIP_OFF_MS = 1950;
 
 StatusLed::StatusLed(gpio_num_t pin,
                      ledc_channel_t channel,
@@ -124,21 +127,19 @@ void StatusLed::runLedTask(void *pParam)
                 pSelf->mLedOn = true;
                 pSelf->updateDuty(MAX_DUTY);
                 break;
+            case ControlBoardWorkingStatus::Active:
+                // Blip: brief flash once per second (off 900ms, on 100ms)
+                pSelf->updateDuty(ACT_DUTY);
+                xTimerChangePeriod(pSelf->mpBlinkTimer, pdMS_TO_TICKS(BLIP_OFF_MS), 0);
+                xTimerStart(pSelf->mpBlinkTimer, 0);
+                break;
             case ControlBoardWorkingStatus::SolidIdle:
                 pSelf->mLedOn = true;
                 pSelf->updateDuty(pSelf->mIdleDuty);
                 break;
             case ControlBoardWorkingStatus::Idle:
-            case ControlBoardWorkingStatus::MaintenanceMode:
-            case ControlBoardWorkingStatus::Active:
-                xTimerChangePeriod(
-                    pSelf->mpBlinkTimer,
-                    pdMS_TO_TICKS(pSelf->getBlinkInterval(receivedStatus)),
-                    0);
-                xTimerStart(pSelf->mpBlinkTimer, 0);
-                ESP_LOGI(spTag, "Blinking at interval: %lu ms on pin %d", pSelf->getBlinkInterval(receivedStatus), pSelf->mPin);
+                // LED stays off — system is idle/off
                 break;
-
             case ControlBoardWorkingStatus::sleeping:
                 pSelf->startBreatheEffect();
                 break;
@@ -161,6 +162,12 @@ void StatusLed::handleTimer(TimerHandle_t timerHandle)
                         ? pSelf->getBlinkDuty(pSelf->mCurrentStatus)
                         : 0;
     pSelf->updateDuty(duty);
+
+    if (pSelf->mCurrentStatus == ControlBoardWorkingStatus::Active)
+    {
+        const uint32_t nextPeriod = pSelf->mLedOn ? BLIP_ON_MS : BLIP_OFF_MS;
+        xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
+    }
 }
 
 void StatusLed::startBreatheEffect()
@@ -226,8 +233,6 @@ uint32_t StatusLed::getBlinkInterval(ControlBoardWorkingStatus status)
     {
     case ControlBoardWorkingStatus::Idle:
         return 1000;
-    case ControlBoardWorkingStatus::MaintenanceMode:
-        return 3000;
     case ControlBoardWorkingStatus::Active:
         return 500;
     case ControlBoardWorkingStatus::doingWork:
@@ -245,8 +250,6 @@ uint32_t StatusLed::getBlinkDuty(ControlBoardWorkingStatus status)
     case ControlBoardWorkingStatus::SolidIdle:
     case ControlBoardWorkingStatus::Idle:
         return mIdleDuty;
-    case ControlBoardWorkingStatus::MaintenanceMode:
-        return MAX_DUTY / 2;
     case ControlBoardWorkingStatus::Active:
         return MAX_DUTY;
     default:

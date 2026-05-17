@@ -45,7 +45,10 @@ namespace controlSystem
                 }
             });
 
-        mpResponseProcessor = std::make_unique<ActionProcessor>(*mpSerialHandler, *mpRelays);
+        mpResponseProcessor = std::make_unique<ActionProcessor>(
+            *mpSerialHandler,
+            *mpRelays,
+            static_cast<IActivityStatusSink *>(static_cast<IControlBoardIndicators *>(this)));
         mpInputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
             mpButtonActions,
             static_cast<IActionResponseSink *>(this),
@@ -119,6 +122,12 @@ namespace controlSystem
 
     void ControlBoard::setActivityStatus(ControlBoardWorkingStatus status)
     {
+        if (status != ControlBoardWorkingStatus::doingWork)
+        {
+            mBackgroundStatus = status;
+            if (mpInputDispatcher)
+                mpInputDispatcher->setBackgroundStatus(status);
+        }
         indicators::getActivityStatusLed().sendStatus(status);
     }
 

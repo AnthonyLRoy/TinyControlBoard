@@ -15,10 +15,8 @@ namespace controlSystem
         virtual void process(const actions::ActionResponse &response) = 0;
     };
 
-    struct IControlBoardIndicators
+    struct IControlBoardIndicators : IActivityStatusSink
     {
-        virtual ~IControlBoardIndicators() = default;
-        virtual void setActivityStatus(ControlBoardWorkingStatus status) = 0;
         virtual void setButtonLed(uint8_t pin, bool enabled) = 0;
     };
 
@@ -39,10 +37,12 @@ namespace controlSystem
         void handleButtonPressed(uint8_t buttonPressedId);
         void handleButtonReleased(uint8_t buttonReleasedId);
         void handleRotaryMovement(int direction);
+        void setBackgroundStatus(ControlBoardWorkingStatus status) { mBackgroundStatus = status; }
 
     private:
         ActionMap &mrActionMap;
         IActionResponseSink *mpResponseSink;
         IControlBoardIndicators *mpIndicators;
+        ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
     };
 }
