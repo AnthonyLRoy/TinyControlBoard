@@ -76,4 +76,10 @@ inline constexpr uint8_t kCycleBrightness = 15;
 inline constexpr uint8_t kCount = 16;
 } // namespace buttons
 
+namespace debug {
+    // Set to true to skip waiting for the RPi heartbeat during boot.
+    // Useful for testing firmware locally without a connected Raspberry Pi.
+    inline constexpr bool kSimulateRpiBoot = false;
+} // namespace debug
+
 } // namespace board

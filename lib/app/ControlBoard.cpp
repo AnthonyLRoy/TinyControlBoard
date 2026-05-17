@@ -60,6 +60,7 @@ namespace controlSystem
 
         if (!mBootstrap.setupMcpHandler(mMcpHandler))
         {
+            indicators::getSpiBootIndicator().notifyFailure();
             return false;
         }
 
@@ -86,6 +87,7 @@ namespace controlSystem
 
         if (!mBootstrap.setupSerial(*mpSerialHandler))
         {
+            indicators::getSpiBootIndicator().notifyFailure();
             return false;
         }
 

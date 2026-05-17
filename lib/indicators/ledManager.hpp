@@ -4,6 +4,7 @@
 #include "monitorBrightnessController.hpp"
 #include "powerLed.hpp"
 #include "spiLedDriver.hpp"
+#include "SpiBootIndicator.hpp"
 
 namespace indicators
 {
@@ -12,4 +13,5 @@ namespace indicators
     indicators::StatusLed &getButtonStatusLed();
     indicators::SpiLedDriver &getSpiLedDriver();
     indicators::MonitorBrightnessController &getMonitorBrightnessController();
+    indicators::SpiBootIndicator &getSpiBootIndicator();
 }

@@ -1,5 +1,6 @@
 #include "power/RPIBootManager.hpp"
 
+#include "board/boardConfig.hpp"
 #include <inttypes.h>
 
 namespace controlSystem
@@ -38,6 +39,12 @@ namespace controlSystem
 
     bool RpiBootManager::waitForRpiToBoot(uint32_t timeoutMs)
     {
+        if constexpr (board::debug::kSimulateRpiBoot)
+        {
+            ESP_LOGW(mspTag, "DEBUG: kSimulateRpiBoot is set — skipping RPi heartbeat wait");
+            return true;
+        }
+
         if (mpRpiBootEventGroup == nullptr) {
             ESP_LOGE(mspTag, "Event group not initialized");
             return false;

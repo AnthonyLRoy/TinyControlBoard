@@ -40,7 +40,17 @@ namespace controlSystem
             mrRelayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, true, POWER_SETTLE_DELAY_MS);
             mrRelayController.setRelayWithDelay(PIN_RELAY_RPI_POWER, true, SCREEN_ON_DELAY_MS);
 
+            indicators::getSpiBootIndicator().startWaiting();
             const bool booted = mrRpiBootManager.waitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
+            if (booted)
+            {
+                indicators::getSpiBootIndicator().notifySuccess();
+            }
+            else
+            {
+                indicators::getSpiBootIndicator().notifyFailure();
+            }
+
             indicators::getPowerLed().setState(ControlBoardPowerState::ON);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
             indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);

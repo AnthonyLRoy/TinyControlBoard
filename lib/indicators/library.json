@@ -1,0 +1,11 @@
+{
+  "name": "indicators",
+  "version": "1.0.0",
+  "frameworks": "espidf",
+  "platforms": "espressif32",
+  "dependencies": [
+    {
+      "name": "support"
+    }
+  ]
+}

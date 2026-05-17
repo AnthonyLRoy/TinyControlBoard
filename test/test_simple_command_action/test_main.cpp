@@ -29,10 +29,10 @@ void test_simple_command_action_returns_no_action_when_released()
     TEST_ASSERT_EQUAL_UINT16(0, response.releaseTimeMillis);
 }
 
-extern "C" int main(int argc, char **argv)
+extern "C" void app_main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_simple_command_action_returns_configured_command_when_pressed);
     RUN_TEST(test_simple_command_action_returns_no_action_when_released);
-    return UNITY_END();
+    UNITY_END();
 }

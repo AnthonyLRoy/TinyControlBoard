@@ -91,6 +91,17 @@ namespace indicators
         update();
     }
 
+    void SpiLedDriver::setAllLeds(bool on)
+    {
+        if (!mStarted)
+        {
+            ESP_LOGW(mspTag, "setAllLeds called before init");
+            return;
+        }
+        mLedBitState = on ? 0xFFFFu : 0x0000u;
+        update();
+    }
+
     void SpiLedDriver::update()
     {
         if (!mStarted)

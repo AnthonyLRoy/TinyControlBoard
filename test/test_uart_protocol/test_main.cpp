@@ -1,6 +1,6 @@
 #include <unity.h>
 
-#include "protocol/uartProtocol.hpp"
+#include "uartProtocol.hpp"
 
 void test_uart_message_defaults_match_protocol()
 {
@@ -116,7 +116,7 @@ void test_deserialize_message_rejects_invalid_checksum()
     TEST_ASSERT_FALSE(deserializeMessage(buffer, parsed));
 }
 
-extern "C" int main(int argc, char **argv)
+extern "C" void app_main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_uart_message_defaults_match_protocol);
@@ -124,5 +124,5 @@ extern "C" int main(int argc, char **argv)
     RUN_TEST(test_deserialize_message_round_trips_serialized_message);
     RUN_TEST(test_deserialize_message_rejects_invalid_start_byte);
     RUN_TEST(test_deserialize_message_rejects_invalid_checksum);
-    return UNITY_END();
+    UNITY_END();
 }
