@@ -2,7 +2,6 @@
 
 #include "indicators/ledManager.hpp"
 #include "protocol/uartProtocol.hpp"
-#include "spi.hpp"
 #include "transport/uart/serial.hpp"
 #include "nvs_flash.h"
 #include <inttypes.h>
