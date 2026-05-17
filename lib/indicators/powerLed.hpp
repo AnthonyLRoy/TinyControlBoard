@@ -4,7 +4,7 @@
 #include "esp_timer.h"
 #include "power/powerState.hpp"
 #include "indicators/pwm/pwmLed.hpp"
-#include "led_definitions.hpp"
+#include "ledDefinitions.hpp"
 #include "esp_log.h"
 
 namespace indicators

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "spi.hpp"
 #include "relay.hpp"
 #include "input/actions/actionsResponse.hpp"
 #include "app/ActionUartDispatcher.hpp"
