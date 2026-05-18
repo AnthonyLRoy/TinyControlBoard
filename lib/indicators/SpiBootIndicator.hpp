@@ -30,13 +30,13 @@ namespace indicators
     private:
         enum class State : uint8_t { Idle, Booting, Failed };
 
-        static constexpr uint32_t kBootHalfPeriodMs   = 500;
-        static constexpr uint32_t kFailedHalfPeriodMs = 150;
-        static constexpr const char *kLogTag = "SpiBootIndicator";
+        static constexpr uint32_t k_bootHalfPeriodMs   = 500;
+        static constexpr uint32_t k_failedHalfPeriodMs = 150;
+        static constexpr const char *k_logTag = "SpiBootIndicator";
 
-        std::atomic<State> mState{State::Idle};
-        std::atomic<bool> mStop{false};
-        TaskHandle_t   mTask    = nullptr;
+        std::atomic<State> m_state{State::Idle};
+        std::atomic<bool> m_stop{false};
+        TaskHandle_t   m_task    = nullptr;
 
         void startTask();
         static void flashTask(void *arg);

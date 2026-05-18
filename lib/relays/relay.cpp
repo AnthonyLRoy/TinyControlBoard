@@ -3,11 +3,11 @@
 namespace relays
 {
 
-static constexpr const char *kLogTag = "Relay           ";
+static constexpr const char *k_logTag = "Relay           ";
 
 void StandardRelay::init(gpio_num_t pinRelay)
 {
-    ESP_LOGI(kLogTag, "Initializing relay on GPIO %d", pinRelay);
+    ESP_LOGI(k_logTag, "Initializing relay on GPIO %d", pinRelay);
     // Initialize the GPIO pin for the relay
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE; // Disable interrupts
@@ -20,13 +20,13 @@ void StandardRelay::init(gpio_num_t pinRelay)
     const esp_err_t err = gpio_config(&io_conf);
     if (err != ESP_OK)
     {
-        ESP_LOGE(kLogTag, "Failed to configure relay GPIO %d (err=0x%x)", pinRelay, err);
+        ESP_LOGE(k_logTag, "Failed to configure relay GPIO %d (err=0x%x)", pinRelay, err);
     }
 }
 
 void StandardRelay::setRelayState(gpio_num_t relayPin, bool state)
 {
-    ESP_LOGI(kLogTag, "Setting relay on GPIO %d to %s", relayPin, state ? "ON" : "OFF");
+    ESP_LOGI(k_logTag, "Setting relay on GPIO %d to %s", relayPin, state ? "ON" : "OFF");
     // Set the GPIO state based on the relay state
     gpio_set_level(relayPin, state ? 1 : 0);
 }

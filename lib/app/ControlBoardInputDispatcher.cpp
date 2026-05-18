@@ -7,11 +7,11 @@ namespace controlSystem
         switch (policy)
         {
         case LedPolicy::Momentary:
-            mrIndicators.setButtonLed(buttonId, true);
+            mr_indicators.setButtonLed(buttonId, true);
             break;
         case LedPolicy::Toggle:
-            mrSystemState.buttonLedStates[buttonId] = !mrSystemState.buttonLedStates[buttonId];
-            mrIndicators.setButtonLed(buttonId, mrSystemState.buttonLedStates[buttonId]);
+            mr_systemState.buttonLedStates[buttonId] = !mr_systemState.buttonLedStates[buttonId];
+            mr_indicators.setButtonLed(buttonId, mr_systemState.buttonLedStates[buttonId]);
             break;
         case LedPolicy::None:
         default:
@@ -25,57 +25,57 @@ namespace controlSystem
         {
             return;
         }
-        mrIndicators.setButtonLed(buttonId, false);
+        mr_indicators.setButtonLed(buttonId, false);
     }
 
     void ControlBoardInputDispatcher::handleButtonPressed(uint8_t buttonPressedId)
     {
-        mrIndicators.setActivityStatus(ControlBoardWorkingStatus::doingWork);
+        mr_indicators.setActivityStatus(ControlBoardWorkingStatus::doingWork);
 
-        if (buttonPressedId >= controlBoardButtons::kCount)
+        if (buttonPressedId >= controlBoardButtons::k_count)
         {
             return;
         }
 
-        const ButtonConfig &config = mrActionMap[buttonPressedId];
+        const ButtonConfig &config = mr_actionMap[buttonPressedId];
         applyLedOnPress(buttonPressedId, config.ledPolicy);
 
         if (config.action)
         {
             const actions::ActionResponse result = config.action->execute(true);
-            mrResponseSink.process(result);
+            mr_responseSink.process(result);
         }
     }
 
     void ControlBoardInputDispatcher::handleButtonReleased(uint8_t buttonReleasedId)
     {
-        mrIndicators.setActivityStatus(mBackgroundStatus);
+        mr_indicators.setActivityStatus(m_backgroundStatus);
 
-        if (buttonReleasedId >= controlBoardButtons::kCount)
+        if (buttonReleasedId >= controlBoardButtons::k_count)
         {
             return;
         }
 
-        const ButtonConfig &config = mrActionMap[buttonReleasedId];
+        const ButtonConfig &config = mr_actionMap[buttonReleasedId];
         if (config.action)
         {
             const actions::ActionResponse result = config.action->execute(false);
-            mrResponseSink.process(result);
+            mr_responseSink.process(result);
             applyLedOnRelease(buttonReleasedId, config.ledPolicy);
         }
     }
 
     void ControlBoardInputDispatcher::handleRotaryMovement(int direction)
     {
-        mrIndicators.setActivityStatus(ControlBoardWorkingStatus::doingWork);
+        mr_indicators.setActivityStatus(ControlBoardWorkingStatus::doingWork);
 
-        const ButtonConfig &config = mrActionMap[controlBoardButtons::kRotaryEventLeft];
+        const ButtonConfig &config = mr_actionMap[controlBoardButtons::k_rotaryEventLeft];
         if (config.action)
         {
             const actions::ActionResponse result = config.action->execute(direction > 0);
-            mrResponseSink.process(result);
+            mr_responseSink.process(result);
         }
 
-        mrIndicators.setActivityStatus(mBackgroundStatus);
+        mr_indicators.setActivityStatus(m_backgroundStatus);
     }
 }

@@ -10,76 +10,76 @@
 namespace board {
 
 namespace timing {
-inline constexpr uint32_t kHeartbeatTimeoutMs = 30000;
-inline constexpr uint32_t kInitDelayMs = 5000;
+inline constexpr uint32_t k_heartbeatTimeoutMs = 30000;
+inline constexpr uint32_t k_initDelayMs = 5000;
 } // namespace timing
 
 namespace serial {
-inline constexpr uart_port_t kPort = UART_NUM_2;
-inline constexpr uint32_t kBaudRate = 115200;
-inline constexpr gpio_num_t kTxPin = GPIO_NUM_2;
-inline constexpr gpio_num_t kRxPin = GPIO_NUM_1;
-inline constexpr std::size_t kBufferSize = 256;
-inline constexpr gpio_num_t kRpiDataReadyPin = GPIO_NUM_42;
-inline constexpr gpio_num_t kEsp32DataReadyPin = GPIO_NUM_41;
+inline constexpr uart_port_t k_port = UART_NUM_2;
+inline constexpr uint32_t k_baudRate = 115200;
+inline constexpr gpio_num_t k_txPin = GPIO_NUM_2;
+inline constexpr gpio_num_t k_rxPin = GPIO_NUM_1;
+inline constexpr std::size_t k_bufferSize = 256;
+inline constexpr gpio_num_t k_rpiDataReadyPin = GPIO_NUM_42;
+inline constexpr gpio_num_t k_esp32DataReadyPin = GPIO_NUM_41;
 } // namespace serial
 
 namespace i2c {
-inline constexpr gpio_num_t kSclPin = GPIO_NUM_15;
-inline constexpr gpio_num_t kSdaPin = GPIO_NUM_16;
-inline constexpr gpio_num_t kInterruptPin = GPIO_NUM_18;
-inline constexpr gpio_num_t kEnablePin = GPIO_NUM_17;
-inline constexpr uint8_t kMcpAddress = 0x20;
-inline constexpr int kMcpTimeoutMs = 10;
-inline constexpr uint32_t kClockSpeedHz = 50000;
+inline constexpr gpio_num_t k_sclPin = GPIO_NUM_15;
+inline constexpr gpio_num_t k_sdaPin = GPIO_NUM_16;
+inline constexpr gpio_num_t k_interruptPin = GPIO_NUM_18;
+inline constexpr gpio_num_t k_enablePin = GPIO_NUM_17;
+inline constexpr uint8_t k_mcpAddress = 0x20;
+inline constexpr int k_mcpTimeoutMs = 10;
+inline constexpr uint32_t k_clockSpeedHz = 50000;
 } // namespace i2c
 
 namespace relays {
-inline constexpr gpio_num_t kScreenPower = GPIO_NUM_13;
-inline constexpr gpio_num_t kDacPower = GPIO_NUM_12;
-inline constexpr gpio_num_t kRpiPower = GPIO_NUM_11;
-inline constexpr gpio_num_t kOutputStagePower = GPIO_NUM_9;
-inline constexpr gpio_num_t kProtoDacEnabled = GPIO_NUM_10;
-inline constexpr gpio_num_t kGeneral1 = GPIO_NUM_47;
-inline constexpr gpio_num_t kGeneral2 = GPIO_NUM_39;
+inline constexpr gpio_num_t k_screenPower = GPIO_NUM_13;
+inline constexpr gpio_num_t k_dacPower = GPIO_NUM_12;
+inline constexpr gpio_num_t k_rpiPower = GPIO_NUM_11;
+inline constexpr gpio_num_t k_outputStagePower = GPIO_NUM_9;
+inline constexpr gpio_num_t k_protoDacEnabled = GPIO_NUM_10;
+inline constexpr gpio_num_t k_general1 = GPIO_NUM_47;
+inline constexpr gpio_num_t k_general2 = GPIO_NUM_39;
 } // namespace relays
 
 namespace indicators {
-inline constexpr gpio_num_t kAppActiveLed = GPIO_NUM_3;
-inline constexpr gpio_num_t kAppStandbyLed = GPIO_NUM_4;
-inline constexpr gpio_num_t kWorkingStatusLed = GPIO_NUM_48;
-inline constexpr gpio_num_t kButtonLedPwmPin = GPIO_NUM_21;
-inline constexpr uint32_t   kButtonLedDefaultDuty = (8191 * 8) / 10;
-inline constexpr gpio_num_t kMonitorBrightness = GPIO_NUM_43;
-inline constexpr gpio_num_t kSpiData = GPIO_NUM_7;
-inline constexpr gpio_num_t kSpiClock = GPIO_NUM_6;
-inline constexpr gpio_num_t kSpiLatch = GPIO_NUM_5;
+inline constexpr gpio_num_t k_appActiveLed = GPIO_NUM_3;
+inline constexpr gpio_num_t k_appStandbyLed = GPIO_NUM_4;
+inline constexpr gpio_num_t k_workingStatusLed = GPIO_NUM_48;
+inline constexpr gpio_num_t k_buttonLedPwmPin = GPIO_NUM_21;
+inline constexpr uint32_t   k_buttonLedDefaultDuty = (8191 * 8) / 10;
+inline constexpr gpio_num_t k_monitorBrightness = GPIO_NUM_43;
+inline constexpr gpio_num_t k_spiData = GPIO_NUM_7;
+inline constexpr gpio_num_t k_spiClock = GPIO_NUM_6;
+inline constexpr gpio_num_t k_spiLatch = GPIO_NUM_5;
 } // namespace indicators
 
 namespace buttons {
-inline constexpr uint8_t kPower = 0;
-inline constexpr uint8_t kPrevTrack = 1;
-inline constexpr uint8_t kNextTrack = 2;
-inline constexpr uint8_t kSkipForward = 3;
-inline constexpr uint8_t kSkipBack = 4;
-inline constexpr uint8_t kPlayPause = 5;
-inline constexpr uint8_t kStop = 6;
-inline constexpr uint8_t kCover = 7;
-inline constexpr uint8_t kRepeat = 8;
-inline constexpr uint8_t kToggleRandom = 9;
-inline constexpr uint8_t kToggleDac = 10;
-inline constexpr uint8_t kToggleDisplay = 11;
-inline constexpr uint8_t kToggleMeter = 12;
-inline constexpr uint8_t kRotaryEventLeft = 13;
-inline constexpr uint8_t kRotaryEventRight = 14;
-inline constexpr uint8_t kCycleBrightness = 15;
-inline constexpr uint8_t kCount = 16;
+inline constexpr uint8_t k_power = 0;
+inline constexpr uint8_t k_prevTrack = 1;
+inline constexpr uint8_t k_nextTrack = 2;
+inline constexpr uint8_t k_skipForward = 3;
+inline constexpr uint8_t k_skipBack = 4;
+inline constexpr uint8_t k_playPause = 5;
+inline constexpr uint8_t k_stop = 6;
+inline constexpr uint8_t k_cover = 7;
+inline constexpr uint8_t k_repeat = 8;
+inline constexpr uint8_t k_toggleRandom = 9;
+inline constexpr uint8_t k_toggleDac = 10;
+inline constexpr uint8_t k_toggleDisplay = 11;
+inline constexpr uint8_t k_toggleMeter = 12;
+inline constexpr uint8_t k_rotaryEventLeft = 13;
+inline constexpr uint8_t k_rotaryEventRight = 14;
+inline constexpr uint8_t k_cycleBrightness = 15;
+inline constexpr uint8_t k_count = 16;
 } // namespace buttons
 
 namespace debug {
     // Set to true to skip waiting for the RPi heartbeat during boot.
     // Useful for testing firmware locally without a connected Raspberry Pi.
-    inline constexpr bool kSimulateRpiBoot = true;
+    inline constexpr bool k_simulateRpiBoot = true;
 } // namespace debug
 
 } // namespace board

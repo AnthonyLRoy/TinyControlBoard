@@ -19,9 +19,9 @@ namespace controlSystem
         bool waitForRpiShutdown(uint32_t timeoutMs = 60000);
 
     private:
-        EventGroupHandle_t mpRpiBootEventGroup = nullptr;
-        static constexpr int msRpiHeartbeatBit = (1 << 0);
-        static constexpr int msRpiShutdownBit = (1 << 1);
-        static constexpr const char *kLogTag = "Rpi_Boot_Manager";
+        EventGroupHandle_t mp_rpiBootEventGroup = nullptr;
+        static constexpr int ms_rpiHeartbeatBit = (1 << 0);
+        static constexpr int ms_rpiShutdownBit = (1 << 1);
+        static constexpr const char *k_logTag = "Rpi_Boot_Manager";
     };
 }

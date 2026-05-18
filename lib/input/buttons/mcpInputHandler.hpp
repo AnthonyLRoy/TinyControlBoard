@@ -27,12 +27,12 @@ constexpr uint8_t MCP_INTCAPB = 0x11;
 constexpr uint8_t MCP_GPIOA = 0x12;
 constexpr uint8_t MCP_GPIOB = 0x13;
 
-inline constexpr uint8_t ROTARY_A_PIN = board::buttons::kRotaryEventLeft;
-inline constexpr uint8_t ROTARY_B_PIN = board::buttons::kRotaryEventRight;
-inline constexpr uint8_t ROTARY_ACTION = board::buttons::kRotaryEventLeft;
-inline constexpr uint32_t I2C_CLK_SPEED_HZ = board::i2c::kClockSpeedHz;
+inline constexpr uint8_t ROTARY_A_PIN = board::buttons::k_rotaryEventLeft;
+inline constexpr uint8_t ROTARY_B_PIN = board::buttons::k_rotaryEventRight;
+inline constexpr uint8_t ROTARY_ACTION = board::buttons::k_rotaryEventLeft;
+inline constexpr uint32_t I2C_CLK_SPEED_HZ = board::i2c::k_clockSpeedHz;
 inline constexpr uint8_t ALL_INPUTS = 0xFF;
-inline constexpr gpio_num_t PIN_I2C_ENABLE = board::i2c::kEnablePin;
+inline constexpr gpio_num_t PIN_I2C_ENABLE = board::i2c::k_enablePin;
 
 namespace buttons {
 
@@ -60,33 +60,33 @@ private:
     void createInterruptTask();
     void clearInitialInterrupts();
 
-    static void gpioIsr(void *pArg);
+    static void gpioIsr(void *p_arg);
     void runInterruptTaskLoop();
     void handleInterrupt();
     void decodeRotary(uint16_t state);
 
-    esp_err_t i2cWrite(const uint8_t *pData, size_t len) const;
-    esp_err_t i2cWriteRead(uint8_t reg, uint8_t *pData, size_t len) const;
+    esp_err_t i2cWrite(const uint8_t *p_data, size_t len) const;
+    esp_err_t i2cWriteRead(uint8_t reg, uint8_t *p_data, size_t len) const;
     uint8_t readRegister(uint8_t reg) const;
     uint16_t readGpio16() const;
     void writeRegister(uint8_t reg, uint8_t val);
     void writeRegisterPair(uint8_t baseReg, uint8_t a, uint8_t b);
 
 private:
-    const uint8_t mI2cAddr;
-    const i2c_port_t mI2cPort;
-    gpio_num_t mInterruptPin;
+    const uint8_t m_i2cAddr;
+    const i2c_port_t m_i2cPort;
+    gpio_num_t m_interruptPin;
 
-    uint16_t mPrevState;
-    uint8_t mRotaryLast;
-    TickType_t mTicksToWait;
+    uint16_t m_prevState;
+    uint8_t m_rotaryLast;
+    TickType_t m_ticksToWait;
 
-    TaskHandle_t mpInterruptTaskHandle;
-    std::function<void(uint8_t, bool)> mButtonCallback;
-    std::function<void(uint8_t, bool)> mReleaseCallback;
-    std::function<void(int)> mRotaryCallback;
+    TaskHandle_t mp_interruptTaskHandle;
+    std::function<void(uint8_t, bool)> m_buttonCallback;
+    std::function<void(uint8_t, bool)> m_releaseCallback;
+    std::function<void(int)> m_rotaryCallback;
 
-    static constexpr int8_t msRotaryTable[16] = {
+    static constexpr int8_t ms_rotaryTable[16] = {
         0, -1, 1, 0,
         1, 0, 0, -1,
         -1, 0, 0, 1,

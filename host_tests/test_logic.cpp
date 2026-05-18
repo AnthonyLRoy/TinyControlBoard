@@ -176,7 +176,7 @@ class FakeAction : public actions::ButtonAction
 {
 public:
     explicit FakeAction(actions::ActionResponse response)
-        : mResponse(response)
+        : m_response(response)
     {
     }
 
@@ -184,14 +184,14 @@ public:
     {
         lastPressedArg = isPressed;
         ++callCount;
-        return mResponse;
+        return m_response;
     }
 
     int callCount = 0;
     bool lastPressedArg = false;
 
 private:
-    actions::ActionResponse mResponse;
+    actions::ActionResponse m_response;
 };
 
 class FakeResponseSink : public controlSystem::IActionResponseSink
@@ -242,17 +242,17 @@ public:
 class FakeUartCommandSink : public controlSystem::IUartCommandSink
 {
 public:
-    void sendUartCommand(const char *pLogTag, uint32_t commandId) override
+    void sendUartCommand(const char *p_logTag, uint32_t commandId) override
     {
         ++commandCount;
-        lastLogTag = pLogTag;
+        lastLogTag = p_logTag;
         lastCommandId = commandId;
     }
 
-    void sendUartMessage(const char *pLogTag, UartMessage &rMessage) override
+    void sendUartMessage(const char *p_logTag, UartMessage &rMessage) override
     {
         ++messageCount;
-        lastLogTag = pLogTag;
+        lastLogTag = p_logTag;
         lastMessage = rMessage;
     }
 
@@ -276,18 +276,18 @@ void test_control_board_button_press_dispatches_action_and_led()
     FakeResponseSink responseSink;
     FakeIndicators indicators;
     FakeAction action(makeResponse(CMD_PLAY_PAUSE));
-    actionMap[controlSystem::controlBoardButtons::kPlayPause] = {&action, controlSystem::LedPolicy::Momentary};
+    actionMap[controlSystem::controlBoardButtons::k_playPause] = {&action, controlSystem::LedPolicy::Momentary};
 
     controlSystem::SystemState testState{};
     controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
-    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kPlayPause);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_playPause);
 
     expect_equal(1, action.callCount, "Press should execute mapped action exactly once");
     expect_true(action.lastPressedArg, "Press should execute action with true");
     expect_equal(1, responseSink.callCount, "Press should forward ActionResponse");
     expect_equal(CMD_PLAY_PAUSE, responseSink.lastResponse.command, "Press should forward returned command");
     expect_equal(1, indicators.ledCallCount, "Press should update the nonzero button LED");
-    expect_equal(controlSystem::controlBoardButtons::kPlayPause, indicators.lastLedPin, "Press should target the correct button LED");
+    expect_equal(controlSystem::controlBoardButtons::k_playPause, indicators.lastLedPin, "Press should target the correct button LED");
     expect_true(indicators.lastLedState, "Press should turn the button LED on");
     expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(), "Press should record one status update");
     expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::doingWork,
@@ -300,17 +300,17 @@ void test_control_board_momentary_button_release_turns_led_off()
     FakeResponseSink responseSink;
     FakeIndicators indicators;
     FakeAction action(makeResponse(CMD_NO_ACTION));
-    actionMap[controlSystem::controlBoardButtons::kPlayPause] = {&action, controlSystem::LedPolicy::Momentary};
+    actionMap[controlSystem::controlBoardButtons::k_playPause] = {&action, controlSystem::LedPolicy::Momentary};
 
     controlSystem::SystemState testState{};
     controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
-    dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::kPlayPause);
+    dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_playPause);
 
     expect_equal(1, action.callCount, "Release should execute mapped action exactly once");
     expect_true(!action.lastPressedArg, "Release should execute action with false");
     expect_equal(1, responseSink.callCount, "Release should forward ActionResponse");
     expect_equal(1, indicators.ledCallCount, "Momentary release should turn LED off");
-    expect_equal(controlSystem::controlBoardButtons::kPlayPause, indicators.lastLedPin, "Release should target the correct button LED");
+    expect_equal(controlSystem::controlBoardButtons::k_playPause, indicators.lastLedPin, "Release should target the correct button LED");
     expect_true(!indicators.lastLedState, "Momentary release should set LED to false");
     expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(), "Release should record one status update");
     expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::Idle,
@@ -323,19 +323,19 @@ void test_control_board_toggle_button_press_flips_led_state()
     FakeResponseSink responseSink;
     FakeIndicators indicators;
     FakeAction action(makeResponse(CMD_NO_ACTION));
-    actionMap[controlSystem::controlBoardButtons::kCover] = {&action, controlSystem::LedPolicy::Toggle};
+    actionMap[controlSystem::controlBoardButtons::k_cover] = {&action, controlSystem::LedPolicy::Toggle};
 
     controlSystem::SystemState testState{};
     controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
 
-    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kCover);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
     expect_equal(1, indicators.ledCallCount, "First press should call setButtonLed once");
     expect_true(indicators.lastLedState, "First press should turn toggle LED on");
 
-    dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::kCover);
+    dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_cover);
     expect_equal(1, indicators.ledCallCount, "Toggle release should not call setButtonLed again");
 
-    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kCover);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
     expect_equal(2, indicators.ledCallCount, "Second press should call setButtonLed again");
     expect_true(!indicators.lastLedState, "Second press should turn toggle LED off");
 }
@@ -348,7 +348,7 @@ void test_control_board_out_of_range_press_keeps_existing_status_ordering()
 
     controlSystem::SystemState testState{};
     controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
-    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kCount);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_count);
 
     expect_equal(0, responseSink.callCount, "Out-of-range press should not forward a response");
     expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(),
@@ -363,7 +363,7 @@ void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
     FakeResponseSink responseSink;
     FakeIndicators indicators;
     FakeAction action(makeResponse(CMD_ROTARY_ACTION));
-    actionMap[controlSystem::controlBoardButtons::kRotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
+    actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
 
     controlSystem::SystemState testState{};
     controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
@@ -397,7 +397,7 @@ void test_serial_heartbeat_router_handles_legacy_heartbeat()
     FakeHeartbeatSink heartbeatSink;
     controlSystem::SerialHeartbeatRouter router(&heartbeatSink);
     UartMessage message;
-    message.commandId = controlSystem::SerialHeartbeatRouter::kLegacyHeartbeatCommandId;
+    message.commandId = controlSystem::SerialHeartbeatRouter::k_legacyHeartbeatCommandId;
 
     const bool handled = router.route(message);
 

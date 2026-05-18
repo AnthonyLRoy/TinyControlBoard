@@ -37,32 +37,32 @@ namespace controlSystem
     class ControlBoardInputDispatcher
     {
     public:
-        using ActionMap = std::array<ButtonConfig, controlBoardButtons::kCount>;
+        using ActionMap = std::array<ButtonConfig, controlBoardButtons::k_count>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
                                     IActionResponseSink &rResponseSink,
                                     IControlBoardIndicators &rIndicators,
                                     SystemState &rSystemState)
-            : mrActionMap(rActionMap),
-              mrResponseSink(rResponseSink),
-              mrIndicators(rIndicators),
-              mrSystemState(rSystemState)
+            : mr_actionMap(rActionMap),
+              mr_responseSink(rResponseSink),
+              mr_indicators(rIndicators),
+              mr_systemState(rSystemState)
         {
         }
 
         void handleButtonPressed(uint8_t buttonPressedId);
         void handleButtonReleased(uint8_t buttonReleasedId);
         void handleRotaryMovement(int direction);
-        void setBackgroundStatus(ControlBoardWorkingStatus status) { mBackgroundStatus = status; }
+        void setBackgroundStatus(ControlBoardWorkingStatus status) { m_backgroundStatus = status; }
 
     private:
         void applyLedOnPress(uint8_t buttonId, LedPolicy policy);
         void applyLedOnRelease(uint8_t buttonId, LedPolicy policy);
 
-        ActionMap &mrActionMap;
-        IActionResponseSink &mrResponseSink;
-        IControlBoardIndicators &mrIndicators;
-        ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
-        SystemState &mrSystemState;
+        ActionMap &mr_actionMap;
+        IActionResponseSink &mr_responseSink;
+        IControlBoardIndicators &mr_indicators;
+        ControlBoardWorkingStatus m_backgroundStatus = ControlBoardWorkingStatus::Idle;
+        SystemState &mr_systemState;
     };
 }

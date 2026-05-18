@@ -49,7 +49,7 @@ namespace support
         bool writeString(const char* key, const char* value);
 
     private:
-        const char* mNamespace;
+        const char* m_namespace;
     };
 
 } // namespace support

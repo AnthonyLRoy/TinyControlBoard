@@ -7,23 +7,23 @@ using namespace transport::uart;
 
 namespace
 {
-    constexpr uint32_t kDataReadySignalHoldMs = 10;
-    constexpr uint32_t kHeartbeatCheckIntervalMs = 100;
-    constexpr uint32_t kUartRxTaskStackSize = 4096;
-    constexpr uint32_t kUartRxTaskPriority = 10;
-    constexpr uint32_t kHeartbeatTaskStackSize = 4096;
-    constexpr uint32_t kHeartbeatTaskPriority = 5;
+    constexpr uint32_t k_dataReadySignalHoldMs = 10;
+    constexpr uint32_t k_heartbeatCheckIntervalMs = 100;
+    constexpr uint32_t k_uartRxTaskStackSize = 4096;
+    constexpr uint32_t k_uartRxTaskPriority = 10;
+    constexpr uint32_t k_heartbeatTaskStackSize = 4096;
+    constexpr uint32_t k_heartbeatTaskPriority = 5;
 }
 
-static constexpr const char *kLogTag = "Serial          ";
+static constexpr const char *k_logTag = "Serial          ";
 
 UartTransport &UartTransport::getInstance()
 {
-    static UartTransport sInstance;
-    return sInstance;
+    static UartTransport s_instance;
+    return s_instance;
 }
 
-UartTransport::UartTransport() : mUartNumber(UART_NUM_0) {}
+UartTransport::UartTransport() : m_uartNumber(UART_NUM_0) {}
 
 UartTransport::~UartTransport()
 {
@@ -41,12 +41,12 @@ bool UartTransport::initUart(uart_port_t uartNum,
 {
     if (baudRate <= 0 || uartNum >= UART_NUM_MAX || bufferSize == 0)
     {
-        ESP_LOGE(kLogTag, "Invalid UART parameters.");
+        ESP_LOGE(k_logTag, "Invalid UART parameters.");
         return false;
     }
 
-    ESP_LOGI(kLogTag, "Initializing UART%d...", uartNum);
-    mUartNumber = uartNum;
+    ESP_LOGI(k_logTag, "Initializing UART%d...", uartNum);
+    m_uartNumber = uartNum;
 
     uart_config_t uart_config = {
         .baud_rate = baudRate,
@@ -58,7 +58,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
         .source_clk = UART_SCLK_APB,
     };
 
-    ESP_LOGI(kLogTag, "Configuring UART%d: %d baud, TX=%d, RX=%d", mUartNumber, baudRate, txPin, rxPin);
+    ESP_LOGI(k_logTag, "Configuring UART%d: %d baud, TX=%d, RX=%d", m_uartNumber, baudRate, txPin, rxPin);
 
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_POSEDGE;
@@ -69,37 +69,37 @@ bool UartTransport::initUart(uart_port_t uartNum,
     esp_err_t ret = gpio_config(&io_conf);
     if (ret != ESP_OK)
     {
-        ESP_LOGE(kLogTag, "Failed to configure RPi data-ready input (err=0x%x)", ret);
+        ESP_LOGE(k_logTag, "Failed to configure RPi data-ready input (err=0x%x)", ret);
         return false;
     }
 
-    if (!mInitialized.load(std::memory_order_acquire))
+    if (!m_initialized.load(std::memory_order_acquire))
     {
-        mStopRxTask.store(false, std::memory_order_release);
+        m_stopRxTask.store(false, std::memory_order_release);
         if (xTaskCreate([](void *arg)
                         { static_cast<UartTransport *>(arg)->runUartRxTask(); },
                         "uart_rx_task",
-                        kUartRxTaskStackSize,
+                        k_uartRxTaskStackSize,
                         this,
-                        kUartRxTaskPriority,
-                        &this->mpTaskHandle) != pdPASS)
+                        k_uartRxTaskPriority,
+                        &this->mp_taskHandle) != pdPASS)
         {
-            mpTaskHandle = nullptr;
-            ESP_LOGE(kLogTag, "Failed to create UART RX task");
+            mp_taskHandle = nullptr;
+            ESP_LOGE(k_logTag, "Failed to create UART RX task");
             return false;
         }
     }
 
-    static bool sIsrServiceInstalled = false;
-    if (!sIsrServiceInstalled)
+    static bool s_isrServiceInstalled = false;
+    if (!s_isrServiceInstalled)
     {
         ret = gpio_install_isr_service(0);
         if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
         {
-            ESP_LOGE(kLogTag, "Failed to install ISR service: %d", ret);
+            ESP_LOGE(k_logTag, "Failed to install ISR service: %d", ret);
             return false;
         }
-        sIsrServiceInstalled = true;
+        s_isrServiceInstalled = true;
     }
 
     ESP_ERROR_CHECK(gpio_isr_handler_add(PIN_RPI_DATA_READY, gpioIsrHandler, (void *)this));
@@ -113,17 +113,17 @@ bool UartTransport::initUart(uart_port_t uartNum,
     ret = gpio_config(&io_conf_out);
     if (ret != ESP_OK)
     {
-        ESP_LOGE(kLogTag, "Failed to configure ESP32 data-ready output (err=0x%x)", ret);
+        ESP_LOGE(k_logTag, "Failed to configure ESP32 data-ready output (err=0x%x)", ret);
         return false;
     }
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
 
-    ESP_ERROR_CHECK(uart_driver_install(mUartNumber, bufferSize * 2, 0, 0, nullptr, 0));
-    ESP_ERROR_CHECK(uart_param_config(mUartNumber, &uart_config));
-    ESP_ERROR_CHECK(uart_set_pin(mUartNumber, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_driver_install(m_uartNumber, bufferSize * 2, 0, 0, nullptr, 0));
+    ESP_ERROR_CHECK(uart_param_config(m_uartNumber, &uart_config));
+    ESP_ERROR_CHECK(uart_set_pin(m_uartNumber, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
-    ESP_LOGI(kLogTag, "UART%d initialized at %d baud.", mUartNumber, baudRate);
-    mInitialized.store(true, std::memory_order_release);
+    ESP_LOGI(k_logTag, "UART%d initialized at %d baud.", m_uartNumber, baudRate);
+    m_initialized.store(true, std::memory_order_release);
     return true;
 }
 
@@ -138,7 +138,7 @@ void UartTransport::initDataReadyPin()
     const esp_err_t err = gpio_config(&io_conf);
     if (err != ESP_OK)
     {
-        ESP_LOGE(kLogTag, "Failed to initialize data-ready pin (err=0x%x)", err);
+        ESP_LOGE(k_logTag, "Failed to initialize data-ready pin (err=0x%x)", err);
         return;
     }
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
@@ -148,151 +148,151 @@ void UartTransport::deinitUart()
 {
     stopHeartbeatMonitor();
 
-    mStopRxTask.store(true, std::memory_order_release);
-    if (mpTaskHandle)
+    m_stopRxTask.store(true, std::memory_order_release);
+    if (mp_taskHandle)
     {
-        xTaskNotifyGive(mpTaskHandle);
+        xTaskNotifyGive(mp_taskHandle);
         if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING)
         {
-            for (int i = 0; mpTaskHandle && i < 50; ++i)
+            for (int i = 0; mp_taskHandle && i < 50; ++i)
             {
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
         }
-        if (mpTaskHandle)
+        if (mp_taskHandle)
         {
-            ESP_LOGW(kLogTag, "UART RX task did not stop in time; forcing delete");
-            vTaskDelete(mpTaskHandle);
-            mpTaskHandle = nullptr;
+            ESP_LOGW(k_logTag, "UART RX task did not stop in time; forcing delete");
+            vTaskDelete(mp_taskHandle);
+            mp_taskHandle = nullptr;
         }
     }
 
-    if (mInitialized.load(std::memory_order_acquire))
+    if (m_initialized.load(std::memory_order_acquire))
     {
-        uart_driver_delete(mUartNumber);
-        ESP_LOGI(kLogTag, "UART%d deinitialized.", mUartNumber);
-        mInitialized.store(false, std::memory_order_release);
+        uart_driver_delete(m_uartNumber);
+        ESP_LOGI(k_logTag, "UART%d deinitialized.", m_uartNumber);
+        m_initialized.store(false, std::memory_order_release);
     }
 }
 
-void UartTransport::sendUartMessage(const char *pLogTag, UartMessage &rMessage)
+void UartTransport::sendUartMessage(const char *p_logTag, UartMessage &rMessage)
 {
     uint8_t txBuffer[UART_PACKET_SIZE];
     serializeMessage(rMessage, txBuffer);
 
-    ESP_LOGI(pLogTag, "Sending %s message (cmd=0x%04X)", pLogTag, rMessage.commandId);
+    ESP_LOGI(p_logTag, "Sending %s message (cmd=0x%04X)", p_logTag, rMessage.commandId);
 
     if (!sendData(txBuffer, UART_PACKET_SIZE))
     {
-        ESP_LOGE(pLogTag, "Failed to send %s message", pLogTag);
+        ESP_LOGE(p_logTag, "Failed to send %s message", p_logTag);
     }
     else
     {
-        ESP_LOGI(pLogTag, "%s message sent successfully", pLogTag);
+        ESP_LOGI(p_logTag, "%s message sent successfully", p_logTag);
     }
 }
 
-bool UartTransport::sendData(const uint8_t *pData, size_t len)
+bool UartTransport::sendData(const uint8_t *p_data, size_t len)
 {
-    if (!pData || len == 0 || !mInitialized.load(std::memory_order_acquire))
+    if (!p_data || len == 0 || !m_initialized.load(std::memory_order_acquire))
     {
-        ESP_LOGW(kLogTag, "Invalid send attempt");
+        ESP_LOGW(k_logTag, "Invalid send attempt");
         return false;
     }
 
     if (gpio_get_level(PIN_ESP32_DATA_READY) == 1)
     {
-        ESP_LOGW(kLogTag, "Raspberry Pi not ready to receive data");
+        ESP_LOGW(k_logTag, "Raspberry Pi not ready to receive data");
         return false;
     }
 
-    ESP_LOGI(kLogTag, "Sending data of length %zu", len);
-    int written = uart_write_bytes(mUartNumber, pData, len);
+    ESP_LOGI(k_logTag, "Sending data of length %zu", len);
+    int written = uart_write_bytes(m_uartNumber, p_data, len);
 
-    ESP_LOGI(kLogTag, "Data sent, signaling Raspberry Pi.");
+    ESP_LOGI(k_logTag, "Data sent, signaling Raspberry Pi.");
     ESP_ERROR_CHECK(gpio_set_level(PIN_ESP32_DATA_READY, 1));
-    vTaskDelay(pdMS_TO_TICKS(kDataReadySignalHoldMs));
+    vTaskDelay(pdMS_TO_TICKS(k_dataReadySignalHoldMs));
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
     return written == len;
 }
 
-void UartTransport::sendUartCommand(const char *pLogTag, uint32_t commandId)
+void UartTransport::sendUartCommand(const char *p_logTag, uint32_t commandId)
 {
     UartMessage msg{};
     msg.commandId = commandId;
-    sendUartMessage(pLogTag, msg);
+    sendUartMessage(p_logTag, msg);
 }
 
-void IRAM_ATTR UartTransport::gpioIsrHandler(void *pArg)
+void IRAM_ATTR UartTransport::gpioIsrHandler(void *p_arg)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    auto *pSelf = static_cast<UartTransport *>(pArg);
+    auto *p_self = static_cast<UartTransport *>(p_arg);
 
-    if (pSelf->mpTaskHandle)
+    if (p_self->mp_taskHandle)
     {
-        vTaskNotifyGiveFromISR(pSelf->mpTaskHandle, &xHigherPriorityTaskWoken);
+        vTaskNotifyGiveFromISR(p_self->mp_taskHandle, &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
 }
 
 void UartTransport::handleUartRx()
 {
-    if (mInitialized.load(std::memory_order_acquire))
+    if (m_initialized.load(std::memory_order_acquire))
     {
-        int receivedDataLength = uart_read_bytes(mUartNumber, mTmpBuffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
+        int receivedDataLength = uart_read_bytes(m_uartNumber, m_tmpBuffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
 
         if (receivedDataLength > 0)
         {
-            mRxBuffer.pushBytes(mTmpBuffer, receivedDataLength);
+            m_rxBuffer.pushBytes(m_tmpBuffer, receivedDataLength);
 
             UartMessage msg;
-            while (mRxBuffer.getNextMessage(msg))
+            while (m_rxBuffer.getNextMessage(msg))
             {
-                if (mRxCallback)
+                if (m_rxCallback)
                 {
-                    mLastRxTimeUs.store(esp_timer_get_time(), std::memory_order_relaxed);
-                    mRxCallback(msg);
+                    m_lastRxTimeUs.store(esp_timer_get_time(), std::memory_order_relaxed);
+                    m_rxCallback(msg);
                 }
                 else
                 {
-                    ESP_LOGW(kLogTag, "RX callback not set; dropping parsed message");
+                    ESP_LOGW(k_logTag, "RX callback not set; dropping parsed message");
                 }
             }
         }
     }
     else
     {
-        ESP_LOGW(kLogTag, "UART not initialized; cannot handle RX");
+        ESP_LOGW(k_logTag, "UART not initialized; cannot handle RX");
     }
 }
 
 void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
                                    std::function<void()> onTimeout)
 {
-    mHeartbeatTimeoutMs = timeoutMs;
-    mHeartbeatTimeoutCallback = onTimeout;
-    mLastRxTimeUs.store(esp_timer_get_time(), std::memory_order_relaxed);
+    m_heartbeatTimeoutMs = timeoutMs;
+    m_heartbeatTimeoutCallback = onTimeout;
+    m_lastRxTimeUs.store(esp_timer_get_time(), std::memory_order_relaxed);
 
-    if (mpHeartbeatTaskHandle == nullptr)
+    if (mp_heartbeatTaskHandle == nullptr)
     {
-        mStopHeartbeatTask.store(false, std::memory_order_release);
+        m_stopHeartbeatTask.store(false, std::memory_order_release);
         if (xTaskCreate(
             [](void *arg)
             {
-                UartTransport *pSelf = static_cast<UartTransport *>(arg);
-                const TickType_t delay = pdMS_TO_TICKS(kHeartbeatCheckIntervalMs);
+                UartTransport *p_self = static_cast<UartTransport *>(arg);
+                const TickType_t delay = pdMS_TO_TICKS(k_heartbeatCheckIntervalMs);
 
-                while (!pSelf->mStopHeartbeatTask.load(std::memory_order_acquire))
+                while (!p_self->m_stopHeartbeatTask.load(std::memory_order_acquire))
                 {
                     vTaskDelay(delay);
 
-                    if (pSelf->mStopHeartbeatTask.load(std::memory_order_acquire))
+                    if (p_self->m_stopHeartbeatTask.load(std::memory_order_acquire))
                     {
                         break;
                     }
 
                     uint64_t now = esp_timer_get_time();
-                    uint64_t last = pSelf->mLastRxTimeUs.load(std::memory_order_relaxed);
+                    uint64_t last = p_self->m_lastRxTimeUs.load(std::memory_order_relaxed);
 
                     if (last == 0)
                     {
@@ -301,68 +301,68 @@ void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
 
                     uint64_t diff_ms = (now - last) / 1000;
 
-                    if (diff_ms > pSelf->mHeartbeatTimeoutMs)
+                    if (diff_ms > p_self->m_heartbeatTimeoutMs)
                     {
-                        if (pSelf->mHeartbeatTimeoutCallback)
-                            pSelf->mHeartbeatTimeoutCallback();
+                        if (p_self->m_heartbeatTimeoutCallback)
+                            p_self->m_heartbeatTimeoutCallback();
 
-                        pSelf->mLastRxTimeUs.store(now, std::memory_order_relaxed);
+                        p_self->m_lastRxTimeUs.store(now, std::memory_order_relaxed);
                     }
                 }
 
-                pSelf->mpHeartbeatTaskHandle = nullptr;
+                p_self->mp_heartbeatTaskHandle = nullptr;
                 vTaskDelete(nullptr);
             },
             "heartbeat_task",
-            kHeartbeatTaskStackSize,
+            k_heartbeatTaskStackSize,
             this,
-            kHeartbeatTaskPriority,
-            &mpHeartbeatTaskHandle) != pdPASS)
+            k_heartbeatTaskPriority,
+            &mp_heartbeatTaskHandle) != pdPASS)
         {
-            mpHeartbeatTaskHandle = nullptr;
-            ESP_LOGE(kLogTag, "Failed to create heartbeat monitor task");
+            mp_heartbeatTaskHandle = nullptr;
+            ESP_LOGE(k_logTag, "Failed to create heartbeat monitor task");
         }
     }
 }
 
 void UartTransport::stopHeartbeatMonitor()
 {
-    if (mpHeartbeatTaskHandle)
+    if (mp_heartbeatTaskHandle)
     {
-        mStopHeartbeatTask.store(true, std::memory_order_release);
+        m_stopHeartbeatTask.store(true, std::memory_order_release);
         if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING)
         {
-            for (int i = 0; mpHeartbeatTaskHandle && i < 50; ++i)
+            for (int i = 0; mp_heartbeatTaskHandle && i < 50; ++i)
             {
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
         }
-        if (mpHeartbeatTaskHandle)
+        if (mp_heartbeatTaskHandle)
         {
-            ESP_LOGW(kLogTag, "Heartbeat task did not stop in time; forcing delete");
-            vTaskDelete(mpHeartbeatTaskHandle);
-            mpHeartbeatTaskHandle = nullptr;
+            ESP_LOGW(k_logTag, "Heartbeat task did not stop in time; forcing delete");
+            vTaskDelete(mp_heartbeatTaskHandle);
+            mp_heartbeatTaskHandle = nullptr;
         }
     }
 }
 
 void UartTransport::runUartRxTask()
 {
-    while (!mStopRxTask.load(std::memory_order_acquire))
+    while (!m_stopRxTask.load(std::memory_order_acquire))
     {
         ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(100));
-        if (mStopRxTask.load(std::memory_order_acquire))
+        if (m_stopRxTask.load(std::memory_order_acquire))
         {
             break;
         }
         handleUartRx();
     }
 
-    mpTaskHandle = nullptr;
+    mp_taskHandle = nullptr;
     vTaskDelete(nullptr);
 }
 
 void UartTransport::setRxCallback(std::function<void(const UartMessage &)> callback)
 {
-    mRxCallback = callback;
+    m_rxCallback = callback;
 }

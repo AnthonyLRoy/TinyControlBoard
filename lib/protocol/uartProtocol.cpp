@@ -1,54 +1,54 @@
 #include "uartProtocol.hpp"
 
-uint8_t calculateChecksum(const uint8_t *pData)
+uint8_t calculateChecksum(const uint8_t *p_data)
 {
     uint16_t sum = 0;
 
     for (int i = 1; i <= 16; i++)
     {
-        sum += pData[i];
+        sum += p_data[i];
     }
 
     return sum % 256;
 }
 
-void serializeMessage(UartMessage &rMsg, uint8_t *pBuffer)
+void serializeMessage(UartMessage &rMsg, uint8_t *p_buffer)
 {
-    pBuffer[0] = rMsg.startByte;
-    pBuffer[1] = rMsg.version;
-    pBuffer[2] = rMsg.srcApp;
-    pBuffer[3] = rMsg.msgType;
-    pBuffer[4] = rMsg.sequence;
-    pBuffer[5] = rMsg.commandId & 0xFF;
-    pBuffer[6] = rMsg.commandId >> 8;
+    p_buffer[0] = rMsg.startByte;
+    p_buffer[1] = rMsg.version;
+    p_buffer[2] = rMsg.srcApp;
+    p_buffer[3] = rMsg.msgType;
+    p_buffer[4] = rMsg.sequence;
+    p_buffer[5] = rMsg.commandId & 0xFF;
+    p_buffer[6] = rMsg.commandId >> 8;
 
     for (int i = 0; i < 5; ++i)
     {
-        pBuffer[7 + i * 2] = rMsg.params[i] & 0xFF;
-        pBuffer[8 + i * 2] = rMsg.params[i] >> 8;
+        p_buffer[7 + i * 2] = rMsg.params[i] & 0xFF;
+        p_buffer[8 + i * 2] = rMsg.params[i] >> 8;
     }
 
-    pBuffer[17] = calculateChecksum(pBuffer);
-    rMsg.checksum = pBuffer[17];
+    p_buffer[17] = calculateChecksum(p_buffer);
+    rMsg.checksum = p_buffer[17];
 }
 
-bool deserializeMessage(const uint8_t *pBuffer, UartMessage &rMsg)
+bool deserializeMessage(const uint8_t *p_buffer, UartMessage &rMsg)
 {
-    if (pBuffer[0] != UART_START_BYTE)
+    if (p_buffer[0] != UART_START_BYTE)
         return false;
 
-    rMsg.startByte = pBuffer[0];
-    rMsg.version = pBuffer[1];
-    rMsg.srcApp = pBuffer[2];
-    rMsg.msgType = pBuffer[3];
-    rMsg.sequence = pBuffer[4];
-    rMsg.commandId = pBuffer[5] | (pBuffer[6] << 8);
+    rMsg.startByte = p_buffer[0];
+    rMsg.version = p_buffer[1];
+    rMsg.srcApp = p_buffer[2];
+    rMsg.msgType = p_buffer[3];
+    rMsg.sequence = p_buffer[4];
+    rMsg.commandId = p_buffer[5] | (p_buffer[6] << 8);
 
     for (int i = 0; i < 5; ++i)
     {
-        rMsg.params[i] = pBuffer[7 + i * 2] | (pBuffer[8 + i * 2] << 8);
+        rMsg.params[i] = p_buffer[7 + i * 2] | (p_buffer[8 + i * 2] << 8);
     }
 
-    rMsg.checksum = pBuffer[17];
-    return rMsg.checksum == calculateChecksum(pBuffer);
+    rMsg.checksum = p_buffer[17];
+    return rMsg.checksum == calculateChecksum(p_buffer);
 }

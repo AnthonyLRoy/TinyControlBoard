@@ -2,35 +2,35 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-UartReceiver::UartReceiver() : mBufferLen(0) {}
+UartReceiver::UartReceiver() : m_bufferLen(0) {}
 
-void UartReceiver::pushBytes(const uint8_t *pData, int len)
+void UartReceiver::pushBytes(const uint8_t *p_data, int len)
 {
-    int toCopy = MIN(len, BUFFER_SIZE - mBufferLen);
-    memcpy(mBuffer + mBufferLen, pData, toCopy);
-    mBufferLen += toCopy;
+    int toCopy = MIN(len, BUFFER_SIZE - m_bufferLen);
+    memcpy(m_buffer + m_bufferLen, p_data, toCopy);
+    m_bufferLen += toCopy;
 }
 
 bool UartReceiver::getNextMessage(UartMessage &rOutMsg)
 {
-    while (mBufferLen >= FRAME_SIZE)
+    while (m_bufferLen >= FRAME_SIZE)
     {
-        if (mBuffer[0] == UART_START_BYTE)
+        if (m_buffer[0] == UART_START_BYTE)
         {
-            if (deserializeMessage(mBuffer, rOutMsg))
+            if (deserializeMessage(m_buffer, rOutMsg))
             {
-                memmove(mBuffer, mBuffer + FRAME_SIZE, mBufferLen - FRAME_SIZE);
-                mBufferLen -= FRAME_SIZE;
+                memmove(m_buffer, m_buffer + FRAME_SIZE, m_bufferLen - FRAME_SIZE);
+                m_bufferLen -= FRAME_SIZE;
                 return true;
             }
 
-            memmove(mBuffer, mBuffer + 1, mBufferLen - 1);
-            mBufferLen -= 1;
+            memmove(m_buffer, m_buffer + 1, m_bufferLen - 1);
+            m_bufferLen -= 1;
         }
         else
         {
-            memmove(mBuffer, mBuffer + 1, mBufferLen - 1);
-            mBufferLen -= 1;
+            memmove(m_buffer, m_buffer + 1, m_bufferLen - 1);
+            m_bufferLen -= 1;
         }
     }
     return false;

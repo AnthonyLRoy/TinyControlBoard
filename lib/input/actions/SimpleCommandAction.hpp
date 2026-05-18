@@ -8,19 +8,19 @@ namespace actions
     class SimpleCommandAction : public ButtonAction
     {
     public:
-        explicit SimpleCommandAction(CommandId commandId) : mCommandId(commandId) {}
+        explicit SimpleCommandAction(CommandId commandId) : m_commandId(commandId) {}
 
         ActionResponse execute(bool isPressed) override
         {
             ActionResponse response;
             if (isPressed)
             {
-                response.command = mCommandId;
+                response.command = m_commandId;
             }
             return response;
         }
 
     private:
-        CommandId mCommandId;
+        CommandId m_commandId;
     };
 }

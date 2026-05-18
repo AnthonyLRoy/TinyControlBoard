@@ -4,51 +4,51 @@
 #define SPI_HOST spi_host_device_t::SPI2_HOST
 namespace indicators {
 
-    static StatusLed sActivityStatusLed(board::indicators::kWorkingStatusLed, LEDC_CHANNEL_0);
-    static StatusLed sButtonStatusLed(board::indicators::kButtonLedPwmPin,
+    static StatusLed s_activityStatusLed(board::indicators::k_workingStatusLed, LEDC_CHANNEL_0);
+    static StatusLed s_buttonStatusLed(board::indicators::k_buttonLedPwmPin,
                                       LEDC_CHANNEL_1,
-                                      board::indicators::kButtonLedDefaultDuty,
+                                      board::indicators::k_buttonLedDefaultDuty,
                                       ControlBoardWorkingStatus::SolidIdle);
-    static PowerLed sPowerLed(board::indicators::kAppActiveLed, LEDC_CHANNEL_ON, board::indicators::kAppStandbyLed, LEDC_CHANNEL_STANDBY);
-    static SpiLedDriver sSpiLedDriver(SPI_HOST, board::indicators::kSpiData, board::indicators::kSpiClock, board::indicators::kSpiLatch);
-    static MonitorBrightnessController sMonitorBrightnessController(board::indicators::kMonitorBrightness, LEDC_CHANNEL_MONITOR_BRIGHTNESS);
-    static SpiBootIndicator sSpiBootIndicator;
+    static PowerLed s_powerLed(board::indicators::k_appActiveLed, LEDC_CHANNEL_ON, board::indicators::k_appStandbyLed, LEDC_CHANNEL_STANDBY);
+    static SpiLedDriver s_spiLedDriver(SPI_HOST, board::indicators::k_spiData, board::indicators::k_spiClock, board::indicators::k_spiLatch);
+    static MonitorBrightnessController s_monitorBrightnessController(board::indicators::k_monitorBrightness, LEDC_CHANNEL_MONITOR_BRIGHTNESS);
+    static SpiBootIndicator s_spiBootIndicator;
 
 
     MonitorBrightnessController& getMonitorBrightnessController() {
-        if (!sMonitorBrightnessController.mStarted)
+        if (!s_monitorBrightnessController.m_started)
         {
-            sMonitorBrightnessController.init();
-            sMonitorBrightnessController.mStarted = true;
+            s_monitorBrightnessController.init();
+            s_monitorBrightnessController.m_started = true;
         }
-        return sMonitorBrightnessController;
+        return s_monitorBrightnessController;
     }
     
     StatusLed& getActivityStatusLed() {
-        return sActivityStatusLed;
+        return s_activityStatusLed;
     }
 
     PowerLed& getPowerLed() {
-        if (!sPowerLed.mStarted)
+        if (!s_powerLed.m_started)
         {
-            sPowerLed.init();
-            sPowerLed.mStarted = true;
+            s_powerLed.init();
+            s_powerLed.m_started = true;
         }
-        return sPowerLed;
+        return s_powerLed;
     }
 
     StatusLed& getButtonStatusLed() {
-        return sButtonStatusLed;
+        return s_buttonStatusLed;
     }
     SpiLedDriver& getSpiLedDriver() {
-        if (!sSpiLedDriver.isStarted())
+        if (!s_spiLedDriver.isStarted())
         {
-            sSpiLedDriver.init();
+            s_spiLedDriver.init();
         }
-        return sSpiLedDriver;
+        return s_spiLedDriver;
     }
 
     SpiBootIndicator& getSpiBootIndicator() {
-        return sSpiBootIndicator;
+        return s_spiBootIndicator;
     }
 }

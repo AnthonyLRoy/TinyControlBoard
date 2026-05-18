@@ -12,23 +12,23 @@ namespace actions
     class ToggleAction : public ButtonAction
     {
     public:
-        ToggleAction() : mState(false) {}
+        ToggleAction() : m_state(false) {}
 
         ActionResponse execute(bool isPressed) override
         {
             ActionResponse response;
             if (isPressed)
             {
-                mState = !mState;
-                response.command = mState ? CMD_ON : CMD_OFF;
+                m_state = !m_state;
+                response.command = m_state ? CMD_ON : CMD_OFF;
             }
-            const char *pCommandName = controlSystem::getCommandNameById(response.command);
-            ESP_LOGI("Toggle_Action   ", "Toggle action executed: %s, new state: %s", pCommandName, mState ? "ON" : "OFF");
+            const char *p_commandName = controlSystem::getCommandNameById(response.command);
+            ESP_LOGI("Toggle_Action   ", "Toggle action executed: %s, new state: %s", p_commandName, m_state ? "ON" : "OFF");
             return response;
         }
 
     private:
-        bool mState;
+        bool m_state;
     };
 
     template <CommandId ROTATE_DIRECTION>
@@ -64,20 +64,20 @@ namespace actions
     class TimedAction : public ButtonAction
     {
     public:
-        TimedAction() : mPressStartUs(0) {}
+        TimedAction() : m_pressStartUs(0) {}
 
         ActionResponse execute(bool isPressed) override
         {
             ActionResponse response;
             if (isPressed)
             {
-                mPressStartUs = esp_timer_get_time();
-                ESP_LOGI("Timed_Action    ", "Press start timestamp: %" PRIi64 " us", mPressStartUs);
+                m_pressStartUs = esp_timer_get_time();
+                ESP_LOGI("Timed_Action    ", "Press start timestamp: %" PRIi64 " us", m_pressStartUs);
             }
             else
             {
-                ESP_LOGI("Timed_Action    ", "Press start timestamp (for validation): %" PRIi64 " us", mPressStartUs);
-                const int64_t durationUs = esp_timer_get_time() - mPressStartUs;
+                ESP_LOGI("Timed_Action    ", "Press start timestamp (for validation): %" PRIi64 " us", m_pressStartUs);
+                const int64_t durationUs = esp_timer_get_time() - m_pressStartUs;
                 ESP_LOGI("Timed_Action    ", "Button was pressed for %" PRIu64 " us", durationUs);
                 response.releaseTimeMillis = static_cast<uint32_t>(durationUs / 1000);
                 response.command = CMD;
@@ -86,6 +86,6 @@ namespace actions
         }
 
     private:
-        int64_t mPressStartUs;
+        int64_t m_pressStartUs;
     };
 }

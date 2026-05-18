@@ -14,29 +14,29 @@ namespace controlSystem
     class SerialHeartbeatRouter
     {
     public:
-        static constexpr uint16_t kLegacyHeartbeatCommandId = 0x9999;
+        static constexpr uint16_t k_legacyHeartbeatCommandId = 0x9999;
 
-        explicit SerialHeartbeatRouter(IHeartbeatSink *pHeartbeatSink)
-            : mpHeartbeatSink(pHeartbeatSink)
+        explicit SerialHeartbeatRouter(IHeartbeatSink *p_heartbeatSink)
+            : mp_heartbeatSink(p_heartbeatSink)
         {
         }
 
         bool route(const UartMessage &message) const
         {
             if (message.commandId != CMD_SYS_HEARTBEAT &&
-                message.commandId != kLegacyHeartbeatCommandId)
+                message.commandId != k_legacyHeartbeatCommandId)
             {
                 return false;
             }
 
-            if (mpHeartbeatSink)
+            if (mp_heartbeatSink)
             {
-                mpHeartbeatSink->handleHeartbeatReceived();
+                mp_heartbeatSink->handleHeartbeatReceived();
             }
             return true;
         }
 
     private:
-        IHeartbeatSink *mpHeartbeatSink;
+        IHeartbeatSink *mp_heartbeatSink;
     };
 }

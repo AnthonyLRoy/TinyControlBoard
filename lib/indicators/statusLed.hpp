@@ -22,23 +22,23 @@ public:
     void sendStatus(ControlBoardWorkingStatus status);
     void init();
 private:
-    gpio_num_t mPin;
-    ledc_channel_t mChannel;
-    uint32_t mIdleDuty;
-    ControlBoardWorkingStatus mDefaultStatus;
-    ControlBoardWorkingStatus mCurrentStatus;
-    bool mLedOn = true;
-    QueueHandle_t mpStatusQueue = nullptr;
-    TimerHandle_t mpBlinkTimer = nullptr;
-    TaskHandle_t mpBreatheTaskHandle = nullptr;
-    std::atomic<bool> mStopLedTask{false};
-    std::atomic<bool> mStopBreatheTask{false};
+    gpio_num_t m_pin;
+    ledc_channel_t m_channel;
+    uint32_t m_idleDuty;
+    ControlBoardWorkingStatus m_defaultStatus;
+    ControlBoardWorkingStatus m_currentStatus;
+    bool m_ledOn = true;
+    QueueHandle_t mp_statusQueue = nullptr;
+    TimerHandle_t mp_blinkTimer = nullptr;
+    TaskHandle_t mp_breatheTaskHandle = nullptr;
+    std::atomic<bool> m_stopLedTask{false};
+    std::atomic<bool> m_stopBreatheTask{false};
 
-    TaskHandle_t mpLedTaskHandle = nullptr;
-    static void runLedTask(void *pParam);
+    TaskHandle_t mp_ledTaskHandle = nullptr;
+    static void runLedTask(void *p_param);
     void updateDuty(uint32_t duty);
     static void handleTimer(TimerHandle_t timerHandle);
-    static void runBreatheTask(void *pParameter);
+    static void runBreatheTask(void *p_parameter);
     void startBreatheEffect();
     void stopBreatheEffect();
 

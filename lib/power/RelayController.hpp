@@ -18,8 +18,8 @@ namespace controlSystem
         bool shutdownScreen(bool wait);
 
     private:
-        transport::uart::UartTransport &mrSerial;
-        relays::StandardRelay &mrRelays;
-        static constexpr const char *kLogTag = "Relay_Controller";
+        transport::uart::UartTransport &mr_serial;
+        relays::StandardRelay &mr_relays;
+        static constexpr const char *k_logTag = "Relay_Controller";
     };
 }

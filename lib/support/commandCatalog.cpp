@@ -10,11 +10,11 @@ namespace
     struct CommandCatalogEntry
     {
         CommandId commandId;
-        const char *pCommandName;
-        const char *pSimpleLogTag;
+        const char *p_commandName;
+        const char *p_simpleLogTag;
     };
 
-    const CommandCatalogEntry sCommandCatalog[] = {
+    const CommandCatalogEntry s_commandCatalog[] = {
         {CMD_NO_ACTION, "No_Action", nullptr},
         {CMD_SYS_POWER, "Sys_Power", nullptr},
         {CMD_SYS_RPI_SHUTDOWN, "Sys_Rpi_Shutdown", nullptr},
@@ -54,14 +54,14 @@ namespace
         {CMD_TOGGLE_RANDOM, "Toggle_Random", nullptr},
     };
 
-    const size_t kCommandCatalogCount = sizeof(sCommandCatalog) / sizeof(sCommandCatalog[0]);
+    const size_t k_commandCatalogCount = sizeof(s_commandCatalog) / sizeof(s_commandCatalog[0]);
 }
 
 const char *getSimpleCommandLogTag(CommandId commandId)
 {
-    for (size_t i = 0; i < kCommandCatalogCount; ++i) {
-        if (sCommandCatalog[i].commandId == commandId)
-            return sCommandCatalog[i].pSimpleLogTag;
+    for (size_t i = 0; i < k_commandCatalogCount; ++i) {
+        if (s_commandCatalog[i].commandId == commandId)
+            return s_commandCatalog[i].p_simpleLogTag;
     }
 
     return nullptr;
@@ -69,9 +69,9 @@ const char *getSimpleCommandLogTag(CommandId commandId)
 
 const char *getCommandNameById(CommandId commandId)
 {
-    for (size_t i = 0; i < kCommandCatalogCount; ++i) {
-        if (sCommandCatalog[i].commandId == commandId)
-            return sCommandCatalog[i].pCommandName;
+    for (size_t i = 0; i < k_commandCatalogCount; ++i) {
+        if (s_commandCatalog[i].commandId == commandId)
+            return s_commandCatalog[i].p_commandName;
     }
 
     return "UNKNOWN";

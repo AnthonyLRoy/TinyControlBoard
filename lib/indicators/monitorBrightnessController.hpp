@@ -14,7 +14,7 @@ namespace indicators
     {
     public:
         MonitorBrightnessController(gpio_num_t monitorPin, ledc_channel_t pwmChannel)
-            : mMonitorPin(monitorPin), mPwmChannel(pwmChannel)
+            : m_monitorPin(monitorPin), m_pwmChannel(pwmChannel)
         {
             // Just store values; do not create timers here
         }
@@ -22,29 +22,29 @@ namespace indicators
 
         // Must be called after app_main() starts
         void init();
-        bool mStarted = false;
+        bool m_started = false;
         void setState(ControlBoardPowerState state);
-        ControlBoardPowerState getState() const { return mCurrentPowerState; }
+        ControlBoardPowerState getState() const { return m_currentPowerState; }
         void setBrightness(int brightness);
         void setBlanked(bool blanked);
-        bool isBlanked() const { return mBlanked; }
+        bool isBlanked() const { return m_blanked; }
 
         void changeBrightnessLevel(int change);
         void cycleBrightness();
 
     private:
-        support::NvsStorage mNvsStorage{"brightness"};
-        led::LedPwm mMonitorLed;
-        int mBrightnessLevels[12] = {10, 109, 568, 1127, 1486, 1845, 2205, 2564, 2923, 3282, 3641, 4000};
+        support::NvsStorage m_nvsStorage{"brightness"};
+        led::LedPwm m_monitorLed;
+        int m_brightnessLevels[12] = {10, 109, 568, 1127, 1486, 1845, 2205, 2564, 2923, 3282, 3641, 4000};
 
-        int mCurrentBrightnessLevel = 2; // Start at medium brightness
-        int mSavedBrightnessLevel = 2;   // Saved before sleep/off, restored on wake/on
-        bool mBlanked = false;
+        int m_currentBrightnessLevel = 2; // Start at medium brightness
+        int m_savedBrightnessLevel = 2;   // Saved before sleep/off, restored on wake/on
+        bool m_blanked = false;
 
-        ControlBoardPowerState mCurrentPowerState = ControlBoardPowerState::OFF;
+        ControlBoardPowerState m_currentPowerState = ControlBoardPowerState::OFF;
 
         // Store pin/channel info for init
-        gpio_num_t mMonitorPin;
-        ledc_channel_t mPwmChannel;
+        gpio_num_t m_monitorPin;
+        ledc_channel_t m_pwmChannel;
     };
 }

@@ -29,7 +29,7 @@ namespace controlSystem
     public:
         bool init();
         void deinit();
-        ActionProcessor &getActionProcessor() { return *mpResponseProcessor; }
+        ActionProcessor &getActionProcessor() { return *mp_responseProcessor; }
 
     private:
         void process(const actions::ActionResponse &response) override;
@@ -37,26 +37,26 @@ namespace controlSystem
         void setButtonLed(uint8_t pin, bool enabled) override;
         void handleHeartbeatReceived() override;
         void handleSerialRxMessage(const UartMessage &rMsg);
-        bool enqueueButtonEvent(const ButtonEvent &event, const char *pEventName);
+        bool enqueueButtonEvent(const ButtonEvent &event, const char *p_eventName);
 
-        static constexpr uint8_t kButtonQueueDepth = 16;
+        static constexpr uint8_t k_buttonQueueDepth = 16;
         static void actionTask(void *pvParam);
 
-        transport::uart::UartTransport *mpSerialHandler = nullptr;
-        relays::StandardRelay *mpRelays = nullptr;
-        std::unique_ptr<ActionProcessor> mpResponseProcessor;
-        std::unique_ptr<ControlBoardInputDispatcher> mpInputDispatcher;
-        std::unique_ptr<SerialHeartbeatRouter> mpHeartbeatRouter;
-        ControlBoardActionRegistry mActionRegistry;
-        ControlBoardBootstrap mBootstrap;
-        ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
+        transport::uart::UartTransport *mp_serialHandler = nullptr;
+        relays::StandardRelay *mp_relays = nullptr;
+        std::unique_ptr<ActionProcessor> mp_responseProcessor;
+        std::unique_ptr<ControlBoardInputDispatcher> mp_inputDispatcher;
+        std::unique_ptr<SerialHeartbeatRouter> mp_heartbeatRouter;
+        ControlBoardActionRegistry m_actionRegistry;
+        ControlBoardBootstrap m_bootstrap;
+        ControlBoardWorkingStatus m_backgroundStatus = ControlBoardWorkingStatus::Idle;
 
-        buttons::McpInputHandler mMcpHandler{board::i2c::kMcpAddress, I2C_NUM_0};
-        ControlBoardInputDispatcher::ActionMap mpButtonActions{};
+        buttons::McpInputHandler m_mcpHandler{board::i2c::k_mcpAddress, I2C_NUM_0};
+        ControlBoardInputDispatcher::ActionMap mp_buttonActions{};
 
-        SystemState mSystemState;
-        QueueHandle_t mButtonEventQueue = nullptr;
-        TaskHandle_t mActionTaskHandle = nullptr;
-        uint32_t mDroppedButtonEvents = 0;
+        SystemState m_systemState;
+        QueueHandle_t m_buttonEventQueue = nullptr;
+        TaskHandle_t m_actionTaskHandle = nullptr;
+        uint32_t m_droppedButtonEvents = 0;
     };
 }

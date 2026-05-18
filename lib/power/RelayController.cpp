@@ -7,14 +7,14 @@
 namespace controlSystem
 {
     RelayController::RelayController(transport::uart::UartTransport &rSerial, relays::StandardRelay &rRelays)
-        : mrSerial(rSerial), mrRelays(rRelays)
+        : mr_serial(rSerial), mr_relays(rRelays)
     {
     }
 
     void RelayController::setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs)
     {
-        ESP_LOGI(kLogTag, "Setting relay %d to %s with delay %lu ms", pin, state ? "ON" : "OFF", delayMs);
-        mrRelays.setRelayState(pin, state);
+        ESP_LOGI(k_logTag, "Setting relay %d to %s with delay %lu ms", pin, state ? "ON" : "OFF", delayMs);
+        mr_relays.setRelayState(pin, state);
         if (delayMs > 0) {
             vTaskDelay(pdMS_TO_TICKS(delayMs));
         }
@@ -22,22 +22,22 @@ namespace controlSystem
 
     bool RelayController::handleToggleDac(bool state)
     {
-        mrRelays.setRelayState(PIN_RELAY_DAC_POWER, state);
-        ESP_LOGI(kLogTag, "DAC relay set to %s", state ? "ON" : "OFF");
+        mr_relays.setRelayState(PIN_RELAY_DAC_POWER, state);
+        ESP_LOGI(k_logTag, "DAC relay set to %s", state ? "ON" : "OFF");
         return true;
     }
 
     bool RelayController::shutdownRpi(bool wait)
     {
-        mrRelays.setRelayState(PIN_RELAY_RPI_POWER, false);
-        ESP_LOGI(kLogTag, "RPI relay disabled");
+        mr_relays.setRelayState(PIN_RELAY_RPI_POWER, false);
+        ESP_LOGI(k_logTag, "RPI relay disabled");
         return true;
     }
 
     bool RelayController::shutdownScreen(bool wait)
     {
-        mrRelays.setRelayState(PIN_RELAY_SCREEN_POWER, false);
-        ESP_LOGI(kLogTag, "Screen relay disabled");
+        mr_relays.setRelayState(PIN_RELAY_SCREEN_POWER, false);
+        ESP_LOGI(k_logTag, "Screen relay disabled");
         return true;
     }
 }

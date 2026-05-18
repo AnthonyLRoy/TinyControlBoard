@@ -12,6 +12,6 @@ namespace controlSystem
     struct SystemState
     {
         std::atomic<ControlBoardPowerState> powerState{ControlBoardPowerState::OFF};
-        bool buttonLedStates[controlBoardButtons::kCount]{};
+        bool buttonLedStates[controlBoardButtons::k_count]{};
     };
 }

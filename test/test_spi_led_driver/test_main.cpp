@@ -10,10 +10,10 @@
 using indicators::SpiLedDriver;
 
 // Use the same pins as the real board so the tests exercise the real config
-static constexpr spi_host_device_t kTestSpiHost  = SPI2_HOST;
-static constexpr gpio_num_t        kTestMosi      = GPIO_NUM_7;
-static constexpr gpio_num_t        kTestClk       = GPIO_NUM_6;
-static constexpr gpio_num_t        kTestLatch      = GPIO_NUM_5;
+static constexpr spi_host_device_t k_testSpiHost  = SPI2_HOST;
+static constexpr gpio_num_t        k_testMosi      = GPIO_NUM_7;
+static constexpr gpio_num_t        k_testClk       = GPIO_NUM_6;
+static constexpr gpio_num_t        k_testLatch      = GPIO_NUM_5;
 
 void setUp() {}
 void tearDown() {}
@@ -22,68 +22,68 @@ void tearDown() {}
 
 void test_constructor_initial_state()
 {
-    SpiLedDriver driver(kTestSpiHost, kTestMosi, kTestClk, kTestLatch);
+    SpiLedDriver driver(k_testSpiHost, k_testMosi, k_testClk, k_testLatch);
 
-    TEST_ASSERT_FALSE(driver.mStarted);
-    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.mLedBitState);
+    TEST_ASSERT_FALSE(driver.m_started);
+    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.m_ledBitState);
 }
 
 // ---- setAllLeds() — early-return path (driver not yet initialised) ---------
 
 void test_set_all_leds_true_before_init_does_not_modify_bit_state()
 {
-    SpiLedDriver driver(kTestSpiHost, kTestMosi, kTestClk, kTestLatch);
+    SpiLedDriver driver(k_testSpiHost, k_testMosi, k_testClk, k_testLatch);
 
-    driver.setAllLeds(true); // mStarted == false → returns early
+    driver.setAllLeds(true); // m_started == false → returns early
 
-    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.mLedBitState);
+    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.m_ledBitState);
 }
 
 void test_set_all_leds_false_before_init_does_not_modify_bit_state()
 {
-    SpiLedDriver driver(kTestSpiHost, kTestMosi, kTestClk, kTestLatch);
-    driver.mLedBitState = 0xABCD; // seed a non-zero value
+    SpiLedDriver driver(k_testSpiHost, k_testMosi, k_testClk, k_testLatch);
+    driver.m_ledBitState = 0xABCD; // seed a non-zero value
 
-    driver.setAllLeds(false); // mStarted == false → returns early
+    driver.setAllLeds(false); // m_started == false → returns early
 
-    TEST_ASSERT_EQUAL_UINT16(0xABCD, driver.mLedBitState); // unchanged
+    TEST_ASSERT_EQUAL_UINT16(0xABCD, driver.m_ledBitState); // unchanged
 }
 
 // ---- setLed() — early-return path (driver not yet initialised) ------------
 
 void test_set_led_before_init_does_not_modify_bit_state()
 {
-    SpiLedDriver driver(kTestSpiHost, kTestMosi, kTestClk, kTestLatch);
+    SpiLedDriver driver(k_testSpiHost, k_testMosi, k_testClk, k_testLatch);
 
-    driver.setLed(0, true); // mStarted == false → returns early
+    driver.setLed(0, true); // m_started == false → returns early
 
-    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.mLedBitState);
+    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.m_ledBitState);
 }
 
-// ---- setLed() — out-of-range guard (mock mStarted without calling init) ---
+// ---- setLed() — out-of-range guard (mock m_started without calling init) ---
 
 void test_set_led_out_of_range_does_not_modify_bit_state()
 {
-    SpiLedDriver driver(kTestSpiHost, kTestMosi, kTestClk, kTestLatch);
+    SpiLedDriver driver(k_testSpiHost, k_testMosi, k_testClk, k_testLatch);
     // Bypass init by forcing the started flag — this avoids touching hardware
     // while still exercising the bounds-check branch.
-    driver.mStarted = true;
+    driver.m_started = true;
 
     driver.setLed(16, true); // ledIndex >= LED_COUNT (16) → returns early
 
-    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.mLedBitState);
+    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.m_ledBitState);
 }
 
 void test_set_led_max_valid_index_boundary()
 {
-    SpiLedDriver driver(kTestSpiHost, kTestMosi, kTestClk, kTestLatch);
+    SpiLedDriver driver(k_testSpiHost, k_testMosi, k_testClk, k_testLatch);
     // LED_COUNT - 1 == 15 is the last valid index.
-    // With mStarted == false the early-return fires, but we verify no crash.
+    // With m_started == false the early-return fires, but we verify no crash.
     driver.setLed(15, true);
     driver.setLed(16, true);
 
     // Both should leave bit state at 0 (not started, early return)
-    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.mLedBitState);
+    TEST_ASSERT_EQUAL_UINT16(0x0000, driver.m_ledBitState);
 }
 
 // ---- LED_COUNT constant ----------------------------------------------------
