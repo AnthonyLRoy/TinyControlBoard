@@ -1,7 +1,7 @@
 #include "powerLed.hpp"
 #include <cmath>
 
-static const char *spTag = "Power_Led       ";
+static constexpr const char *kLogTag = "Power_Led";
 
 namespace indicators
 {
@@ -26,7 +26,7 @@ PowerLed::~PowerLed()
 
 void PowerLed::init()
 {
-    ESP_LOGI(spTag, "Initializing PowerLed hardware");
+    ESP_LOGI(kLogTag, "Initializing PowerLed hardware");
 
     // LEDC timer
     ledc_timer_config_t timer = {};
@@ -101,7 +101,7 @@ void PowerLed::setState(ControlBoardPowerState state)
     mActiveBlip = false;
     mStandbyBlip = false;
     uint64_t now = esp_timer_get_time() / 1000;
-    ESP_LOGI(spTag, "Setting PowerLed state to %d", static_cast<int>(state));
+    ESP_LOGI(kLogTag, "Setting PowerLed state to %d", static_cast<int>(state));
 
     switch (state)
     {

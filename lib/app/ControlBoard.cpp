@@ -14,11 +14,11 @@ namespace controlSystem
         constexpr UBaseType_t kActionTaskPriority = 5;
     }
 
-    static const char *spTag = "Control_Board   ";
+    static constexpr const char *kLogTag = "Control_Board";
 
     bool ControlBoard::init()
     {
-        ESP_LOGI(spTag, "Starting ControlBoard init...");
+        ESP_LOGI(kLogTag, "Starting ControlBoard init...");
 
         // Initialise NVS flash (required before any nvs_open call)
         esp_err_t nvsErr = nvs_flash_init();
@@ -29,7 +29,7 @@ namespace controlSystem
         }
         if (nvsErr != ESP_OK)
         {
-            ESP_LOGW(spTag, "NVS flash init failed (0x%x) — brightness will not persist", nvsErr);
+            ESP_LOGW(kLogTag, "NVS flash init failed (0x%x) — brightness will not persist", nvsErr);
         }
 
         mBootstrap.prepareStartupIndicators();
@@ -43,7 +43,7 @@ namespace controlSystem
                 handleSerialRxMessage(rMsg);
             },
             [this]() {
-                ESP_LOGE(spTag, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
+                ESP_LOGE(kLogTag, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
                          board::timing::kHeartbeatTimeoutMs);
                 if (mpResponseProcessor)
                 {
@@ -77,12 +77,12 @@ namespace controlSystem
         mButtonEventQueue = xQueueCreate(kButtonQueueDepth, sizeof(ButtonEvent));
         if (!mButtonEventQueue)
         {
-            ESP_LOGE(spTag, "Failed to create button event queue");
+            ESP_LOGE(kLogTag, "Failed to create button event queue");
             return false;
         }
         if (xTaskCreate(actionTask, "action_task", kActionTaskStackSize, this, kActionTaskPriority, &mActionTaskHandle) != pdPASS)
         {
-            ESP_LOGE(spTag, "Failed to create action task");
+            ESP_LOGE(kLogTag, "Failed to create action task");
             vQueueDelete(mButtonEventQueue);
             mButtonEventQueue = nullptr;
             indicators::getSpiBootIndicator().notifyFailure();
@@ -143,7 +143,7 @@ namespace controlSystem
     {
         if (!mButtonEventQueue)
         {
-            ESP_LOGW(spTag, "Dropping %s event because queue is not initialized", pEventName);
+            ESP_LOGW(kLogTag, "Dropping %s event because queue is not initialized", pEventName);
             return false;
         }
 
@@ -155,7 +155,7 @@ namespace controlSystem
         ++mDroppedButtonEvents;
         if ((mDroppedButtonEvents % 16U) == 1U)
         {
-            ESP_LOGW(spTag, "Button event queue full, dropped %lu events (latest=%s)",
+            ESP_LOGW(kLogTag, "Button event queue full, dropped %lu events (latest=%s)",
                      static_cast<unsigned long>(mDroppedButtonEvents), pEventName);
         }
         return false;
@@ -223,14 +223,14 @@ namespace controlSystem
 
     void ControlBoard::handleSerialRxMessage(const UartMessage &rMsg)
     {
-        ESP_LOGI(spTag, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
+        ESP_LOGI(kLogTag, "Received UART message: cmd=0x%04X seq=%u type=%u",
                  rMsg.commandId, rMsg.sequence, rMsg.msgType);
 
         if (mpHeartbeatRouter && mpHeartbeatRouter->route(rMsg))
         {
             if (rMsg.commandId == SerialHeartbeatRouter::kLegacyHeartbeatCommandId)
             {
-                ESP_LOGW(spTag, "Received legacy heartbeat command 0x%04X; update the RPI heartbeat sender to CMD_SYS_HEARTBEAT (0x%04X)",
+                ESP_LOGW(kLogTag, "Received legacy heartbeat command 0x%04X; update the RPi heartbeat sender to CMD_SYS_HEARTBEAT (0x%04X)",
                          rMsg.commandId, CMD_SYS_HEARTBEAT);
             }
             return;
@@ -240,7 +240,7 @@ namespace controlSystem
         {
             if (!mpResponseProcessor->handleInboundUartMessage(rMsg))
             {
-                ESP_LOGI(spTag, "No inbound handler implemented for UART message (cmd=0x%04X, type=%u)",
+                ESP_LOGI(kLogTag, "No inbound handler implemented for UART message (cmd=0x%04X, type=%u)",
                          rMsg.commandId, rMsg.msgType);
             }
         }

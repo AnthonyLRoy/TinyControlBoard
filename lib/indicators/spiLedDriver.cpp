@@ -17,7 +17,7 @@ namespace indicators
     }
     bool SpiLedDriver::init()
     {
-        ESP_LOGW(mspTag, "Initializing LED Driver on SPI host %d with latch pin %d", mHost, mLatchPin);
+        ESP_LOGW(kLogTag, "Initializing LED Driver on SPI host %d with latch pin %d", mHost, mLatchPin);
 
         spi_bus_config_t buscfg = {};
         buscfg.mosi_io_num = mMosiPin;
@@ -30,7 +30,7 @@ namespace indicators
         esp_err_t err = spi_bus_initialize(mHost, &buscfg, SPI_DMA_CH_AUTO);
         if (err != ESP_OK)
         {
-            ESP_LOGE(mspTag, "spi_bus_initialize failed: %d", err);
+            ESP_LOGE(kLogTag, "spi_bus_initialize failed: %d", err);
             return false;
         }
 
@@ -43,7 +43,7 @@ namespace indicators
         err = spi_bus_add_device(mHost, &devcfg, &mpSpiHandle);
         if (err != ESP_OK)
         {
-            ESP_LOGE(mspTag, "spi_bus_add_device failed: %d", err);
+            ESP_LOGE(kLogTag, "spi_bus_add_device failed: %d", err);
             return false;
         }
 
@@ -56,7 +56,7 @@ namespace indicators
         err = gpio_config(&latch_config);
         if (err != ESP_OK)
         {
-            ESP_LOGE(mspTag, "gpio_config failed: %d", err);
+            ESP_LOGE(kLogTag, "gpio_config failed: %d", err);
             return false;
         }
 
@@ -69,12 +69,12 @@ namespace indicators
     {
         if (!mStarted)
         {
-            ESP_LOGW(mspTag, "setLed called before init");
+            ESP_LOGW(kLogTag, "setLed called before init");
             return;
         }
         if (ledIndex >= LED_COUNT)
         {
-            ESP_LOGW(mspTag, "setLed out of range: %u", ledIndex);
+            ESP_LOGW(kLogTag, "setLed out of range: %u", ledIndex);
             return;
         }
 
@@ -95,7 +95,7 @@ namespace indicators
     {
         if (!mStarted)
         {
-            ESP_LOGW(mspTag, "setAllLeds called before init");
+            ESP_LOGW(kLogTag, "setAllLeds called before init");
             return;
         }
         mLedBitState = on ? 0xFFFFu : 0x0000u;
@@ -106,7 +106,7 @@ namespace indicators
     {
         if (!mStarted)
         {
-            ESP_LOGW(mspTag, "update called before init");
+            ESP_LOGW(kLogTag, "update called before init");
             return;
         }
         mTxBuf[0] = (uint8_t)(mLedBitState & 0xFF);

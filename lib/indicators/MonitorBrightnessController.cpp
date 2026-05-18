@@ -7,7 +7,7 @@ namespace
     constexpr const char *kNvsKeyLevel = "level";
 }
 
-static const char *spTag = "Monitor_Bright  ";
+static constexpr const char *kLogTag = "Monitor_Bright";
 
 namespace indicators
 {
@@ -27,8 +27,8 @@ namespace indicators
 
     void MonitorBrightnessController::init()
     {
-        ESP_LOGI(spTag, "Initializing MonitorBrightnessController hardware");
-        ESP_LOGI(spTag, "monitorPin: %d, pwmChannel: %d", mMonitorPin, mPwmChannel);
+        ESP_LOGI(kLogTag, "Initializing MonitorBrightnessController hardware");
+        ESP_LOGI(kLogTag, "monitorPin: %d, pwmChannel: %d", mMonitorPin, mPwmChannel);
 
         // LEDC timer
         ledc_timer_config_t timer = {};
@@ -38,7 +38,7 @@ namespace indicators
         timer.freq_hz = 4000;
         timer.clk_cfg = LEDC_AUTO_CLK;
         if (ledc_timer_config(&timer) != ESP_OK) {
-            ESP_LOGE(spTag, "Failed to configure LEDC timer");
+            ESP_LOGE(kLogTag, "Failed to configure LEDC timer");
         }
 
         // Active LED
@@ -50,7 +50,7 @@ namespace indicators
         activeCfg.hpoint = 0;
         activeCfg.timer_sel = LEDC_TIMER_0;
         if (ledc_channel_config(&activeCfg) != ESP_OK) {
-            ESP_LOGE(spTag, "Failed to configure LEDC channel");
+            ESP_LOGE(kLogTag, "Failed to configure LEDC channel");
         }
 
         // Init PWM wrappers
@@ -61,13 +61,13 @@ namespace indicators
         if (mNvsStorage.readInt8(kNvsKeyLevel, savedLevel))
         {
             mCurrentBrightnessLevel = std::clamp(static_cast<int>(savedLevel), 0, 9);
-            ESP_LOGI(spTag, "Restored brightness level %d from NVS", mCurrentBrightnessLevel);
+            ESP_LOGI(kLogTag, "Restored brightness level %d from NVS", mCurrentBrightnessLevel);
         }
         else
         {
             // First boot — write the default so it exists next time
             mNvsStorage.writeInt8(kNvsKeyLevel, static_cast<int8_t>(mCurrentBrightnessLevel));
-            ESP_LOGI(spTag, "NVS: first boot, wrote default brightness %d", mCurrentBrightnessLevel);
+            ESP_LOGI(kLogTag, "NVS: first boot, wrote default brightness %d", mCurrentBrightnessLevel);
         }
         mSavedBrightnessLevel = mCurrentBrightnessLevel;
 
@@ -80,13 +80,13 @@ namespace indicators
 
     void MonitorBrightnessController::changeBrightnessLevel(int change)
     {
-        ESP_LOGI(spTag, "Changing brightness level by %d", change);
+        ESP_LOGI(kLogTag, "Changing brightness level by %d", change);
         mCurrentBrightnessLevel = std::clamp(mCurrentBrightnessLevel + change, 0, 9);
         mBlanked = false;
         mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
         mMonitorLed.updateDuty();
         mNvsStorage.writeInt8(kNvsKeyLevel, static_cast<int8_t>(mCurrentBrightnessLevel));
-        ESP_LOGI(spTag, "Saved brightness level %d to NVS", mCurrentBrightnessLevel);
+        ESP_LOGI(kLogTag, "Saved brightness level %d to NVS", mCurrentBrightnessLevel);
     }
 
     void MonitorBrightnessController::cycleBrightness()
@@ -96,7 +96,7 @@ namespace indicators
         mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
         mMonitorLed.updateDuty();
         mNvsStorage.writeInt8(kNvsKeyLevel, static_cast<int8_t>(mCurrentBrightnessLevel));
-        ESP_LOGI(spTag, "Saved brightness level %d to NVS", mCurrentBrightnessLevel);
+        ESP_LOGI(kLogTag, "Saved brightness level %d to NVS", mCurrentBrightnessLevel);
     }
 
     void MonitorBrightnessController::setState(ControlBoardPowerState state)
@@ -111,7 +111,7 @@ namespace indicators
         case ControlBoardPowerState::SHUTTING_DOWN:
         case ControlBoardPowerState::OFF:
             mSavedBrightnessLevel = mCurrentBrightnessLevel;
-            ESP_LOGI(spTag, "Saved brightness level %d", mSavedBrightnessLevel);
+            ESP_LOGI(kLogTag, "Saved brightness level %d", mSavedBrightnessLevel);
             break;
         case ControlBoardPowerState::TURNING_ON:
         case ControlBoardPowerState::ON:
@@ -119,7 +119,7 @@ namespace indicators
             mBlanked = false;
             mMonitorLed.setDuty(mBrightnessLevels[mCurrentBrightnessLevel]);
             mMonitorLed.updateDuty();
-            ESP_LOGI(spTag, "Restored brightness level %d", mCurrentBrightnessLevel);
+            ESP_LOGI(kLogTag, "Restored brightness level %d", mCurrentBrightnessLevel);
             break;
         default:
             break;
@@ -130,7 +130,7 @@ namespace indicators
     {
         mBlanked = blanked;
         const uint32_t duty = blanked ? 0 : getDutyForBrightnessLevel(mCurrentBrightnessLevel);
-        ESP_LOGI(spTag, "%s monitor backlight", blanked ? "Blanking" : "Restoring");
+        ESP_LOGI(kLogTag, "%s monitor backlight", blanked ? "Blanking" : "Restoring");
         mMonitorLed.setDuty(duty);
         mMonitorLed.updateDuty();
     }

@@ -23,7 +23,7 @@ namespace actions
                 response.command = mState ? CMD_ON : CMD_OFF;
             }
             const char *pCommandName = controlSystem::getCommandNameById(response.command);
-            ESP_LOGI("Toggle_Action   ", "Executed toggle action: %s, New State: %s", pCommandName, mState ? "ON" : "OFF");
+            ESP_LOGI("Toggle_Action", "Toggle action executed: %s, new state: %s", pCommandName, mState ? "ON" : "OFF");
             return response;
         }
 
@@ -72,13 +72,13 @@ namespace actions
             if (isPressed)
             {
                 mPressStartUs = esp_timer_get_time();
-                ESP_LOGI("Timed_Action    ", "inital value at %" PRIi64 " us", mPressStartUs);
+                ESP_LOGI("Timed_Action", "Press start timestamp: %" PRIi64 " us", mPressStartUs);
             }
             else
             {
-                ESP_LOGI("Timed_Action    ", "Validate at %" PRIi64 " us", mPressStartUs);
+                ESP_LOGI("Timed_Action", "Press start timestamp (for validation): %" PRIi64 " us", mPressStartUs);
                 const int64_t durationUs = esp_timer_get_time() - mPressStartUs;
-                ESP_LOGI("Timed_Action    ", "Button was pressed for %" PRIu64 " us", durationUs);
+                ESP_LOGI("Timed_Action", "Button was pressed for %" PRIu64 " us", durationUs);
                 response.releaseTimeMillis = static_cast<uint32_t>(durationUs / 1000);
                 response.command = CMD;
             }

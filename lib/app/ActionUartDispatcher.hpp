@@ -28,6 +28,6 @@ namespace controlSystem
 
         IUartCommandSink &mrUartCommandSink;
 
-        static constexpr const char *mspTag = "Uart_Dispatcher ";
+        static constexpr const char *kLogTag = "Uart_Dispatcher";
     };
 }

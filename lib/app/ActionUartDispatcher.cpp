@@ -31,7 +31,7 @@ namespace controlSystem
             return false;
         }
 
-        ESP_LOGI(mspTag, "Processing Cover View Toggle Command (%s)",
+        ESP_LOGI(kLogTag, "Processing Cover View Toggle Command (%s)",
                  response.command == CMD_COVER_VIEW_ON ? "ON" : "OFF");
 
         UartMessage message;
@@ -48,7 +48,7 @@ namespace controlSystem
             return false;
         }
 
-        ESP_LOGI(mspTag, "Processing Meter Toggle Command (%s)",
+        ESP_LOGI(kLogTag, "Processing Meter Toggle Command (%s)",
                  response.command == CMD_TOGGLE_METER_ON ? "ON" : "OFF");
         UartMessage message;
         message.commandId = CMD_TOGGLE_METER;
@@ -68,7 +68,7 @@ namespace controlSystem
         message.commandId = response.command;
         message.params[0] = response.parameters[0];
         mrUartCommandSink.sendUartMessage("Rotary", message);
-        ESP_LOGI(mspTag, "Processing Rotary Action Command (%s)",
+        ESP_LOGI(kLogTag, "Processing Rotary Action Command (%s)",
                  response.parameters[0] == 0 ? "LEFT" : "RIGHT");
         return true;
     }
@@ -80,7 +80,7 @@ namespace controlSystem
             return false;
         }
 
-        ESP_LOGI(mspTag, "Processing Repeat Toggle Command (%s)",
+        ESP_LOGI(kLogTag, "Processing Repeat Toggle Command (%s)",
                  response.command == CMD_REPEAT_ON ? "ON" : "OFF");
         UartMessage message;
         message.commandId = CMD_TOGGLE_REPEAT;
@@ -96,7 +96,7 @@ namespace controlSystem
             return false;
         }
 
-        ESP_LOGI(mspTag, "Processing Random Toggle Command (%s)",
+        ESP_LOGI(kLogTag, "Processing Random Toggle Command (%s)",
                  response.command == CMD_RANDOM_ON ? "ON" : "OFF");
         UartMessage message;
         message.commandId = CMD_TOGGLE_RANDOM;
@@ -111,7 +111,7 @@ namespace controlSystem
         if (pCommandTag)
         {
             mrUartCommandSink.sendUartCommand(pCommandTag, response.command);
-            ESP_LOGI(mspTag, "Sending command: %s", pCommandTag);
+            ESP_LOGI(kLogTag, "Sending command: %s", pCommandTag);
             return true;
         }
 

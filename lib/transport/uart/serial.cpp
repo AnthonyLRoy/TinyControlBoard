@@ -15,7 +15,7 @@ namespace
     constexpr uint32_t kHeartbeatTaskPriority = 5;
 }
 
-static const char *spTag = "Serial          ";
+static constexpr const char *kLogTag = "Serial";
 
 UartTransport &UartTransport::getInstance()
 {
@@ -41,11 +41,11 @@ bool UartTransport::initUart(uart_port_t uartNum,
 {
     if (baudRate <= 0 || uartNum >= UART_NUM_MAX || bufferSize == 0)
     {
-        ESP_LOGE(spTag, "Invalid UART parameters.");
+        ESP_LOGE(kLogTag, "Invalid UART parameters.");
         return false;
     }
 
-    ESP_LOGI(spTag, "Initializing UART%d...", uartNum);
+    ESP_LOGI(kLogTag, "Initializing UART%d...", uartNum);
     mUartNumber = uartNum;
 
     uart_config_t uart_config = {
@@ -58,7 +58,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
         .source_clk = UART_SCLK_APB,
     };
 
-    ESP_LOGI(spTag, "Configuring UART%d: %d baud, TX=%d, RX=%d", mUartNumber, baudRate, txPin, rxPin);
+    ESP_LOGI(kLogTag, "Configuring UART%d: %d baud, TX=%d, RX=%d", mUartNumber, baudRate, txPin, rxPin);
 
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_POSEDGE;
@@ -85,7 +85,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
         esp_err_t ret = gpio_install_isr_service(0);
         if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
         {
-            ESP_LOGE(spTag, "Failed to install ISR service: %d", ret);
+            ESP_LOGE(kLogTag, "Failed to install ISR service: %d", ret);
             return false;
         }
         sIsrServiceInstalled = true;
@@ -106,7 +106,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
     ESP_ERROR_CHECK(uart_param_config(mUartNumber, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(mUartNumber, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
-    ESP_LOGI(spTag, "UART%d initialized at %d baud.", mUartNumber, baudRate);
+    ESP_LOGI(kLogTag, "UART%d initialized at %d baud.", mUartNumber, baudRate);
     mInitialized = true;
     return true;
 }
@@ -128,7 +128,7 @@ void UartTransport::deinitUart()
     if (mInitialized)
     {
         uart_driver_delete(mUartNumber);
-        ESP_LOGI(spTag, "UART%d deinitialized.", mUartNumber);
+        ESP_LOGI(kLogTag, "UART%d deinitialized.", mUartNumber);
         mInitialized = false;
     }
 }
@@ -154,20 +154,20 @@ bool UartTransport::sendData(const uint8_t *pData, size_t len)
 {
     if (!pData || len == 0 || !mInitialized)
     {
-        ESP_LOGW(spTag, "Invalid send attempt.");
+        ESP_LOGW(kLogTag, "Invalid send attempt");
         return false;
     }
 
     if (gpio_get_level(PIN_ESP32_DATA_READY) == 1)
     {
-        ESP_LOGW(spTag, "Raspberry Pi not ready to receive data.");
+        ESP_LOGW(kLogTag, "Raspberry Pi not ready to receive data");
         return false;
     }
 
-    ESP_LOGI(spTag, "Sending data of length %zu", len);
+    ESP_LOGI(kLogTag, "Sending data of length %zu", len);
     int written = uart_write_bytes(mUartNumber, pData, len);
 
-    ESP_LOGI(spTag, "Data sent, signaling Raspberry Pi.");
+    ESP_LOGI(kLogTag, "Data sent, signaling Raspberry Pi.");
     ESP_ERROR_CHECK(gpio_set_level(PIN_ESP32_DATA_READY, 1));
     vTaskDelay(pdMS_TO_TICKS(kDataReadySignalHoldMs));
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
@@ -213,14 +213,14 @@ void UartTransport::handleUartRx()
                 }
                 else
                 {
-                    ESP_LOGW(spTag, "Failed to parse message");
+                    ESP_LOGW(kLogTag, "RX callback not set; dropping parsed message");
                 }
             }
         }
     }
     else
     {
-        ESP_LOGW(spTag, "UART not initialized, cannot handle RX");
+        ESP_LOGW(kLogTag, "UART not initialized; cannot handle RX");
     }
 }
 

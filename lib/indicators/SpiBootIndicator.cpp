@@ -58,7 +58,7 @@ namespace indicators
         {
             return; // already running
         }
-        ESP_LOGI(mspTag, "Starting boot-wait flash (500 ms)");
+        ESP_LOGI(kLogTag, "Starting boot-wait flash (500 ms)");
         mState = State::Booting;
         startTask();
     }
@@ -69,7 +69,7 @@ namespace indicators
         {
             return; // nothing running, nothing to do
         }
-        ESP_LOGI(mspTag, "RPi boot confirmed — stopping boot indicator");
+        ESP_LOGI(kLogTag, "RPi boot confirmed — stopping boot indicator");
         mStop = true;
         // The task will clear the LEDs and delete itself on its next wake
     }
@@ -79,13 +79,13 @@ namespace indicators
         if (mTask != nullptr)
         {
             // Task already running (timeout case) — switch to the fast failed pattern
-            ESP_LOGW(mspTag, "Boot failed — switching to fast-fail flash (150 ms)");
+            ESP_LOGW(kLogTag, "Boot failed — switching to fast-fail flash (150 ms)");
             mState = State::Failed;
         }
         else
         {
             // Task not yet running (firmware init failure case) — start in failed state
-            ESP_LOGW(mspTag, "Firmware init failed — starting fast-fail flash (150 ms)");
+            ESP_LOGW(kLogTag, "Firmware init failed — starting fast-fail flash (150 ms)");
             mState = State::Failed;
             startTask();
         }

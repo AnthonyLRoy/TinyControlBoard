@@ -52,6 +52,6 @@ namespace controlSystem
         relays::StandardRelay &mrRelays;
         SystemState &mrSystemState;
 
-        static constexpr const char *mspTag = "Action_Processor";
+        static constexpr const char *kLogTag = "Action_Processor";
     };
 }

@@ -37,7 +37,7 @@ namespace controlSystem
         {
             indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::TURNING_ON);
-            ESP_LOGI(mspTag, "Initiating Power ON sequence");
+            ESP_LOGI(kLogTag, "Initiating Power ON sequence");
 
             mrRelayController.setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, SCREEN_ON_DELAY_MS);
             mrRelayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, true, POWER_SETTLE_DELAY_MS);
@@ -65,18 +65,18 @@ namespace controlSystem
                 mpActivitySink->setActivityStatus(ControlBoardWorkingStatus::sleeping);
             else
                 indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
-            ESP_LOGW(mspTag, "Power ON sequence aborted because no RPI heartbeat was received");
+            ESP_LOGW(kLogTag, "Power ON sequence aborted because no RPi heartbeat was received");
             return false;
         }
 
-        ESP_LOGI(mspTag, "Release Time MS: %" PRIu16 "", response.releaseTimeMillis);
+        ESP_LOGI(kLogTag, "Release Time MS: %" PRIu16 "", response.releaseTimeMillis);
         if (transitionAction == PowerTransitionAction::Sleep)
         {
-            ESP_LOGI(mspTag, "Initiating Sleep Sequence");
+            ESP_LOGI(kLogTag, "Initiating sleep sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::GOING_TO_SLEEP);
 
-            mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
+            mrSerial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mrRpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             mrRelayController.shutdownRpi(true);
             vTaskDelay(pdMS_TO_TICKS(RPI_SHUTDOWN_SETTLE_DELAY_MS));
@@ -93,10 +93,10 @@ namespace controlSystem
 
         if (transitionAction == PowerTransitionAction::DeepSleep)
         {
-            ESP_LOGI(mspTag, "Initiating Deep Sleep Sequence");
+            ESP_LOGI(kLogTag, "Initiating deep sleep sequence");
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-            mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
+            mrSerial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mrRpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             mrRelayController.shutdownRpi(true);
             vTaskDelay(pdMS_TO_TICKS(RPI_SHUTDOWN_SETTLE_DELAY_MS));

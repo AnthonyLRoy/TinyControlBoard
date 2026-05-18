@@ -31,7 +31,7 @@ namespace indicators
 
         static constexpr uint32_t kBootHalfPeriodMs   = 500;
         static constexpr uint32_t kFailedHalfPeriodMs = 150;
-        static constexpr const char *mspTag = "SpiBootIndicator";
+        static constexpr const char *kLogTag = "SpiBootIndicator";
 
         volatile State mState   = State::Idle;
         volatile bool  mStop    = false;

@@ -22,7 +22,7 @@ namespace controlSystem
 
     void ActionProcessor::process(const actions::ActionResponse &response)
     {
-        ESP_LOGI(mspTag, "Action Processor received command: 0x%04X", response.command);
+        ESP_LOGI(kLogTag, "Action processor received command: 0x%04X", response.command);
 
         const auto powerState = mrSystemState.powerState.load();
         switch (ActionCommandRoutingPolicy::classify(response.command, powerState))
@@ -31,13 +31,13 @@ namespace controlSystem
             return;
 
         case ActionCommandRoute::PowerStateTransition:
-            ESP_LOGI(mspTag, "Processing Power State Change Command");
+            ESP_LOGI(kLogTag, "Processing power-state transition command");
             handleCommandPowerStateChange(response);
             mrSystemState.powerState.store(indicators::getPowerLed().getState());
             return;
 
         case ActionCommandRoute::IgnoreWhileNotOn:
-            ESP_LOGI(mspTag, "Ignoring command %u as system is not ON", response.command);
+            ESP_LOGI(kLogTag, "Ignoring command %u as system is not ON", response.command);
             return;
 
         case ActionCommandRoute::System:
@@ -69,7 +69,7 @@ namespace controlSystem
     {
         // Scaffold only: protocol-specific inbound handling will be added in a
         // dedicated pass once ACK/STATUS semantics are finalized.
-        ESP_LOGI(mspTag, "Inbound UART message received (type=%u cmd=0x%04X seq=%u)",
+        ESP_LOGI(kLogTag, "Inbound UART message received (type=%u cmd=0x%04X seq=%u)",
                  message.msgType, message.commandId, message.sequence);
         return false;
     }
@@ -78,14 +78,14 @@ namespace controlSystem
     {
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
-            mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
+            mrSerial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mpRelayController->shutdownRpi(true);
             return true;
         }
 
         if (response.command == CMD_EXIT_ITEM)
         {
-            ESP_LOGI(mspTag, "Sending Exit Item Message");
+            ESP_LOGI(kLogTag, "Sending exit-item message");
             return true;
         }
 
@@ -110,7 +110,7 @@ namespace controlSystem
             return false;
         }
 
-        ESP_LOGI(mspTag, "Processing Display Toggle Command (%s)",
+        ESP_LOGI(kLogTag, "Processing display toggle command (%s)",
                  response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
 
         indicators::getMonitorBrightnessController().setBlanked(response.command == CMD_DISPLAY_OFF);
@@ -125,7 +125,7 @@ namespace controlSystem
         }
 
         indicators::getMonitorBrightnessController().cycleBrightness();
-        ESP_LOGI(mspTag, "Setting Cycle Brightness Command");
+        ESP_LOGI(kLogTag, "Cycling monitor brightness");
         return true;
     }
 

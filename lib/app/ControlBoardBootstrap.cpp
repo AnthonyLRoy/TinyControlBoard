@@ -8,7 +8,7 @@ namespace controlSystem
 {
     namespace
     {
-        constexpr const char *spTag = "Control_Board   ";
+        static constexpr const char *kLogTag = "Control_Board";
     }
 
     void ControlBoardBootstrap::prepareStartupIndicators() const
@@ -19,8 +19,8 @@ namespace controlSystem
 
     void ControlBoardBootstrap::finalizeStartupIndicators() const
     {
-        ESP_LOGI(spTag, "ControlBoard init complete.");
-        ESP_LOGI(spTag, "Transitioning Power LED to Sleep state...");
+        ESP_LOGI(kLogTag, "ControlBoard init complete.");
+        ESP_LOGI(kLogTag, "Transitioning power LED to sleep state");
 
         vTaskDelay(pdMS_TO_TICKS(board::timing::kInitDelayMs));
 
@@ -37,7 +37,7 @@ namespace controlSystem
 
     bool ControlBoardBootstrap::setupRelays() const
     {
-        ESP_LOGI(spTag, "Setting up relays...");
+        ESP_LOGI(kLogTag, "Setting up relays...");
         relays::StandardRelay::init(PIN_RELAY_SCREEN_POWER);
         relays::StandardRelay::init(PIN_RELAY_RPI_POWER);
         relays::StandardRelay::init(PIN_RELAY_DAC_POWER);
@@ -60,7 +60,7 @@ namespace controlSystem
 
     bool ControlBoardBootstrap::setupSerial(transport::uart::UartTransport &rSerial) const
     {
-        ESP_LOGI(spTag, "Initializing serial...");
+        ESP_LOGI(kLogTag, "Initializing UART");
         const bool ok = rSerial.initUart(board::serial::kPort,
                                          board::serial::kBaudRate,
                                          board::serial::kTxPin,
@@ -71,23 +71,23 @@ namespace controlSystem
                                          UART_HW_FLOWCTRL_DISABLE);
         if (!ok)
         {
-            ESP_LOGE(spTag, "Failed to initialize UART");
+            ESP_LOGE(kLogTag, "Failed to initialize UART");
             return false;
         }
 
-        ESP_LOGI(spTag, "UART initialized successfully");
+        ESP_LOGI(kLogTag, "UART initialized successfully");
         return true;
     }
 
     bool ControlBoardBootstrap::setupMcpHandler(buttons::McpInputHandler &rMcpHandler) const
     {
-        ESP_LOGI(spTag, "Initializing MCP handler...");
+        ESP_LOGI(kLogTag, "Initializing MCP handler");
         const esp_err_t err = rMcpHandler.begin(board::i2c::kSdaPin,
                                                 board::i2c::kSclPin,
                                                 board::i2c::kInterruptPin);
         if (err != ESP_OK)
         {
-            ESP_LOGE(spTag, "Failed MCPHandler begin: %d", err);
+            ESP_LOGE(kLogTag, "Failed to initialize MCP handler: %d", err);
             return false;
         }
 
@@ -96,7 +96,7 @@ namespace controlSystem
 #ifdef DEBUG_MCP_SCAN
         rMcpHandler.scanI2c();
 #endif
-        ESP_LOGI(spTag, "MCP Handler initialized successfully.");
+        ESP_LOGI(kLogTag, "MCP handler initialized successfully");
 #ifdef DEBUG_MCP_SCAN
         rMcpHandler.dumpRegisters();
 #endif

@@ -5,7 +5,7 @@
 
 using namespace indicators;
 
-static const char *spTag = "Status_Led      ";
+static constexpr const char *kLogTag = "Status_Led";
 
 static constexpr uint32_t MAX_DUTY = 8191;
 static constexpr uint32_t ACT_DUTY = 2000;
@@ -95,7 +95,7 @@ void StatusLed::sendStatus(ControlBoardWorkingStatus status)
         xQueueOverwrite(mpStatusQueue, &status);
     }
 
-    ESP_LOGI(spTag, "Status sent: %d", static_cast<int>(status));
+    ESP_LOGI(kLogTag, "Status sent: %d", static_cast<int>(status));
 
     if (mpLedTaskHandle)
     {
@@ -103,7 +103,7 @@ void StatusLed::sendStatus(ControlBoardWorkingStatus status)
     }
     else
     {
-        ESP_LOGE(spTag, "LED Task not initialized, cannot send status");
+        ESP_LOGE(kLogTag, "LED task not initialized; cannot send status");
     }
 }
 
@@ -112,14 +112,14 @@ void StatusLed::runLedTask(void *pParam)
     auto *pSelf = static_cast<StatusLed *>(pParam);
 
     ControlBoardWorkingStatus receivedStatus;
-    ESP_LOGI(spTag, "LED Task started on pin %d", pSelf->mPin);
+    ESP_LOGI(kLogTag, "LED task started on pin %d", pSelf->mPin);
     for (;;)
     {
         if (xQueueReceive(pSelf->mpStatusQueue, &receivedStatus, portMAX_DELAY))
         {
             pSelf->mCurrentStatus = receivedStatus;
-            ESP_LOGI(spTag, "LED status updated to %d", static_cast<int>(receivedStatus));
-            ESP_LOGI(spTag, "Handling status change for pin %d", pSelf->mPin);
+            ESP_LOGI(kLogTag, "LED status updated to %d", static_cast<int>(receivedStatus));
+            ESP_LOGI(kLogTag, "Handling status change for pin %d", pSelf->mPin);
             xTimerStop(pSelf->mpBlinkTimer, 0);
             pSelf->stopBreatheEffect();
             pSelf->mLedOn = false;

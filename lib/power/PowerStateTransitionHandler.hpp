@@ -24,6 +24,6 @@ namespace controlSystem
         RpiBootManager &mrRpiBootManager;
         IActivityStatusSink *mpActivitySink;
 
-        static constexpr const char *mspTag = "Power_State_Hdlr";
+        static constexpr const char *kLogTag = "Power_State_Hdlr";
     };
 }

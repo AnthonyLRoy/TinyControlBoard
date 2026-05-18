@@ -20,6 +20,6 @@ namespace controlSystem
     private:
         transport::uart::UartTransport &mrSerial;
         relays::StandardRelay &mrRelays;
-        static constexpr const char *mspTag = "Relay_Controller";
+        static constexpr const char *kLogTag = "Relay_Controller";
     };
 }
