@@ -9,6 +9,19 @@
 
 namespace controlSystem
 {
+    enum class LedPolicy : uint8_t
+    {
+        None,       // no LED feedback (e.g. rotary events, power button)
+        Momentary,  // LED on while held, off on release
+        Toggle,     // LED flips state on each press and holds it
+    };
+
+    struct ButtonConfig
+    {
+        actions::ButtonAction *action = nullptr;
+        LedPolicy ledPolicy = LedPolicy::None;
+    };
+
     struct IActionResponseSink
     {
         virtual ~IActionResponseSink() = default;
@@ -23,7 +36,7 @@ namespace controlSystem
     class ControlBoardInputDispatcher
     {
     public:
-        using ActionMap = std::array<actions::ButtonAction *, controlBoardButtons::kCount>;
+        using ActionMap = std::array<ButtonConfig, controlBoardButtons::kCount>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
                                     IActionResponseSink *pResponseSink,
@@ -40,9 +53,13 @@ namespace controlSystem
         void setBackgroundStatus(ControlBoardWorkingStatus status) { mBackgroundStatus = status; }
 
     private:
+        void applyLedOnPress(uint8_t buttonId, LedPolicy policy);
+        void applyLedOnRelease(uint8_t buttonId, LedPolicy policy);
+
         ActionMap &mrActionMap;
         IActionResponseSink *mpResponseSink;
         IControlBoardIndicators *mpIndicators;
         ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
+        bool mToggleLedState[controlBoardButtons::kCount]{};
     };
 }

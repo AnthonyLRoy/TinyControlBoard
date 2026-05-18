@@ -44,7 +44,6 @@ void test_simple_command_action_returns_configured_command_when_pressed()
 
     expect_equal(CMD_PLAY_PAUSE, response.command, "Pressed action should return configured command");
     expect_true(!response.isActive, "Pressed action should keep default inactive state");
-    expect_true(!response.keepLedActive, "Pressed action should not force LED activity");
     expect_equal(static_cast<uint16_t>(0), response.releaseTimeMillis, "Pressed action should keep default release time");
 }
 
@@ -55,7 +54,6 @@ void test_simple_command_action_returns_no_action_when_released()
 
     expect_equal(CMD_NO_ACTION, response.command, "Released action should not emit a command");
     expect_true(!response.isActive, "Released action should keep default inactive state");
-    expect_true(!response.keepLedActive, "Released action should not force LED activity");
     expect_equal(static_cast<uint16_t>(0), response.releaseTimeMillis, "Released action should keep default release time");
 }
 
@@ -264,11 +262,10 @@ public:
     UartMessage lastMessage;
 };
 
-actions::ActionResponse makeResponse(CommandId command, bool keepLedActive = false)
+actions::ActionResponse makeResponse(CommandId command)
 {
     actions::ActionResponse response;
     response.command = command;
-    response.keepLedActive = keepLedActive;
     return response;
 }
 
@@ -278,7 +275,7 @@ void test_control_board_button_press_dispatches_action_and_led()
     FakeResponseSink responseSink;
     FakeIndicators indicators;
     FakeAction action(makeResponse(CMD_PLAY_PAUSE));
-    actionMap[controlSystem::controlBoardButtons::kPlayPause] = &action;
+    actionMap[controlSystem::controlBoardButtons::kPlayPause] = {&action, controlSystem::LedPolicy::Momentary};
 
     controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kPlayPause);
@@ -295,13 +292,13 @@ void test_control_board_button_press_dispatches_action_and_led()
                 "Press should set doingWork status");
 }
 
-void test_control_board_button_release_dispatches_action_and_keep_led_state()
+void test_control_board_momentary_button_release_turns_led_off()
 {
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeResponse(CMD_NO_ACTION, true));
-    actionMap[controlSystem::controlBoardButtons::kPlayPause] = &action;
+    FakeAction action(makeResponse(CMD_NO_ACTION));
+    actionMap[controlSystem::controlBoardButtons::kPlayPause] = {&action, controlSystem::LedPolicy::Momentary};
 
     controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
     dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::kPlayPause);
@@ -309,12 +306,34 @@ void test_control_board_button_release_dispatches_action_and_keep_led_state()
     expect_equal(1, action.callCount, "Release should execute mapped action exactly once");
     expect_true(!action.lastPressedArg, "Release should execute action with false");
     expect_equal(1, responseSink.callCount, "Release should forward ActionResponse");
-    expect_equal(1, indicators.ledCallCount, "Release should update the button LED");
+    expect_equal(1, indicators.ledCallCount, "Momentary release should turn LED off");
     expect_equal(controlSystem::controlBoardButtons::kPlayPause, indicators.lastLedPin, "Release should target the correct button LED");
-    expect_true(indicators.lastLedState, "Release should preserve keepLedActive state");
+    expect_true(!indicators.lastLedState, "Momentary release should set LED to false");
     expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(), "Release should record one status update");
     expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::Idle,
                 "Release should set Idle status");
+}
+
+void test_control_board_toggle_button_press_flips_led_state()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction action(makeResponse(CMD_NO_ACTION));
+    actionMap[controlSystem::controlBoardButtons::kCover] = {&action, controlSystem::LedPolicy::Toggle};
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kCover);
+    expect_equal(1, indicators.ledCallCount, "First press should call setButtonLed once");
+    expect_true(indicators.lastLedState, "First press should turn toggle LED on");
+
+    dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::kCover);
+    expect_equal(1, indicators.ledCallCount, "Toggle release should not call setButtonLed again");
+
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kCover);
+    expect_equal(2, indicators.ledCallCount, "Second press should call setButtonLed again");
+    expect_true(!indicators.lastLedState, "Second press should turn toggle LED off");
 }
 
 void test_control_board_out_of_range_press_keeps_existing_status_ordering()
@@ -339,7 +358,7 @@ void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
     FakeResponseSink responseSink;
     FakeIndicators indicators;
     FakeAction action(makeResponse(CMD_ROTARY_ACTION));
-    actionMap[controlSystem::controlBoardButtons::kRotaryEventLeft] = &action;
+    actionMap[controlSystem::controlBoardButtons::kRotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
 
     controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
     dispatcher.handleRotaryMovement(1);
@@ -572,7 +591,8 @@ int main()
         {"test_deserialize_message_rejects_invalid_start_byte", test_deserialize_message_rejects_invalid_start_byte},
         {"test_deserialize_message_rejects_invalid_checksum", test_deserialize_message_rejects_invalid_checksum},
         {"test_control_board_button_press_dispatches_action_and_led", test_control_board_button_press_dispatches_action_and_led},
-        {"test_control_board_button_release_dispatches_action_and_keep_led_state", test_control_board_button_release_dispatches_action_and_keep_led_state},
+        {"test_control_board_momentary_button_release_turns_led_off", test_control_board_momentary_button_release_turns_led_off},
+        {"test_control_board_toggle_button_press_flips_led_state", test_control_board_toggle_button_press_flips_led_state},
         {"test_control_board_out_of_range_press_keeps_existing_status_ordering", test_control_board_out_of_range_press_keeps_existing_status_ordering},
         {"test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle", test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle},
         {"test_serial_heartbeat_router_handles_current_heartbeat", test_serial_heartbeat_router_handles_current_heartbeat},

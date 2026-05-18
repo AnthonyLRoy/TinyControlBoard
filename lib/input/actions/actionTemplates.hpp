@@ -17,12 +17,10 @@ namespace actions
         ActionResponse execute(bool isPressed) override
         {
             ActionResponse response;
-            response.keepLedActive = mState;
             if (isPressed)
             {
                 mState = !mState;
                 response.command = mState ? CMD_ON : CMD_OFF;
-                response.keepLedActive = mState;
             }
             const char *pCommandName = controlSystem::getCommandNameById(response.command);
             ESP_LOGI("Toggle_Action   ", "Executed toggle action: %s, New State: %s", pCommandName, mState ? "ON" : "OFF");

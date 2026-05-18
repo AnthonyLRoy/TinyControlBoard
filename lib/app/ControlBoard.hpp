@@ -15,10 +15,6 @@
 #include <array>
 #include <memory>
 
-namespace actions {
-    class ButtonAction;
-}
-
 namespace controlSystem
 {
     class ControlBoard : private IActionResponseSink,
@@ -47,6 +43,6 @@ namespace controlSystem
         ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
 
         buttons::McpInputHandler mMcpHandler{board::i2c::kMcpAddress, I2C_NUM_0};
-        std::array<actions::ButtonAction *, board::buttons::kCount> mpButtonActions{};
+        ControlBoardInputDispatcher::ActionMap mpButtonActions{};
     };
 }
