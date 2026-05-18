@@ -40,12 +40,12 @@ namespace controlSystem
         using ActionMap = std::array<ButtonConfig, controlBoardButtons::kCount>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
-                                    IActionResponseSink *pResponseSink,
-                                    IControlBoardIndicators *pIndicators,
+                                    IActionResponseSink &rResponseSink,
+                                    IControlBoardIndicators &rIndicators,
                                     SystemState &rSystemState)
             : mrActionMap(rActionMap),
-              mpResponseSink(pResponseSink),
-              mpIndicators(pIndicators),
+              mrResponseSink(rResponseSink),
+              mrIndicators(rIndicators),
               mrSystemState(rSystemState)
         {
         }
@@ -60,8 +60,8 @@ namespace controlSystem
         void applyLedOnRelease(uint8_t buttonId, LedPolicy policy);
 
         ActionMap &mrActionMap;
-        IActionResponseSink *mpResponseSink;
-        IControlBoardIndicators *mpIndicators;
+        IActionResponseSink &mrResponseSink;
+        IControlBoardIndicators &mrIndicators;
         ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
         SystemState &mrSystemState;
     };

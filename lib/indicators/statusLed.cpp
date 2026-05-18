@@ -13,6 +13,10 @@ static constexpr uint32_t BREATHE_STEP = 64;
 static constexpr uint32_t BREATHE_DELAY_MS = 20;
 static constexpr uint32_t BLIP_ON_MS = 50;
 static constexpr uint32_t BLIP_OFF_MS = 1950;
+static constexpr uint32_t PWM_FREQ_HZ = 5000;
+static constexpr uint32_t BLINK_TIMER_PERIOD_MS = 100;
+static constexpr uint32_t LED_TASK_STACK_SIZE = 4096;
+static constexpr UBaseType_t LED_TASK_PRIORITY = 5;
 
 StatusLed::StatusLed(gpio_num_t pin,
                      ledc_channel_t channel,
@@ -50,7 +54,7 @@ void StatusLed::init()
         .speed_mode = LEDC_LOW_SPEED_MODE,
         .duty_resolution = LEDC_TIMER_13_BIT,
         .timer_num = LEDC_TIMER_0,
-        .freq_hz = 5000,
+        .freq_hz = PWM_FREQ_HZ,
         .clk_cfg = LEDC_AUTO_CLK};
 
     ESP_ERROR_CHECK(ledc_timer_config(&timerConfig));
@@ -74,9 +78,9 @@ void StatusLed::init()
 
     mpStatusQueue = xQueueCreate(1, sizeof(ControlBoardWorkingStatus));
 
-    mpBlinkTimer = xTimerCreate("BlinkTimer", pdMS_TO_TICKS(100), pdTRUE, this, handleTimer);
+    mpBlinkTimer = xTimerCreate("BlinkTimer", pdMS_TO_TICKS(BLINK_TIMER_PERIOD_MS), pdTRUE, this, handleTimer);
 
-    xTaskCreate(runLedTask, "LED_Task", 4096, this, 5, &mpLedTaskHandle);
+    xTaskCreate(runLedTask, "LED_Task", LED_TASK_STACK_SIZE, this, LED_TASK_PRIORITY, &mpLedTaskHandle);
 }
 
 void StatusLed::setStatus(ControlBoardWorkingStatus newStatus)

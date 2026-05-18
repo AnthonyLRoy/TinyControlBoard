@@ -13,6 +13,8 @@ namespace controlSystem
         constexpr uint32_t SCREEN_ON_DELAY_MS = 1000;
         constexpr uint32_t RPI_BOOT_TIMEOUT_MS = 60000;
         constexpr uint32_t RPI_SHUTDOWN_TIMEOUT_MS = 60000;
+        constexpr uint32_t RPI_SHUTDOWN_SETTLE_DELAY_MS = 500;
+        constexpr uint32_t SCREEN_POWER_OFF_DELAY_MS = 5000;
     }
 
     PowerStateTransitionHandler::PowerStateTransitionHandler(transport::uart::UartTransport &rSerial,
@@ -72,9 +74,9 @@ namespace controlSystem
             mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mrRpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             mrRelayController.shutdownRpi(true);
-            vTaskDelay(pdMS_TO_TICKS(500));
+            vTaskDelay(pdMS_TO_TICKS(RPI_SHUTDOWN_SETTLE_DELAY_MS));
             mrRelayController.shutdownScreen(false);
-            vTaskDelay(pdMS_TO_TICKS(5000));
+            vTaskDelay(pdMS_TO_TICKS(SCREEN_POWER_OFF_DELAY_MS));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
             if (mpActivitySink)
@@ -92,7 +94,7 @@ namespace controlSystem
             mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mrRpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
             mrRelayController.shutdownRpi(true);
-            vTaskDelay(pdMS_TO_TICKS(500));
+            vTaskDelay(pdMS_TO_TICKS(RPI_SHUTDOWN_SETTLE_DELAY_MS));
             mrRelayController.shutdownScreen(false);
             mrRelayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
             mrRelayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);

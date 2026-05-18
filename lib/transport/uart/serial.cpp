@@ -5,6 +5,16 @@
 
 using namespace transport::uart;
 
+namespace
+{
+    constexpr uint32_t kDataReadySignalHoldMs = 10;
+    constexpr uint32_t kHeartbeatCheckIntervalMs = 100;
+    constexpr uint32_t kUartRxTaskStackSize = 4096;
+    constexpr uint32_t kUartRxTaskPriority = 10;
+    constexpr uint32_t kHeartbeatTaskStackSize = 4096;
+    constexpr uint32_t kHeartbeatTaskPriority = 5;
+}
+
 static const char *spTag = "Serial          ";
 
 UartTransport &UartTransport::getInstance()
@@ -63,9 +73,9 @@ bool UartTransport::initUart(uart_port_t uartNum,
         xTaskCreate([](void *arg)
                     { static_cast<UartTransport *>(arg)->runUartRxTask(); },
                     "uart_rx_task",
-                    4096,
+                    kUartRxTaskStackSize,
                     this,
-                    10,
+                    kUartRxTaskPriority,
                     &this->mpTaskHandle);
     }
 
@@ -159,7 +169,7 @@ bool UartTransport::sendData(const uint8_t *pData, size_t len)
 
     ESP_LOGI(spTag, "Data sent, signaling Raspberry Pi.");
     ESP_ERROR_CHECK(gpio_set_level(PIN_ESP32_DATA_READY, 1));
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(kDataReadySignalHoldMs));
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
     return written == len;
 }
@@ -227,7 +237,7 @@ void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
             [](void *arg)
             {
                 UartTransport *pSelf = static_cast<UartTransport *>(arg);
-                const TickType_t delay = pdMS_TO_TICKS(100);
+                const TickType_t delay = pdMS_TO_TICKS(kHeartbeatCheckIntervalMs);
 
                 while (true)
                 {
@@ -253,9 +263,9 @@ void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
                 }
             },
             "heartbeat_task",
-            4096,
+            kHeartbeatTaskStackSize,
             this,
-            5,
+            kHeartbeatTaskPriority,
             &mpHeartbeatTaskHandle);
     }
 }

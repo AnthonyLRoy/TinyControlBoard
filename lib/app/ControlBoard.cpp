@@ -8,6 +8,12 @@
 
 namespace controlSystem
 {
+    namespace
+    {
+        constexpr uint32_t kActionTaskStackSize = 4096;
+        constexpr UBaseType_t kActionTaskPriority = 5;
+    }
+
     static const char *spTag = "Control_Board   ";
 
     bool ControlBoard::init()
@@ -52,8 +58,8 @@ namespace controlSystem
             static_cast<IActivityStatusSink *>(static_cast<IControlBoardIndicators *>(this)));
         mpInputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
             mpButtonActions,
-            static_cast<IActionResponseSink *>(this),
-            static_cast<IControlBoardIndicators *>(this),
+            static_cast<IActionResponseSink &>(*this),
+            static_cast<IControlBoardIndicators &>(*this),
             mSystemState);
         mpHeartbeatRouter = std::make_unique<SerialHeartbeatRouter>(static_cast<IHeartbeatSink *>(this));
 
@@ -74,7 +80,7 @@ namespace controlSystem
             ESP_LOGE(spTag, "Failed to create button event queue");
             return false;
         }
-        xTaskCreate(actionTask, "action_task", 4096, this, 5, &mActionTaskHandle);
+        xTaskCreate(actionTask, "action_task", kActionTaskStackSize, this, kActionTaskPriority, &mActionTaskHandle);
 
         mBootstrap.configureMcpCallbacks(
             mMcpHandler,
