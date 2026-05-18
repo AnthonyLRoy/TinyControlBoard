@@ -1,4 +1,5 @@
 #include "app/ActionUartDispatcher.hpp"
+#include "support/controlSystemHelpers.hpp"
 
 #if __has_include("esp_log.h")
 #include "esp_log.h"
@@ -8,18 +9,6 @@
 
 namespace controlSystem
 {
-    const SimpleCommandEntry sSimpleCommands[] = {
-        {"Next_Track", CMD_NEXT_TRACK},
-        {"Prev_Track", CMD_PREVIOUS_TRACK},
-        {"Play_Pause", CMD_PLAY_PAUSE},
-        {"Stop", CMD_STOP_TRACK},
-        {"Skip_Forward", CMD_SKIP_FORWARD},
-        {"Skip_Back", CMD_SKIP_BACK},
-        {"Item_Select", CMD_ITEM_SELECT},
-    };
-
-    const size_t kSimpleCommandCount = sizeof(sSimpleCommands) / sizeof(sSimpleCommands[0]);
-
     ActionUartDispatcher::ActionUartDispatcher(IUartCommandSink &rUartCommandSink)
         : mrUartCommandSink(rUartCommandSink)
     {
@@ -118,14 +107,12 @@ namespace controlSystem
 
     bool ActionUartDispatcher::handleSimpleCommand(const actions::ActionResponse &response)
     {
-        for (size_t cmdReference = 0; cmdReference < kSimpleCommandCount; cmdReference++)
+        const char *pCommandTag = getSimpleCommandLogTag(response.command);
+        if (pCommandTag)
         {
-            if (sSimpleCommands[cmdReference].commandId == response.command)
-            {
-                mrUartCommandSink.sendUartCommand(sSimpleCommands[cmdReference].pLogTag, response.command);
-                ESP_LOGI(mspTag, "Sending command: %s", sSimpleCommands[cmdReference].pLogTag);
-                return true;
-            }
+            mrUartCommandSink.sendUartCommand(pCommandTag, response.command);
+            ESP_LOGI(mspTag, "Sending command: %s", pCommandTag);
+            return true;
         }
 
         return false;

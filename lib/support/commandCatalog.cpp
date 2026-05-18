@@ -1,12 +1,30 @@
-#include "controlSystemHelpers.hpp"
+#include "support/commandCatalog.hpp"
 
-#include "app/ActionUartDispatcher.hpp"
+#include <cstddef>
 
 namespace controlSystem
 {
 
 namespace
 {
+    struct SimpleCommandEntry
+    {
+        const char *pLogTag;
+        CommandId commandId;
+    };
+
+    const SimpleCommandEntry sSimpleCommands[] = {
+        {"Next_Track", CMD_NEXT_TRACK},
+        {"Prev_Track", CMD_PREVIOUS_TRACK},
+        {"Play_Pause", CMD_PLAY_PAUSE},
+        {"Stop", CMD_STOP_TRACK},
+        {"Skip_Forward", CMD_SKIP_FORWARD},
+        {"Skip_Back", CMD_SKIP_BACK},
+        {"Item_Select", CMD_ITEM_SELECT},
+    };
+
+    const size_t kSimpleCommandCount = sizeof(sSimpleCommands) / sizeof(sSimpleCommands[0]);
+
     struct CommandNameEntry
     {
         CommandId commandId;
@@ -49,11 +67,21 @@ namespace
     const size_t kAdditionalCommandCount = sizeof(sAdditionalCommands) / sizeof(sAdditionalCommands[0]);
 }
 
-const char *getCommandNameById(CommandId commandId)
+const char *getSimpleCommandLogTag(CommandId commandId)
 {
     for (size_t i = 0; i < kSimpleCommandCount; ++i) {
         if (sSimpleCommands[i].commandId == commandId)
             return sSimpleCommands[i].pLogTag;
+    }
+
+    return nullptr;
+}
+
+const char *getCommandNameById(CommandId commandId)
+{
+    if (const char *pSimpleLogTag = getSimpleCommandLogTag(commandId))
+    {
+        return pSimpleLogTag;
     }
 
     for (size_t i = 0; i < kAdditionalCommandCount; ++i) {

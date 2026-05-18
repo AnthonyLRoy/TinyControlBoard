@@ -13,6 +13,7 @@ add_executable(tiny_control_board_host_tests
     ../lib/protocol/uartProtocol.cpp
     ../lib/app/ActionUartDispatcher.cpp
     ../lib/app/ControlBoardInputDispatcher.cpp
+    ../lib/support/commandCatalog.cpp
 )
 
 target_include_directories(tiny_control_board_host_tests PRIVATE

@@ -4,12 +4,6 @@
 
 namespace controlSystem
 {
-    struct SimpleCommandEntry
-    {
-        const char *pLogTag;
-        uint32_t commandId;
-    };
-
     struct IUartCommandSink
     {
         virtual ~IUartCommandSink() = default;
@@ -36,7 +30,4 @@ namespace controlSystem
 
         static constexpr const char *mspTag = "Uart_Dispatcher ";
     };
-
-    extern const SimpleCommandEntry sSimpleCommands[];
-    extern const size_t kSimpleCommandCount;
 }
