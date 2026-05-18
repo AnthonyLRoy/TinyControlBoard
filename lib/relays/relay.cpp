@@ -3,7 +3,7 @@
 namespace relays
 {
 
-static constexpr const char *kLogTag = "Relay";
+static constexpr const char *kLogTag = "Relay           ";
 
 void StandardRelay::init(gpio_num_t pinRelay)
 {

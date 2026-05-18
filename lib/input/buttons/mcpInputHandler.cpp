@@ -7,7 +7,7 @@
 
 namespace buttons {
 
-static constexpr const char *kLogTag = "MCP";
+static constexpr const char *kLogTag = "MCP             ";
 
 McpInputHandler::McpInputHandler(uint8_t address, i2c_port_t port)
         : mI2cAddr(address),

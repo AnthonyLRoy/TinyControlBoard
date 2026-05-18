@@ -7,7 +7,7 @@ namespace
     constexpr const char *kNvsKeyLevel = "level";
 }
 
-static constexpr const char *kLogTag = "Monitor_Bright";
+static constexpr const char *kLogTag = "Monitor_Bright  ";
 
 namespace indicators
 {

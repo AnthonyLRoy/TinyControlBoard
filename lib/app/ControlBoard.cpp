@@ -14,7 +14,7 @@ namespace controlSystem
         constexpr UBaseType_t kActionTaskPriority = 5;
     }
 
-    static constexpr const char *kLogTag = "Control_Board";
+    static constexpr const char *kLogTag = "Control_Board   ";
 
     bool ControlBoard::init()
     {

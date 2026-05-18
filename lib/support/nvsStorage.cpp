@@ -3,7 +3,7 @@
 #include "nvs.h"
 #include "esp_log.h"
 
-static constexpr const char *kLogTag = "NvsStorage";
+static constexpr const char *kLogTag = "NvsStorage      ";
 
 namespace support
 {

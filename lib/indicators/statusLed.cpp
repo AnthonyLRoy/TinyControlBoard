@@ -5,7 +5,7 @@
 
 using namespace indicators;
 
-static constexpr const char *kLogTag = "Status_Led";
+static constexpr const char *kLogTag = "Status_Led      ";
 
 static constexpr uint32_t MAX_DUTY = 8191;
 static constexpr uint32_t ACT_DUTY = 2000;

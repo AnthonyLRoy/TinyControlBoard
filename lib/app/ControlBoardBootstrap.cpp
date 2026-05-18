@@ -8,7 +8,7 @@ namespace controlSystem
 {
     namespace
     {
-        static constexpr const char *kLogTag = "Control_Board";
+        static constexpr const char *kLogTag = "Control_Board   ";
     }
 
     void ControlBoardBootstrap::prepareStartupIndicators() const

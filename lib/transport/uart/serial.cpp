@@ -15,7 +15,7 @@ namespace
     constexpr uint32_t kHeartbeatTaskPriority = 5;
 }
 
-static constexpr const char *kLogTag = "Serial";
+static constexpr const char *kLogTag = "Serial          ";
 
 UartTransport &UartTransport::getInstance()
 {
