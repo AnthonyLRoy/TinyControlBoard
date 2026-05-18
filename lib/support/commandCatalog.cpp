@@ -7,71 +7,61 @@ namespace controlSystem
 
 namespace
 {
-    struct SimpleCommandEntry
-    {
-        const char *pLogTag;
-        CommandId commandId;
-    };
-
-    const SimpleCommandEntry sSimpleCommands[] = {
-        {"Next_Track", CMD_NEXT_TRACK},
-        {"Prev_Track", CMD_PREVIOUS_TRACK},
-        {"Play_Pause", CMD_PLAY_PAUSE},
-        {"Stop", CMD_STOP_TRACK},
-        {"Skip_Forward", CMD_SKIP_FORWARD},
-        {"Skip_Back", CMD_SKIP_BACK},
-        {"Item_Select", CMD_ITEM_SELECT},
-    };
-
-    const size_t kSimpleCommandCount = sizeof(sSimpleCommands) / sizeof(sSimpleCommands[0]);
-
-    struct CommandNameEntry
+    struct CommandCatalogEntry
     {
         CommandId commandId;
         const char *pCommandName;
+        const char *pSimpleLogTag;
     };
 
-    const CommandNameEntry sAdditionalCommands[] = {
-        {CMD_NO_ACTION, "No_Action"},
-        {CMD_SYS_POWER, "Sys_Power"},
-        {CMD_SYS_RPI_SHUTDOWN, "Sys_Rpi_Shutdown"},
-        {CMD_SYS_HEARTBEAT, "Sys_Heartbeat"},
-        {CMD_SYS_NOHEARTBEAT, "Sys_NoHeartbeat"},
-        {CMD_PREV_MENU_ITEM, "Prev_Menu_Item"},
-        {CMD_NEXT_MENU_ITEM, "Next_Menu_Item"},
-        {CMD_EXIT_ITEM, "Exit_Item"},
-        {CMD_DISPLAY_OFF, "Display_Off"},
-        {CMD_DISPLAY_ON, "Display_On"},
-        {CMD_TOGGLE_METER_ON, "Toggle_Meter_On"},
-        {CMD_TOGGLE_METER_OFF, "Toggle_Meter_Off"},
-        {CMD_TOGGLE_DAC_ON, "Toggle_Dac_On"},
-        {CMD_TOGGLE_DAC_OFF, "Toggle_Dac_Off"},
-        {CMD_ROTARY_LEFT, "Rotary_Left"},
-        {CMD_ROTARY_RIGHT, "Rotary_Right"},
-        {CMD_ROTARY_ACTION, "Rotary_Action"},
-        {CMD_TOGGLE_DAC, "Toggle_Dac"},
-        {CMD_TOGGLE_DISPLAY, "Toggle_Display"},
-        {CMD_TOGGLE_METER, "Toggle_Meter"},
-        {CMD_CYCLE_BRIGHTNESS, "Cycle_Brightness"},
-        {CMD_COVER_VIEW_ON, "Cover_View_On"},
-        {CMD_COVER_VIEW_OFF, "Cover_View_Off"},
-        {CMD_TOGGLE_COVER_VIEW, "Toggle_Cover_View"},
-        {CMD_REPEAT_ON, "Repeat_On"},
-        {CMD_REPEAT_OFF, "Repeat_Off"},
-        {CMD_TOGGLE_REPEAT, "Toggle_Repeat"},
-        {CMD_RANDOM_ON, "Random_On"},
-        {CMD_RANDOM_OFF, "Random_Off"},
-        {CMD_TOGGLE_RANDOM, "Toggle_Random"},
+    const CommandCatalogEntry sCommandCatalog[] = {
+        {CMD_NO_ACTION, "No_Action", nullptr},
+        {CMD_SYS_POWER, "Sys_Power", nullptr},
+        {CMD_SYS_RPI_SHUTDOWN, "Sys_Rpi_Shutdown", nullptr},
+        {CMD_SYS_HEARTBEAT, "Sys_Heartbeat", nullptr},
+        {CMD_SYS_NOHEARTBEAT, "Sys_NoHeartbeat", nullptr},
+        {CMD_NEXT_TRACK, "Next_Track", "Next_Track"},
+        {CMD_PREVIOUS_TRACK, "Prev_Track", "Prev_Track"},
+        {CMD_PLAY_PAUSE, "Play_Pause", "Play_Pause"},
+        {CMD_STOP_TRACK, "Stop", "Stop"},
+        {CMD_SKIP_FORWARD, "Skip_Forward", "Skip_Forward"},
+        {CMD_SKIP_BACK, "Skip_Back", "Skip_Back"},
+        {CMD_PREV_MENU_ITEM, "Prev_Menu_Item", nullptr},
+        {CMD_NEXT_MENU_ITEM, "Next_Menu_Item", nullptr},
+        {CMD_ITEM_SELECT, "Item_Select", "Item_Select"},
+        {CMD_EXIT_ITEM, "Exit_Item", nullptr},
+        {CMD_DISPLAY_OFF, "Display_Off", nullptr},
+        {CMD_TOGGLE_METER_ON, "Toggle_Meter_On", nullptr},
+        {CMD_TOGGLE_METER_OFF, "Toggle_Meter_Off", nullptr},
+        {CMD_DISPLAY_ON, "Display_On", nullptr},
+        {CMD_TOGGLE_DAC_ON, "Toggle_Dac_On", nullptr},
+        {CMD_TOGGLE_DAC_OFF, "Toggle_Dac_Off", nullptr},
+        {CMD_ROTARY_LEFT, "Rotary_Left", nullptr},
+        {CMD_ROTARY_RIGHT, "Rotary_Right", nullptr},
+        {CMD_ROTARY_ACTION, "Rotary_Action", nullptr},
+        {CMD_TOGGLE_DAC, "Toggle_Dac", nullptr},
+        {CMD_TOGGLE_DISPLAY, "Toggle_Display", nullptr},
+        {CMD_TOGGLE_METER, "Toggle_Meter", nullptr},
+        {CMD_CYCLE_BRIGHTNESS, "Cycle_Brightness", nullptr},
+        {CMD_COVER_VIEW_ON, "Cover_View_On", nullptr},
+        {CMD_COVER_VIEW_OFF, "Cover_View_Off", nullptr},
+        {CMD_TOGGLE_COVER_VIEW, "Toggle_Cover_View", nullptr},
+        {CMD_REPEAT_ON, "Repeat_On", nullptr},
+        {CMD_REPEAT_OFF, "Repeat_Off", nullptr},
+        {CMD_TOGGLE_REPEAT, "Toggle_Repeat", nullptr},
+        {CMD_RANDOM_ON, "Random_On", nullptr},
+        {CMD_RANDOM_OFF, "Random_Off", nullptr},
+        {CMD_TOGGLE_RANDOM, "Toggle_Random", nullptr},
     };
 
-    const size_t kAdditionalCommandCount = sizeof(sAdditionalCommands) / sizeof(sAdditionalCommands[0]);
+    const size_t kCommandCatalogCount = sizeof(sCommandCatalog) / sizeof(sCommandCatalog[0]);
 }
 
 const char *getSimpleCommandLogTag(CommandId commandId)
 {
-    for (size_t i = 0; i < kSimpleCommandCount; ++i) {
-        if (sSimpleCommands[i].commandId == commandId)
-            return sSimpleCommands[i].pLogTag;
+    for (size_t i = 0; i < kCommandCatalogCount; ++i) {
+        if (sCommandCatalog[i].commandId == commandId)
+            return sCommandCatalog[i].pSimpleLogTag;
     }
 
     return nullptr;
@@ -79,14 +69,9 @@ const char *getSimpleCommandLogTag(CommandId commandId)
 
 const char *getCommandNameById(CommandId commandId)
 {
-    if (const char *pSimpleLogTag = getSimpleCommandLogTag(commandId))
-    {
-        return pSimpleLogTag;
-    }
-
-    for (size_t i = 0; i < kAdditionalCommandCount; ++i) {
-        if (sAdditionalCommands[i].commandId == commandId)
-            return sAdditionalCommands[i].pCommandName;
+    for (size_t i = 0; i < kCommandCatalogCount; ++i) {
+        if (sCommandCatalog[i].commandId == commandId)
+            return sCommandCatalog[i].pCommandName;
     }
 
     return "UNKNOWN";
