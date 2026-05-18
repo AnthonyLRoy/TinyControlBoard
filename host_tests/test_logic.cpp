@@ -12,6 +12,7 @@
 #include "app/ActionUartDispatcher.hpp"
 #include "app/ControlBoardButtonIds.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
+#include "app/SystemState.hpp"
 #include "power/PowerStateTransitionPolicy.hpp"
 #include "app/SerialHeartbeatRouter.hpp"
 #include "protocol/uartProtocol.hpp"
@@ -277,7 +278,8 @@ void test_control_board_button_press_dispatches_action_and_led()
     FakeAction action(makeResponse(CMD_PLAY_PAUSE));
     actionMap[controlSystem::controlBoardButtons::kPlayPause] = {&action, controlSystem::LedPolicy::Momentary};
 
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    controlSystem::SystemState testState{};
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kPlayPause);
 
     expect_equal(1, action.callCount, "Press should execute mapped action exactly once");
@@ -300,7 +302,8 @@ void test_control_board_momentary_button_release_turns_led_off()
     FakeAction action(makeResponse(CMD_NO_ACTION));
     actionMap[controlSystem::controlBoardButtons::kPlayPause] = {&action, controlSystem::LedPolicy::Momentary};
 
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    controlSystem::SystemState testState{};
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
     dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::kPlayPause);
 
     expect_equal(1, action.callCount, "Release should execute mapped action exactly once");
@@ -322,7 +325,8 @@ void test_control_board_toggle_button_press_flips_led_state()
     FakeAction action(makeResponse(CMD_NO_ACTION));
     actionMap[controlSystem::controlBoardButtons::kCover] = {&action, controlSystem::LedPolicy::Toggle};
 
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    controlSystem::SystemState testState{};
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
 
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kCover);
     expect_equal(1, indicators.ledCallCount, "First press should call setButtonLed once");
@@ -342,7 +346,8 @@ void test_control_board_out_of_range_press_keeps_existing_status_ordering()
     FakeResponseSink responseSink;
     FakeIndicators indicators;
 
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    controlSystem::SystemState testState{};
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::kCount);
 
     expect_equal(0, responseSink.callCount, "Out-of-range press should not forward a response");
@@ -360,7 +365,8 @@ void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
     FakeAction action(makeResponse(CMD_ROTARY_ACTION));
     actionMap[controlSystem::controlBoardButtons::kRotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
 
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators);
+    controlSystem::SystemState testState{};
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
     dispatcher.handleRotaryMovement(1);
 
     expect_equal(1, action.callCount, "Rotary movement should execute the shared rotary action once");

@@ -14,8 +14,8 @@ namespace controlSystem
             mpIndicators->setButtonLed(buttonId, true);
             break;
         case LedPolicy::Toggle:
-            mToggleLedState[buttonId] = !mToggleLedState[buttonId];
-            mpIndicators->setButtonLed(buttonId, mToggleLedState[buttonId]);
+            mrSystemState.buttonLedStates[buttonId] = !mrSystemState.buttonLedStates[buttonId];
+            mpIndicators->setButtonLed(buttonId, mrSystemState.buttonLedStates[buttonId]);
             break;
         case LedPolicy::None:
         default:

@@ -11,7 +11,12 @@
 #include "app/ControlBoardBootstrap.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
 #include "app/SerialHeartbeatRouter.hpp"
+#include "app/ButtonEvent.hpp"
+#include "app/SystemState.hpp"
 #include "board/boardConfig.hpp"
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "freertos/task.h"
 #include <array>
 #include <memory>
 
@@ -33,6 +38,9 @@ namespace controlSystem
         void handleHeartbeatReceived() override;
         void handleSerialRxMessage(const UartMessage &rMsg);
 
+        static constexpr uint8_t kButtonQueueDepth = 8;
+        static void actionTask(void *pvParam);
+
         transport::uart::UartTransport *mpSerialHandler = nullptr;
         relays::StandardRelay *mpRelays = nullptr;
         std::unique_ptr<ActionProcessor> mpResponseProcessor;
@@ -44,5 +52,9 @@ namespace controlSystem
 
         buttons::McpInputHandler mMcpHandler{board::i2c::kMcpAddress, I2C_NUM_0};
         ControlBoardInputDispatcher::ActionMap mpButtonActions{};
+
+        SystemState mSystemState;
+        QueueHandle_t mButtonEventQueue = nullptr;
+        TaskHandle_t mActionTaskHandle = nullptr;
     };
 }

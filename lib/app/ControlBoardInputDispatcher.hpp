@@ -4,6 +4,7 @@
 #include "activityStatus.hpp"
 #include "input/actions/buttonAction.hpp"
 #include "app/ControlBoardButtonIds.hpp"
+#include "app/SystemState.hpp"
 #include <array>
 #include <cstdint>
 
@@ -13,7 +14,7 @@ namespace controlSystem
     {
         None,       // no LED feedback (e.g. rotary events, power button)
         Momentary,  // LED on while held, off on release
-        Toggle,     // LED flips state on each press and holds it
+        Toggle,     // LED flips state 
     };
 
     struct ButtonConfig
@@ -40,10 +41,12 @@ namespace controlSystem
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
                                     IActionResponseSink *pResponseSink,
-                                    IControlBoardIndicators *pIndicators)
+                                    IControlBoardIndicators *pIndicators,
+                                    SystemState &rSystemState)
             : mrActionMap(rActionMap),
               mpResponseSink(pResponseSink),
-              mpIndicators(pIndicators)
+              mpIndicators(pIndicators),
+              mrSystemState(rSystemState)
         {
         }
 
@@ -60,6 +63,6 @@ namespace controlSystem
         IActionResponseSink *mpResponseSink;
         IControlBoardIndicators *mpIndicators;
         ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
-        bool mToggleLedState[controlBoardButtons::kCount]{};
+        SystemState &mrSystemState;
     };
 }

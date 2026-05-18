@@ -48,11 +48,13 @@ namespace controlSystem
         mpResponseProcessor = std::make_unique<ActionProcessor>(
             *mpSerialHandler,
             *mpRelays,
+            mSystemState,
             static_cast<IActivityStatusSink *>(static_cast<IControlBoardIndicators *>(this)));
         mpInputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
             mpButtonActions,
             static_cast<IActionResponseSink *>(this),
-            static_cast<IControlBoardIndicators *>(this));
+            static_cast<IControlBoardIndicators *>(this),
+            mSystemState);
         mpHeartbeatRouter = std::make_unique<SerialHeartbeatRouter>(static_cast<IHeartbeatSink *>(this));
 
         if (!mBootstrap.setupRelays())
@@ -66,25 +68,27 @@ namespace controlSystem
             return false;
         }
 
+        mButtonEventQueue = xQueueCreate(kButtonQueueDepth, sizeof(ButtonEvent));
+        if (!mButtonEventQueue)
+        {
+            ESP_LOGE(spTag, "Failed to create button event queue");
+            return false;
+        }
+        xTaskCreate(actionTask, "action_task", 4096, this, 5, &mActionTaskHandle);
+
         mBootstrap.configureMcpCallbacks(
             mMcpHandler,
             [this](uint8_t pin) {
-                if (mpInputDispatcher)
-                {
-                    mpInputDispatcher->handleButtonPressed(pin);
-                }
+                const ButtonEvent event{ButtonEventType::Press, pin, 0};
+                xQueueSend(mButtonEventQueue, &event, 0);
             },
             [this](uint8_t pin) {
-                if (mpInputDispatcher)
-                {
-                    mpInputDispatcher->handleButtonReleased(pin);
-                }
+                const ButtonEvent event{ButtonEventType::Release, pin, 0};
+                xQueueSend(mButtonEventQueue, &event, 0);
             },
             [this](int movement) {
-                if (mpInputDispatcher)
-                {
-                    mpInputDispatcher->handleRotaryMovement(movement);
-                }
+                const ButtonEvent event{ButtonEventType::Rotary, 0, static_cast<int8_t>(movement)};
+                xQueueSend(mButtonEventQueue, &event, 0);
             });
 
         if (!mBootstrap.setupSerial(*mpSerialHandler))
@@ -102,6 +106,16 @@ namespace controlSystem
 
     void ControlBoard::deinit()
     {
+        if (mActionTaskHandle)
+        {
+            vTaskDelete(mActionTaskHandle);
+            mActionTaskHandle = nullptr;
+        }
+        if (mButtonEventQueue)
+        {
+            vQueueDelete(mButtonEventQueue);
+            mButtonEventQueue = nullptr;
+        }
         if (mpSerialHandler)
         {
             mpSerialHandler->deinitUart();
@@ -110,6 +124,34 @@ namespace controlSystem
         mpHeartbeatRouter.reset();
         mpInputDispatcher.reset();
         mpResponseProcessor.reset();
+    }
+
+    void ControlBoard::actionTask(void *pvParam)
+    {
+        auto *pSelf = static_cast<ControlBoard *>(pvParam);
+        ButtonEvent event{};
+        while (true)
+        {
+            if (xQueueReceive(pSelf->mButtonEventQueue, &event, portMAX_DELAY) == pdTRUE)
+            {
+                if (!pSelf->mpInputDispatcher)
+                {
+                    continue;
+                }
+                switch (event.type)
+                {
+                case ButtonEventType::Press:
+                    pSelf->mpInputDispatcher->handleButtonPressed(event.buttonId);
+                    break;
+                case ButtonEventType::Release:
+                    pSelf->mpInputDispatcher->handleButtonReleased(event.buttonId);
+                    break;
+                case ButtonEventType::Rotary:
+                    pSelf->mpInputDispatcher->handleRotaryMovement(event.rotaryDelta);
+                    break;
+                }
+            }
+        }
     }
 
     void ControlBoard::process(const actions::ActionResponse &response)

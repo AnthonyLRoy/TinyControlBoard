@@ -6,8 +6,8 @@
 
 namespace controlSystem
 {
-    ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, IActivityStatusSink *pActivitySink)
-        : mrSerial(rSerialBus), mrRelays(rRelays)
+    ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, SystemState &rSystemState, IActivityStatusSink *pActivitySink)
+        : mrSerial(rSerialBus), mrRelays(rRelays), mrSystemState(rSystemState)
     {
         mpSerialUartCommandSink = std::make_unique<SerialUartCommandSink>(mrSerial);
         mpActionUartDispatcher = std::make_unique<ActionUartDispatcher>(*mpSerialUartCommandSink);
@@ -24,7 +24,7 @@ namespace controlSystem
     {
         ESP_LOGI(mspTag, "Action Processor received command: 0x%04X", response.command);
 
-        const auto powerState = indicators::getPowerLed().getState();
+        const auto powerState = mrSystemState.powerState.load();
         switch (ActionCommandRoutingPolicy::classify(response.command, powerState))
         {
         case ActionCommandRoute::None:
@@ -33,6 +33,7 @@ namespace controlSystem
         case ActionCommandRoute::PowerStateTransition:
             ESP_LOGI(mspTag, "Processing Power State Change Command");
             handleCommandPowerStateChange(response);
+            mrSystemState.powerState.store(indicators::getPowerLed().getState());
             return;
 
         case ActionCommandRoute::IgnoreWhileNotOn:

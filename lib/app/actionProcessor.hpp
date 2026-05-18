@@ -4,6 +4,7 @@
 #include "input/actions/actionsResponse.hpp"
 #include "app/ActionUartDispatcher.hpp"
 #include "app/SerialUartCommandSink.hpp"
+#include "app/SystemState.hpp"
 #include "esp_log.h"
 #include "power/powerState.hpp"
 #include "power/PowerStateTransitionHandler.hpp"
@@ -23,6 +24,7 @@ namespace controlSystem
     public:
         ActionProcessor(transport::uart::UartTransport &rSerialBus,
                         relays::StandardRelay &rRelays,
+                        SystemState &rSystemState,
                         IActivityStatusSink *pActivitySink = nullptr);
         void process(const actions::ActionResponse &response);
         const char *getCommandNameForPin(uint8_t pin);
@@ -47,6 +49,7 @@ namespace controlSystem
 
         transport::uart::UartTransport &mrSerial;
         relays::StandardRelay &mrRelays;
+        SystemState &mrSystemState;
 
         static constexpr const char *mspTag = "Action_Processor";
     };
