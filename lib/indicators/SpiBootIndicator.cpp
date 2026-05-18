@@ -39,13 +39,19 @@ namespace indicators
     void SpiBootIndicator::startTask()
     {
         mStop = false;
-        xTaskCreate(
+        if (xTaskCreate(
             flashTask,
             "spi_boot_ind",
             4096,
             this,
             tskIDLE_PRIORITY + 1,
-            &mTask);
+            &mTask) != pdPASS)
+        {
+            mTask = nullptr;
+            mStop = true;
+            mState = State::Idle;
+            ESP_LOGE(kLogTag, "Failed to create SPI boot indicator task");
+        }
     }
 
     // -------------------------------------------------------------------------

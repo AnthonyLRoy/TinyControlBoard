@@ -17,7 +17,11 @@ void StandardRelay::init(gpio_num_t pinRelay)
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;     // Disable pull-up
 
     // Apply the configuration
-    gpio_config(&io_conf);
+    const esp_err_t err = gpio_config(&io_conf);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to configure relay GPIO %d (err=0x%x)", pinRelay, err);
+    }
 }
 
 void StandardRelay::setRelayState(gpio_num_t relayPin, bool state)

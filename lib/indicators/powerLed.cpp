@@ -27,6 +27,7 @@ PowerLed::~PowerLed()
 void PowerLed::init()
 {
     ESP_LOGI(kLogTag, "Initializing PowerLed hardware");
+    mStarted = false;
 
     // LEDC timer
     ledc_timer_config_t timer = {};
@@ -35,7 +36,12 @@ void PowerLed::init()
     timer.timer_num = LEDC_TIMER_1;
     timer.freq_hz = LEDC_FREQUENCY;
     timer.clk_cfg = LEDC_AUTO_CLK;
-    ledc_timer_config(&timer);
+    esp_err_t err = ledc_timer_config(&timer);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to configure LEDC timer (err=0x%x)", err);
+        return;
+    }
 
     // Monitor  LED
     ledc_channel_config_t activeCfg = {};
@@ -45,7 +51,12 @@ void PowerLed::init()
     activeCfg.speed_mode = LEDC_MODE;
     activeCfg.hpoint = 0;
     activeCfg.timer_sel = LEDC_TIMER;
-    ledc_channel_config(&activeCfg);
+    err = ledc_channel_config(&activeCfg);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to configure active LED channel (err=0x%x)", err);
+        return;
+    }
 
     // Standby LED
     ledc_channel_config_t standbyCfg = {};
@@ -55,7 +66,12 @@ void PowerLed::init()
     standbyCfg.speed_mode = LEDC_MODE;
     standbyCfg.hpoint = 0;
     standbyCfg.timer_sel = LEDC_TIMER;
-    ledc_channel_config(&standbyCfg);
+    err = ledc_channel_config(&standbyCfg);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to configure standby LED channel (err=0x%x)", err);
+        return;
+    }
 
     // Init PWM wrappers
     mActiveLed.init(timer, activeCfg);
@@ -68,8 +84,21 @@ void PowerLed::init()
     args.dispatch_method = ESP_TIMER_TASK;
     args.name = "power_led_update";
 
-    ESP_ERROR_CHECK(esp_timer_create(&args, &mpUpdateTimer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(mpUpdateTimer, 50 * 1000)); // 50 ms
+    err = esp_timer_create(&args, &mpUpdateTimer);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to create PowerLed timer (err=0x%x)", err);
+        return;
+    }
+
+    err = esp_timer_start_periodic(mpUpdateTimer, 50 * 1000);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to start PowerLed timer (err=0x%x)", err);
+        return;
+    }
+
+    mStarted = true;
 
   
 }
@@ -93,6 +122,12 @@ void PowerLed::setBrightness(int brightness)
 
 void PowerLed::setState(ControlBoardPowerState state)
 {
+    if (!mStarted)
+    {
+        ESP_LOGW(kLogTag, "Ignoring setState because PowerLed is not initialized");
+        return;
+    }
+
     mCurrentPowerState = state;
     mActiveFlash = false;
     mStandbyFlash = false;
@@ -160,6 +195,11 @@ void PowerLed::setState(ControlBoardPowerState state)
 
 void PowerLed::update()
 {
+    if (!mStarted)
+    {
+        return;
+    }
+
     const uint32_t flashPeriod = 300; // ms
     uint64_t now = esp_timer_get_time() / 1000;
 

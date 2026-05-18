@@ -26,6 +26,11 @@ esp_err_t McpInputHandler::begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intP
     ESP_RETURN_ON_ERROR(initInterruptPin(), kLogTag, "Interrupt pin setup failed");
 
     createInterruptTask();
+    if (mpInterruptTaskHandle == nullptr)
+    {
+        ESP_LOGE(kLogTag, "Failed to create MCP interrupt task");
+        return ESP_ERR_NO_MEM;
+    }
     clearInitialInterrupts();
 
     ESP_LOGI(kLogTag, "MCP23018 initialized successfully");
@@ -118,14 +123,18 @@ esp_err_t McpInputHandler::initInterruptPin() {
     esp_err_t isr_err = gpio_install_isr_service(0);
     if (isr_err != ESP_OK && isr_err != ESP_ERR_INVALID_STATE) return isr_err;
 
-    gpio_isr_handler_add(mInterruptPin, McpInputHandler::gpioIsr, this);
+    esp_err_t add_err = gpio_isr_handler_add(mInterruptPin, McpInputHandler::gpioIsr, this);
+    if (add_err != ESP_OK) return add_err;
     return ESP_OK;
 }
 
 void McpInputHandler::createInterruptTask() {
-    xTaskCreate([](void *arg) {
+    if (xTaskCreate([](void *arg) {
         static_cast<McpInputHandler*>(arg)->runInterruptTaskLoop();
-    }, "mcp_int_task", 4096, this, 10, &mpInterruptTaskHandle);
+    }, "mcp_int_task", 4096, this, 10, &mpInterruptTaskHandle) != pdPASS) {
+        mpInterruptTaskHandle = nullptr;
+        ESP_LOGE(kLogTag, "xTaskCreate failed for MCP interrupt task");
+    }
 }
 
 void McpInputHandler::clearInitialInterrupts() {
@@ -136,8 +145,11 @@ void McpInputHandler::clearInitialInterrupts() {
 void IRAM_ATTR McpInputHandler::gpioIsr(void *pArg) {
     auto *pSelf = static_cast<McpInputHandler*>(pArg);
     BaseType_t higherPriorityWoken = pdFALSE;
-    vTaskNotifyGiveFromISR(pSelf->mpInterruptTaskHandle, &higherPriorityWoken);
-    portYIELD_FROM_ISR(higherPriorityWoken);
+    if (pSelf->mpInterruptTaskHandle)
+    {
+        vTaskNotifyGiveFromISR(pSelf->mpInterruptTaskHandle, &higherPriorityWoken);
+        portYIELD_FROM_ISR(higherPriorityWoken);
+    }
 }
 
 void McpInputHandler::runInterruptTaskLoop() {

@@ -66,23 +66,33 @@ bool UartTransport::initUart(uart_port_t uartNum,
     io_conf.pin_bit_mask = (1ULL << PIN_RPI_DATA_READY);
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    gpio_config(&io_conf);
+    esp_err_t ret = gpio_config(&io_conf);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to configure RPi data-ready input (err=0x%x)", ret);
+        return false;
+    }
 
     if (!mInitialized)
     {
-        xTaskCreate([](void *arg)
-                    { static_cast<UartTransport *>(arg)->runUartRxTask(); },
-                    "uart_rx_task",
-                    kUartRxTaskStackSize,
-                    this,
-                    kUartRxTaskPriority,
-                    &this->mpTaskHandle);
+        if (xTaskCreate([](void *arg)
+                        { static_cast<UartTransport *>(arg)->runUartRxTask(); },
+                        "uart_rx_task",
+                        kUartRxTaskStackSize,
+                        this,
+                        kUartRxTaskPriority,
+                        &this->mpTaskHandle) != pdPASS)
+        {
+            mpTaskHandle = nullptr;
+            ESP_LOGE(kLogTag, "Failed to create UART RX task");
+            return false;
+        }
     }
 
     static bool sIsrServiceInstalled = false;
     if (!sIsrServiceInstalled)
     {
-        esp_err_t ret = gpio_install_isr_service(0);
+        ret = gpio_install_isr_service(0);
         if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
         {
             ESP_LOGE(kLogTag, "Failed to install ISR service: %d", ret);
@@ -99,7 +109,12 @@ bool UartTransport::initUart(uart_port_t uartNum,
     io_conf_out.pull_up_en = GPIO_PULLUP_DISABLE;
     io_conf_out.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf_out.intr_type = GPIO_INTR_DISABLE;
-    gpio_config(&io_conf_out);
+    ret = gpio_config(&io_conf_out);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to configure ESP32 data-ready output (err=0x%x)", ret);
+        return false;
+    }
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
 
     ESP_ERROR_CHECK(uart_driver_install(mUartNumber, bufferSize * 2, 0, 0, nullptr, 0));
@@ -119,7 +134,12 @@ void UartTransport::initDataReadyPin()
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE};
-    gpio_config(&io_conf);
+    const esp_err_t err = gpio_config(&io_conf);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(kLogTag, "Failed to initialize data-ready pin (err=0x%x)", err);
+        return;
+    }
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
 }
 
@@ -233,7 +253,7 @@ void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
 
     if (mpHeartbeatTaskHandle == nullptr)
     {
-        xTaskCreate(
+        if (xTaskCreate(
             [](void *arg)
             {
                 UartTransport *pSelf = static_cast<UartTransport *>(arg);
@@ -266,7 +286,11 @@ void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
             kHeartbeatTaskStackSize,
             this,
             kHeartbeatTaskPriority,
-            &mpHeartbeatTaskHandle);
+            &mpHeartbeatTaskHandle) != pdPASS)
+        {
+            mpHeartbeatTaskHandle = nullptr;
+            ESP_LOGE(kLogTag, "Failed to create heartbeat monitor task");
+        }
     }
 }
 

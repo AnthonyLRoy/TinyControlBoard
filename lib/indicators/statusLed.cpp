@@ -77,10 +77,31 @@ void StatusLed::init()
     }
 
     mpStatusQueue = xQueueCreate(1, sizeof(ControlBoardWorkingStatus));
+    if (!mpStatusQueue)
+    {
+        ESP_LOGE(kLogTag, "Failed to create status queue");
+        return;
+    }
 
     mpBlinkTimer = xTimerCreate("BlinkTimer", pdMS_TO_TICKS(BLINK_TIMER_PERIOD_MS), pdTRUE, this, handleTimer);
+    if (!mpBlinkTimer)
+    {
+        ESP_LOGE(kLogTag, "Failed to create blink timer");
+        vQueueDelete(mpStatusQueue);
+        mpStatusQueue = nullptr;
+        return;
+    }
 
-    xTaskCreate(runLedTask, "LED_Task", LED_TASK_STACK_SIZE, this, LED_TASK_PRIORITY, &mpLedTaskHandle);
+    if (xTaskCreate(runLedTask, "LED_Task", LED_TASK_STACK_SIZE, this, LED_TASK_PRIORITY, &mpLedTaskHandle) != pdPASS)
+    {
+        ESP_LOGE(kLogTag, "Failed to create LED task");
+        xTimerDelete(mpBlinkTimer, 0);
+        mpBlinkTimer = nullptr;
+        vQueueDelete(mpStatusQueue);
+        mpStatusQueue = nullptr;
+        mpLedTaskHandle = nullptr;
+        return;
+    }
 }
 
 void StatusLed::setStatus(ControlBoardWorkingStatus newStatus)
@@ -180,7 +201,11 @@ void StatusLed::startBreatheEffect()
     {
         return;
     }
-    xTaskCreate(runBreatheTask, "BreatheTask", 2048, this, 5, &mpBreatheTaskHandle);
+    if (xTaskCreate(runBreatheTask, "BreatheTask", 2048, this, 5, &mpBreatheTaskHandle) != pdPASS)
+    {
+        mpBreatheTaskHandle = nullptr;
+        ESP_LOGE(kLogTag, "Failed to create breathe task");
+    }
 }
 
 void StatusLed::stopBreatheEffect()
