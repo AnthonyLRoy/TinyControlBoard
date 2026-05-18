@@ -80,21 +80,28 @@ namespace controlSystem
             ESP_LOGE(spTag, "Failed to create button event queue");
             return false;
         }
-        xTaskCreate(actionTask, "action_task", kActionTaskStackSize, this, kActionTaskPriority, &mActionTaskHandle);
+        if (xTaskCreate(actionTask, "action_task", kActionTaskStackSize, this, kActionTaskPriority, &mActionTaskHandle) != pdPASS)
+        {
+            ESP_LOGE(spTag, "Failed to create action task");
+            vQueueDelete(mButtonEventQueue);
+            mButtonEventQueue = nullptr;
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
+        }
 
         mBootstrap.configureMcpCallbacks(
             mMcpHandler,
             [this](uint8_t pin) {
                 const ButtonEvent event{ButtonEventType::Press, pin, 0};
-                xQueueSend(mButtonEventQueue, &event, 0);
+                enqueueButtonEvent(event, "press");
             },
             [this](uint8_t pin) {
                 const ButtonEvent event{ButtonEventType::Release, pin, 0};
-                xQueueSend(mButtonEventQueue, &event, 0);
+                enqueueButtonEvent(event, "release");
             },
             [this](int movement) {
                 const ButtonEvent event{ButtonEventType::Rotary, 0, static_cast<int8_t>(movement)};
-                xQueueSend(mButtonEventQueue, &event, 0);
+                enqueueButtonEvent(event, "rotary");
             });
 
         if (!mBootstrap.setupSerial(*mpSerialHandler))
@@ -130,6 +137,28 @@ namespace controlSystem
         mpHeartbeatRouter.reset();
         mpInputDispatcher.reset();
         mpResponseProcessor.reset();
+    }
+
+    bool ControlBoard::enqueueButtonEvent(const ButtonEvent &event, const char *pEventName)
+    {
+        if (!mButtonEventQueue)
+        {
+            ESP_LOGW(spTag, "Dropping %s event because queue is not initialized", pEventName);
+            return false;
+        }
+
+        if (xQueueSend(mButtonEventQueue, &event, 0) == pdTRUE)
+        {
+            return true;
+        }
+
+        ++mDroppedButtonEvents;
+        if ((mDroppedButtonEvents % 16U) == 1U)
+        {
+            ESP_LOGW(spTag, "Button event queue full, dropped %lu events (latest=%s)",
+                     static_cast<unsigned long>(mDroppedButtonEvents), pEventName);
+        }
+        return false;
     }
 
     void ControlBoard::actionTask(void *pvParam)
@@ -209,7 +238,11 @@ namespace controlSystem
 
         if (mpResponseProcessor)
         {
-            ESP_LOGI(spTag, "Processing UART message through action processor (cmd=0x%04X)", rMsg.commandId);
+            if (!mpResponseProcessor->handleInboundUartMessage(rMsg))
+            {
+                ESP_LOGI(spTag, "No inbound handler implemented for UART message (cmd=0x%04X, type=%u)",
+                         rMsg.commandId, rMsg.msgType);
+            }
         }
     }
 }

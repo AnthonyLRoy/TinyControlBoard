@@ -37,8 +37,9 @@ namespace controlSystem
         void setButtonLed(uint8_t pin, bool enabled) override;
         void handleHeartbeatReceived() override;
         void handleSerialRxMessage(const UartMessage &rMsg);
+        bool enqueueButtonEvent(const ButtonEvent &event, const char *pEventName);
 
-        static constexpr uint8_t kButtonQueueDepth = 8;
+        static constexpr uint8_t kButtonQueueDepth = 16;
         static void actionTask(void *pvParam);
 
         transport::uart::UartTransport *mpSerialHandler = nullptr;
@@ -56,5 +57,6 @@ namespace controlSystem
         SystemState mSystemState;
         QueueHandle_t mButtonEventQueue = nullptr;
         TaskHandle_t mActionTaskHandle = nullptr;
+        uint32_t mDroppedButtonEvents = 0;
     };
 }

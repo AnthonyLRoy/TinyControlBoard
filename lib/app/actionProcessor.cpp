@@ -65,6 +65,15 @@ namespace controlSystem
         }
     }
 
+    bool ActionProcessor::handleInboundUartMessage(const UartMessage &message)
+    {
+        // Scaffold only: protocol-specific inbound handling will be added in a
+        // dedicated pass once ACK/STATUS semantics are finalized.
+        ESP_LOGI(mspTag, "Inbound UART message received (type=%u cmd=0x%04X seq=%u)",
+                 message.msgType, message.commandId, message.sequence);
+        return false;
+    }
+
     bool ActionProcessor::handleSystemCommand(const actions::ActionResponse &response)
     {
         if (response.command == CMD_SYS_RPI_SHUTDOWN)

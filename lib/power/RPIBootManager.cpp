@@ -50,6 +50,11 @@ namespace controlSystem
             return false;
         }
 
+        // Start each wait from a clean state so stale events from previous cycles
+        // cannot satisfy the current lifecycle transition.
+        const EventBits_t clearMask = static_cast<EventBits_t>(msRpiHeartbeatBit | msRpiShutdownBit);
+        xEventGroupClearBits(mpRpiBootEventGroup, clearMask);
+
         ESP_LOGI(mspTag, "Waiting for RPI heartbeat (timeout: %" PRIu32 " ms)...", timeoutMs);
 
         EventBits_t bits = xEventGroupWaitBits(
@@ -75,6 +80,9 @@ namespace controlSystem
             ESP_LOGE(mspTag, "Event group not initialized");
             return false;
         }
+
+        const EventBits_t clearMask = static_cast<EventBits_t>(msRpiHeartbeatBit | msRpiShutdownBit);
+        xEventGroupClearBits(mpRpiBootEventGroup, clearMask);
 
         ESP_LOGI(mspTag, "Waiting for RPI shutdown confirmation (timeout: %" PRIu32 " ms)...", timeoutMs);
 

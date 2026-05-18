@@ -49,19 +49,24 @@ namespace controlSystem
             if (booted)
             {
                 indicators::getSpiBootIndicator().notifySuccess();
-            }
-            else
-            {
-                indicators::getSpiBootIndicator().notifyFailure();
+                indicators::getPowerLed().setState(ControlBoardPowerState::ON);
+                indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
+                if (mpActivitySink)
+                    mpActivitySink->setActivityStatus(ControlBoardWorkingStatus::Active);
+                else
+                    indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);
+                return true;
             }
 
-            indicators::getPowerLed().setState(ControlBoardPowerState::ON);
-            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
+            indicators::getSpiBootIndicator().notifyFailure();
+            indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
+            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
             if (mpActivitySink)
-                mpActivitySink->setActivityStatus(ControlBoardWorkingStatus::Active);
+                mpActivitySink->setActivityStatus(ControlBoardWorkingStatus::sleeping);
             else
-                indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);
-            return booted;
+                indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            ESP_LOGW(mspTag, "Power ON sequence aborted because no RPI heartbeat was received");
+            return false;
         }
 
         ESP_LOGI(mspTag, "Release Time MS: %" PRIu16 "", response.releaseTimeMillis);
