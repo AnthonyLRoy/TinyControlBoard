@@ -6,6 +6,7 @@
 #include "freertos/timers.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include <atomic>
 
 namespace indicators {
 
@@ -30,6 +31,8 @@ private:
     QueueHandle_t mpStatusQueue = nullptr;
     TimerHandle_t mpBlinkTimer = nullptr;
     TaskHandle_t mpBreatheTaskHandle = nullptr;
+    std::atomic<bool> mStopLedTask{false};
+    std::atomic<bool> mStopBreatheTask{false};
 
     TaskHandle_t mpLedTaskHandle = nullptr;
     static void runLedTask(void *pParam);

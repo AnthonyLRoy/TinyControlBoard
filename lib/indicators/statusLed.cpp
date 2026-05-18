@@ -38,18 +38,42 @@ StatusLed::StatusLed(gpio_num_t pin,
 
 StatusLed::~StatusLed()
 {
+    mStopLedTask.store(true, std::memory_order_release);
+    mStopBreatheTask.store(true, std::memory_order_release);
+
+    if (mpStatusQueue)
+    {
+        const ControlBoardWorkingStatus wakeStatus = mCurrentStatus;
+        xQueueOverwrite(mpStatusQueue, &wakeStatus);
+    }
+
+    if (mpLedTaskHandle && xTaskGetSchedulerState() == taskSCHEDULER_RUNNING)
+    {
+        for (int i = 0; mpLedTaskHandle && i < 50; ++i)
+        {
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+    }
     if (mpLedTaskHandle)
+    {
+        ESP_LOGW(kLogTag, "LED task did not stop in time; forcing delete");
         vTaskDelete(mpLedTaskHandle);
+        mpLedTaskHandle = nullptr;
+    }
+
+    stopBreatheEffect();
+
     if (mpBlinkTimer)
         xTimerDelete(mpBlinkTimer, portMAX_DELAY);
-    if (mpBreatheTaskHandle)
-        vTaskDelete(mpBreatheTaskHandle);
     if (mpStatusQueue)
         vQueueDelete(mpStatusQueue);
 }
 
 void StatusLed::init()
 {
+    mStopLedTask.store(false, std::memory_order_release);
+    mStopBreatheTask.store(false, std::memory_order_release);
+
     ledc_timer_config_t timerConfig = {
         .speed_mode = LEDC_LOW_SPEED_MODE,
         .duty_resolution = LEDC_TIMER_13_BIT,
@@ -134,10 +158,15 @@ void StatusLed::runLedTask(void *pParam)
 
     ControlBoardWorkingStatus receivedStatus;
     ESP_LOGI(kLogTag, "LED task started on pin %d", pSelf->mPin);
-    for (;;)
+    while (!pSelf->mStopLedTask.load(std::memory_order_acquire))
     {
-        if (xQueueReceive(pSelf->mpStatusQueue, &receivedStatus, portMAX_DELAY))
+        if (xQueueReceive(pSelf->mpStatusQueue, &receivedStatus, pdMS_TO_TICKS(100)))
         {
+            if (pSelf->mStopLedTask.load(std::memory_order_acquire))
+            {
+                break;
+            }
+
             pSelf->mCurrentStatus = receivedStatus;
             ESP_LOGI(kLogTag, "LED status updated to %d", static_cast<int>(receivedStatus));
             ESP_LOGI(kLogTag, "Handling status change for pin %d", pSelf->mPin);
@@ -171,6 +200,9 @@ void StatusLed::runLedTask(void *pParam)
             }
         }
     }
+
+    pSelf->mpLedTaskHandle = nullptr;
+    vTaskDelete(nullptr);
 }
 
 void StatusLed::updateDuty(uint32_t duty)
@@ -201,6 +233,7 @@ void StatusLed::startBreatheEffect()
     {
         return;
     }
+    mStopBreatheTask.store(false, std::memory_order_release);
     if (xTaskCreate(runBreatheTask, "BreatheTask", 2048, this, 5, &mpBreatheTaskHandle) != pdPASS)
     {
         mpBreatheTaskHandle = nullptr;
@@ -212,8 +245,20 @@ void StatusLed::stopBreatheEffect()
 {
     if (mpBreatheTaskHandle)
     {
-        vTaskDelete(mpBreatheTaskHandle);
-        mpBreatheTaskHandle = nullptr;
+        mStopBreatheTask.store(true, std::memory_order_release);
+        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING)
+        {
+            for (int i = 0; mpBreatheTaskHandle && i < 50; ++i)
+            {
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+        }
+        if (mpBreatheTaskHandle)
+        {
+            ESP_LOGW(kLogTag, "Breathe task did not stop in time; forcing delete");
+            vTaskDelete(mpBreatheTaskHandle);
+            mpBreatheTaskHandle = nullptr;
+        }
         updateDuty(0);
     }
 }
@@ -224,7 +269,7 @@ void StatusLed::runBreatheTask(void *pParameter)
     uint32_t duty = 0;
     bool increasing = true;
 
-    while (true)
+    while (!pSelf->mStopBreatheTask.load(std::memory_order_acquire))
     {
         pSelf->updateDuty(duty);
 
@@ -254,6 +299,10 @@ void StatusLed::runBreatheTask(void *pParameter)
         }
         vTaskDelay(pdMS_TO_TICKS(BREATHE_DELAY_MS));
     }
+
+    pSelf->mpBreatheTaskHandle = nullptr;
+    pSelf->updateDuty(0);
+    vTaskDelete(nullptr);
 }
 
 uint32_t StatusLed::getBlinkInterval(ControlBoardWorkingStatus status)

@@ -23,7 +23,7 @@ UartTransport &UartTransport::getInstance()
     return sInstance;
 }
 
-UartTransport::UartTransport() : mUartNumber(UART_NUM_0), mInitialized(false) {}
+UartTransport::UartTransport() : mUartNumber(UART_NUM_0) {}
 
 UartTransport::~UartTransport()
 {
@@ -73,8 +73,9 @@ bool UartTransport::initUart(uart_port_t uartNum,
         return false;
     }
 
-    if (!mInitialized)
+    if (!mInitialized.load(std::memory_order_acquire))
     {
+        mStopRxTask.store(false, std::memory_order_release);
         if (xTaskCreate([](void *arg)
                         { static_cast<UartTransport *>(arg)->runUartRxTask(); },
                         "uart_rx_task",
@@ -122,7 +123,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
     ESP_ERROR_CHECK(uart_set_pin(mUartNumber, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
     ESP_LOGI(kLogTag, "UART%d initialized at %d baud.", mUartNumber, baudRate);
-    mInitialized = true;
+    mInitialized.store(true, std::memory_order_release);
     return true;
 }
 
@@ -145,11 +146,32 @@ void UartTransport::initDataReadyPin()
 
 void UartTransport::deinitUart()
 {
-    if (mInitialized)
+    stopHeartbeatMonitor();
+
+    mStopRxTask.store(true, std::memory_order_release);
+    if (mpTaskHandle)
+    {
+        xTaskNotifyGive(mpTaskHandle);
+        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING)
+        {
+            for (int i = 0; mpTaskHandle && i < 50; ++i)
+            {
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+        }
+        if (mpTaskHandle)
+        {
+            ESP_LOGW(kLogTag, "UART RX task did not stop in time; forcing delete");
+            vTaskDelete(mpTaskHandle);
+            mpTaskHandle = nullptr;
+        }
+    }
+
+    if (mInitialized.load(std::memory_order_acquire))
     {
         uart_driver_delete(mUartNumber);
         ESP_LOGI(kLogTag, "UART%d deinitialized.", mUartNumber);
-        mInitialized = false;
+        mInitialized.store(false, std::memory_order_release);
     }
 }
 
@@ -172,7 +194,7 @@ void UartTransport::sendUartMessage(const char *pLogTag, UartMessage &rMessage)
 
 bool UartTransport::sendData(const uint8_t *pData, size_t len)
 {
-    if (!pData || len == 0 || !mInitialized)
+    if (!pData || len == 0 || !mInitialized.load(std::memory_order_acquire))
     {
         ESP_LOGW(kLogTag, "Invalid send attempt");
         return false;
@@ -215,7 +237,7 @@ void IRAM_ATTR UartTransport::gpioIsrHandler(void *pArg)
 
 void UartTransport::handleUartRx()
 {
-    if (mInitialized)
+    if (mInitialized.load(std::memory_order_acquire))
     {
         int receivedDataLength = uart_read_bytes(mUartNumber, mTmpBuffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
 
@@ -228,7 +250,7 @@ void UartTransport::handleUartRx()
             {
                 if (mRxCallback)
                 {
-                    mLastRxTimeUs = esp_timer_get_time();
+                    mLastRxTimeUs.store(esp_timer_get_time(), std::memory_order_relaxed);
                     mRxCallback(msg);
                 }
                 else
@@ -249,22 +271,28 @@ void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
 {
     mHeartbeatTimeoutMs = timeoutMs;
     mHeartbeatTimeoutCallback = onTimeout;
-    mLastRxTimeUs = esp_timer_get_time();
+    mLastRxTimeUs.store(esp_timer_get_time(), std::memory_order_relaxed);
 
     if (mpHeartbeatTaskHandle == nullptr)
     {
+        mStopHeartbeatTask.store(false, std::memory_order_release);
         if (xTaskCreate(
             [](void *arg)
             {
                 UartTransport *pSelf = static_cast<UartTransport *>(arg);
                 const TickType_t delay = pdMS_TO_TICKS(kHeartbeatCheckIntervalMs);
 
-                while (true)
+                while (!pSelf->mStopHeartbeatTask.load(std::memory_order_acquire))
                 {
                     vTaskDelay(delay);
 
+                    if (pSelf->mStopHeartbeatTask.load(std::memory_order_acquire))
+                    {
+                        break;
+                    }
+
                     uint64_t now = esp_timer_get_time();
-                    uint64_t last = pSelf->mLastRxTimeUs;
+                    uint64_t last = pSelf->mLastRxTimeUs.load(std::memory_order_relaxed);
 
                     if (last == 0)
                     {
@@ -278,9 +306,12 @@ void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs,
                         if (pSelf->mHeartbeatTimeoutCallback)
                             pSelf->mHeartbeatTimeoutCallback();
 
-                        pSelf->mLastRxTimeUs = now;
+                        pSelf->mLastRxTimeUs.store(now, std::memory_order_relaxed);
                     }
                 }
+
+                pSelf->mpHeartbeatTaskHandle = nullptr;
+                vTaskDelete(nullptr);
             },
             "heartbeat_task",
             kHeartbeatTaskStackSize,
@@ -298,18 +329,37 @@ void UartTransport::stopHeartbeatMonitor()
 {
     if (mpHeartbeatTaskHandle)
     {
-        vTaskDelete(mpHeartbeatTaskHandle);
-        mpHeartbeatTaskHandle = nullptr;
+        mStopHeartbeatTask.store(true, std::memory_order_release);
+        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING)
+        {
+            for (int i = 0; mpHeartbeatTaskHandle && i < 50; ++i)
+            {
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+        }
+        if (mpHeartbeatTaskHandle)
+        {
+            ESP_LOGW(kLogTag, "Heartbeat task did not stop in time; forcing delete");
+            vTaskDelete(mpHeartbeatTaskHandle);
+            mpHeartbeatTaskHandle = nullptr;
+        }
     }
 }
 
 void UartTransport::runUartRxTask()
 {
-    while (true)
+    while (!mStopRxTask.load(std::memory_order_acquire))
     {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(100));
+        if (mStopRxTask.load(std::memory_order_acquire))
+        {
+            break;
+        }
         handleUartRx();
     }
+
+    mpTaskHandle = nullptr;
+    vTaskDelete(nullptr);
 }
 
 void UartTransport::setRxCallback(std::function<void(const UartMessage &)> callback)

@@ -7,6 +7,7 @@
 #include "protocol/uartProtocol.hpp"
 #include "transport/uart/uartReceiver.hpp"
 
+#include <atomic>
 #include <functional>
 
 namespace transport::uart
@@ -35,7 +36,7 @@ namespace transport::uart
         void sendUartMessage(const char *pLogTag, UartMessage &rMessage);
         void setRxCallback(std::function<void(const UartMessage &)> callback);
 
-        uint64_t getLastRxTimeUs() const { return mLastRxTimeUs; }
+        uint64_t getLastRxTimeUs() const { return mLastRxTimeUs.load(std::memory_order_relaxed); }
 
         void startHeartbeatMonitor(uint32_t timeoutMs,
                                    std::function<void()> onTimeout);
@@ -46,13 +47,15 @@ namespace transport::uart
         UartTransport();
         ~UartTransport();
 
-        volatile uint64_t mLastRxTimeUs = 0;
+        std::atomic<uint64_t> mLastRxTimeUs{0};
         uint32_t mHeartbeatTimeoutMs = 0;
         TaskHandle_t mpHeartbeatTaskHandle = nullptr;
         std::function<void()> mHeartbeatTimeoutCallback = nullptr;
 
         uart_port_t mUartNumber;
-        bool mInitialized;
+        std::atomic<bool> mInitialized{false};
+        std::atomic<bool> mStopRxTask{false};
+        std::atomic<bool> mStopHeartbeatTask{false};
         TaskHandle_t mpTaskHandle = nullptr;
 
         static constexpr size_t TMP_BUFFER_SIZE = 64;

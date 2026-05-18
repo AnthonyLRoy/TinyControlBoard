@@ -2,6 +2,7 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <atomic>
 #include <cstdint>
 
 namespace indicators
@@ -33,8 +34,8 @@ namespace indicators
         static constexpr uint32_t kFailedHalfPeriodMs = 150;
         static constexpr const char *kLogTag = "SpiBootIndicator";
 
-        volatile State mState   = State::Idle;
-        volatile bool  mStop    = false;
+        std::atomic<State> mState{State::Idle};
+        std::atomic<bool> mStop{false};
         TaskHandle_t   mTask    = nullptr;
 
         void startTask();
