@@ -279,7 +279,7 @@ void test_control_board_button_press_dispatches_action_and_led()
     actionMap[controlSystem::controlBoardButtons::k_playPause] = {&action, controlSystem::LedPolicy::Momentary};
 
     controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_playPause);
 
     expect_equal(1, action.callCount, "Press should execute mapped action exactly once");
@@ -303,7 +303,7 @@ void test_control_board_momentary_button_release_turns_led_off()
     actionMap[controlSystem::controlBoardButtons::k_playPause] = {&action, controlSystem::LedPolicy::Momentary};
 
     controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
     dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_playPause);
 
     expect_equal(1, action.callCount, "Release should execute mapped action exactly once");
@@ -326,7 +326,7 @@ void test_control_board_toggle_button_press_flips_led_state()
     actionMap[controlSystem::controlBoardButtons::k_cover] = {&action, controlSystem::LedPolicy::Toggle};
 
     controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
 
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
     expect_equal(1, indicators.ledCallCount, "First press should call setButtonLed once");
@@ -347,7 +347,7 @@ void test_control_board_out_of_range_press_keeps_existing_status_ordering()
     FakeIndicators indicators;
 
     controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_count);
 
     expect_equal(0, responseSink.callCount, "Out-of-range press should not forward a response");
@@ -366,7 +366,7 @@ void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
     actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
 
     controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, &responseSink, &indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
     dispatcher.handleRotaryMovement(1);
 
     expect_equal(1, action.callCount, "Rotary movement should execute the shared rotary action once");
@@ -429,7 +429,7 @@ void test_action_uart_dispatcher_routes_simple_command()
     expect_true(handled, "Simple UART command should be handled");
     expect_equal(1, uartSink.commandCount, "Simple UART command should send one command");
     expect_equal(0, uartSink.messageCount, "Simple UART command should not send a structured message");
-    expect_equal(std::string("PLAYPAUSE"), uartSink.lastLogTag, "Simple UART command should use configured log tag");
+    expect_equal(std::string("Play_Pause"), uartSink.lastLogTag, "Simple UART command should use configured log tag");
     expect_equal(static_cast<uint32_t>(CMD_PLAY_PAUSE), uartSink.lastCommandId, "Simple UART command should forward command id");
 }
 
@@ -444,7 +444,7 @@ void test_action_uart_dispatcher_routes_cover_view_message()
     expect_true(handled, "Cover view command should be handled");
     expect_equal(0, uartSink.commandCount, "Cover view should not use simple command path");
     expect_equal(1, uartSink.messageCount, "Cover view should send one structured message");
-    expect_equal(std::string("COVERVIEW"), uartSink.lastLogTag, "Cover view should use COVERVIEW log tag");
+    expect_equal(std::string("Cover_View"), uartSink.lastLogTag, "Cover view should use Cover_View log tag");
     expect_equal(static_cast<uint16_t>(CMD_TOGGLE_COVER_VIEW), uartSink.lastMessage.commandId,
                  "Cover view should normalize to toggle cover command");
     expect_equal(static_cast<uint16_t>(1), uartSink.lastMessage.params[0],
@@ -462,7 +462,7 @@ void test_action_uart_dispatcher_routes_meter_message()
     expect_true(handled, "Meter command should be handled");
     expect_equal(0, uartSink.commandCount, "Meter command should not use simple command path");
     expect_equal(1, uartSink.messageCount, "Meter command should send one structured message");
-    expect_equal(std::string("METER"), uartSink.lastLogTag, "Meter command should use METER log tag");
+    expect_equal(std::string("Meter"), uartSink.lastLogTag, "Meter command should use Meter log tag");
     expect_equal(static_cast<uint16_t>(CMD_TOGGLE_METER), uartSink.lastMessage.commandId,
                  "Meter command should normalize to toggle meter command");
     expect_equal(static_cast<uint16_t>(0), uartSink.lastMessage.params[0],
@@ -480,7 +480,7 @@ void test_action_uart_dispatcher_routes_meter_on_message()
     expect_true(handled, "Meter ON command should be handled");
     expect_equal(0, uartSink.commandCount, "Meter ON command should not use simple command path");
     expect_equal(1, uartSink.messageCount, "Meter ON command should send one structured message");
-    expect_equal(std::string("METER"), uartSink.lastLogTag, "Meter ON command should use METER log tag");
+    expect_equal(std::string("Meter"), uartSink.lastLogTag, "Meter ON command should use Meter log tag");
     expect_equal(static_cast<uint16_t>(CMD_TOGGLE_METER), uartSink.lastMessage.commandId,
                  "Meter ON command should normalize to toggle meter command");
     expect_equal(static_cast<uint16_t>(1), uartSink.lastMessage.params[0],
@@ -499,7 +499,7 @@ void test_action_uart_dispatcher_routes_rotary_message()
     expect_true(handled, "Rotary command should be handled");
     expect_equal(0, uartSink.commandCount, "Rotary command should not use simple command path");
     expect_equal(1, uartSink.messageCount, "Rotary command should send one structured message");
-    expect_equal(std::string("ROTARY"), uartSink.lastLogTag, "Rotary command should use ROTARY log tag");
+    expect_equal(std::string("Rotary"), uartSink.lastLogTag, "Rotary command should use Rotary log tag");
     expect_equal(static_cast<uint16_t>(CMD_ROTARY_ACTION), uartSink.lastMessage.commandId,
                  "Rotary command should preserve command id");
     expect_equal(static_cast<uint16_t>(1), uartSink.lastMessage.params[0],
@@ -584,6 +584,55 @@ void test_action_command_routing_policy_classifies_on_state_handlers()
                     controlSystem::ActionCommandRoute::UartDispatch,
                 "Remaining ON-state commands should fall through to UART dispatch");
 }
+
+void test_control_board_rotary_negative_direction_passes_false_to_action()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction action(makeResponse(CMD_ROTARY_ACTION));
+    actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
+
+    controlSystem::SystemState testState{};
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    dispatcher.handleRotaryMovement(-1);
+
+    expect_equal(1, action.callCount, "Negative rotary movement should execute the shared action once");
+    expect_true(!action.lastPressedArg, "Negative rotary direction should pass false to the action");
+    expect_equal(1, responseSink.callCount, "Negative rotary movement should forward ActionResponse");
+}
+
+void test_control_board_in_range_unmapped_button_press_does_not_dispatch_response()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+
+    controlSystem::SystemState testState{};
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_playPause);
+
+    expect_equal(0, responseSink.callCount, "In-range unmapped press should not dispatch a response");
+    expect_equal(0, indicators.ledCallCount, "In-range unmapped press should not change any LED");
+    expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(),
+                 "In-range unmapped press should still set doingWork status");
+}
+
+void test_control_board_in_range_unmapped_button_release_does_not_dispatch_response()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+
+    controlSystem::SystemState testState{};
+    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_playPause);
+
+    expect_equal(0, responseSink.callCount, "In-range unmapped release should not dispatch a response");
+    expect_equal(0, indicators.ledCallCount, "In-range unmapped release should not change any LED");
+    expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(),
+                 "In-range unmapped release should still set background status");
+}
 } // namespace
 
 int main()
@@ -616,6 +665,9 @@ int main()
         {"test_power_state_transition_policy_returns_none_for_non_on_intermediate_states", test_power_state_transition_policy_returns_none_for_non_on_intermediate_states},
         {"test_action_command_routing_policy_handles_pre_on_routes", test_action_command_routing_policy_handles_pre_on_routes},
         {"test_action_command_routing_policy_classifies_on_state_handlers", test_action_command_routing_policy_classifies_on_state_handlers},
+        {"test_control_board_rotary_negative_direction_passes_false_to_action", test_control_board_rotary_negative_direction_passes_false_to_action},
+        {"test_control_board_in_range_unmapped_button_press_does_not_dispatch_response", test_control_board_in_range_unmapped_button_press_does_not_dispatch_response},
+        {"test_control_board_in_range_unmapped_button_release_does_not_dispatch_response", test_control_board_in_range_unmapped_button_release_does_not_dispatch_response},
     };
 
     int failures = 0;

@@ -1,5 +1,7 @@
-//this code is based on the mcphandler code from  the the internet but modified to fit the needs of this project. 
-//It is used to handle the input from the mcp23018 io expander and convert it to button presses and rotary encoder movements.
+//this code is based on the mcphandler code from internet  modified to fit the needs of this project. 
+//Like the rotary encoder handling and the button handling. It is used to handle the input from the mcp23018 io expander and convert 
+//it to button presses and rotary encoder movements.  
+// I did create my own implementation but this is better than mine ,
 
 
 

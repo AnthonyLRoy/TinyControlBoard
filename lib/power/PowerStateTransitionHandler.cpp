@@ -1,5 +1,6 @@
 #include "power/PowerStateTransitionHandler.hpp"
 
+#include "board/boardConfig.hpp"
 #include "ledManager.hpp"
 #include "powerLed.hpp"
 #include "power/PowerStateTransitionPolicy.hpp"
@@ -7,15 +8,6 @@
 
 namespace controlSystem
 {
-    namespace
-    {
-        constexpr uint32_t POWER_SETTLE_DELAY_MS = 1500;
-        constexpr uint32_t SCREEN_ON_DELAY_MS = 1000;
-        constexpr uint32_t RPI_BOOT_TIMEOUT_MS = 60000;
-        constexpr uint32_t RPI_SHUTDOWN_TIMEOUT_MS = 60000;
-        constexpr uint32_t RPI_SHUTDOWN_SETTLE_DELAY_MS = 500;
-        constexpr uint32_t SCREEN_POWER_OFF_DELAY_MS = 5000;
-    }
 
     PowerStateTransitionHandler::PowerStateTransitionHandler(transport::uart::UartTransport &rSerial,
                                                              RelayController &rRelayController,
@@ -39,13 +31,13 @@ namespace controlSystem
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::TURNING_ON);
             ESP_LOGI(k_logTag, "Initiating Power ON sequence");
 
-            mr_relayController.setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, SCREEN_ON_DELAY_MS);
-            mr_relayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, true, POWER_SETTLE_DELAY_MS);
-            mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, true, POWER_SETTLE_DELAY_MS);
-            mr_relayController.setRelayWithDelay(PIN_RELAY_RPI_POWER, true, SCREEN_ON_DELAY_MS);
+            mr_relayController.setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, board::timing::k_screenOnDelayMs);
+            mr_relayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, true, board::timing::k_powerSettleDelayMs);
+            mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, true, board::timing::k_powerSettleDelayMs);
+            mr_relayController.setRelayWithDelay(PIN_RELAY_RPI_POWER, true, board::timing::k_screenOnDelayMs);
 
             indicators::getSpiBootIndicator().startWaiting();
-            const bool booted = mr_rpiBootManager.waitForRpiToBoot(RPI_BOOT_TIMEOUT_MS);
+            const bool booted = mr_rpiBootManager.waitForRpiToBoot(board::timing::k_rpiBootTimeoutMs);
             if (booted)
             {
                 indicators::getSpiBootIndicator().notifySuccess();
@@ -77,11 +69,11 @@ namespace controlSystem
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::GOING_TO_SLEEP);
 
             mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
-            mr_rpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
+            mr_rpiBootManager.waitForRpiShutdown(board::timing::k_rpiShutdownTimeoutMs);
             mr_relayController.shutdownRpi(true);
-            vTaskDelay(pdMS_TO_TICKS(RPI_SHUTDOWN_SETTLE_DELAY_MS));
+            vTaskDelay(pdMS_TO_TICKS(board::timing::k_rpiShutdownSettleDelayMs));
             mr_relayController.shutdownScreen(false);
-            vTaskDelay(pdMS_TO_TICKS(SCREEN_POWER_OFF_DELAY_MS));
+            vTaskDelay(pdMS_TO_TICKS(board::timing::k_screenPowerOffDelayMs));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
             if (mp_activitySink)
@@ -97,9 +89,9 @@ namespace controlSystem
             indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::GOING_TO_SLEEP);
             mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
-            mr_rpiBootManager.waitForRpiShutdown(RPI_SHUTDOWN_TIMEOUT_MS);
+            mr_rpiBootManager.waitForRpiShutdown(board::timing::k_rpiShutdownTimeoutMs);
             mr_relayController.shutdownRpi(true);
-            vTaskDelay(pdMS_TO_TICKS(RPI_SHUTDOWN_SETTLE_DELAY_MS));
+            vTaskDelay(pdMS_TO_TICKS(board::timing::k_rpiShutdownSettleDelayMs));
             mr_relayController.shutdownScreen(false);
             mr_relayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);

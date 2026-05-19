@@ -12,6 +12,12 @@ namespace board {
 namespace timing {
 inline constexpr uint32_t k_heartbeatTimeoutMs = 30000;
 inline constexpr uint32_t k_initDelayMs = 5000;
+inline constexpr uint32_t k_powerSettleDelayMs = 1500;
+inline constexpr uint32_t k_screenOnDelayMs = 1000;
+inline constexpr uint32_t k_rpiBootTimeoutMs = 60000;
+inline constexpr uint32_t k_rpiShutdownTimeoutMs = 60000;
+inline constexpr uint32_t k_rpiShutdownSettleDelayMs = 500;
+inline constexpr uint32_t k_screenPowerOffDelayMs = 5000;
 } // namespace timing
 
 namespace serial {
@@ -77,9 +83,16 @@ inline constexpr uint8_t k_count = 16;
 } // namespace buttons
 
 namespace debug {
-    // Set to true to skip waiting for the RPi heartbeat during boot.
-    // Useful for testing firmware locally without a connected Raspberry Pi.
+    // Skips waiting for the RPi heartbeat during boot.
+    // Automatically true in debug builds, false in release builds.
+    // Override by defining SIMULATE_RPI_BOOT=1 or =0 in your build flags.
+#if defined(SIMULATE_RPI_BOOT)
+    inline constexpr bool k_simulateRpiBoot = (SIMULATE_RPI_BOOT != 0);
+#elif defined(NDEBUG)
+    inline constexpr bool k_simulateRpiBoot = false;
+#else
     inline constexpr bool k_simulateRpiBoot = true;
+#endif
 } // namespace debug
 
 } // namespace board

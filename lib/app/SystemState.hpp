@@ -7,11 +7,11 @@
 namespace controlSystem
 {
     // Central, thread-safe runtime state. Uses only std::atomic — no FreeRTOS headers.
-    // buttonLedStates is written exclusively from the action task (Phase 1 queue),
-    // so no locking is required for that array.
+    // buttonLedBitmask stores one bit per button LED (bit N = button index N).
+    // Using an atomic allows safe read from any task without a mutex.
     struct SystemState
     {
         std::atomic<ControlBoardPowerState> powerState{ControlBoardPowerState::OFF};
-        bool buttonLedStates[controlBoardButtons::k_count]{};
+        std::atomic<uint16_t> buttonLedBitmask{0};
     };
 }

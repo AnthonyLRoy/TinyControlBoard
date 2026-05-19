@@ -10,9 +10,13 @@ namespace controlSystem
             mr_indicators.setButtonLed(buttonId, true);
             break;
         case LedPolicy::Toggle:
-            mr_systemState.buttonLedStates[buttonId] = !mr_systemState.buttonLedStates[buttonId];
-            mr_indicators.setButtonLed(buttonId, mr_systemState.buttonLedStates[buttonId]);
+        {
+            const auto mask = static_cast<uint16_t>(1u << buttonId);
+            const uint16_t prev = mr_systemState.buttonLedBitmask.fetch_xor(mask);
+            const bool newState = !((prev >> buttonId) & 1u);
+            mr_indicators.setButtonLed(buttonId, newState);
             break;
+        }
         case LedPolicy::None:
         default:
             break;
