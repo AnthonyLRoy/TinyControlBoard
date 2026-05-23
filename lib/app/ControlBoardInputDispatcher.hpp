@@ -23,9 +23,18 @@ namespace controlSystem
         LedPolicy ledPolicy = LedPolicy::None;
     };
 
-    struct IControlBoardIndicators : IActivityStatusSink
+    // Drives button LED state; separate from activity status so it can be
+    // used independently (e.g. in tests that only care about LEDs).
+    struct IButtonLedSink
     {
+        virtual ~IButtonLedSink() = default;
         virtual void setButtonLed(uint8_t pin, bool enabled) = 0;
+    };
+
+    // Combined interface for components that need both activity-status feedback
+    // and button LED control.
+    struct IControlBoardIndicators : IActivityStatusSink, IButtonLedSink
+    {
     };
 
     class ControlBoardInputDispatcher
