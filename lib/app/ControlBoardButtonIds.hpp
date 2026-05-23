@@ -4,21 +4,21 @@
 
 namespace controlSystem::controlBoardButtons
 {
-    inline constexpr uint8_t kPower = 0;
-    inline constexpr uint8_t kPrevTrack = 1;
-    inline constexpr uint8_t kNextTrack = 2;
-    inline constexpr uint8_t kSkipForward = 3;
-    inline constexpr uint8_t kSkipBack = 4;
-    inline constexpr uint8_t kPlayPause = 5;
-    inline constexpr uint8_t kStop = 6;
-    inline constexpr uint8_t kCover = 7;
-    inline constexpr uint8_t kRepeat = 8;
-    inline constexpr uint8_t kToggleRandom = 9;
-    inline constexpr uint8_t kToggleDac = 10;
-    inline constexpr uint8_t kToggleDisplay = 11;
-    inline constexpr uint8_t kToggleMeter = 12;
-    inline constexpr uint8_t kRotaryEventLeft = 13;
-    inline constexpr uint8_t kRotaryEventRight = 14;
-    inline constexpr uint8_t kCycleBrightness = 15;
-    inline constexpr uint8_t kCount = 16;
+    inline constexpr uint8_t k_power = 0;
+    inline constexpr uint8_t k_prevTrack = 1;
+    inline constexpr uint8_t k_nextTrack = 2;
+    inline constexpr uint8_t k_skipForward = 3;
+    inline constexpr uint8_t k_skipBack = 4;
+    inline constexpr uint8_t k_playPause = 5;
+    inline constexpr uint8_t k_stop = 6;
+    inline constexpr uint8_t k_cover = 7;
+    inline constexpr uint8_t k_repeat = 8;
+    inline constexpr uint8_t k_toggleRandom = 9;
+    inline constexpr uint8_t k_toggleDac = 10;
+    inline constexpr uint8_t k_toggleDisplay = 11;
+    inline constexpr uint8_t k_toggleMeter = 12;
+    inline constexpr uint8_t k_rotaryEventLeft = 13;
+    inline constexpr uint8_t k_rotaryEventRight = 14;
+    inline constexpr uint8_t k_cycleBrightness = 15;
+    inline constexpr uint8_t k_count = 16;
 }

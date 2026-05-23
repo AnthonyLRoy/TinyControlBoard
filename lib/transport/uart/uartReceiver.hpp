@@ -13,10 +13,10 @@ public:
 
     UartReceiver();
 
-    void pushBytes(const uint8_t *pData, int len);
+    void pushBytes(const uint8_t *p_data, int len);
     bool getNextMessage(UartMessage &rOutMsg);
 
 private:
-    uint8_t mBuffer[BUFFER_SIZE];
-    int mBufferLen;
+    uint8_t m_buffer[BUFFER_SIZE];
+    int m_bufferLen;
 };

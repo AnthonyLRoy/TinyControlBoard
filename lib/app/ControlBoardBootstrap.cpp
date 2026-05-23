@@ -8,7 +8,7 @@ namespace controlSystem
 {
     namespace
     {
-        constexpr const char *spTag = "Control_Board   ";
+        static constexpr const char *k_logTag = "Control_Board   ";
     }
 
     void ControlBoardBootstrap::prepareStartupIndicators() const
@@ -19,10 +19,10 @@ namespace controlSystem
 
     void ControlBoardBootstrap::finalizeStartupIndicators() const
     {
-        ESP_LOGI(spTag, "ControlBoard init complete.");
-        ESP_LOGI(spTag, "Transitioning Power LED to Sleep state...");
+        ESP_LOGI(k_logTag, "ControlBoard init complete.");
+        ESP_LOGI(k_logTag, "Transitioning power LED to sleep state");
 
-        vTaskDelay(pdMS_TO_TICKS(board::timing::kInitDelayMs));
+        vTaskDelay(pdMS_TO_TICKS(board::timing::k_initDelayMs));
 
         indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
     }
@@ -32,12 +32,12 @@ namespace controlSystem
                                                          VoidCallback onHeartbeatTimeout) const
     {
         rSerial.setRxCallback(std::move(onSerialRx));
-        rSerial.startHeartbeatMonitor(board::timing::kHeartbeatTimeoutMs, std::move(onHeartbeatTimeout));
+        rSerial.startHeartbeatMonitor(board::timing::k_heartbeatTimeoutMs, std::move(onHeartbeatTimeout));
     }
 
     bool ControlBoardBootstrap::setupRelays() const
     {
-        ESP_LOGI(spTag, "Setting up relays...");
+        ESP_LOGI(k_logTag, "Setting up relays...");
         relays::StandardRelay::init(PIN_RELAY_SCREEN_POWER);
         relays::StandardRelay::init(PIN_RELAY_RPI_POWER);
         relays::StandardRelay::init(PIN_RELAY_DAC_POWER);
@@ -60,43 +60,43 @@ namespace controlSystem
 
     bool ControlBoardBootstrap::setupSerial(transport::uart::UartTransport &rSerial) const
     {
-        ESP_LOGI(spTag, "Initializing serial...");
-        const bool ok = rSerial.initUart(board::serial::kPort,
-                                         board::serial::kBaudRate,
-                                         board::serial::kTxPin,
-                                         board::serial::kRxPin,
-                                         board::serial::kBufferSize,
+        ESP_LOGI(k_logTag, "Initializing UART");
+        const bool ok = rSerial.initUart(board::serial::k_port,
+                                         board::serial::k_baudRate,
+                                         board::serial::k_txPin,
+                                         board::serial::k_rxPin,
+                                         board::serial::k_bufferSize,
                                          UART_PARITY_DISABLE,
                                          UART_STOP_BITS_1,
                                          UART_HW_FLOWCTRL_DISABLE);
         if (!ok)
         {
-            ESP_LOGE(spTag, "Failed to initialize UART");
+            ESP_LOGE(k_logTag, "Failed to initialize UART");
             return false;
         }
 
-        ESP_LOGI(spTag, "UART initialized successfully");
+        ESP_LOGI(k_logTag, "UART initialized successfully");
         return true;
     }
 
     bool ControlBoardBootstrap::setupMcpHandler(buttons::McpInputHandler &rMcpHandler) const
     {
-        ESP_LOGI(spTag, "Initializing MCP handler...");
-        const esp_err_t err = rMcpHandler.begin(board::i2c::kSdaPin,
-                                                board::i2c::kSclPin,
-                                                board::i2c::kInterruptPin);
+        ESP_LOGI(k_logTag, "Initializing MCP handler");
+        const esp_err_t err = rMcpHandler.begin(board::i2c::k_sdaPin,
+                                                board::i2c::k_sclPin,
+                                                board::i2c::k_interruptPin);
         if (err != ESP_OK)
         {
-            ESP_LOGE(spTag, "Failed MCPHandler begin: %d", err);
+            ESP_LOGE(k_logTag, "Failed to initialize MCP handler: %d", err);
             return false;
         }
 
-        rMcpHandler.setTimeout(board::i2c::kMcpTimeoutMs);
+        rMcpHandler.setTimeout(board::i2c::k_mcpTimeoutMs);
         rMcpHandler.enableI2c(true);
 #ifdef DEBUG_MCP_SCAN
         rMcpHandler.scanI2c();
 #endif
-        ESP_LOGI(spTag, "MCP Handler initialized successfully.");
+        ESP_LOGI(k_logTag, "MCP handler initialized successfully");
 #ifdef DEBUG_MCP_SCAN
         rMcpHandler.dumpRegisters();
 #endif

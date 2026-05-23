@@ -4,17 +4,11 @@
 
 namespace controlSystem
 {
-    struct SimpleCommandEntry
-    {
-        const char *pLogTag;
-        uint32_t commandId;
-    };
-
     struct IUartCommandSink
     {
         virtual ~IUartCommandSink() = default;
-        virtual void sendUartCommand(const char *pLogTag, uint32_t commandId) = 0;
-        virtual void sendUartMessage(const char *pLogTag, UartMessage &rMessage) = 0;
+        virtual void sendUartCommand(const char *p_logTag, uint32_t commandId) = 0;
+        virtual void sendUartMessage(const char *p_logTag, UartMessage &rMessage) = 0;
     };
 
     class ActionUartDispatcher
@@ -32,11 +26,8 @@ namespace controlSystem
         bool handleRandomCommand(const actions::ActionResponse &response);
         bool handleSimpleCommand(const actions::ActionResponse &response);
 
-        IUartCommandSink &mrUartCommandSink;
+        IUartCommandSink &mr_uartCommandSink;
 
-        static constexpr const char *mspTag = "Uart_Dispatcher ";
+        static constexpr const char *k_logTag = "Uart_Dispatcher ";
     };
-
-    extern const SimpleCommandEntry sSimpleCommands[];
-    extern const size_t kSimpleCommandCount;
 }

@@ -14,10 +14,10 @@ namespace controlSystem
     public:
         explicit SerialUartCommandSink(transport::uart::UartTransport &rSerial);
 
-        void sendUartCommand(const char *pLogTag, uint32_t commandId) override;
-        void sendUartMessage(const char *pLogTag, UartMessage &rMessage) override;
+        void sendUartCommand(const char *p_logTag, uint32_t commandId) override;
+        void sendUartMessage(const char *p_logTag, UartMessage &rMessage) override;
 
     private:
-        transport::uart::UartTransport &mrSerial;
+        transport::uart::UartTransport &mr_serial;
     };
 }

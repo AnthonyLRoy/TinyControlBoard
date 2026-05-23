@@ -11,13 +11,12 @@
 #include "app/ControlBoardBootstrap.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
 #include "app/SerialHeartbeatRouter.hpp"
+#include "app/ButtonEventQueue.hpp"
+#include "app/SystemState.hpp"
 #include "board/boardConfig.hpp"
+#include "freertos/FreeRTOS.h"
 #include <array>
 #include <memory>
-
-namespace actions {
-    class ButtonAction;
-}
 
 namespace controlSystem
 {
@@ -28,25 +27,31 @@ namespace controlSystem
     public:
         bool init();
         void deinit();
-        ActionProcessor &getActionProcessor() { return *mpResponseProcessor; }
+        ActionProcessor &getActionProcessor() { return *mp_responseProcessor; }
 
     private:
+        void initNvs();
+        void initTransport();
+        void initComponents();
+
         void process(const actions::ActionResponse &response) override;
         void setActivityStatus(ControlBoardWorkingStatus status) override;
         void setButtonLed(uint8_t pin, bool enabled) override;
         void handleHeartbeatReceived() override;
         void handleSerialRxMessage(const UartMessage &rMsg);
 
-        transport::uart::UartTransport *mpSerialHandler = nullptr;
-        relays::StandardRelay *mpRelays = nullptr;
-        std::unique_ptr<ActionProcessor> mpResponseProcessor;
-        std::unique_ptr<ControlBoardInputDispatcher> mpInputDispatcher;
-        std::unique_ptr<SerialHeartbeatRouter> mpHeartbeatRouter;
-        ControlBoardActionRegistry mActionRegistry;
-        ControlBoardBootstrap mBootstrap;
-        ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
+        transport::uart::UartTransport *mp_serialHandler = nullptr;  // non-owning; singleton assigned in initTransport()
+        relays::StandardRelay *mp_relays = nullptr;                   // non-owning; singleton assigned in initTransport()
+        std::unique_ptr<ActionProcessor> mp_responseProcessor;
+        std::unique_ptr<ControlBoardInputDispatcher> mp_inputDispatcher;
+        std::unique_ptr<SerialHeartbeatRouter> mp_heartbeatRouter;
+        ControlBoardActionRegistry m_actionRegistry;
+        ControlBoardBootstrap m_bootstrap;
 
-        buttons::McpInputHandler mMcpHandler{board::i2c::kMcpAddress, I2C_NUM_0};
-        std::array<actions::ButtonAction *, board::buttons::kCount> mpButtonActions{};
+        buttons::McpInputHandler m_mcpHandler{board::i2c::k_mcpAddress, I2C_NUM_0};
+        ControlBoardInputDispatcher::ActionMap mp_buttonActions{};
+        ButtonEventQueue m_buttonQueue;
+
+        SystemState m_systemState;
     };
 }

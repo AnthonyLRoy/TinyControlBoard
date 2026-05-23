@@ -6,21 +6,21 @@ namespace controlSystem
 {
     void ControlBoardActionRegistry::populate(ControlBoardInputDispatcher::ActionMap &rActionMap) const
     {
-        rActionMap[controlBoardButtons::kPower] = &actions::PowerButtonInstance;
-        rActionMap[controlBoardButtons::kPrevTrack] = &actions::PreviousTrackInstance;
-        rActionMap[controlBoardButtons::kNextTrack] = &actions::NextTrackInstance;
-        rActionMap[controlBoardButtons::kSkipForward] = &actions::SkipForwardInstance;
-        rActionMap[controlBoardButtons::kSkipBack] = &actions::SkipBackInstance;
-        rActionMap[controlBoardButtons::kPlayPause] = &actions::PlayPauseInstance;
-        rActionMap[controlBoardButtons::kStop] = &actions::StopInstance;
-        rActionMap[controlBoardButtons::kCover] = &actions::CoverViewInstance;
-        rActionMap[controlBoardButtons::kRepeat] = &actions::RepeatInstance;
-        rActionMap[controlBoardButtons::kToggleRandom] = &actions::ToggleRandomInstance;
-        rActionMap[controlBoardButtons::kToggleDac] = &actions::ToggleDacInstance;
-        rActionMap[controlBoardButtons::kToggleDisplay] = &actions::ToggleDisplayInstance;
-        rActionMap[controlBoardButtons::kToggleMeter] = &actions::ToggleMeterDisplayInstance;
-        rActionMap[controlBoardButtons::kRotaryEventLeft] = &actions::RotaryEventInstance;
-        rActionMap[controlBoardButtons::kRotaryEventRight] = &actions::RotaryEventInstance;
-        rActionMap[controlBoardButtons::kCycleBrightness] = &actions::CycleBrightnessInstance;
+        rActionMap[controlBoardButtons::k_power]           = {&actions::PowerButtonInstance,        LedPolicy::None};
+        rActionMap[controlBoardButtons::k_prevTrack]       = {&actions::PreviousTrackInstance,      LedPolicy::Momentary};
+        rActionMap[controlBoardButtons::k_nextTrack]       = {&actions::NextTrackInstance,           LedPolicy::Momentary};
+        rActionMap[controlBoardButtons::k_skipForward]     = {&actions::SkipForwardInstance,        LedPolicy::Momentary};
+        rActionMap[controlBoardButtons::k_skipBack]        = {&actions::SkipBackInstance,           LedPolicy::Momentary};
+        rActionMap[controlBoardButtons::k_playPause]       = {&actions::PlayPauseInstance,          LedPolicy::Momentary};
+        rActionMap[controlBoardButtons::k_stop]            = {&actions::StopInstance,               LedPolicy::Momentary};
+        rActionMap[controlBoardButtons::k_cover]           = {&actions::CoverViewInstance,          LedPolicy::Toggle};
+        rActionMap[controlBoardButtons::k_repeat]          = {&actions::RepeatInstance,             LedPolicy::Toggle};
+        rActionMap[controlBoardButtons::k_toggleRandom]    = {&actions::ToggleRandomInstance,       LedPolicy::Toggle};
+        rActionMap[controlBoardButtons::k_toggleDac]       = {&actions::ToggleDacInstance,          LedPolicy::Toggle};
+        rActionMap[controlBoardButtons::k_toggleDisplay]   = {&actions::ToggleDisplayInstance,      LedPolicy::Toggle};
+        rActionMap[controlBoardButtons::k_toggleMeter]     = {&actions::ToggleMeterDisplayInstance, LedPolicy::Toggle};
+        rActionMap[controlBoardButtons::k_rotaryEventLeft] = {&actions::RotaryEventInstance,        LedPolicy::None};
+        rActionMap[controlBoardButtons::k_rotaryEventRight]= {&actions::RotaryEventInstance,        LedPolicy::None};
+        rActionMap[controlBoardButtons::k_cycleBrightness] = {&actions::CycleBrightnessInstance,    LedPolicy::Momentary};
     }
 }

@@ -209,7 +209,7 @@ The Pi -> ESP32 path is:
 Important current limitation:
 
 - `ControlBoard::handleSerialRxMessage()` actively handles heartbeat messages.
-- Other received UART messages are logged but are not yet processed into local behavior.
+- Other received UART messages are now routed through a minimal `ActionProcessor` inbound scaffold and logged, but protocol-specific behavior is still pending.
 
 References:
 

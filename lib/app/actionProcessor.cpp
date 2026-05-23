@@ -6,37 +6,38 @@
 
 namespace controlSystem
 {
-    ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, IActivityStatusSink *pActivitySink)
-        : mrSerial(rSerialBus), mrRelays(rRelays)
+    ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, SystemState &rSystemState, IActivityStatusSink *p_activitySink)
+        : mr_serial(rSerialBus), mr_relays(rRelays), mr_systemState(rSystemState)
     {
-        mpSerialUartCommandSink = std::make_unique<SerialUartCommandSink>(mrSerial);
-        mpActionUartDispatcher = std::make_unique<ActionUartDispatcher>(*mpSerialUartCommandSink);
-        mpRpiBootManager = std::make_unique<RpiBootManager>();
-        mpRelayController = std::make_unique<RelayController>(mrSerial, mrRelays);
-        mpPowerStateTransitionHandler = std::make_unique<PowerStateTransitionHandler>(
-            mrSerial,
-            *mpRelayController,
-            *mpRpiBootManager,
-            pActivitySink);
+        mp_serialUartCommandSink = std::make_unique<SerialUartCommandSink>(mr_serial);
+        mp_actionUartDispatcher = std::make_unique<ActionUartDispatcher>(*mp_serialUartCommandSink);
+        mp_rpiBootManager = std::make_unique<RpiBootManager>();
+        mp_relayController = std::make_unique<RelayController>(mr_serial, mr_relays);
+        mp_powerStateTransitionHandler = std::make_unique<PowerStateTransitionHandler>(
+            mr_serial,
+            *mp_relayController,
+            *mp_rpiBootManager,
+            p_activitySink);
     }
 
     void ActionProcessor::process(const actions::ActionResponse &response)
     {
-        ESP_LOGI(mspTag, "Action Processor received command: 0x%04X", response.command);
+        ESP_LOGI(k_logTag, "Action processor received command: 0x%04X", response.command);
 
-        const auto powerState = indicators::getPowerLed().getState();
+        const auto powerState = mr_systemState.powerState.load();
         switch (ActionCommandRoutingPolicy::classify(response.command, powerState))
         {
         case ActionCommandRoute::None:
             return;
 
         case ActionCommandRoute::PowerStateTransition:
-            ESP_LOGI(mspTag, "Processing Power State Change Command");
+            ESP_LOGI(k_logTag, "Processing power-state transition command");
             handleCommandPowerStateChange(response);
+            mr_systemState.powerState.store(indicators::getPowerLed().getState());
             return;
 
         case ActionCommandRoute::IgnoreWhileNotOn:
-            ESP_LOGI(mspTag, "Ignoring command %u as system is not ON", response.command);
+            ESP_LOGI(k_logTag, "Ignoring command %u as system is not ON", response.command);
             return;
 
         case ActionCommandRoute::System:
@@ -56,26 +57,35 @@ namespace controlSystem
             return;
 
         case ActionCommandRoute::UartDispatch:
-            if (mpActionUartDispatcher)
+            if (mp_actionUartDispatcher)
             {
-                mpActionUartDispatcher->handle(response);
+                mp_actionUartDispatcher->handle(response);
             }
             return;
         }
+    }
+
+    bool ActionProcessor::handleInboundUartMessage(const UartMessage &message)
+    {
+        // Scaffold only: protocol-specific inbound handling will be added in a
+        // dedicated pass once ACK/STATUS semantics are finalized.
+        ESP_LOGI(k_logTag, "Inbound UART message received (type=%u cmd=0x%04X seq=%u)",
+                 message.msgType, message.commandId, message.sequence);
+        return false;
     }
 
     bool ActionProcessor::handleSystemCommand(const actions::ActionResponse &response)
     {
         if (response.command == CMD_SYS_RPI_SHUTDOWN)
         {
-            mrSerial.sendUartCommand("RPI_Shutdown", CMD_SYS_RPI_SHUTDOWN);
-            mpRelayController->shutdownRpi(true);
+            mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
+            mp_relayController->shutdownRpi(true);
             return true;
         }
 
         if (response.command == CMD_EXIT_ITEM)
         {
-            ESP_LOGI(mspTag, "Sending Exit Item Message");
+            ESP_LOGI(k_logTag, "Sending exit-item message");
             return true;
         }
 
@@ -89,7 +99,7 @@ namespace controlSystem
             return false;
         }
 
-        mpRelayController->handleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
+        mp_relayController->handleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
         return true;
     }
 
@@ -100,7 +110,7 @@ namespace controlSystem
             return false;
         }
 
-        ESP_LOGI(mspTag, "Processing Display Toggle Command (%s)",
+        ESP_LOGI(k_logTag, "Processing display toggle command (%s)",
                  response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
 
         indicators::getMonitorBrightnessController().setBlanked(response.command == CMD_DISPLAY_OFF);
@@ -115,46 +125,46 @@ namespace controlSystem
         }
 
         indicators::getMonitorBrightnessController().cycleBrightness();
-        ESP_LOGI(mspTag, "Setting Cycle Brightness Command");
+        ESP_LOGI(k_logTag, "Cycling monitor brightness");
         return true;
     }
 
     void ActionProcessor::handleHeartbeatReceived()
     {
-        if (mpRpiBootManager)
+        if (mp_rpiBootManager)
         {
-            mpRpiBootManager->handleHeartbeatReceived();
+            mp_rpiBootManager->handleHeartbeatReceived();
         }
     }
 
     void ActionProcessor::handleHeartbeatTimeout()
     {
-        if (mpRpiBootManager)
+        if (mp_rpiBootManager)
         {
-            mpRpiBootManager->handleHeartbeatTimeout();
+            mp_rpiBootManager->handleHeartbeatTimeout();
         }
     }
 
     bool ActionProcessor::waitForRpiToBoot(uint32_t timeoutMs)
     {
-        if (mpRpiBootManager)
+        if (mp_rpiBootManager)
         {
-            return mpRpiBootManager->waitForRpiToBoot(timeoutMs);
+            return mp_rpiBootManager->waitForRpiToBoot(timeoutMs);
         }
         return false;
     }
 
     bool ActionProcessor::waitForRpiShutdown(uint32_t timeoutMs)
     {
-        if (mpRpiBootManager)
+        if (mp_rpiBootManager)
         {
-            return mpRpiBootManager->waitForRpiShutdown(timeoutMs);
+            return mp_rpiBootManager->waitForRpiShutdown(timeoutMs);
         }
         return false;
     }
 
     bool ActionProcessor::handleCommandPowerStateChange(const actions::ActionResponse &response)
     {
-        return mpPowerStateTransitionHandler->handle(response);
+        return mp_powerStateTransitionHandler->handle(response);
     }
 }

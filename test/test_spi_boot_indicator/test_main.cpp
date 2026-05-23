@@ -30,9 +30,9 @@ void test_initial_state_is_idle()
 {
     SpiBootIndicator indicator;
 
-    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Idle, indicator.mState);
-    TEST_ASSERT_NULL(indicator.mTask);
-    TEST_ASSERT_FALSE(indicator.mStop);
+    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Idle, indicator.m_state);
+    TEST_ASSERT_NULL(indicator.m_task);
+    TEST_ASSERT_FALSE(indicator.m_stop);
 }
 
 void test_start_waiting_sets_booting_state_and_creates_task()
@@ -40,9 +40,9 @@ void test_start_waiting_sets_booting_state_and_creates_task()
     SpiBootIndicator indicator;
     indicator.startWaiting();
 
-    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Booting, indicator.mState);
-    TEST_ASSERT_NOT_NULL(indicator.mTask);
-    TEST_ASSERT_FALSE(indicator.mStop);
+    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Booting, indicator.m_state);
+    TEST_ASSERT_NOT_NULL(indicator.m_task);
+    TEST_ASSERT_FALSE(indicator.m_stop);
 
     stopAndDrain(indicator);
 }
@@ -51,11 +51,11 @@ void test_start_waiting_is_idempotent_when_already_running()
 {
     SpiBootIndicator indicator;
     indicator.startWaiting();
-    TaskHandle_t firstTask = indicator.mTask;
+    TaskHandle_t firstTask = indicator.m_task;
 
     indicator.startWaiting(); // second call must be a no-op
 
-    TEST_ASSERT_EQUAL_PTR(firstTask, indicator.mTask);
+    TEST_ASSERT_EQUAL_PTR(firstTask, indicator.m_task);
 
     stopAndDrain(indicator);
 }
@@ -67,7 +67,7 @@ void test_notify_success_sets_stop_flag()
 
     indicator.notifySuccess();
 
-    TEST_ASSERT_TRUE(indicator.mStop);
+    TEST_ASSERT_TRUE(indicator.m_stop);
     vTaskDelay(pdMS_TO_TICKS(600)); // let the task finish
 }
 
@@ -77,8 +77,8 @@ void test_notify_success_on_idle_indicator_is_safe_noop()
 
     indicator.notifySuccess(); // no task running — must not crash
 
-    TEST_ASSERT_NULL(indicator.mTask);
-    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Idle, indicator.mState);
+    TEST_ASSERT_NULL(indicator.m_task);
+    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Idle, indicator.m_state);
 }
 
 void test_notify_failure_on_idle_starts_task_in_failed_state()
@@ -86,8 +86,8 @@ void test_notify_failure_on_idle_starts_task_in_failed_state()
     SpiBootIndicator indicator;
     indicator.notifyFailure();
 
-    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Failed, indicator.mState);
-    TEST_ASSERT_NOT_NULL(indicator.mTask);
+    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Failed, indicator.m_state);
+    TEST_ASSERT_NOT_NULL(indicator.m_task);
 
     stopAndDrain(indicator);
 }
@@ -96,12 +96,12 @@ void test_notify_failure_during_booting_switches_to_failed_state()
 {
     SpiBootIndicator indicator;
     indicator.startWaiting();
-    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Booting, indicator.mState);
+    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Booting, indicator.m_state);
 
     indicator.notifyFailure();
 
-    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Failed, indicator.mState);
-    TEST_ASSERT_NOT_NULL(indicator.mTask); // same task, still running
+    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Failed, indicator.m_state);
+    TEST_ASSERT_NOT_NULL(indicator.m_task); // same task, still running
 
     stopAndDrain(indicator);
 }
@@ -110,12 +110,12 @@ void test_notify_failure_on_already_failed_indicator_is_idempotent()
 {
     SpiBootIndicator indicator;
     indicator.notifyFailure();
-    TaskHandle_t firstTask = indicator.mTask;
+    TaskHandle_t firstTask = indicator.m_task;
 
     indicator.notifyFailure(); // repeat call
 
-    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Failed, indicator.mState);
-    TEST_ASSERT_EQUAL_PTR(firstTask, indicator.mTask);
+    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Failed, indicator.m_state);
+    TEST_ASSERT_EQUAL_PTR(firstTask, indicator.m_task);
 
     stopAndDrain(indicator);
 }
@@ -128,8 +128,8 @@ void test_task_self_clears_after_success_is_signalled()
     indicator.notifySuccess();
     vTaskDelay(pdMS_TO_TICKS(600)); // allow task to wake and delete itself
 
-    TEST_ASSERT_NULL(indicator.mTask);
-    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Idle, indicator.mState);
+    TEST_ASSERT_NULL(indicator.m_task);
+    TEST_ASSERT_EQUAL(SpiBootIndicator::State::Idle, indicator.m_state);
 }
 
 // ------------------------------------------------------------------ entry ---

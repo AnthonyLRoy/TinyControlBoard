@@ -5,17 +5,17 @@
 namespace controlSystem
 {
     SerialUartCommandSink::SerialUartCommandSink(transport::uart::UartTransport &rSerial)
-        : mrSerial(rSerial)
+        : mr_serial(rSerial)
     {
     }
 
-    void SerialUartCommandSink::sendUartCommand(const char *pLogTag, uint32_t commandId)
+    void SerialUartCommandSink::sendUartCommand(const char *p_logTag, uint32_t commandId)
     {
-        mrSerial.sendUartCommand(pLogTag, commandId);
+        mr_serial.sendUartCommand(p_logTag, commandId);
     }
 
-    void SerialUartCommandSink::sendUartMessage(const char *pLogTag, UartMessage &rMessage)
+    void SerialUartCommandSink::sendUartMessage(const char *p_logTag, UartMessage &rMessage)
     {
-        mrSerial.sendUartMessage(pLogTag, rMessage);
+        mr_serial.sendUartMessage(p_logTag, rMessage);
     }
 }

@@ -4,11 +4,25 @@
 #include "activityStatus.hpp"
 #include "input/actions/buttonAction.hpp"
 #include "app/ControlBoardButtonIds.hpp"
+#include "app/SystemState.hpp"
 #include <array>
 #include <cstdint>
 
 namespace controlSystem
 {
+    enum class LedPolicy : uint8_t
+    {
+        None,       // no LED feedback (e.g. rotary events, power button)
+        Momentary,  // LED on while held, off on release
+        Toggle,     // LED flips state 
+    };
+
+    struct ButtonConfig
+    {
+        actions::ButtonAction *action = nullptr;
+        LedPolicy ledPolicy = LedPolicy::None;
+    };
+
     struct IActionResponseSink
     {
         virtual ~IActionResponseSink() = default;
@@ -23,26 +37,32 @@ namespace controlSystem
     class ControlBoardInputDispatcher
     {
     public:
-        using ActionMap = std::array<actions::ButtonAction *, controlBoardButtons::kCount>;
+        using ActionMap = std::array<ButtonConfig, controlBoardButtons::k_count>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
-                                    IActionResponseSink *pResponseSink,
-                                    IControlBoardIndicators *pIndicators)
-            : mrActionMap(rActionMap),
-              mpResponseSink(pResponseSink),
-              mpIndicators(pIndicators)
+                                    IActionResponseSink &rResponseSink,
+                                    IControlBoardIndicators &rIndicators,
+                                    SystemState &rSystemState)
+            : mr_actionMap(rActionMap),
+              mr_responseSink(rResponseSink),
+              mr_indicators(rIndicators),
+              mr_systemState(rSystemState)
         {
         }
 
         void handleButtonPressed(uint8_t buttonPressedId);
         void handleButtonReleased(uint8_t buttonReleasedId);
         void handleRotaryMovement(int direction);
-        void setBackgroundStatus(ControlBoardWorkingStatus status) { mBackgroundStatus = status; }
+        void setBackgroundStatus(ControlBoardWorkingStatus status) { m_backgroundStatus = status; }
 
     private:
-        ActionMap &mrActionMap;
-        IActionResponseSink *mpResponseSink;
-        IControlBoardIndicators *mpIndicators;
-        ControlBoardWorkingStatus mBackgroundStatus = ControlBoardWorkingStatus::Idle;
+        void applyLedOnPress(uint8_t buttonId, LedPolicy policy);
+        void applyLedOnRelease(uint8_t buttonId, LedPolicy policy);
+
+        ActionMap &mr_actionMap;
+        IActionResponseSink &mr_responseSink;
+        IControlBoardIndicators &mr_indicators;
+        ControlBoardWorkingStatus m_backgroundStatus = ControlBoardWorkingStatus::Idle;
+        SystemState &mr_systemState;
     };
 }

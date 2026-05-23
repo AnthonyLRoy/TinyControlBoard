@@ -5,28 +5,28 @@
 
 namespace protocol
 {
-inline constexpr uint8_t kVersion = 0x01;
-inline constexpr uint8_t kStartByte = 0xAA;
-inline constexpr uint8_t kIndexVersion = 1;
-inline constexpr uint8_t kIndexSrcApp = 2;
-inline constexpr uint8_t kIndexType = 3;
-inline constexpr uint8_t kIndexSequence = 4;
-inline constexpr uint8_t kIndexCommandId = 5;
-inline constexpr uint8_t kIndexParams = 7;
-inline constexpr uint8_t kIndexChecksum = 17;
-inline constexpr uint8_t kPacketSize = 18;
+inline constexpr uint8_t k_version = 0x01;
+inline constexpr uint8_t k_startByte = 0xAA;
+inline constexpr uint8_t k_indexVersion = 1;
+inline constexpr uint8_t k_indexSrcApp = 2;
+inline constexpr uint8_t k_indexType = 3;
+inline constexpr uint8_t k_indexSequence = 4;
+inline constexpr uint8_t k_indexCommandId = 5;
+inline constexpr uint8_t k_indexParams = 7;
+inline constexpr uint8_t k_indexChecksum = 17;
+inline constexpr uint8_t k_packetSize = 18;
 } // namespace protocol
 
-#define UART_PROTOCOL_VERSION protocol::kVersion
-#define UART_START_BYTE protocol::kStartByte
+#define UART_PROTOCOL_VERSION protocol::k_version
+#define UART_START_BYTE protocol::k_startByte
 
-#define PROTO_INDEX_VERSION protocol::kIndexVersion
-#define PROTO_INDEX_SRC_APP protocol::kIndexSrcApp
-#define PROTO_INDEX_TYPE protocol::kIndexType
-#define PROTO_INDEX_SEQUENCE protocol::kIndexSequence
-#define PROTO_INDEX_COMMAND_ID protocol::kIndexCommandId
-#define PROTO_INDEX_PARAMS protocol::kIndexParams
-#define PROTO_INDEX_CHECKSUM protocol::kIndexChecksum
+#define PROTO_INDEX_VERSION protocol::k_indexVersion
+#define PROTO_INDEX_SRC_APP protocol::k_indexSrcApp
+#define PROTO_INDEX_TYPE protocol::k_indexType
+#define PROTO_INDEX_SEQUENCE protocol::k_indexSequence
+#define PROTO_INDEX_COMMAND_ID protocol::k_indexCommandId
+#define PROTO_INDEX_PARAMS protocol::k_indexParams
+#define PROTO_INDEX_CHECKSUM protocol::k_indexChecksum
 
 enum MessageType : uint8_t
 {
@@ -36,7 +36,7 @@ enum MessageType : uint8_t
     MSG_NACK = 0x04
 };
 
-#define UART_PACKET_SIZE protocol::kPacketSize
+#define UART_PACKET_SIZE protocol::k_packetSize
 
 enum CommandId : uint16_t
 {
@@ -111,6 +111,6 @@ struct UartMessage
     }
 };
 
-uint8_t calculateChecksum(const uint8_t *pData);
-void serializeMessage(UartMessage &rMsg, uint8_t *pBuffer);
-bool deserializeMessage(const uint8_t *pBuffer, UartMessage &rMsg);
+uint8_t calculateChecksum(const uint8_t *p_data);
+void serializeMessage(UartMessage &rMsg, uint8_t *p_buffer);
+bool deserializeMessage(const uint8_t *p_buffer, UartMessage &rMsg);

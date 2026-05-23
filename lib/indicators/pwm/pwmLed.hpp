@@ -10,8 +10,8 @@ namespace led
     class LedPwm
     {
     private:
-        ledc_timer_config_t mLedcTimerConfig;
-        ledc_channel_config_t mLedcChannelConfig;
+        ledc_timer_config_t m_ledcTimerConfig;
+        ledc_channel_config_t m_ledcChannelConfig;
 
     public:
         void init(ledc_timer_config_t timerConfig, ledc_channel_config_t channelConfig);

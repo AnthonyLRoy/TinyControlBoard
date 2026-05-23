@@ -10,20 +10,20 @@ namespace led
    {
       ESP_LOGI("Led_PWM         ", "Initializing Led_PWM with channel: %d", channelConfig.channel);
 
-      mLedcTimerConfig = timerConfig;
-      mLedcChannelConfig = channelConfig;
+      m_ledcTimerConfig = timerConfig;
+      m_ledcChannelConfig = channelConfig;
 
-      ESP_ERROR_CHECK(ledc_timer_config(&mLedcTimerConfig));
-      ESP_ERROR_CHECK(ledc_channel_config(&mLedcChannelConfig));
+      ESP_ERROR_CHECK(ledc_timer_config(&m_ledcTimerConfig));
+      ESP_ERROR_CHECK(ledc_channel_config(&m_ledcChannelConfig));
    }
 
    esp_err_t LedPwm::setDuty(uint32_t duty)
    {
-      return ledc_set_duty(mLedcTimerConfig.speed_mode, mLedcChannelConfig.channel, duty);
+      return ledc_set_duty(m_ledcTimerConfig.speed_mode, m_ledcChannelConfig.channel, duty);
    }
 
    esp_err_t LedPwm::updateDuty()
    {
-      return ledc_update_duty(mLedcTimerConfig.speed_mode, mLedcChannelConfig.channel);
+      return ledc_update_duty(m_ledcTimerConfig.speed_mode, m_ledcChannelConfig.channel);
    }
 }

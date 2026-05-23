@@ -4,6 +4,7 @@
 #include "input/actions/actionsResponse.hpp"
 #include "app/ActionUartDispatcher.hpp"
 #include "app/SerialUartCommandSink.hpp"
+#include "app/SystemState.hpp"
 #include "esp_log.h"
 #include "power/powerState.hpp"
 #include "power/PowerStateTransitionHandler.hpp"
@@ -23,8 +24,10 @@ namespace controlSystem
     public:
         ActionProcessor(transport::uart::UartTransport &rSerialBus,
                         relays::StandardRelay &rRelays,
-                        IActivityStatusSink *pActivitySink = nullptr);
+                        SystemState &rSystemState,
+                        IActivityStatusSink *p_activitySink = nullptr);
         void process(const actions::ActionResponse &response);
+        bool handleInboundUartMessage(const UartMessage &message);
         const char *getCommandNameForPin(uint8_t pin);
 
         void handleHeartbeatReceived();
@@ -39,15 +42,16 @@ namespace controlSystem
         bool handleDisplayCommand(const actions::ActionResponse &response);
         bool handleBrightnessCommand(const actions::ActionResponse &response);
 
-        std::unique_ptr<ActionUartDispatcher> mpActionUartDispatcher;
-        std::unique_ptr<SerialUartCommandSink> mpSerialUartCommandSink;
-        std::unique_ptr<RpiBootManager> mpRpiBootManager;
-        std::unique_ptr<RelayController> mpRelayController;
-        std::unique_ptr<PowerStateTransitionHandler> mpPowerStateTransitionHandler;
+        std::unique_ptr<ActionUartDispatcher> mp_actionUartDispatcher;
+        std::unique_ptr<SerialUartCommandSink> mp_serialUartCommandSink;
+        std::unique_ptr<RpiBootManager> mp_rpiBootManager;
+        std::unique_ptr<RelayController> mp_relayController;
+        std::unique_ptr<PowerStateTransitionHandler> mp_powerStateTransitionHandler;
 
-        transport::uart::UartTransport &mrSerial;
-        relays::StandardRelay &mrRelays;
+        transport::uart::UartTransport &mr_serial;
+        relays::StandardRelay &mr_relays;
+        SystemState &mr_systemState;
 
-        static constexpr const char *mspTag = "Action_Processor";
+        static constexpr const char *k_logTag = "Action_Processor";
     };
 }

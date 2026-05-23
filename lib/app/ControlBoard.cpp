@@ -1,20 +1,59 @@
-#include "app/ControlBoard.hpp"
+﻿#include "app/ControlBoard.hpp"
 
 #include "indicators/ledManager.hpp"
 #include "protocol/uartProtocol.hpp"
 #include "transport/uart/serial.hpp"
 #include "nvs_flash.h"
+#include <cassert>
 #include <inttypes.h>
 
 namespace controlSystem
 {
-    static const char *spTag = "Control_Board   ";
+    static constexpr const char *k_logTag = "Control_Board   ";
 
     bool ControlBoard::init()
     {
-        ESP_LOGI(spTag, "Starting ControlBoard init...");
+        ESP_LOGI(k_logTag, "Starting ControlBoard init...");
 
-        // Initialise NVS flash (required before any nvs_open call)
+        initNvs();
+        m_bootstrap.prepareStartupIndicators();
+        initTransport();
+        initComponents();
+
+        if (!m_bootstrap.setupRelays())
+            return false;
+
+        if (!m_bootstrap.setupMcpHandler(m_mcpHandler))
+        {
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
+        }
+
+        if (!m_buttonQueue.start(*mp_inputDispatcher))
+        {
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
+        }
+
+        m_bootstrap.configureMcpCallbacks(
+            m_mcpHandler,
+            [this](uint8_t pin)  { m_buttonQueue.enqueuePress(pin); },
+            [this](uint8_t pin)  { m_buttonQueue.enqueueRelease(pin); },
+            [this](int movement) { m_buttonQueue.enqueueRotary(movement); });
+
+        if (!m_bootstrap.setupSerial(*mp_serialHandler))
+        {
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
+        }
+
+        m_actionRegistry.populate(mp_buttonActions);
+        m_bootstrap.finalizeStartupIndicators();
+        return true;
+    }
+
+    void ControlBoard::initNvs()
+    {
         esp_err_t nvsErr = nvs_flash_init();
         if (nvsErr == ESP_ERR_NVS_NO_FREE_PAGES || nvsErr == ESP_ERR_NVS_NEW_VERSION_FOUND)
         {
@@ -23,110 +62,68 @@ namespace controlSystem
         }
         if (nvsErr != ESP_OK)
         {
-            ESP_LOGW(spTag, "NVS flash init failed (0x%x) — brightness will not persist", nvsErr);
+            ESP_LOGW(k_logTag, "NVS flash init failed (0x%x) u{2014} brightness will not persist", nvsErr);
         }
+    }
 
-        mBootstrap.prepareStartupIndicators();
+    void ControlBoard::initTransport()
+    {
+        mp_serialHandler = &transport::uart::UartTransport::getInstance();
+        mp_relays = &relays::StandardRelay::getInstance();
 
-        mpSerialHandler = &transport::uart::UartTransport::getInstance();
-        mpRelays = &relays::StandardRelay::getInstance();
-
-        mBootstrap.configureSerialCallbacks(
-            *mpSerialHandler,
+        m_bootstrap.configureSerialCallbacks(
+            *mp_serialHandler,
             [this](const UartMessage &rMsg) {
                 handleSerialRxMessage(rMsg);
             },
             [this]() {
-                ESP_LOGE(spTag, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
-                         board::timing::kHeartbeatTimeoutMs);
-                if (mpResponseProcessor)
+                ESP_LOGE(k_logTag, "Heartbeat timeout: No data received from Raspberry Pi within %" PRIu32 " ms",
+                         board::timing::k_heartbeatTimeoutMs);
+                if (mp_responseProcessor)
                 {
-                    mpResponseProcessor->handleHeartbeatTimeout();
+                    mp_responseProcessor->handleHeartbeatTimeout();
                 }
             });
+    }
 
-        mpResponseProcessor = std::make_unique<ActionProcessor>(
-            *mpSerialHandler,
-            *mpRelays,
-            static_cast<IActivityStatusSink *>(static_cast<IControlBoardIndicators *>(this)));
-        mpInputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
-            mpButtonActions,
-            static_cast<IActionResponseSink *>(this),
+    void ControlBoard::initComponents()
+    {
+        mp_responseProcessor = std::make_unique<ActionProcessor>(
+            *mp_serialHandler,
+            *mp_relays,
+            m_systemState,
             static_cast<IControlBoardIndicators *>(this));
-        mpHeartbeatRouter = std::make_unique<SerialHeartbeatRouter>(static_cast<IHeartbeatSink *>(this));
-
-        if (!mBootstrap.setupRelays())
-        {
-            return false;
-        }
-
-        if (!mBootstrap.setupMcpHandler(mMcpHandler))
-        {
-            indicators::getSpiBootIndicator().notifyFailure();
-            return false;
-        }
-
-        mBootstrap.configureMcpCallbacks(
-            mMcpHandler,
-            [this](uint8_t pin) {
-                if (mpInputDispatcher)
-                {
-                    mpInputDispatcher->handleButtonPressed(pin);
-                }
-            },
-            [this](uint8_t pin) {
-                if (mpInputDispatcher)
-                {
-                    mpInputDispatcher->handleButtonReleased(pin);
-                }
-            },
-            [this](int movement) {
-                if (mpInputDispatcher)
-                {
-                    mpInputDispatcher->handleRotaryMovement(movement);
-                }
-            });
-
-        if (!mBootstrap.setupSerial(*mpSerialHandler))
-        {
-            indicators::getSpiBootIndicator().notifyFailure();
-            return false;
-        }
-
-        mActionRegistry.populate(mpButtonActions);
-
-        mBootstrap.finalizeStartupIndicators();
-
-        return true;
+        mp_inputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
+            mp_buttonActions,
+            static_cast<IActionResponseSink &>(*this),
+            static_cast<IControlBoardIndicators &>(*this),
+            m_systemState);
+        mp_heartbeatRouter = std::make_unique<SerialHeartbeatRouter>(static_cast<IHeartbeatSink *>(this));
     }
 
     void ControlBoard::deinit()
     {
-        if (mpSerialHandler)
-        {
-            mpSerialHandler->deinitUart();
-            mpSerialHandler = nullptr;
-        }
-        mpHeartbeatRouter.reset();
-        mpInputDispatcher.reset();
-        mpResponseProcessor.reset();
+        m_buttonQueue.stop();
+        assert(mp_serialHandler != nullptr);
+        mp_serialHandler->deinitUart();
+        mp_serialHandler = nullptr;
+        mp_heartbeatRouter.reset();
+        mp_inputDispatcher.reset();
+        mp_responseProcessor.reset();
     }
 
     void ControlBoard::process(const actions::ActionResponse &response)
     {
-        if (mpResponseProcessor)
-        {
-            mpResponseProcessor->process(response);
-        }
+        assert(mp_responseProcessor != nullptr);
+        mp_responseProcessor->process(response);
     }
 
     void ControlBoard::setActivityStatus(ControlBoardWorkingStatus status)
     {
         if (status != ControlBoardWorkingStatus::doingWork)
         {
-            mBackgroundStatus = status;
-            if (mpInputDispatcher)
-                mpInputDispatcher->setBackgroundStatus(status);
+            assert(mp_inputDispatcher != nullptr);
+            mp_inputDispatcher->setBackgroundStatus(status);
         }
         indicators::getActivityStatusLed().sendStatus(status);
     }
@@ -138,30 +135,31 @@ namespace controlSystem
 
     void ControlBoard::handleHeartbeatReceived()
     {
-        if (mpResponseProcessor)
-        {
-            mpResponseProcessor->handleHeartbeatReceived();
-        }
+        assert(mp_responseProcessor != nullptr);
+        mp_responseProcessor->handleHeartbeatReceived();
     }
 
     void ControlBoard::handleSerialRxMessage(const UartMessage &rMsg)
     {
-        ESP_LOGI(spTag, "Received UART message - Command ID: 0x%04X, Sequence: %u, Type: %u",
+        ESP_LOGI(k_logTag, "Received UART message: cmd=0x%04X seq=%u type=%u",
                  rMsg.commandId, rMsg.sequence, rMsg.msgType);
 
-        if (mpHeartbeatRouter && mpHeartbeatRouter->route(rMsg))
+        assert(mp_heartbeatRouter != nullptr);
+        if (mp_heartbeatRouter->route(rMsg))
         {
-            if (rMsg.commandId == SerialHeartbeatRouter::kLegacyHeartbeatCommandId)
+            if (rMsg.commandId == SerialHeartbeatRouter::k_legacyHeartbeatCommandId)
             {
-                ESP_LOGW(spTag, "Received legacy heartbeat command 0x%04X; update the RPI heartbeat sender to CMD_SYS_HEARTBEAT (0x%04X)",
+                ESP_LOGW(k_logTag, "Received legacy heartbeat command 0x%04X; update the RPi heartbeat sender to CMD_SYS_HEARTBEAT (0x%04X)",
                          rMsg.commandId, CMD_SYS_HEARTBEAT);
             }
             return;
         }
 
-        if (mpResponseProcessor)
+        assert(mp_responseProcessor != nullptr);
+        if (!mp_responseProcessor->handleInboundUartMessage(rMsg))
         {
-            ESP_LOGI(spTag, "Processing UART message through action processor (cmd=0x%04X)", rMsg.commandId);
+            ESP_LOGI(k_logTag, "No inbound handler implemented for UART message (cmd=0x%04X, type=%u)",
+                     rMsg.commandId, rMsg.msgType);
         }
     }
 }
