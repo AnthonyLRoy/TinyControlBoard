@@ -20,47 +20,55 @@ namespace controlSystem
             p_activitySink);
     }
 
-    void ActionProcessor::process(const actions::ActionResponse &response)
+    void ActionProcessor::process(const actions::Action &action)
     {
-        ESP_LOGI(k_logTag, "Action processor received command: 0x%04X", response.command);
+        ESP_LOGI(k_logTag, "Action processor received command: 0x%04X", action.command);
 
+        // Power gate: separate from routing, applied before the dispatch switch.
         const auto powerState = mr_systemState.powerState.load();
-        switch (classifyCommand(response.command, powerState))
+        if (action.route != ActionCommandRoute::PowerStateTransition
+            && powerState != ControlBoardPowerState::ON)
+        {
+            ESP_LOGI(k_logTag, "Ignoring command %u as system is not ON", action.command);
+            return;
+        }
+
+        switch (action.route)
         {
         case ActionCommandRoute::None:
             return;
 
         case ActionCommandRoute::PowerStateTransition:
             ESP_LOGI(k_logTag, "Processing power-state transition command");
-            handleCommandPowerStateChange(response);
+            handleCommandPowerStateChange(action);
             mr_systemState.powerState.store(indicators::getPowerLed().getState());
             return;
 
-        case ActionCommandRoute::IgnoreWhileNotOn:
-            ESP_LOGI(k_logTag, "Ignoring command %u as system is not ON", response.command);
-            return;
-
         case ActionCommandRoute::System:
-            handleSystemCommand(response);
+            handleSystemCommand(action);
             return;
 
         case ActionCommandRoute::Relay:
-            handleRelayCommand(response);
+            handleRelayCommand(action);
             return;
 
         case ActionCommandRoute::Display:
-            handleDisplayCommand(response);
+            handleDisplayCommand(action);
             return;
 
         case ActionCommandRoute::Brightness:
-            handleBrightnessCommand(response);
+            handleBrightnessCommand(action);
             return;
 
         case ActionCommandRoute::UartDispatch:
             if (mp_actionUartDispatcher)
             {
-                mp_actionUartDispatcher->handle(response);
+                mp_actionUartDispatcher->handle(action);
             }
+            return;
+
+        case ActionCommandRoute::IgnoreWhileNotOn:
+            // Never stored on an Action; power gate above handles this path.
             return;
         }
     }
@@ -74,16 +82,16 @@ namespace controlSystem
         return false;
     }
 
-    bool ActionProcessor::handleSystemCommand(const actions::ActionResponse &response)
+    bool ActionProcessor::handleSystemCommand(const actions::Action &action)
     {
-        if (response.command == CMD_SYS_RPI_SHUTDOWN)
+        if (action.command == CMD_SYS_RPI_SHUTDOWN)
         {
             mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             mp_relayController->shutdownRpi(true);
             return true;
         }
 
-        if (response.command == CMD_EXIT_ITEM)
+        if (action.command == CMD_EXIT_ITEM)
         {
             ESP_LOGI(k_logTag, "Sending exit-item message");
             return true;
@@ -92,34 +100,34 @@ namespace controlSystem
         return false;
     }
 
-    bool ActionProcessor::handleRelayCommand(const actions::ActionResponse &response)
+    bool ActionProcessor::handleRelayCommand(const actions::Action &action)
     {
-        if (response.command != CMD_TOGGLE_DAC_ON && response.command != CMD_TOGGLE_DAC_OFF)
+        if (action.command != CMD_TOGGLE_DAC_ON && action.command != CMD_TOGGLE_DAC_OFF)
         {
             return false;
         }
 
-        mp_relayController->handleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
+        mp_relayController->handleToggleDac(action.command == CMD_TOGGLE_DAC_ON);
         return true;
     }
 
-    bool ActionProcessor::handleDisplayCommand(const actions::ActionResponse &response)
+    bool ActionProcessor::handleDisplayCommand(const actions::Action &action)
     {
-        if (response.command != CMD_DISPLAY_OFF && response.command != CMD_DISPLAY_ON)
+        if (action.command != CMD_DISPLAY_OFF && action.command != CMD_DISPLAY_ON)
         {
             return false;
         }
 
         ESP_LOGI(k_logTag, "Processing display toggle command (%s)",
-                 response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
+                 action.command == CMD_DISPLAY_ON ? "ON" : "OFF");
 
-        indicators::getMonitorBrightnessController().setBlanked(response.command == CMD_DISPLAY_OFF);
+        indicators::getMonitorBrightnessController().setBlanked(action.command == CMD_DISPLAY_OFF);
         return true;
     }
 
-    bool ActionProcessor::handleBrightnessCommand(const actions::ActionResponse &response)
+    bool ActionProcessor::handleBrightnessCommand(const actions::Action &action)
     {
-        if (response.command != CMD_CYCLE_BRIGHTNESS)
+        if (action.command != CMD_CYCLE_BRIGHTNESS)
         {
             return false;
         }
@@ -163,19 +171,19 @@ namespace controlSystem
         return false;
     }
 
-    bool ActionProcessor::handleCommandPowerStateChange(const actions::ActionResponse &response)
+    bool ActionProcessor::handleCommandPowerStateChange(const actions::Action &action)
     {
-        return mp_powerStateTransitionHandler->handle(response);
+        return mp_powerStateTransitionHandler->handle(action);
     }
 
     bool ActionProcessor::triggerInitialPowerOn()
     {
         // Force LED to OFF so PowerStateTransitionPolicy treats this as a power-on request
         indicators::getPowerLed().setState(ControlBoardPowerState::OFF);
-        actions::ActionResponse syntheticResponse;
-        syntheticResponse.command = CMD_SYS_POWER;
-        syntheticResponse.releaseTimeMillis = 0;
-        const bool result = mp_powerStateTransitionHandler->handle(syntheticResponse);
+        actions::Action syntheticAction;
+        syntheticAction.command = CMD_SYS_POWER;
+        syntheticAction.releaseTimeMillis = 0;
+        const bool result = mp_powerStateTransitionHandler->handle(syntheticAction);
         mr_systemState.powerState.store(indicators::getPowerLed().getState());
         return result;
     }

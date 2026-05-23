@@ -16,15 +16,15 @@ namespace controlSystem
     public:
         explicit ActionUartDispatcher(IUartCommandSink &rUartCommandSink);
 
-        bool handle(const actions::ActionResponse &response);
+        bool handle(const actions::Action &action);
 
     private:
-        bool handleCoverViewCommand(const actions::ActionResponse &response);
-        bool handleMeterCommand(const actions::ActionResponse &response);
-        bool handleRotaryCommand(const actions::ActionResponse &response);
-        bool handleRepeatCommand(const actions::ActionResponse &response);
-        bool handleRandomCommand(const actions::ActionResponse &response);
-        bool handleSimpleCommand(const actions::ActionResponse &response);
+        bool handleCoverViewCommand(const actions::Action &action);
+        bool handleMeterCommand(const actions::Action &action);
+        bool handleRotaryCommand(const actions::Action &action);
+        bool handleRepeatCommand(const actions::Action &action);
+        bool handleRandomCommand(const actions::Action &action);
+        bool handleSimpleCommand(const actions::Action &action);
 
         IUartCommandSink &mr_uartCommandSink;
 

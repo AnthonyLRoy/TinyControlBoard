@@ -26,7 +26,7 @@ namespace controlSystem
                         relays::StandardRelay &rRelays,
                         SystemState &rSystemState,
                         IActivityStatusSink *p_activitySink = nullptr);
-        void process(const actions::ActionResponse &response);
+        void process(const actions::Action &action);
         bool handleInboundUartMessage(const UartMessage &message);
         const char *getCommandNameForPin(uint8_t pin);
 
@@ -37,11 +37,11 @@ namespace controlSystem
         bool waitForRpiShutdown(uint32_t timeoutMs = 60000);
 
     private:
-        bool handleCommandPowerStateChange(const actions::ActionResponse &response);
-        bool handleSystemCommand(const actions::ActionResponse &response);
-        bool handleRelayCommand(const actions::ActionResponse &response);
-        bool handleDisplayCommand(const actions::ActionResponse &response);
-        bool handleBrightnessCommand(const actions::ActionResponse &response);
+        bool handleCommandPowerStateChange(const actions::Action &action);
+        bool handleSystemCommand(const actions::Action &action);
+        bool handleRelayCommand(const actions::Action &action);
+        bool handleDisplayCommand(const actions::Action &action);
+        bool handleBrightnessCommand(const actions::Action &action);
 
         std::unique_ptr<ActionUartDispatcher> mp_actionUartDispatcher;
         std::unique_ptr<SerialUartCommandSink> mp_serialUartCommandSink;

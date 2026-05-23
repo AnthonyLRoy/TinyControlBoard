@@ -20,10 +20,10 @@ namespace controlSystem
     {
     }
 
-    bool PowerStateTransitionHandler::handle(const actions::ActionResponse &response)
+    bool PowerStateTransitionHandler::handle(const actions::Action &action)
     {
         const auto powerState = indicators::getPowerLed().getState();
-        const auto transitionAction = evaluatePowerTransition(powerState, response.releaseTimeMillis);
+        const auto transitionAction = evaluatePowerTransition(powerState, action.releaseTimeMillis);
 
         if (transitionAction == PowerTransitionAction::PowerOn)
         {
@@ -61,7 +61,7 @@ namespace controlSystem
             return false;
         }
 
-        ESP_LOGI(k_logTag, "Release Time MS: %" PRIu16 "", response.releaseTimeMillis);
+        ESP_LOGI(k_logTag, "Release Time MS: %" PRIu16 "", action.releaseTimeMillis);
         if (transitionAction == PowerTransitionAction::Sleep)
         {
             ESP_LOGI(k_logTag, "Initiating sleep sequence");

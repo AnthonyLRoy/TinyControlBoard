@@ -16,7 +16,7 @@ namespace controlSystem
                                     RpiBootManager &rRpiBootManager,
                                     IActivityStatusSink *p_activitySink = nullptr);
 
-        bool handle(const actions::ActionResponse &response);
+        bool handle(const actions::Action &action);
 
     private:
         transport::uart::UartTransport &mr_serial;

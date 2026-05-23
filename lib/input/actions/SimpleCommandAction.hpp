@@ -5,19 +5,18 @@
 
 namespace actions
 {
-    class SimpleCommandAction : public ButtonAction
+    class SimpleCommandAction : public IActionSource
     {
     public:
         explicit SimpleCommandAction(CommandId commandId) : m_commandId(commandId) {}
 
-        ActionResponse execute(bool isPressed) override
+        std::optional<Action> produce(bool isPressed) override
         {
-            ActionResponse response;
-            if (isPressed)
-            {
-                response.command = m_commandId;
-            }
-            return response;
+            if (!isPressed)
+                return std::nullopt;
+            Action action;
+            action.command = m_commandId;
+            return action;
         }
 
     private:

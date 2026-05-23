@@ -20,7 +20,7 @@ namespace controlSystem
 
     struct ButtonConfig
     {
-        actions::ButtonAction *action = nullptr;
+        actions::IActionSource *action = nullptr;
         LedPolicy ledPolicy = LedPolicy::None;
     };
 
@@ -33,7 +33,7 @@ namespace controlSystem
     {
     public:
         using ActionMap = std::array<ButtonConfig, controlBoardButtons::k_count>;
-                using ResponseHandler = std::function<void(const actions::ActionResponse &)>;
+                using ResponseHandler = std::function<void(const actions::Action &)>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
                                                                         ResponseHandler onResponse,

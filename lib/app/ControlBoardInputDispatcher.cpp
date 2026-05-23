@@ -1,4 +1,5 @@
 #include "app/ControlBoardInputDispatcher.hpp"
+#include "app/ActionCommandRoutingPolicy.hpp"
 
 namespace controlSystem
 {
@@ -46,8 +47,12 @@ namespace controlSystem
 
         if (config.action)
         {
-            const actions::ActionResponse result = config.action->execute(true);
-            m_onResponse(result);
+            auto action = config.action->produce(true);
+            if (action)
+            {
+                action->route = classifyCommand(action->command, ControlBoardPowerState::ON);
+                m_onResponse(*action);
+            }
         }
     }
 
@@ -63,8 +68,12 @@ namespace controlSystem
         const ButtonConfig &config = mr_actionMap[buttonReleasedId];
         if (config.action)
         {
-            const actions::ActionResponse result = config.action->execute(false);
-            m_onResponse(result);
+            auto action = config.action->produce(false);
+            if (action)
+            {
+                action->route = classifyCommand(action->command, ControlBoardPowerState::ON);
+                m_onResponse(*action);
+            }
             applyLedOnRelease(buttonReleasedId, config.ledPolicy);
         }
     }
@@ -76,8 +85,12 @@ namespace controlSystem
         const ButtonConfig &config = mr_actionMap[controlBoardButtons::k_rotaryEventLeft];
         if (config.action)
         {
-            const actions::ActionResponse result = config.action->execute(direction > 0);
-            m_onResponse(result);
+            auto action = config.action->produce(direction > 0);
+            if (action)
+            {
+                action->route = classifyCommand(action->command, ControlBoardPowerState::ON);
+                m_onResponse(*action);
+            }
         }
 
         mr_indicators.setActivityStatus(m_backgroundStatus);

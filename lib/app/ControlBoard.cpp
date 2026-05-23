@@ -97,8 +97,8 @@ namespace controlSystem
             static_cast<IControlBoardIndicators *>(this));
         mp_inputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
             mp_buttonActions,
-            [this](const actions::ActionResponse &response) {
-                process(response);
+            [this](const actions::Action &action) {
+                process(action);
             },
             static_cast<IControlBoardIndicators &>(*this),
             m_systemState);
@@ -114,10 +114,10 @@ namespace controlSystem
         mp_responseProcessor.reset();
     }
 
-    void ControlBoard::process(const actions::ActionResponse &response)
+    void ControlBoard::process(const actions::Action &action)
     {
         assert(mp_responseProcessor != nullptr);
-        mp_responseProcessor->process(response);
+        mp_responseProcessor->process(action);
     }
 
     void ControlBoard::setActivityStatus(ControlBoardWorkingStatus status)

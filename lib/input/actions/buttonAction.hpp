@@ -1,13 +1,17 @@
 #pragma once
 
+#include "input/actions/actionsResponse.hpp"
+#include <optional>
+
 namespace actions
 {
-    struct ActionResponse;
-
-    class ButtonAction
+    /// Source of Action objects driven by button/rotary events.
+    /// produce() returns nullopt when the event generates no pipeline action
+    /// (e.g. press-down for a timed action, or release for a simple command).
+    class IActionSource
     {
     public:
-        virtual ~ButtonAction() = default;
-        virtual ActionResponse execute(bool isPressed) = 0;
+        virtual ~IActionSource() = default;
+        virtual std::optional<Action> produce(bool isPressed) = 0;
     };
 }

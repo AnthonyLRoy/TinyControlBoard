@@ -1,22 +1,11 @@
 #pragma once
 
-#include "input/actions/actionsResponse.hpp"
+#include "app/ActionCommandRoute.hpp"
+#include "protocol/uartProtocol.hpp"
 #include "power/powerState.hpp"
 
 namespace controlSystem
 {
-    enum class ActionCommandRoute
-    {
-        None,
-        PowerStateTransition,
-        IgnoreWhileNotOn,
-        System,
-        Relay,
-        Display,
-        Brightness,
-        UartDispatch,
-    };
-
     constexpr ActionCommandRoute classifyCommand(CommandId command,
                                                  ControlBoardPowerState powerState)
     {
