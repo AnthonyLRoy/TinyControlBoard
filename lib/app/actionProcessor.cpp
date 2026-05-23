@@ -167,4 +167,16 @@ namespace controlSystem
     {
         return mp_powerStateTransitionHandler->handle(response);
     }
+
+    bool ActionProcessor::triggerInitialPowerOn()
+    {
+        // Force LED to OFF so PowerStateTransitionPolicy treats this as a power-on request
+        indicators::getPowerLed().setState(ControlBoardPowerState::OFF);
+        actions::ActionResponse syntheticResponse;
+        syntheticResponse.command = CMD_SYS_POWER;
+        syntheticResponse.releaseTimeMillis = 0;
+        const bool result = mp_powerStateTransitionHandler->handle(syntheticResponse);
+        mr_systemState.powerState.store(indicators::getPowerLed().getState());
+        return result;
+    }
 }

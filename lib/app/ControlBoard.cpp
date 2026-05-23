@@ -49,6 +49,7 @@ namespace controlSystem
 
         m_actionRegistry.populate(mp_buttonActions);
         m_bootstrap.finalizeStartupIndicators();
+        mp_responseProcessor->triggerInitialPowerOn();
         return true;
     }
 

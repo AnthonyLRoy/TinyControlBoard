@@ -20,11 +20,7 @@ namespace controlSystem
     void ControlBoardBootstrap::finalizeStartupIndicators() const
     {
         ESP_LOGI(k_logTag, "ControlBoard init complete.");
-        ESP_LOGI(k_logTag, "Transitioning power LED to sleep state");
-
         vTaskDelay(pdMS_TO_TICKS(board::timing::k_initDelayMs));
-
-        indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
     }
 
     void ControlBoardBootstrap::configureSerialCallbacks(transport::uart::UartTransport &rSerial,
