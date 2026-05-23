@@ -100,8 +100,7 @@ namespace controlSystem
             [this](const actions::Action &action) {
                 process(action);
             },
-            static_cast<IControlBoardIndicators &>(*this),
-            m_systemState);
+            static_cast<IControlBoardIndicators &>(*this));
     }
 
     void ControlBoard::deinit()

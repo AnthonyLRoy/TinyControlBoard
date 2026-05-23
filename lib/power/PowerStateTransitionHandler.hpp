@@ -19,6 +19,8 @@ namespace controlSystem
         bool handle(const actions::IAction &action);
 
     private:
+        void reportStatus(ControlBoardWorkingStatus status);
+
         transport::uart::UartTransport &mr_serial;
         RelayController &mr_relayController;
         RpiBootManager &mr_rpiBootManager;

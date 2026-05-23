@@ -20,6 +20,14 @@ namespace controlSystem
     {
     }
 
+    void PowerStateTransitionHandler::reportStatus(ControlBoardWorkingStatus status)
+    {
+        if (mp_activitySink)
+            mp_activitySink->setActivityStatus(status);
+        else
+            indicators::getActivityStatusLed().sendStatus(status);
+    }
+
     bool PowerStateTransitionHandler::handle(const actions::IAction &action)
     {
         const auto powerState = indicators::getPowerLed().getState();
@@ -43,20 +51,14 @@ namespace controlSystem
                 indicators::getSpiBootIndicator().notifySuccess();
                 indicators::getPowerLed().setState(ControlBoardPowerState::ON);
                 indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
-                if (mp_activitySink)
-                    mp_activitySink->setActivityStatus(ControlBoardWorkingStatus::Active);
-                else
-                    indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Active);
+                reportStatus(ControlBoardWorkingStatus::Active);
                 return true;
             }
 
             indicators::getSpiBootIndicator().notifyFailure();
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
-            if (mp_activitySink)
-                mp_activitySink->setActivityStatus(ControlBoardWorkingStatus::sleeping);
-            else
-                indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            reportStatus(ControlBoardWorkingStatus::sleeping);
             ESP_LOGW(k_logTag, "Power ON sequence aborted because no RPi heartbeat was received");
             return false;
         }
@@ -76,10 +78,7 @@ namespace controlSystem
             vTaskDelay(pdMS_TO_TICKS(board::timing::k_screenPowerOffDelayMs));
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
-            if (mp_activitySink)
-                mp_activitySink->setActivityStatus(ControlBoardWorkingStatus::sleeping);
-            else
-                indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            reportStatus(ControlBoardWorkingStatus::sleeping);
             return true;
         }
 
@@ -97,10 +96,7 @@ namespace controlSystem
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::DEEPSLEEP);
-            if (mp_activitySink)
-                mp_activitySink->setActivityStatus(ControlBoardWorkingStatus::sleeping);
-            else
-                indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::sleeping);
+            reportStatus(ControlBoardWorkingStatus::sleeping);
         }
 
         return true;

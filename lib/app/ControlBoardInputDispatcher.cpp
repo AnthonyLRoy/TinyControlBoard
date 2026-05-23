@@ -12,8 +12,8 @@ namespace controlSystem
         case LedPolicy::Toggle:
         {
             const auto mask = static_cast<uint16_t>(1u << buttonId);
-            const uint16_t prev = mr_systemState.buttonLedBitmask.fetch_xor(mask);
-            const bool newState = !((prev >> buttonId) & 1u);
+            m_buttonLedBitmask ^= mask;
+            const bool newState = (m_buttonLedBitmask >> buttonId) & 1u;
             mr_indicators.setButtonLed(buttonId, newState);
             break;
         }

@@ -19,13 +19,6 @@ namespace controlSystem
         bool handle(const actions::IAction &action);
 
     private:
-        bool handleCoverViewCommand(const actions::IAction &action);
-        bool handleMeterCommand(const actions::IAction &action);
-        bool handleRotaryCommand(const actions::IAction &action);
-        bool handleRepeatCommand(const actions::IAction &action);
-        bool handleRandomCommand(const actions::IAction &action);
-        bool handleSimpleCommand(const actions::IAction &action);
-
         IUartCommandSink &mr_uartCommandSink;
 
         static constexpr const char *k_logTag = "Uart_Dispatcher ";

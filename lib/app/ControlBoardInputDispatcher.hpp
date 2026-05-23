@@ -4,7 +4,6 @@
 #include "activityStatus.hpp"
 #include "input/actions/buttonAction.hpp"
 #include "app/ControlBoardButtonIds.hpp"
-#include "app/SystemState.hpp"
 #include <array>
 #include <cstdint>
 #include <functional>
@@ -36,13 +35,11 @@ namespace controlSystem
                 using ResponseHandler = std::function<void(const actions::Action &)>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
-                                                                        ResponseHandler onResponse,
-                                    IControlBoardIndicators &rIndicators,
-                                    SystemState &rSystemState)
+                                    ResponseHandler onResponse,
+                                    IControlBoardIndicators &rIndicators)
             : mr_actionMap(rActionMap),
-                            m_onResponse(std::move(onResponse)),
-              mr_indicators(rIndicators),
-              mr_systemState(rSystemState)
+              m_onResponse(std::move(onResponse)),
+              mr_indicators(rIndicators)
         {
         }
 
@@ -59,6 +56,6 @@ namespace controlSystem
         ResponseHandler m_onResponse;
         IControlBoardIndicators &mr_indicators;
         ControlBoardWorkingStatus m_backgroundStatus = ControlBoardWorkingStatus::Idle;
-        SystemState &mr_systemState;
+        uint16_t m_buttonLedBitmask{0};
     };
 }
