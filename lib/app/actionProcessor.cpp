@@ -25,7 +25,7 @@ namespace controlSystem
         ESP_LOGI(k_logTag, "Action processor received command: 0x%04X", response.command);
 
         const auto powerState = mr_systemState.powerState.load();
-        switch (ActionCommandRoutingPolicy::classify(response.command, powerState))
+        switch (classifyCommand(response.command, powerState))
         {
         case ActionCommandRoute::None:
             return;

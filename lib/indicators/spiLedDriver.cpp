@@ -122,11 +122,4 @@ namespace indicators
         esp_rom_delay_us(20);
         gpio_set_level(m_latchPin, 0);
     }
-// Debug helper to print the 16-bit LED state as binary
-    void SpiLedDriver::printU16Binary(uint16_t value)
-    {
-        for (int i = 15; i >= 0; --i)
-            putchar((value & (1 << i)) ? '1' : '0');
-        putchar('\n');
-    }
 }

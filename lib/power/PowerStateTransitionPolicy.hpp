@@ -13,29 +13,25 @@ namespace controlSystem
         DeepSleep,
     };
 
-    class PowerStateTransitionPolicy
+    inline constexpr uint32_t kLongPressThresholdMs = 3000;
+
+    constexpr PowerTransitionAction evaluatePowerTransition(ControlBoardPowerState powerState,
+                                                            uint16_t releaseTimeMillis)
     {
-    public:
-        static constexpr uint32_t k_longPressThresholdMs = 3000;
-
-        static PowerTransitionAction evaluate(ControlBoardPowerState powerState,
-                                              uint16_t releaseTimeMillis)
+        if (powerState == ControlBoardPowerState::OFF ||
+            powerState == ControlBoardPowerState::SLEEP ||
+            powerState == ControlBoardPowerState::DEEPSLEEP)
         {
-            if (powerState == ControlBoardPowerState::OFF ||
-                powerState == ControlBoardPowerState::SLEEP ||
-                powerState == ControlBoardPowerState::DEEPSLEEP)
-            {
-                return PowerTransitionAction::PowerOn;
-            }
-
-            if (powerState != ControlBoardPowerState::ON)
-            {
-                return PowerTransitionAction::None;
-            }
-
-            return releaseTimeMillis < k_longPressThresholdMs
-                ? PowerTransitionAction::Sleep
-                : PowerTransitionAction::DeepSleep;
+            return PowerTransitionAction::PowerOn;
         }
-    };
+
+        if (powerState != ControlBoardPowerState::ON)
+        {
+            return PowerTransitionAction::None;
+        }
+
+        return releaseTimeMillis < kLongPressThresholdMs
+            ? PowerTransitionAction::Sleep
+            : PowerTransitionAction::DeepSleep;
+    }
 }

@@ -23,7 +23,7 @@ namespace controlSystem
     bool PowerStateTransitionHandler::handle(const actions::ActionResponse &response)
     {
         const auto powerState = indicators::getPowerLed().getState();
-        const auto transitionAction = PowerStateTransitionPolicy::evaluate(powerState, response.releaseTimeMillis);
+        const auto transitionAction = evaluatePowerTransition(powerState, response.releaseTimeMillis);
 
         if (transitionAction == PowerTransitionAction::PowerOn)
         {

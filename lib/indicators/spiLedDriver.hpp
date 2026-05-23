@@ -30,6 +30,5 @@ namespace indicators
         uint16_t m_ledBitState = 0;
         uint8_t m_txBuf[2];
         bool m_started = false;
-        void printU16Binary(uint16_t value);
     };
 }

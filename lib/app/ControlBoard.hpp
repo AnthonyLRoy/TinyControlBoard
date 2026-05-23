@@ -10,7 +10,6 @@
 #include "app/ControlBoardActionRegistry.hpp"
 #include "app/ControlBoardBootstrap.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
-#include "app/SerialHeartbeatRouter.hpp"
 #include "app/ButtonEventQueue.hpp"
 #include "app/SystemState.hpp"
 #include "board/boardConfig.hpp"
@@ -20,9 +19,7 @@
 
 namespace controlSystem
 {
-    class ControlBoard : private IActionResponseSink,
-                         private IControlBoardIndicators,
-                         private IHeartbeatSink
+    class ControlBoard : private IControlBoardIndicators
     {
     public:
         bool init();
@@ -34,19 +31,17 @@ namespace controlSystem
         void initTransport();
         void initComponents();
 
-        void process(const actions::ActionResponse &response) override;
+        void process(const actions::ActionResponse &response);
         void setActivityStatus(ControlBoardWorkingStatus status) override;
         void setButtonLed(uint8_t pin, bool enabled) override;
-        void handleHeartbeatReceived() override;
+        void handleHeartbeatReceived();
         void handleSerialRxMessage(const UartMessage &rMsg);
 
         transport::uart::UartTransport *mp_serialHandler = nullptr;  // non-owning; singleton assigned in initTransport()
         relays::StandardRelay *mp_relays = nullptr;                   // non-owning; singleton assigned in initTransport()
         std::unique_ptr<ActionProcessor> mp_responseProcessor;
         std::unique_ptr<ControlBoardInputDispatcher> mp_inputDispatcher;
-        std::unique_ptr<SerialHeartbeatRouter> mp_heartbeatRouter;
         ControlBoardActionRegistry m_actionRegistry;
-        ControlBoardBootstrap m_bootstrap;
 
         buttons::McpInputHandler m_mcpHandler{board::i2c::k_mcpAddress, I2C_NUM_0};
         ControlBoardInputDispatcher::ActionMap mp_buttonActions{};

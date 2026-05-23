@@ -47,7 +47,7 @@ namespace controlSystem
         if (config.action)
         {
             const actions::ActionResponse result = config.action->execute(true);
-            mr_responseSink.process(result);
+            m_onResponse(result);
         }
     }
 
@@ -64,7 +64,7 @@ namespace controlSystem
         if (config.action)
         {
             const actions::ActionResponse result = config.action->execute(false);
-            mr_responseSink.process(result);
+            m_onResponse(result);
             applyLedOnRelease(buttonReleasedId, config.ledPolicy);
         }
     }
@@ -77,7 +77,7 @@ namespace controlSystem
         if (config.action)
         {
             const actions::ActionResponse result = config.action->execute(direction > 0);
-            mr_responseSink.process(result);
+            m_onResponse(result);
         }
 
         mr_indicators.setActivityStatus(m_backgroundStatus);

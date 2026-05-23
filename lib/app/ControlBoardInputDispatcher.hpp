@@ -7,6 +7,7 @@
 #include "app/SystemState.hpp"
 #include <array>
 #include <cstdint>
+#include <functional>
 
 namespace controlSystem
 {
@@ -23,12 +24,6 @@ namespace controlSystem
         LedPolicy ledPolicy = LedPolicy::None;
     };
 
-    struct IActionResponseSink
-    {
-        virtual ~IActionResponseSink() = default;
-        virtual void process(const actions::ActionResponse &response) = 0;
-    };
-
     struct IControlBoardIndicators : IActivityStatusSink
     {
         virtual void setButtonLed(uint8_t pin, bool enabled) = 0;
@@ -38,13 +33,14 @@ namespace controlSystem
     {
     public:
         using ActionMap = std::array<ButtonConfig, controlBoardButtons::k_count>;
+                using ResponseHandler = std::function<void(const actions::ActionResponse &)>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
-                                    IActionResponseSink &rResponseSink,
+                                                                        ResponseHandler onResponse,
                                     IControlBoardIndicators &rIndicators,
                                     SystemState &rSystemState)
             : mr_actionMap(rActionMap),
-              mr_responseSink(rResponseSink),
+                            m_onResponse(std::move(onResponse)),
               mr_indicators(rIndicators),
               mr_systemState(rSystemState)
         {
@@ -60,7 +56,7 @@ namespace controlSystem
         void applyLedOnRelease(uint8_t buttonId, LedPolicy policy);
 
         ActionMap &mr_actionMap;
-        IActionResponseSink &mr_responseSink;
+        ResponseHandler m_onResponse;
         IControlBoardIndicators &mr_indicators;
         ControlBoardWorkingStatus m_backgroundStatus = ControlBoardWorkingStatus::Idle;
         SystemState &mr_systemState;
