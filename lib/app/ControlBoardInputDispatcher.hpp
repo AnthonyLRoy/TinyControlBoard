@@ -1,6 +1,5 @@
 #pragma once
 
-#include "input/actions/actionsResponse.hpp"
 #include "activityStatus.hpp"
 #include "input/actions/buttonAction.hpp"
 #include "app/ControlBoardButtonIds.hpp"
@@ -41,7 +40,7 @@ namespace controlSystem
     {
     public:
         using ActionMap = std::array<ButtonConfig, controlBoardButtons::k_count>;
-                using ResponseHandler = std::function<void(const actions::Action &)>;
+                using ResponseHandler = std::function<void(std::unique_ptr<actions::IAction>)>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
                                     ResponseHandler onResponse,

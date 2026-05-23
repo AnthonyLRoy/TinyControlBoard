@@ -1,8 +1,6 @@
 #pragma once
 
 #include "input/actions/IAction.hpp"
-#include "app/ActionContext.hpp"
-#include "indicators/ledManager.hpp"
 
 namespace actions
 {
@@ -18,11 +16,6 @@ namespace actions
         }
 
         bool requiresPowerOn() const override { return false; }
-
-        void execute(controlSystem::ActionContext &ctx) override
-        {
-            ctx.powerHandler.handle(*this);
-            ctx.systemState.powerState.store(indicators::getPowerLed().getState());
-        }
+        void execute(controlSystem::ActionContext &ctx) override;
     };
 }

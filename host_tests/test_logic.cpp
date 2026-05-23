@@ -7,8 +7,10 @@
 #include <vector>
 
 #include "activityStatus.hpp"
+#include "input/actions/actionsResponse.hpp"
 #include "input/actions/SimpleCommandAction.hpp"
 #include "app/ActionCommandRoutingPolicy.hpp"
+#include "app/ActionFactory.hpp"
 #include "app/ActionUartDispatcher.hpp"
 #include "app/ControlBoardButtonIds.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
@@ -42,7 +44,7 @@ void test_simple_command_action_returns_configured_command_when_pressed()
     actions::SimpleCommandAction action(CMD_PLAY_PAUSE);
     const auto result = action.produce(true);
 
-    expect_true(result.has_value(), "Press should produce an action");
+    expect_true(result != nullptr, "Press should produce an action");
     expect_equal(CMD_PLAY_PAUSE, result->command, "Pressed action should return configured command");
     expect_true(!result->isActive, "Pressed action should keep default inactive state");
     expect_equal(static_cast<uint16_t>(0), result->releaseTimeMillis, "Pressed action should keep default release time");
@@ -53,7 +55,7 @@ void test_simple_command_action_returns_no_action_when_released()
     actions::SimpleCommandAction action(CMD_PLAY_PAUSE);
     const auto result = action.produce(false);
 
-    expect_true(!result.has_value(), "Released simple command action should produce no action");
+    expect_true(result == nullptr, "Released simple command action should produce no action");
 }
 
 void test_uart_message_defaults_match_protocol()
@@ -173,38 +175,35 @@ void test_deserialize_message_rejects_invalid_checksum()
 class FakeAction : public actions::IActionSource
 {
 public:
-    explicit FakeAction(actions::Action response)
-        : m_response(response)
-    {
-    }
+    explicit FakeAction(CommandId command) : m_command(command) {}
 
-    std::optional<actions::Action> produce(bool isPressed) override
+    std::unique_ptr<actions::IAction> produce(bool isPressed) override
     {
         lastPressedArg = isPressed;
         ++callCount;
-        if (m_response.command == CMD_NO_ACTION)
-            return std::nullopt;
-        return m_response;
+        if (m_command == CMD_NO_ACTION)
+            return nullptr;
+        return controlSystem::createAction(m_command);
     }
 
     int callCount = 0;
     bool lastPressedArg = false;
 
 private:
-    actions::Action m_response;
+    CommandId m_command;
 };
 
 class FakeResponseSink
 {
 public:
-    void process(const actions::Action &action)
+    void process(std::unique_ptr<actions::IAction> iaction)
     {
         ++callCount;
-        lastAction = action;
+        lastAction = std::move(iaction);
     }
 
     int callCount = 0;
-    actions::Action lastAction;
+    std::unique_ptr<actions::IAction> lastAction;
 };
 
 class FakeIndicators : public controlSystem::IControlBoardIndicators
@@ -252,11 +251,9 @@ public:
     UartMessage lastMessage;
 };
 
-actions::Action makeAction(CommandId command)
+std::unique_ptr<actions::IAction> makeAction(CommandId command)
 {
-    actions::Action action;
-    action.command = command;
-    return action;
+    return controlSystem::createAction(command);
 }
 
 void test_control_board_button_press_dispatches_action_and_led()
@@ -264,19 +261,19 @@ void test_control_board_button_press_dispatches_action_and_led()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeAction(CMD_PLAY_PAUSE));
+    FakeAction action(CMD_PLAY_PAUSE);
     actionMap[controlSystem::controlBoardButtons::k_playPause] = {&action, controlSystem::LedPolicy::Momentary};
 
     controlSystem::ControlBoardInputDispatcher dispatcher(
         actionMap,
-        [&responseSink](const actions::Action &action) { responseSink.process(action); },
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
         indicators);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_playPause);
 
-    expect_equal(1, action.callCount, "Press should execute mapped action exactly once");
-    expect_true(action.lastPressedArg, "Press should execute action with true");
-    expect_equal(1, responseSink.callCount, "Press should forward Action");
-    expect_equal(CMD_PLAY_PAUSE, responseSink.lastAction.command, "Press should forward returned command");
+    expect_equal(1, action.callCount, "Press should call produce() once");
+    expect_true(action.lastPressedArg, "Press should pass true to produce()");
+    expect_equal(1, responseSink.callCount, "Press should forward the action");
+    expect_equal(CMD_PLAY_PAUSE, responseSink.lastAction->command, "Press should forward returned command");
     expect_equal(1, indicators.ledCallCount, "Press should update the nonzero button LED");
     expect_equal(controlSystem::controlBoardButtons::k_playPause, indicators.lastLedPin, "Press should target the correct button LED");
     expect_true(indicators.lastLedState, "Press should turn the button LED on");
@@ -290,12 +287,12 @@ void test_control_board_momentary_button_release_turns_led_off()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeAction(CMD_NO_ACTION));
+    FakeAction action(CMD_NO_ACTION);
     actionMap[controlSystem::controlBoardButtons::k_playPause] = {&action, controlSystem::LedPolicy::Momentary};
 
     controlSystem::ControlBoardInputDispatcher dispatcher(
         actionMap,
-        [&responseSink](const actions::Action &action) { responseSink.process(action); },
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
         indicators);
     dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_playPause);
 
@@ -315,12 +312,12 @@ void test_control_board_toggle_button_press_flips_led_state()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeAction(CMD_NO_ACTION));
+    FakeAction action(CMD_NO_ACTION);
     actionMap[controlSystem::controlBoardButtons::k_cover] = {&action, controlSystem::LedPolicy::Toggle};
 
     controlSystem::ControlBoardInputDispatcher dispatcher(
         actionMap,
-        [&responseSink](const actions::Action &action) { responseSink.process(action); },
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
         indicators);
 
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
@@ -343,7 +340,7 @@ void test_control_board_out_of_range_press_keeps_existing_status_ordering()
 
     controlSystem::ControlBoardInputDispatcher dispatcher(
         actionMap,
-        [&responseSink](const actions::Action &action) { responseSink.process(action); },
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
         indicators);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_count);
 
@@ -359,12 +356,12 @@ void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeAction(CMD_ROTARY_ACTION));
+    FakeAction action(CMD_ROTARY_ACTION);
     actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
 
     controlSystem::ControlBoardInputDispatcher dispatcher(
         actionMap,
-        [&responseSink](const actions::Action &action) { responseSink.process(action); },
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
         indicators);
     dispatcher.handleRotaryMovement(1);
 
@@ -400,9 +397,9 @@ void test_action_uart_dispatcher_routes_simple_command()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::Action action = makeAction(CMD_PLAY_PAUSE);
+    const auto action = makeAction(CMD_PLAY_PAUSE);
 
-    const bool handled = dispatcher.handle(action);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Simple UART command should be handled");
     expect_equal(1, uartSink.commandCount, "Simple UART command should send one command");
@@ -415,9 +412,9 @@ void test_action_uart_dispatcher_routes_cover_view_message()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::Action action = makeAction(CMD_COVER_VIEW_ON);
+    const auto action = makeAction(CMD_COVER_VIEW_ON);
 
-    const bool handled = dispatcher.handle(action);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Cover view command should be handled");
     expect_equal(0, uartSink.commandCount, "Cover view should not use simple command path");
@@ -433,9 +430,9 @@ void test_action_uart_dispatcher_routes_meter_message()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::Action action = makeAction(CMD_TOGGLE_METER_OFF);
+    const auto action = makeAction(CMD_TOGGLE_METER_OFF);
 
-    const bool handled = dispatcher.handle(action);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Meter command should be handled");
     expect_equal(0, uartSink.commandCount, "Meter command should not use simple command path");
@@ -451,9 +448,9 @@ void test_action_uart_dispatcher_routes_meter_on_message()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::Action action = makeAction(CMD_TOGGLE_METER_ON);
+    const auto action = makeAction(CMD_TOGGLE_METER_ON);
 
-    const bool handled = dispatcher.handle(action);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Meter ON command should be handled");
     expect_equal(0, uartSink.commandCount, "Meter ON command should not use simple command path");
@@ -469,10 +466,10 @@ void test_action_uart_dispatcher_routes_rotary_message()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    actions::Action action = makeAction(CMD_ROTARY_ACTION);
-    action.parameters[0] = 1;
+    auto action = makeAction(CMD_ROTARY_ACTION);
+    action->parameters[0] = 1;
 
-    const bool handled = dispatcher.handle(action);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Rotary command should be handled");
     expect_equal(0, uartSink.commandCount, "Rotary command should not use simple command path");
@@ -488,8 +485,8 @@ void test_action_uart_dispatcher_ignores_unknown_command()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::Action action = makeAction(CMD_NO_ACTION);
-
+    actions::Action action;
+    action.command = CMD_NO_ACTION;
     const bool handled = dispatcher.handle(action);
 
     expect_true(!handled, "Unknown command should not be handled by UART dispatcher");
@@ -568,12 +565,12 @@ void test_control_board_rotary_negative_direction_passes_false_to_action()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeAction(CMD_ROTARY_ACTION));
+    FakeAction action(CMD_ROTARY_ACTION);
     actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
 
     controlSystem::ControlBoardInputDispatcher dispatcher(
         actionMap,
-        [&responseSink](const actions::Action &action) { responseSink.process(action); },
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
         indicators);
     dispatcher.handleRotaryMovement(-1);
 
@@ -590,7 +587,7 @@ void test_control_board_in_range_unmapped_button_press_does_not_dispatch_respons
 
     controlSystem::ControlBoardInputDispatcher dispatcher(
         actionMap,
-        [&responseSink](const actions::Action &action) { responseSink.process(action); },
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
         indicators);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_playPause);
 
@@ -608,7 +605,7 @@ void test_control_board_in_range_unmapped_button_release_does_not_dispatch_respo
 
     controlSystem::ControlBoardInputDispatcher dispatcher(
         actionMap,
-        [&responseSink](const actions::Action &action) { responseSink.process(action); },
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
         indicators);
     dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_playPause);
 

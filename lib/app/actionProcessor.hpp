@@ -1,8 +1,7 @@
 #pragma once
 
 #include "relay.hpp"
-#include "input/actions/actionsResponse.hpp"
-#include "app/ActionFactory.hpp"
+#include "input/actions/IAction.hpp"
 #include "app/ActionContext.hpp"
 #include "app/ActionUartDispatcher.hpp"
 #include "app/SerialUartCommandSink.hpp"
@@ -28,7 +27,7 @@ namespace controlSystem
                         relays::StandardRelay &rRelays,
                         SystemState &rSystemState,
                         IActivityStatusSink *p_activitySink = nullptr);
-        void process(const actions::Action &action);
+        void process(std::unique_ptr<actions::IAction> iaction);
         bool handleInboundUartMessage(const UartMessage &message);
         const char *getCommandNameForPin(uint8_t pin);
 

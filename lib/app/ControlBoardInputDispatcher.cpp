@@ -46,10 +46,10 @@ namespace controlSystem
 
         if (config.action)
         {
-            auto action = config.action->produce(true);
-            if (action)
+            auto iaction = config.action->produce(true);
+            if (iaction)
             {
-                m_onResponse(*action);
+                m_onResponse(std::move(iaction));
             }
         }
     }
@@ -66,10 +66,10 @@ namespace controlSystem
         const ButtonConfig &config = mr_actionMap[buttonReleasedId];
         if (config.action)
         {
-            auto action = config.action->produce(false);
-            if (action)
+            auto iaction = config.action->produce(false);
+            if (iaction)
             {
-                m_onResponse(*action);
+                m_onResponse(std::move(iaction));
             }
             applyLedOnRelease(buttonReleasedId, config.ledPolicy);
         }
@@ -82,10 +82,10 @@ namespace controlSystem
         const ButtonConfig &config = mr_actionMap[controlBoardButtons::k_rotaryEventLeft];
         if (config.action)
         {
-            auto action = config.action->produce(direction > 0);
-            if (action)
+            auto iaction = config.action->produce(direction > 0);
+            if (iaction)
             {
-                m_onResponse(*action);
+                m_onResponse(std::move(iaction));
             }
         }
 

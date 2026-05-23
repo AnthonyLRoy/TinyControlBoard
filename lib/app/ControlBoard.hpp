@@ -31,7 +31,7 @@ namespace controlSystem
         void initTransport();
         void initComponents();
 
-        void process(const actions::Action &action);
+        void process(std::unique_ptr<actions::IAction> iaction);
         void setActivityStatus(ControlBoardWorkingStatus status) override;
         void setButtonLed(uint8_t pin, bool enabled) override;
         void handleHeartbeatReceived();

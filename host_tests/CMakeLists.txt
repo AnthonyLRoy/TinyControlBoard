@@ -10,7 +10,9 @@ enable_testing()
 
 add_executable(tiny_control_board_host_tests
     test_logic.cpp
+    host_test_action_stubs.cpp
     ../lib/protocol/uartProtocol.cpp
+    ../lib/app/ActionFactory.cpp
     ../lib/app/ActionUartDispatcher.cpp
     ../lib/app/ControlBoardInputDispatcher.cpp
     ../lib/support/commandCatalog.cpp

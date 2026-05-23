@@ -4,10 +4,10 @@
 
 namespace actions
 {
-    /// Concrete data-transfer object for the produce() → dispatch pipeline.
-    /// All data fields are inherited from IAction.  execute() is intentionally
-    /// a no-op: ActionProcessor creates purpose-built IAction subtypes via the
-    /// factory for actual execution.
+    /// Minimal no-op IAction implementation.
+    /// Used in host-test helpers and UART dispatcher tests where a concrete
+    /// IAction value is needed without going through ActionFactory.
+    /// Not produced by any IActionSource in the live firmware pipeline.
     struct Action : public IAction
     {
         bool requiresPowerOn() const override { return true; }

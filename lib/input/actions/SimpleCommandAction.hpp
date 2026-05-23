@@ -1,7 +1,7 @@
 #pragma once
 
 #include "input/actions/buttonAction.hpp"
-#include "input/actions/actionsResponse.hpp"
+#include "app/ActionFactory.hpp"
 
 namespace actions
 {
@@ -10,13 +10,11 @@ namespace actions
     public:
         explicit SimpleCommandAction(CommandId commandId) : m_commandId(commandId) {}
 
-        std::optional<Action> produce(bool isPressed) override
+        std::unique_ptr<IAction> produce(bool isPressed) override
         {
             if (!isPressed)
-                return std::nullopt;
-            Action action;
-            action.command = m_commandId;
-            return action;
+                return nullptr;
+            return controlSystem::createAction(m_commandId);
         }
 
     private:

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "input/actions/IAction.hpp"
-#include "app/ActionContext.hpp"
 
 namespace actions
 {
@@ -12,10 +11,6 @@ namespace actions
         explicit UartDispatchAction(CommandId cmd) { command = cmd; }
 
         bool requiresPowerOn() const override { return true; }
-
-        void execute(controlSystem::ActionContext &ctx) override
-        {
-            ctx.uartDispatcher.handle(*this);
-        }
+        void execute(controlSystem::ActionContext &ctx) override;
     };
 }

@@ -1,4 +1,5 @@
 #include "app/actionProcessor.hpp"
+#include "app/ActionFactory.hpp"
 #include "indicators/ledManager.hpp"
 #include <inttypes.h>
 
@@ -18,21 +19,17 @@ namespace controlSystem
             p_activitySink);
     }
 
-    void ActionProcessor::process(const actions::Action &action)
+    void ActionProcessor::process(std::unique_ptr<actions::IAction> iaction)
     {
-        ESP_LOGI(k_logTag, "Action processor received command: 0x%04X", action.command);
-
-        auto iaction = createAction(action.command, action.releaseTimeMillis);
         if (!iaction)
             return;
 
-        std::copy(std::begin(action.parameters), std::end(action.parameters),
-                  std::begin(iaction->parameters));
+        ESP_LOGI(k_logTag, "Action processor received command: 0x%04X", iaction->command);
 
         const auto powerState = mr_systemState.powerState.load();
         if (iaction->requiresPowerOn() && powerState != ControlBoardPowerState::ON)
         {
-            ESP_LOGI(k_logTag, "Ignoring command %u as system is not ON", action.command);
+            ESP_LOGI(k_logTag, "Ignoring command %u as system is not ON", iaction->command);
             return;
         }
 
@@ -94,10 +91,8 @@ namespace controlSystem
     {
         // Force LED to OFF so PowerStateTransitionPolicy treats this as a power-on request.
         indicators::getPowerLed().setState(ControlBoardPowerState::OFF);
-        actions::Action syntheticAction;
-        syntheticAction.command = CMD_SYS_POWER;
-        syntheticAction.releaseTimeMillis = 0;
-        const bool result = mp_powerStateTransitionHandler->handle(syntheticAction);
+        auto syntheticAction = createAction(CMD_SYS_POWER);
+        const bool result = mp_powerStateTransitionHandler->handle(*syntheticAction);
         mr_systemState.powerState.store(indicators::getPowerLed().getState());
         return result;
     }
