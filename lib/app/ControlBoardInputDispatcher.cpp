@@ -1,5 +1,4 @@
 #include "app/ControlBoardInputDispatcher.hpp"
-#include "app/ActionCommandRoutingPolicy.hpp"
 
 namespace controlSystem
 {
@@ -50,7 +49,6 @@ namespace controlSystem
             auto action = config.action->produce(true);
             if (action)
             {
-                action->route = classifyCommand(action->command, ControlBoardPowerState::ON);
                 m_onResponse(*action);
             }
         }
@@ -71,7 +69,6 @@ namespace controlSystem
             auto action = config.action->produce(false);
             if (action)
             {
-                action->route = classifyCommand(action->command, ControlBoardPowerState::ON);
                 m_onResponse(*action);
             }
             applyLedOnRelease(buttonReleasedId, config.ledPolicy);
@@ -88,7 +85,6 @@ namespace controlSystem
             auto action = config.action->produce(direction > 0);
             if (action)
             {
-                action->route = classifyCommand(action->command, ControlBoardPowerState::ON);
                 m_onResponse(*action);
             }
         }

@@ -14,7 +14,7 @@ namespace controlSystem
     {
     }
 
-    bool ActionUartDispatcher::handle(const actions::Action &action)
+    bool ActionUartDispatcher::handle(const actions::IAction &action)
     {
         return handleCoverViewCommand(action) ||
                handleMeterCommand(action) ||
@@ -24,7 +24,7 @@ namespace controlSystem
                handleSimpleCommand(action);
     }
 
-    bool ActionUartDispatcher::handleCoverViewCommand(const actions::Action &action)
+    bool ActionUartDispatcher::handleCoverViewCommand(const actions::IAction &action)
     {
         if (action.command != CMD_COVER_VIEW_ON && action.command != CMD_COVER_VIEW_OFF)
         {
@@ -41,7 +41,7 @@ namespace controlSystem
         return true;
     }
 
-    bool ActionUartDispatcher::handleMeterCommand(const actions::Action &action)
+    bool ActionUartDispatcher::handleMeterCommand(const actions::IAction &action)
     {
         if (action.command != CMD_TOGGLE_METER_ON && action.command != CMD_TOGGLE_METER_OFF)
         {
@@ -57,7 +57,7 @@ namespace controlSystem
         return true;
     }
 
-    bool ActionUartDispatcher::handleRotaryCommand(const actions::Action &action)
+    bool ActionUartDispatcher::handleRotaryCommand(const actions::IAction &action)
     {
         if (action.command != CMD_ROTARY_ACTION)
         {
@@ -73,7 +73,7 @@ namespace controlSystem
         return true;
     }
 
-    bool ActionUartDispatcher::handleRepeatCommand(const actions::Action &action)
+    bool ActionUartDispatcher::handleRepeatCommand(const actions::IAction &action)
     {
         if (action.command != CMD_REPEAT_ON && action.command != CMD_REPEAT_OFF)
         {
@@ -89,7 +89,7 @@ namespace controlSystem
         return true;
     }
 //simple commands are those that can be directly mapped to a single UART command without needing additional parameters or special handling
-    bool ActionUartDispatcher::handleRandomCommand(const actions::Action &action)
+    bool ActionUartDispatcher::handleRandomCommand(const actions::IAction &action)
     {
         if (action.command != CMD_RANDOM_ON && action.command != CMD_RANDOM_OFF)
         {
@@ -105,7 +105,7 @@ namespace controlSystem
         return true;
     }
 
-    bool ActionUartDispatcher::handleSimpleCommand(const actions::Action &action)
+    bool ActionUartDispatcher::handleSimpleCommand(const actions::IAction &action)
     {
         const char *p_commandTag = getSimpleCommandLogTag(action.command);
         if (p_commandTag)

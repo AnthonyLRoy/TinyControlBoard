@@ -2,6 +2,8 @@
 
 #include "relay.hpp"
 #include "input/actions/actionsResponse.hpp"
+#include "app/ActionFactory.hpp"
+#include "app/ActionContext.hpp"
 #include "app/ActionUartDispatcher.hpp"
 #include "app/SerialUartCommandSink.hpp"
 #include "app/SystemState.hpp"
@@ -37,12 +39,6 @@ namespace controlSystem
         bool waitForRpiShutdown(uint32_t timeoutMs = 60000);
 
     private:
-        bool handleCommandPowerStateChange(const actions::Action &action);
-        bool handleSystemCommand(const actions::Action &action);
-        bool handleRelayCommand(const actions::Action &action);
-        bool handleDisplayCommand(const actions::Action &action);
-        bool handleBrightnessCommand(const actions::Action &action);
-
         std::unique_ptr<ActionUartDispatcher> mp_actionUartDispatcher;
         std::unique_ptr<SerialUartCommandSink> mp_serialUartCommandSink;
         std::unique_ptr<RpiBootManager> mp_rpiBootManager;

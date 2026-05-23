@@ -20,7 +20,7 @@ namespace controlSystem
     {
     }
 
-    bool PowerStateTransitionHandler::handle(const actions::Action &action)
+    bool PowerStateTransitionHandler::handle(const actions::IAction &action)
     {
         const auto powerState = indicators::getPowerLed().getState();
         const auto transitionAction = evaluatePowerTransition(powerState, action.releaseTimeMillis);

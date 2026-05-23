@@ -1,21 +1,17 @@
 #pragma once
 
-#include "protocol/uartProtocol.hpp"
-#include "app/ActionCommandRoute.hpp"
+#include "input/actions/IAction.hpp"
 
 namespace actions
 {
-    /// A fully-classified action intent created from a button event.
-    /// The `route` field is set by ControlBoardInputDispatcher after the
-    /// producer fires, so ActionProcessor can dispatch without re-classifying.
-    struct Action
+    /// Concrete data-transfer object for the produce() → dispatch pipeline.
+    /// All data fields are inherited from IAction.  execute() is intentionally
+    /// a no-op: ActionProcessor creates purpose-built IAction subtypes via the
+    /// factory for actual execution.
+    struct Action : public IAction
     {
-        controlSystem::ActionCommandRoute route = controlSystem::ActionCommandRoute::None;
-        bool isActive = false;
-        CommandId command = CMD_NO_ACTION;
-        uint16_t parameters[5]{0, 0, 0, 0, 0};
-        uint16_t releaseTimeMillis = 0;
-
+        bool requiresPowerOn() const override { return true; }
+        void execute(controlSystem::ActionContext &) override {}
         Action() = default;
     };
 }

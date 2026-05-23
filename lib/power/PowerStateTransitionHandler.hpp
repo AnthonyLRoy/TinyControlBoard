@@ -1,6 +1,6 @@
 #pragma once
 
-#include "input/actions/actionsResponse.hpp"
+#include "input/actions/IAction.hpp"
 #include "power/RelayController.hpp"
 #include "power/RPIBootManager.hpp"
 #include "transport/uart/serial.hpp"
@@ -16,7 +16,7 @@ namespace controlSystem
                                     RpiBootManager &rRpiBootManager,
                                     IActivityStatusSink *p_activitySink = nullptr);
 
-        bool handle(const actions::Action &action);
+        bool handle(const actions::IAction &action);
 
     private:
         transport::uart::UartTransport &mr_serial;
