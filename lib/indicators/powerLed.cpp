@@ -248,7 +248,7 @@ void PowerLed::update()
         }
     }
 
-    // Handle blip effect (short pulse every 10 seconds)
+    //  blip   pulse every 10 seconds)
     if (m_activeBlip || m_standbyBlip)
     {
         uint64_t elapsed = now - m_blipStartTime;
