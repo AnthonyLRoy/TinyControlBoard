@@ -1,6 +1,6 @@
 #pragma once
 
-#include "input/actions/actionsResponse.hpp"
+#include "input/actions/IAction.hpp"
 
 namespace controlSystem
 {
@@ -16,16 +16,9 @@ namespace controlSystem
     public:
         explicit ActionUartDispatcher(IUartCommandSink &rUartCommandSink);
 
-        bool handle(const actions::ActionResponse &response);
+        bool handle(const actions::IAction &action);
 
     private:
-        bool handleCoverViewCommand(const actions::ActionResponse &response);
-        bool handleMeterCommand(const actions::ActionResponse &response);
-        bool handleRotaryCommand(const actions::ActionResponse &response);
-        bool handleRepeatCommand(const actions::ActionResponse &response);
-        bool handleRandomCommand(const actions::ActionResponse &response);
-        bool handleSimpleCommand(const actions::ActionResponse &response);
-
         IUartCommandSink &mr_uartCommandSink;
 
         static constexpr const char *k_logTag = "Uart_Dispatcher ";

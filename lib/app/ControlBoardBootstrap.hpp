@@ -9,28 +9,27 @@
 
 namespace controlSystem
 {
-    class ControlBoardBootstrap
+    namespace bootstrap
     {
-    public:
         using SerialRxCallback = std::function<void(const UartMessage &)>;
         using VoidCallback = std::function<void()>;
         using ButtonCallback = std::function<void(uint8_t)>;
         using RotaryCallback = std::function<void(int)>;
 
-        void prepareStartupIndicators() const;
-        void finalizeStartupIndicators() const;
+        void prepareStartupIndicators();
+        void finalizeStartupIndicators();
 
         void configureSerialCallbacks(transport::uart::UartTransport &rSerial,
                                       SerialRxCallback onSerialRx,
-                                      VoidCallback onHeartbeatTimeout) const;
+                                      VoidCallback onHeartbeatTimeout);
 
-        bool setupRelays() const;
-        bool setupSerial(transport::uart::UartTransport &rSerial) const;
-        bool setupMcpHandler(buttons::McpInputHandler &rMcpHandler) const;
+        bool setupRelays();
+        bool setupSerial(transport::uart::UartTransport &rSerial);
+        bool setupMcpHandler(buttons::McpInputHandler &rMcpHandler);
 
         void configureMcpCallbacks(buttons::McpInputHandler &rMcpHandler,
                                    ButtonCallback onButtonPressed,
                                    ButtonCallback onButtonReleased,
-                                   RotaryCallback onRotaryMovement) const;
-    };
+                                   RotaryCallback onRotaryMovement);
+    }
 }

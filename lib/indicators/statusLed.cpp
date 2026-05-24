@@ -13,6 +13,7 @@ static constexpr uint32_t BREATHE_STEP = 64;
 static constexpr uint32_t BREATHE_DELAY_MS = 20;
 static constexpr uint32_t BLIP_ON_MS = 50;
 static constexpr uint32_t BLIP_OFF_MS = 1950;
+static constexpr uint32_t SLEEP_BLIP_OFF_MS = 9950;
 static constexpr uint32_t PWM_FREQ_HZ = 5000;
 static constexpr uint32_t BLINK_TIMER_PERIOD_MS = 100;
 static constexpr uint32_t LED_TASK_STACK_SIZE = 4096;
@@ -195,7 +196,9 @@ void StatusLed::runLedTask(void *p_param)
                 // LED stays off — system is idle/off
                 break;
             case ControlBoardWorkingStatus::sleeping:
-                p_self->startBreatheEffect();
+                p_self->updateDuty(MAX_DUTY);
+                xTimerChangePeriod(p_self->mp_blinkTimer, pdMS_TO_TICKS(SLEEP_BLIP_OFF_MS), 0);
+                xTimerStart(p_self->mp_blinkTimer, 0);
                 break;
             }
         }
@@ -223,6 +226,11 @@ void StatusLed::handleTimer(TimerHandle_t timerHandle)
     if (p_self->m_currentStatus == ControlBoardWorkingStatus::Active)
     {
         const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : BLIP_OFF_MS;
+        xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
+    }
+    else if (p_self->m_currentStatus == ControlBoardWorkingStatus::sleeping)
+    {
+        const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : SLEEP_BLIP_OFF_MS;
         xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
     }
 }
@@ -329,6 +337,7 @@ uint32_t StatusLed::getBlinkDuty(ControlBoardWorkingStatus status)
     case ControlBoardWorkingStatus::Idle:
         return m_idleDuty;
     case ControlBoardWorkingStatus::Active:
+    case ControlBoardWorkingStatus::sleeping:
         return MAX_DUTY;
     default:
         return MAX_DUTY;

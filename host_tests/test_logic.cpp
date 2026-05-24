@@ -7,12 +7,13 @@
 #include <vector>
 
 #include "activityStatus.hpp"
+#include "input/actions/actionsResponse.hpp"
 #include "input/actions/SimpleCommandAction.hpp"
 #include "app/ActionCommandRoutingPolicy.hpp"
+#include "app/ActionFactory.hpp"
 #include "app/ActionUartDispatcher.hpp"
 #include "app/ControlBoardButtonIds.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
-#include "app/SystemState.hpp"
 #include "power/PowerStateTransitionPolicy.hpp"
 #include "app/SerialHeartbeatRouter.hpp"
 #include "protocol/uartProtocol.hpp"
@@ -41,21 +42,20 @@ void expect_true(bool condition, const std::string &message)
 void test_simple_command_action_returns_configured_command_when_pressed()
 {
     actions::SimpleCommandAction action(CMD_PLAY_PAUSE);
-    const actions::ActionResponse response = action.execute(true);
+    const auto result = action.produce(true);
 
-    expect_equal(CMD_PLAY_PAUSE, response.command, "Pressed action should return configured command");
-    expect_true(!response.isActive, "Pressed action should keep default inactive state");
-    expect_equal(static_cast<uint16_t>(0), response.releaseTimeMillis, "Pressed action should keep default release time");
+    expect_true(result != nullptr, "Press should produce an action");
+    expect_equal(CMD_PLAY_PAUSE, result->command, "Pressed action should return configured command");
+    expect_true(!result->isActive, "Pressed action should keep default inactive state");
+    expect_equal(static_cast<uint16_t>(0), result->releaseTimeMillis, "Pressed action should keep default release time");
 }
 
 void test_simple_command_action_returns_no_action_when_released()
 {
     actions::SimpleCommandAction action(CMD_PLAY_PAUSE);
-    const actions::ActionResponse response = action.execute(false);
+    const auto result = action.produce(false);
 
-    expect_equal(CMD_NO_ACTION, response.command, "Released action should not emit a command");
-    expect_true(!response.isActive, "Released action should keep default inactive state");
-    expect_equal(static_cast<uint16_t>(0), response.releaseTimeMillis, "Released action should keep default release time");
+    expect_true(result == nullptr, "Released simple command action should produce no action");
 }
 
 void test_uart_message_defaults_match_protocol()
@@ -172,39 +172,38 @@ void test_deserialize_message_rejects_invalid_checksum()
     expect_true(!deserializeMessage(buffer, parsed), "Invalid checksum should be rejected");
 }
 
-class FakeAction : public actions::ButtonAction
+class FakeAction : public actions::IActionSource
 {
 public:
-    explicit FakeAction(actions::ActionResponse response)
-        : m_response(response)
-    {
-    }
+    explicit FakeAction(CommandId command) : m_command(command) {}
 
-    actions::ActionResponse execute(bool isPressed) override
+    std::unique_ptr<actions::IAction> produce(bool isPressed) override
     {
         lastPressedArg = isPressed;
         ++callCount;
-        return m_response;
+        if (m_command == CMD_NO_ACTION)
+            return nullptr;
+        return controlSystem::createAction(m_command);
     }
 
     int callCount = 0;
     bool lastPressedArg = false;
 
 private:
-    actions::ActionResponse m_response;
+    CommandId m_command;
 };
 
-class FakeResponseSink : public controlSystem::IActionResponseSink
+class FakeResponseSink
 {
 public:
-    void process(const actions::ActionResponse &response) override
+    void process(std::unique_ptr<actions::IAction> iaction)
     {
         ++callCount;
-        lastResponse = response;
+        lastAction = std::move(iaction);
     }
 
     int callCount = 0;
-    actions::ActionResponse lastResponse;
+    std::unique_ptr<actions::IAction> lastAction;
 };
 
 class FakeIndicators : public controlSystem::IControlBoardIndicators
@@ -226,17 +225,6 @@ public:
     int ledCallCount = 0;
     uint8_t lastLedPin = 0;
     bool lastLedState = false;
-};
-
-class FakeHeartbeatSink : public controlSystem::IHeartbeatSink
-{
-public:
-    void handleHeartbeatReceived() override
-    {
-        ++receivedCount;
-    }
-
-    int receivedCount = 0;
 };
 
 class FakeUartCommandSink : public controlSystem::IUartCommandSink
@@ -263,11 +251,9 @@ public:
     UartMessage lastMessage;
 };
 
-actions::ActionResponse makeResponse(CommandId command)
+std::unique_ptr<actions::IAction> makeAction(CommandId command)
 {
-    actions::ActionResponse response;
-    response.command = command;
-    return response;
+    return controlSystem::createAction(command);
 }
 
 void test_control_board_button_press_dispatches_action_and_led()
@@ -275,17 +261,19 @@ void test_control_board_button_press_dispatches_action_and_led()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeResponse(CMD_PLAY_PAUSE));
+    FakeAction action(CMD_PLAY_PAUSE);
     actionMap[controlSystem::controlBoardButtons::k_playPause] = {&action, controlSystem::LedPolicy::Momentary};
 
-    controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_playPause);
 
-    expect_equal(1, action.callCount, "Press should execute mapped action exactly once");
-    expect_true(action.lastPressedArg, "Press should execute action with true");
-    expect_equal(1, responseSink.callCount, "Press should forward ActionResponse");
-    expect_equal(CMD_PLAY_PAUSE, responseSink.lastResponse.command, "Press should forward returned command");
+    expect_equal(1, action.callCount, "Press should call produce() once");
+    expect_true(action.lastPressedArg, "Press should pass true to produce()");
+    expect_equal(1, responseSink.callCount, "Press should forward the action");
+    expect_equal(CMD_PLAY_PAUSE, responseSink.lastAction->command, "Press should forward returned command");
     expect_equal(1, indicators.ledCallCount, "Press should update the nonzero button LED");
     expect_equal(controlSystem::controlBoardButtons::k_playPause, indicators.lastLedPin, "Press should target the correct button LED");
     expect_true(indicators.lastLedState, "Press should turn the button LED on");
@@ -299,16 +287,18 @@ void test_control_board_momentary_button_release_turns_led_off()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeResponse(CMD_NO_ACTION));
+    FakeAction action(CMD_NO_ACTION);
     actionMap[controlSystem::controlBoardButtons::k_playPause] = {&action, controlSystem::LedPolicy::Momentary};
 
-    controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
     dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_playPause);
 
     expect_equal(1, action.callCount, "Release should execute mapped action exactly once");
     expect_true(!action.lastPressedArg, "Release should execute action with false");
-    expect_equal(1, responseSink.callCount, "Release should forward ActionResponse");
+    expect_equal(0, responseSink.callCount, "Release of simple command should not forward an action (no-op on release)");
     expect_equal(1, indicators.ledCallCount, "Momentary release should turn LED off");
     expect_equal(controlSystem::controlBoardButtons::k_playPause, indicators.lastLedPin, "Release should target the correct button LED");
     expect_true(!indicators.lastLedState, "Momentary release should set LED to false");
@@ -322,11 +312,13 @@ void test_control_board_toggle_button_press_flips_led_state()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeResponse(CMD_NO_ACTION));
+    FakeAction action(CMD_NO_ACTION);
     actionMap[controlSystem::controlBoardButtons::k_cover] = {&action, controlSystem::LedPolicy::Toggle};
 
-    controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
 
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
     expect_equal(1, indicators.ledCallCount, "First press should call setButtonLed once");
@@ -346,8 +338,10 @@ void test_control_board_out_of_range_press_keeps_existing_status_ordering()
     FakeResponseSink responseSink;
     FakeIndicators indicators;
 
-    controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_count);
 
     expect_equal(0, responseSink.callCount, "Out-of-range press should not forward a response");
@@ -362,16 +356,18 @@ void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeResponse(CMD_ROTARY_ACTION));
+    FakeAction action(CMD_ROTARY_ACTION);
     actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
 
-    controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
     dispatcher.handleRotaryMovement(1);
 
     expect_equal(1, action.callCount, "Rotary movement should execute the shared rotary action once");
     expect_true(action.lastPressedArg, "Positive rotary movement should pass true to the action");
-    expect_equal(1, responseSink.callCount, "Rotary movement should forward ActionResponse");
+    expect_equal(1, responseSink.callCount, "Rotary movement should forward Action");
     expect_equal(static_cast<size_t>(2), indicators.activityHistory.size(), "Rotary movement should set status twice");
     expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::doingWork,
                 "Rotary movement should enter doingWork first");
@@ -379,52 +375,31 @@ void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
                 "Rotary movement should return to Idle afterwards");
 }
 
-void test_serial_heartbeat_router_handles_current_heartbeat()
+void test_heartbeat_helper_handles_current_heartbeat()
 {
-    FakeHeartbeatSink heartbeatSink;
-    controlSystem::SerialHeartbeatRouter router(&heartbeatSink);
-    UartMessage message;
-    message.commandId = CMD_SYS_HEARTBEAT;
-
-    const bool handled = router.route(message);
-
-    expect_true(handled, "Current heartbeat should be handled");
-    expect_equal(1, heartbeatSink.receivedCount, "Current heartbeat should notify the sink");
+    expect_true(controlSystem::isHeartbeatCommand(CMD_SYS_HEARTBEAT),
+                "Current heartbeat should be recognized");
 }
 
-void test_serial_heartbeat_router_handles_legacy_heartbeat()
+void test_heartbeat_helper_handles_legacy_heartbeat()
 {
-    FakeHeartbeatSink heartbeatSink;
-    controlSystem::SerialHeartbeatRouter router(&heartbeatSink);
-    UartMessage message;
-    message.commandId = controlSystem::SerialHeartbeatRouter::k_legacyHeartbeatCommandId;
-
-    const bool handled = router.route(message);
-
-    expect_true(handled, "Legacy heartbeat should be handled");
-    expect_equal(1, heartbeatSink.receivedCount, "Legacy heartbeat should notify the sink");
+    expect_true(controlSystem::isHeartbeatCommand(controlSystem::kLegacyHeartbeatCommandId),
+                "Legacy heartbeat should be recognized");
 }
 
-void test_serial_heartbeat_router_ignores_non_heartbeat_messages()
+void test_heartbeat_helper_ignores_non_heartbeat_messages()
 {
-    FakeHeartbeatSink heartbeatSink;
-    controlSystem::SerialHeartbeatRouter router(&heartbeatSink);
-    UartMessage message;
-    message.commandId = CMD_PLAY_PAUSE;
-
-    const bool handled = router.route(message);
-
-    expect_true(!handled, "Non-heartbeat command should not be handled");
-    expect_equal(0, heartbeatSink.receivedCount, "Non-heartbeat command should not notify the sink");
+    expect_true(!controlSystem::isHeartbeatCommand(CMD_PLAY_PAUSE),
+                "Non-heartbeat command should not be recognized");
 }
 
 void test_action_uart_dispatcher_routes_simple_command()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::ActionResponse response = makeResponse(CMD_PLAY_PAUSE);
+    const auto action = makeAction(CMD_PLAY_PAUSE);
 
-    const bool handled = dispatcher.handle(response);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Simple UART command should be handled");
     expect_equal(1, uartSink.commandCount, "Simple UART command should send one command");
@@ -437,9 +412,9 @@ void test_action_uart_dispatcher_routes_cover_view_message()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::ActionResponse response = makeResponse(CMD_COVER_VIEW_ON);
+    const auto action = makeAction(CMD_COVER_VIEW_ON);
 
-    const bool handled = dispatcher.handle(response);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Cover view command should be handled");
     expect_equal(0, uartSink.commandCount, "Cover view should not use simple command path");
@@ -455,9 +430,9 @@ void test_action_uart_dispatcher_routes_meter_message()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::ActionResponse response = makeResponse(CMD_TOGGLE_METER_OFF);
+    const auto action = makeAction(CMD_TOGGLE_METER_OFF);
 
-    const bool handled = dispatcher.handle(response);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Meter command should be handled");
     expect_equal(0, uartSink.commandCount, "Meter command should not use simple command path");
@@ -473,9 +448,9 @@ void test_action_uart_dispatcher_routes_meter_on_message()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::ActionResponse response = makeResponse(CMD_TOGGLE_METER_ON);
+    const auto action = makeAction(CMD_TOGGLE_METER_ON);
 
-    const bool handled = dispatcher.handle(response);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Meter ON command should be handled");
     expect_equal(0, uartSink.commandCount, "Meter ON command should not use simple command path");
@@ -491,10 +466,10 @@ void test_action_uart_dispatcher_routes_rotary_message()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    actions::ActionResponse response = makeResponse(CMD_ROTARY_ACTION);
-    response.parameters[0] = 1;
+    auto action = makeAction(CMD_ROTARY_ACTION);
+    action->parameters[0] = 1;
 
-    const bool handled = dispatcher.handle(response);
+    const bool handled = dispatcher.handle(*action);
 
     expect_true(handled, "Rotary command should be handled");
     expect_equal(0, uartSink.commandCount, "Rotary command should not use simple command path");
@@ -510,9 +485,9 @@ void test_action_uart_dispatcher_ignores_unknown_command()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    const actions::ActionResponse response = makeResponse(CMD_NO_ACTION);
-
-    const bool handled = dispatcher.handle(response);
+    actions::Action action;
+    action.command = CMD_NO_ACTION;
+    const bool handled = dispatcher.handle(action);
 
     expect_true(!handled, "Unknown command should not be handled by UART dispatcher");
     expect_equal(0, uartSink.commandCount, "Unknown command should not send a command");
@@ -521,66 +496,66 @@ void test_action_uart_dispatcher_ignores_unknown_command()
 
 void test_power_state_transition_policy_selects_power_on_for_sleeping_states()
 {
-    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::OFF, 0) ==
+    expect_true(controlSystem::evaluatePowerTransition(ControlBoardPowerState::OFF, 0) ==
                     controlSystem::PowerTransitionAction::PowerOn,
                 "OFF should transition to PowerOn");
-    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::SLEEP, 100) ==
+    expect_true(controlSystem::evaluatePowerTransition(ControlBoardPowerState::SLEEP, 100) ==
                     controlSystem::PowerTransitionAction::PowerOn,
                 "SLEEP should transition to PowerOn");
-    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::DEEPSLEEP, 100) ==
+    expect_true(controlSystem::evaluatePowerTransition(ControlBoardPowerState::DEEPSLEEP, 100) ==
                     controlSystem::PowerTransitionAction::PowerOn,
                 "DEEPSLEEP should transition to PowerOn");
 }
 
 void test_power_state_transition_policy_selects_sleep_for_short_press()
 {
-    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::ON, 2999) ==
+    expect_true(controlSystem::evaluatePowerTransition(ControlBoardPowerState::ON, 2999) ==
                     controlSystem::PowerTransitionAction::Sleep,
                 "Short press while ON should transition to Sleep");
 }
 
 void test_power_state_transition_policy_selects_deep_sleep_for_long_press()
 {
-    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::ON, 3000) ==
+    expect_true(controlSystem::evaluatePowerTransition(ControlBoardPowerState::ON, 3000) ==
                     controlSystem::PowerTransitionAction::DeepSleep,
                 "Threshold press while ON should transition to DeepSleep");
 }
 
 void test_power_state_transition_policy_returns_none_for_non_on_intermediate_states()
 {
-    expect_true(controlSystem::PowerStateTransitionPolicy::evaluate(ControlBoardPowerState::TURNING_ON, 100) ==
+    expect_true(controlSystem::evaluatePowerTransition(ControlBoardPowerState::TURNING_ON, 100) ==
                     controlSystem::PowerTransitionAction::None,
                 "Intermediate states should not trigger a transition");
 }
 
 void test_action_command_routing_policy_handles_pre_on_routes()
 {
-    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_NO_ACTION, ControlBoardPowerState::ON) ==
+    expect_true(controlSystem::classifyCommand(CMD_NO_ACTION, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::None,
                 "No action should short-circuit");
-    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_SYS_POWER, ControlBoardPowerState::OFF) ==
+    expect_true(controlSystem::classifyCommand(CMD_SYS_POWER, ControlBoardPowerState::OFF) ==
                     controlSystem::ActionCommandRoute::PowerStateTransition,
                 "Power command should route to power transition handling");
-    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_PLAY_PAUSE, ControlBoardPowerState::OFF) ==
+    expect_true(controlSystem::classifyCommand(CMD_PLAY_PAUSE, ControlBoardPowerState::OFF) ==
                     controlSystem::ActionCommandRoute::IgnoreWhileNotOn,
                 "Non-power commands should be ignored while power is not ON");
 }
 
 void test_action_command_routing_policy_classifies_on_state_handlers()
 {
-    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_SYS_RPI_SHUTDOWN, ControlBoardPowerState::ON) ==
+    expect_true(controlSystem::classifyCommand(CMD_SYS_RPI_SHUTDOWN, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::System,
                 "Shutdown should use the system handler");
-    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_TOGGLE_DAC_ON, ControlBoardPowerState::ON) ==
+    expect_true(controlSystem::classifyCommand(CMD_TOGGLE_DAC_ON, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::Relay,
                 "DAC toggle should use the relay handler");
-    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_DISPLAY_OFF, ControlBoardPowerState::ON) ==
+    expect_true(controlSystem::classifyCommand(CMD_DISPLAY_OFF, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::Display,
                 "Display toggle should use the display handler");
-    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_CYCLE_BRIGHTNESS, ControlBoardPowerState::ON) ==
+    expect_true(controlSystem::classifyCommand(CMD_CYCLE_BRIGHTNESS, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::Brightness,
                 "Cycle brightness should use the brightness handler");
-    expect_true(controlSystem::ActionCommandRoutingPolicy::classify(CMD_PLAY_PAUSE, ControlBoardPowerState::ON) ==
+    expect_true(controlSystem::classifyCommand(CMD_PLAY_PAUSE, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::UartDispatch,
                 "Remaining ON-state commands should fall through to UART dispatch");
 }
@@ -590,16 +565,18 @@ void test_control_board_rotary_negative_direction_passes_false_to_action()
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
     FakeIndicators indicators;
-    FakeAction action(makeResponse(CMD_ROTARY_ACTION));
+    FakeAction action(CMD_ROTARY_ACTION);
     actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft] = {&action, controlSystem::LedPolicy::None};
 
-    controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
     dispatcher.handleRotaryMovement(-1);
 
     expect_equal(1, action.callCount, "Negative rotary movement should execute the shared action once");
     expect_true(!action.lastPressedArg, "Negative rotary direction should pass false to the action");
-    expect_equal(1, responseSink.callCount, "Negative rotary movement should forward ActionResponse");
+    expect_equal(1, responseSink.callCount, "Negative rotary movement should forward Action");
 }
 
 void test_control_board_in_range_unmapped_button_press_does_not_dispatch_response()
@@ -608,8 +585,10 @@ void test_control_board_in_range_unmapped_button_press_does_not_dispatch_respons
     FakeResponseSink responseSink;
     FakeIndicators indicators;
 
-    controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_playPause);
 
     expect_equal(0, responseSink.callCount, "In-range unmapped press should not dispatch a response");
@@ -624,8 +603,10 @@ void test_control_board_in_range_unmapped_button_release_does_not_dispatch_respo
     FakeResponseSink responseSink;
     FakeIndicators indicators;
 
-    controlSystem::SystemState testState{};
-    controlSystem::ControlBoardInputDispatcher dispatcher(actionMap, responseSink, indicators, testState);
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
     dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_playPause);
 
     expect_equal(0, responseSink.callCount, "In-range unmapped release should not dispatch a response");
@@ -650,9 +631,9 @@ int main()
         {"test_control_board_toggle_button_press_flips_led_state", test_control_board_toggle_button_press_flips_led_state},
         {"test_control_board_out_of_range_press_keeps_existing_status_ordering", test_control_board_out_of_range_press_keeps_existing_status_ordering},
         {"test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle", test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle},
-        {"test_serial_heartbeat_router_handles_current_heartbeat", test_serial_heartbeat_router_handles_current_heartbeat},
-        {"test_serial_heartbeat_router_handles_legacy_heartbeat", test_serial_heartbeat_router_handles_legacy_heartbeat},
-        {"test_serial_heartbeat_router_ignores_non_heartbeat_messages", test_serial_heartbeat_router_ignores_non_heartbeat_messages},
+        {"test_heartbeat_helper_handles_current_heartbeat", test_heartbeat_helper_handles_current_heartbeat},
+        {"test_heartbeat_helper_handles_legacy_heartbeat", test_heartbeat_helper_handles_legacy_heartbeat},
+        {"test_heartbeat_helper_ignores_non_heartbeat_messages", test_heartbeat_helper_ignores_non_heartbeat_messages},
         {"test_action_uart_dispatcher_routes_simple_command", test_action_uart_dispatcher_routes_simple_command},
         {"test_action_uart_dispatcher_routes_cover_view_message", test_action_uart_dispatcher_routes_cover_view_message},
         {"test_action_uart_dispatcher_routes_meter_message", test_action_uart_dispatcher_routes_meter_message},

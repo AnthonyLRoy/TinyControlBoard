@@ -1,7 +1,8 @@
 #pragma once
 
 #include "relay.hpp"
-#include "input/actions/actionsResponse.hpp"
+#include "input/actions/IAction.hpp"
+#include "app/ActionContext.hpp"
 #include "app/ActionUartDispatcher.hpp"
 #include "app/SerialUartCommandSink.hpp"
 #include "app/SystemState.hpp"
@@ -26,22 +27,17 @@ namespace controlSystem
                         relays::StandardRelay &rRelays,
                         SystemState &rSystemState,
                         IActivityStatusSink *p_activitySink = nullptr);
-        void process(const actions::ActionResponse &response);
+        void process(std::unique_ptr<actions::IAction> iaction);
         bool handleInboundUartMessage(const UartMessage &message);
         const char *getCommandNameForPin(uint8_t pin);
 
         void handleHeartbeatReceived();
         void handleHeartbeatTimeout();
+        bool triggerInitialPowerOn();
         bool waitForRpiToBoot(uint32_t timeoutMs = 60000);
         bool waitForRpiShutdown(uint32_t timeoutMs = 60000);
 
     private:
-        bool handleCommandPowerStateChange(const actions::ActionResponse &response);
-        bool handleSystemCommand(const actions::ActionResponse &response);
-        bool handleRelayCommand(const actions::ActionResponse &response);
-        bool handleDisplayCommand(const actions::ActionResponse &response);
-        bool handleBrightnessCommand(const actions::ActionResponse &response);
-
         std::unique_ptr<ActionUartDispatcher> mp_actionUartDispatcher;
         std::unique_ptr<SerialUartCommandSink> mp_serialUartCommandSink;
         std::unique_ptr<RpiBootManager> mp_rpiBootManager;

@@ -1,23 +1,20 @@
 #pragma once
 
 #include "input/actions/buttonAction.hpp"
-#include "input/actions/actionsResponse.hpp"
+#include "app/ActionFactory.hpp"
 
 namespace actions
 {
-    class SimpleCommandAction : public ButtonAction
+    class SimpleCommandAction : public IActionSource
     {
     public:
         explicit SimpleCommandAction(CommandId commandId) : m_commandId(commandId) {}
 
-        ActionResponse execute(bool isPressed) override
+        std::unique_ptr<IAction> produce(bool isPressed) override
         {
-            ActionResponse response;
-            if (isPressed)
-            {
-                response.command = m_commandId;
-            }
-            return response;
+            if (!isPressed)
+                return nullptr;
+            return controlSystem::createAction(m_commandId);
         }
 
     private:

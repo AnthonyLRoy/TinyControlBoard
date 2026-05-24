@@ -8,7 +8,7 @@ namespace controlSystem
     {
         rActionMap[controlBoardButtons::k_power]           = {&actions::PowerButtonInstance,        LedPolicy::None};
         rActionMap[controlBoardButtons::k_prevTrack]       = {&actions::PreviousTrackInstance,      LedPolicy::Momentary};
-        rActionMap[controlBoardButtons::k_nextTrack]       = {&actions::NextTrackInstance,           LedPolicy::Momentary};
+        rActionMap[controlBoardButtons::k_nextTrack]       = {&actions::NextTrackInstance,          LedPolicy::Momentary};
         rActionMap[controlBoardButtons::k_skipForward]     = {&actions::SkipForwardInstance,        LedPolicy::Momentary};
         rActionMap[controlBoardButtons::k_skipBack]        = {&actions::SkipBackInstance,           LedPolicy::Momentary};
         rActionMap[controlBoardButtons::k_playPause]       = {&actions::PlayPauseInstance,          LedPolicy::Momentary};

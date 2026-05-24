@@ -1,7 +1,6 @@
 #include "app/actionProcessor.hpp"
-
-#include "app/ActionCommandRoutingPolicy.hpp"
-#include "powerLed.hpp"
+#include "app/ActionFactory.hpp"
+#include "indicators/ledManager.hpp"
 #include <inttypes.h>
 
 namespace controlSystem
@@ -20,49 +19,29 @@ namespace controlSystem
             p_activitySink);
     }
 
-    void ActionProcessor::process(const actions::ActionResponse &response)
+    void ActionProcessor::process(std::unique_ptr<actions::IAction> iaction)
     {
-        ESP_LOGI(k_logTag, "Action processor received command: 0x%04X", response.command);
+        if (!iaction)
+            return;
+
+        ESP_LOGI(k_logTag, "Action processor received command: 0x%04X", iaction->command);
 
         const auto powerState = mr_systemState.powerState.load();
-        switch (ActionCommandRoutingPolicy::classify(response.command, powerState))
+        if (iaction->requiresPowerOn() && powerState != ControlBoardPowerState::ON)
         {
-        case ActionCommandRoute::None:
-            return;
-
-        case ActionCommandRoute::PowerStateTransition:
-            ESP_LOGI(k_logTag, "Processing power-state transition command");
-            handleCommandPowerStateChange(response);
-            mr_systemState.powerState.store(indicators::getPowerLed().getState());
-            return;
-
-        case ActionCommandRoute::IgnoreWhileNotOn:
-            ESP_LOGI(k_logTag, "Ignoring command %u as system is not ON", response.command);
-            return;
-
-        case ActionCommandRoute::System:
-            handleSystemCommand(response);
-            return;
-
-        case ActionCommandRoute::Relay:
-            handleRelayCommand(response);
-            return;
-
-        case ActionCommandRoute::Display:
-            handleDisplayCommand(response);
-            return;
-
-        case ActionCommandRoute::Brightness:
-            handleBrightnessCommand(response);
-            return;
-
-        case ActionCommandRoute::UartDispatch:
-            if (mp_actionUartDispatcher)
-            {
-                mp_actionUartDispatcher->handle(response);
-            }
+            ESP_LOGI(k_logTag, "Ignoring command %u as system is not ON", iaction->command);
             return;
         }
+
+        ActionContext ctx{
+            *mp_actionUartDispatcher,
+            *mp_powerStateTransitionHandler,
+            *mp_relayController,
+            mr_serial,
+            mr_systemState
+        };
+
+        iaction->execute(ctx);
     }
 
     bool ActionProcessor::handleInboundUartMessage(const UartMessage &message)
@@ -72,61 +51,6 @@ namespace controlSystem
         ESP_LOGI(k_logTag, "Inbound UART message received (type=%u cmd=0x%04X seq=%u)",
                  message.msgType, message.commandId, message.sequence);
         return false;
-    }
-
-    bool ActionProcessor::handleSystemCommand(const actions::ActionResponse &response)
-    {
-        if (response.command == CMD_SYS_RPI_SHUTDOWN)
-        {
-            mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
-            mp_relayController->shutdownRpi(true);
-            return true;
-        }
-
-        if (response.command == CMD_EXIT_ITEM)
-        {
-            ESP_LOGI(k_logTag, "Sending exit-item message");
-            return true;
-        }
-
-        return false;
-    }
-
-    bool ActionProcessor::handleRelayCommand(const actions::ActionResponse &response)
-    {
-        if (response.command != CMD_TOGGLE_DAC_ON && response.command != CMD_TOGGLE_DAC_OFF)
-        {
-            return false;
-        }
-
-        mp_relayController->handleToggleDac(response.command == CMD_TOGGLE_DAC_ON);
-        return true;
-    }
-
-    bool ActionProcessor::handleDisplayCommand(const actions::ActionResponse &response)
-    {
-        if (response.command != CMD_DISPLAY_OFF && response.command != CMD_DISPLAY_ON)
-        {
-            return false;
-        }
-
-        ESP_LOGI(k_logTag, "Processing display toggle command (%s)",
-                 response.command == CMD_DISPLAY_ON ? "ON" : "OFF");
-
-        indicators::getMonitorBrightnessController().setBlanked(response.command == CMD_DISPLAY_OFF);
-        return true;
-    }
-
-    bool ActionProcessor::handleBrightnessCommand(const actions::ActionResponse &response)
-    {
-        if (response.command != CMD_CYCLE_BRIGHTNESS)
-        {
-            return false;
-        }
-
-        indicators::getMonitorBrightnessController().cycleBrightness();
-        ESP_LOGI(k_logTag, "Cycling monitor brightness");
-        return true;
     }
 
     void ActionProcessor::handleHeartbeatReceived()
@@ -163,8 +87,13 @@ namespace controlSystem
         return false;
     }
 
-    bool ActionProcessor::handleCommandPowerStateChange(const actions::ActionResponse &response)
+    bool ActionProcessor::triggerInitialPowerOn()
     {
-        return mp_powerStateTransitionHandler->handle(response);
+        // Force LED to OFF so PowerStateTransitionPolicy treats this as a power-on request.
+        indicators::getPowerLed().setState(ControlBoardPowerState::OFF);
+        auto syntheticAction = createAction(CMD_SYS_POWER);
+        const bool result = mp_powerStateTransitionHandler->handle(*syntheticAction);
+        mr_systemState.powerState.store(indicators::getPowerLed().getState());
+        return result;
     }
 }

@@ -12,8 +12,8 @@ namespace controlSystem
         case LedPolicy::Toggle:
         {
             const auto mask = static_cast<uint16_t>(1u << buttonId);
-            const uint16_t prev = mr_systemState.buttonLedBitmask.fetch_xor(mask);
-            const bool newState = !((prev >> buttonId) & 1u);
+            m_buttonLedBitmask ^= mask;
+            const bool newState = (m_buttonLedBitmask >> buttonId) & 1u;
             mr_indicators.setButtonLed(buttonId, newState);
             break;
         }
@@ -46,8 +46,11 @@ namespace controlSystem
 
         if (config.action)
         {
-            const actions::ActionResponse result = config.action->execute(true);
-            mr_responseSink.process(result);
+            auto iaction = config.action->produce(true);
+            if (iaction)
+            {
+                m_onResponse(std::move(iaction));
+            }
         }
     }
 
@@ -63,8 +66,11 @@ namespace controlSystem
         const ButtonConfig &config = mr_actionMap[buttonReleasedId];
         if (config.action)
         {
-            const actions::ActionResponse result = config.action->execute(false);
-            mr_responseSink.process(result);
+            auto iaction = config.action->produce(false);
+            if (iaction)
+            {
+                m_onResponse(std::move(iaction));
+            }
             applyLedOnRelease(buttonReleasedId, config.ledPolicy);
         }
     }
@@ -76,8 +82,11 @@ namespace controlSystem
         const ButtonConfig &config = mr_actionMap[controlBoardButtons::k_rotaryEventLeft];
         if (config.action)
         {
-            const actions::ActionResponse result = config.action->execute(direction > 0);
-            mr_responseSink.process(result);
+            auto iaction = config.action->produce(direction > 0);
+            if (iaction)
+            {
+                m_onResponse(std::move(iaction));
+            }
         }
 
         mr_indicators.setActivityStatus(m_backgroundStatus);

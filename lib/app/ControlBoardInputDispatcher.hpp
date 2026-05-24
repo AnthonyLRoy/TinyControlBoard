@@ -1,12 +1,11 @@
 #pragma once
 
-#include "input/actions/actionsResponse.hpp"
 #include "activityStatus.hpp"
 #include "input/actions/buttonAction.hpp"
 #include "app/ControlBoardButtonIds.hpp"
-#include "app/SystemState.hpp"
 #include <array>
 #include <cstdint>
+#include <functional>
 
 namespace controlSystem
 {
@@ -19,34 +18,36 @@ namespace controlSystem
 
     struct ButtonConfig
     {
-        actions::ButtonAction *action = nullptr;
+        actions::IActionSource *action = nullptr;
         LedPolicy ledPolicy = LedPolicy::None;
     };
 
-    struct IActionResponseSink
+    // Drives button LED state; separate from activity status so it can be
+    // used independently (e.g. in tests that only care about LEDs).
+    struct IButtonLedSink
     {
-        virtual ~IActionResponseSink() = default;
-        virtual void process(const actions::ActionResponse &response) = 0;
+        virtual ~IButtonLedSink() = default;
+        virtual void setButtonLed(uint8_t pin, bool enabled) = 0;
     };
 
-    struct IControlBoardIndicators : IActivityStatusSink
+    // Combined interface for components that need both activity-status feedback
+    // and button LED control.
+    struct IControlBoardIndicators : IActivityStatusSink, IButtonLedSink
     {
-        virtual void setButtonLed(uint8_t pin, bool enabled) = 0;
     };
 
     class ControlBoardInputDispatcher
     {
     public:
         using ActionMap = std::array<ButtonConfig, controlBoardButtons::k_count>;
+                using ResponseHandler = std::function<void(std::unique_ptr<actions::IAction>)>;
 
         ControlBoardInputDispatcher(ActionMap &rActionMap,
-                                    IActionResponseSink &rResponseSink,
-                                    IControlBoardIndicators &rIndicators,
-                                    SystemState &rSystemState)
+                                    ResponseHandler onResponse,
+                                    IControlBoardIndicators &rIndicators)
             : mr_actionMap(rActionMap),
-              mr_responseSink(rResponseSink),
-              mr_indicators(rIndicators),
-              mr_systemState(rSystemState)
+              m_onResponse(std::move(onResponse)),
+              mr_indicators(rIndicators)
         {
         }
 
@@ -60,9 +61,9 @@ namespace controlSystem
         void applyLedOnRelease(uint8_t buttonId, LedPolicy policy);
 
         ActionMap &mr_actionMap;
-        IActionResponseSink &mr_responseSink;
+        ResponseHandler m_onResponse;
         IControlBoardIndicators &mr_indicators;
         ControlBoardWorkingStatus m_backgroundStatus = ControlBoardWorkingStatus::Idle;
-        SystemState &mr_systemState;
+        uint16_t m_buttonLedBitmask{0};
     };
 }
