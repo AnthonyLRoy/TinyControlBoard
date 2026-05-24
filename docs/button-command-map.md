@@ -85,7 +85,7 @@ For toggle-backed buttons, the action can emit one of two raw command IDs depend
 | 8 | Repeat | `ToggleAction<CMD_REPEAT_ON, CMD_REPEAT_OFF>` | `0x0100` | `0000 0001 0000 0000` | `0x00 0x01` | `0x011A / 0x011B` | `CMD_REPEAT_ON / CMD_REPEAT_OFF` | `0x011C CMD_TOGGLE_REPEAT` with param `1` or `0` | Pi toggles repeat mode |
 | 9 | Toggle Random | `ToggleAction<CMD_RANDOM_ON, CMD_RANDOM_OFF>` | `0x0200` | `0000 0010 0000 0000` | `0x00 0x02` | `0x011D / 0x011E` | `CMD_RANDOM_ON / CMD_RANDOM_OFF` | `0x011F CMD_TOGGLE_RANDOM` with param `1` or `0` | Pi toggles random mode |
 | 10 | Toggle DAC | `ToggleAction<CMD_TOGGLE_DAC_ON, CMD_TOGGLE_DAC_OFF>` | `0x0400` | `0000 0100 0000 0000` | `0x00 0x04` | `0x010A / 0x010F` | `CMD_TOGGLE_DAC_ON / CMD_TOGGLE_DAC_OFF` | local-only relay toggle, no normalized UART command | toggles DAC power relay |
-| 11 | Toggle Display | `ToggleAction<CMD_DISPLAY_OFF, CMD_DISPLAY_ON>` | `0x0800` | `0000 1000 0000 0000` | `0x00 0x08` | `0x010B / 0x010E` | `CMD_DISPLAY_OFF / CMD_DISPLAY_ON` | local monitor PWM blank/unblank | blanks or restores the display backlight |
+| 11 | Next Panel | simple command | `0x0800` | `0000 1000 0000 0000` | `0x00 0x08` | `0x0107` | `CMD_NEXT_MENU_ITEM` | `0x0107 CMD_NEXT_MENU_ITEM` | UART command to Pi; Pi cycles to next moOde panel |
 | 12 | Toggle Meter | `ToggleAction<CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF>` | `0x1000` | `0001 0000 0000 0000` | `0x00 0x10` | `0x010C / 0x010D` | `CMD_TOGGLE_METER_ON / CMD_TOGGLE_METER_OFF` | `0x0115 CMD_TOGGLE_METER` with param `1` or `0` | Pi meter display change |
 | 13 | Rotary Left | `RotaryAction<CMD_ROTARY_ACTION>` | n/a | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | `0x0112 CMD_ROTARY_ACTION` with param `0` | Pi interprets as previous/left |
 | 14 | Rotary Right | `RotaryAction<CMD_ROTARY_ACTION>` | n/a | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | `0x0112 CMD_ROTARY_ACTION` with param `1` | Pi interprets as next/right |
@@ -125,23 +125,11 @@ Current toggle-backed buttons:
 
 - Cover
 - Toggle DAC
-- Toggle Display
 - Toggle Meter
 - Repeat
 - Toggle Random
 
-### 4.3 Display Toggle Specifics
-
-The display toggle is currently defined as:
-
-- ON command type: `CMD_DISPLAY_OFF`
-- OFF command type: `CMD_DISPLAY_ON`
-
-Because the toggle state starts as `false`, the first press emits `CMD_DISPLAY_OFF`.
-
-That is now handled locally on the ESP32 by setting the monitor PWM duty to `0` for blank and restoring the saved brightness level for unblank.
-
-### 4.4 Rotary Events
+### 4.3 Rotary Events
 
 Both rotary directions use the same action object class and the same command ID.
 
@@ -152,7 +140,7 @@ Direction is carried in parameter 0:
 
 Unlike the physical push buttons, rotary movement is handled by `handleRotaryMovement()` and does not currently light a button LED through the SPI shift register.
 
-### 4.5 SPI Payload Format For Button LEDs
+### 4.4 SPI Payload Format For Button LEDs
 
 When a physical button press reaches `handleButtonPressed()`, the firmware uses the button ID directly as the LED index and calls `indicators::getSpiLedDriver().setLed(buttonId, true)`.
 
@@ -194,6 +182,7 @@ These actions send a UART command or message to the Raspberry Pi:
 - stop
 - next menu
 - menu select
+- panel cycling (next panel)
 - cover view toggle
 - meter toggle
 - rotary action
@@ -205,7 +194,6 @@ These actions currently stay local:
 
 - power sequencing,
 - DAC relay toggle,
-- display blanking via monitor PWM,
 - brightness cycling,
 - relay shutdown sequencing,
 - heartbeat wait and timeout handling.

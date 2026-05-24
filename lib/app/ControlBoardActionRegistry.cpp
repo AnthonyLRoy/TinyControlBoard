@@ -17,7 +17,7 @@ namespace controlSystem
         rActionMap[controlBoardButtons::k_repeat]          = {&actions::RepeatInstance,             LedPolicy::Toggle};
         rActionMap[controlBoardButtons::k_toggleRandom]    = {&actions::ToggleRandomInstance,       LedPolicy::Toggle};
         rActionMap[controlBoardButtons::k_toggleDac]       = {&actions::ToggleDacInstance,          LedPolicy::Toggle};
-        rActionMap[controlBoardButtons::k_toggleDisplay]   = {&actions::ToggleDisplayInstance,      LedPolicy::Toggle};
+        rActionMap[controlBoardButtons::k_toggleDisplay]   = {&actions::NextMenuInstance,          LedPolicy::Momentary};
         rActionMap[controlBoardButtons::k_toggleMeter]     = {&actions::ToggleMeterDisplayInstance, LedPolicy::Toggle};
         rActionMap[controlBoardButtons::k_rotaryEventLeft] = {&actions::RotaryEventInstance,        LedPolicy::None};
         rActionMap[controlBoardButtons::k_rotaryEventRight]= {&actions::RotaryEventInstance,        LedPolicy::None};
