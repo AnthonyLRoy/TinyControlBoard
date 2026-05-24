@@ -3,6 +3,11 @@ import time
 import RPi.GPIO as GPIO
 import struct
 import subprocess
+import json
+import os
+import socket
+import base64
+import requests
 
 # === CONFIG ===
 UART_PORT = "/dev/ttyAMA5"   # UART5
@@ -17,11 +22,24 @@ CMD_PLAY_PAUSE = 0x0102
 CMD_STOP_TRACK = 0x0103
 CMD_SKIP_FORWARD = 0x0104
 CMD_SKIP_BACK = 0x0105
+CMD_PREV_MENU_ITEM = 0x0106
+CMD_NEXT_MENU_ITEM = 0x0107
 CMD_ROTARY_ACTION = 0x0112
 CMD_TOGGLE_METER = 0x0115
 CMD_TOGGLE_COVER_VIEW = 0x0119
 CMD_TOGGLE_REPEAT = 0x011C
 CMD_TOGGLE_RANDOM = 0x011F
+
+# === PANEL NAVIGATION ===
+PANELS = [
+    ('.radio-view-btn',    'Radio'),
+    ('.playlist-view-btn', 'Playlist'),
+    ('.folder-view-btn',   'Folder'),
+    ('.tag-view-btn',      'Tag'),
+    ('.album-view-btn',    'Album'),
+]
+_panel_idx = 0
+_cdp_ws_url = None
 
 # === PARAMETER VALUES ===
 PARAM_DISABLED = 0
@@ -38,6 +56,81 @@ PACKET_FORMAT = "<BBBBBH5HB"
 
 
 # calculate the checksum to ensure data not currupted 
+
+def _click_panel(css_selector):
+    global _cdp_ws_url
+    try:
+        if _cdp_ws_url is None:
+            targets = requests.get('http://localhost:9222/json', timeout=1).json()
+            _cdp_ws_url = targets[0]['webSocketDebuggerUrl']
+
+        # Parse ws://host:port/path
+        url = _cdp_ws_url[5:]  # strip 'ws://'
+        slash_idx = url.index('/')
+        host_port = url[:slash_idx]
+        path = url[slash_idx:]
+        host, port_str = host_port.split(':')
+        port = int(port_str)
+
+        expression = f"document.querySelector('{css_selector}').click()"
+        payload = json.dumps({
+            'id': 1,
+            'method': 'Runtime.evaluate',
+            'params': {'expression': expression}
+        }).encode()
+
+        # Raw WebSocket upgrade — no Origin header sent
+        sock = socket.create_connection((host, port), timeout=2)
+        key = base64.b64encode(os.urandom(16)).decode()
+        handshake = (
+            f"GET {path} HTTP/1.1\r\n"
+            f"Host: {host}:{port}\r\n"
+            f"Upgrade: websocket\r\n"
+            f"Connection: Upgrade\r\n"
+            f"Sec-WebSocket-Key: {key}\r\n"
+            f"Sec-WebSocket-Version: 13\r\n"
+            f"\r\n"
+        )
+        sock.sendall(handshake.encode())
+
+        buf = b''
+        while b'\r\n\r\n' not in buf:
+            buf += sock.recv(1024)
+        if b'101' not in buf:
+            raise Exception(f"WS handshake failed: {buf[:100]}")
+
+        # Build masked WebSocket text frame
+        mask = os.urandom(4)
+        n = len(payload)
+        frame = bytearray([0x81])
+        if n < 126:
+            frame.append(0x80 | n)
+        elif n < 65536:
+            frame += bytearray([0x80 | 126]) + struct.pack('>H', n)
+        else:
+            frame += bytearray([0x80 | 127]) + struct.pack('>Q', n)
+        frame += mask
+        frame += bytearray(b ^ mask[i % 4] for i, b in enumerate(payload))
+
+        sock.sendall(bytes(frame))
+        sock.close()
+    except Exception as e:
+        _cdp_ws_url = None
+        print(f"Panel switch failed: {e}", flush=True)
+
+def handle_next_panel(params):
+    global _panel_idx
+    _panel_idx = (_panel_idx + 1) % len(PANELS)
+    selector, name = PANELS[_panel_idx]
+    print(f"Panel → {name}", flush=True)
+    _click_panel(selector)
+
+def handle_prev_panel(params):
+    global _panel_idx
+    _panel_idx = (_panel_idx - 1) % len(PANELS)
+    selector, name = PANELS[_panel_idx]
+    print(f"Panel → {name}", flush=True)
+    _click_panel(selector)
 
 def compute_checksum_cpp_style(packet_bytes):
     return sum(packet_bytes[1:17]) & 0xFF
@@ -88,6 +181,8 @@ COMMAND_HANDLERS = {
     CMD_STOP_TRACK: lambda params: run_command(["mpc", "stop"]),
     CMD_SKIP_FORWARD: lambda params: run_command(["mpc", "seek", "+10"]),
     CMD_SKIP_BACK: lambda params: run_command(["mpc", "seek", "-10"]),
+    CMD_PREV_MENU_ITEM: handle_prev_panel,
+    CMD_NEXT_MENU_ITEM: handle_next_panel,
     CMD_ROTARY_ACTION: handle_rotary_action,
     CMD_TOGGLE_METER: toggle_meter_display,
     CMD_TOGGLE_COVER_VIEW: toggle_cover_view,
