@@ -120,14 +120,13 @@ Choose the smallest action type that matches the behavior.
 In [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp), add a `SimpleCommandAction` instance:
 
 ```cpp
-static SimpleCommandAction sMuteCmd(CMD_MUTE);
-ButtonAction &MuteInstance = sMuteCmd;
+SimpleCommandAction MuteInstance(CMD_MUTE);
 ```
 
 In [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp), declare it:
 
 ```cpp
-extern ButtonAction &MuteInstance;
+extern SimpleCommandAction MuteInstance;
 ```
 
 ### 4.2 For A Toggle Or Timed Action
@@ -152,8 +151,7 @@ You still create an action object the same way. The difference is where it is ha
 Example pattern:
 
 ```cpp
-static SimpleCommandAction sToggleFanCmd(CMD_TOGGLE_FAN);
-ButtonAction &ToggleFanInstance = sToggleFanCmd;
+SimpleCommandAction ToggleFanInstance(CMD_TOGGLE_FAN);
 ```
 
 ## 5. Step-By-Step: Add The Button To The Registry
@@ -164,13 +162,19 @@ Steps:
 
 1. Find `ControlBoardActionRegistry::populate(...)`.
 2. Add a map entry using the canonical button ID.
-3. Point it at the action object you created.
+3. Point it at the action object you created and choose a `LedPolicy`.
 
 Example:
 
 ```cpp
-rActionMap[controlBoardButtons::kMute] = &actions::MuteInstance;
+rActionMap[controlBoardButtons::k_mute] = {&actions::MuteInstance, LedPolicy::Momentary};
 ```
+
+`LedPolicy` controls the SPI LED feedback for that button:
+
+- `LedPolicy::None` — no LED feedback (e.g. power button, rotary).
+- `LedPolicy::Momentary` — LED on while held, off on release.
+- `LedPolicy::Toggle` — LED state flips on each press.
 
 At this point, the input side knows which action to execute when that button is pressed.
 
@@ -218,28 +222,29 @@ Use this path when a raw `sendUartCommand()` would lose necessary state.
 
 ### 6.3 Path C: Local-Only Action
 
-Handle the new command in [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp).
+Add a new concrete command class under [lib/app/commands/](../lib/app/commands/).
 
 Steps:
 
-1. Decide which route class the command should use.
-2. Add or update the classification logic if needed.
-3. Extend the relevant handler, or add a new helper if the behavior deserves its own slice.
-4. Perform the local side effect there.
+1. Add a classification case for the new command in [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp).
+2. Add the new `ActionCommandRoute` enum value to [lib/app/ActionCommandRoute.hpp](../lib/app/ActionCommandRoute.hpp).
+3. Create a `.hpp` / `.cpp` pair in `lib/app/commands/` and implement `execute(ActionContext &ctx)` to perform the local side effect.
+4. Add the new route case to `ActionFactory::createAction()` in [lib/app/ActionFactory.cpp](../lib/app/ActionFactory.cpp) so the factory instantiates the new type.
 
-Current examples:
+Current local command examples to copy:
 
-- `handleRelayCommand(...)`
-- `handleDisplayCommand(...)`
-- `handleBrightnessCommand(...)`
-- `handleCommandPowerStateChange(...)`
+- `RelayAction` — [lib/app/commands/RelayAction.cpp](../lib/app/commands/RelayAction.cpp)
+- `DisplayAction` — [lib/app/commands/DisplayAction.cpp](../lib/app/commands/DisplayAction.cpp)
+- `BrightnessAction` — [lib/app/commands/BrightnessAction.cpp](../lib/app/commands/BrightnessAction.cpp)
+- `PowerTransitionAction` — [lib/app/commands/PowerTransitionAction.cpp](../lib/app/commands/PowerTransitionAction.cpp)
 
 For a local-only button, the usual shape is:
 
 1. action object emits `CMD_*`,
-2. routing policy classifies that command as local,
-3. `ActionProcessor` performs the hardware or state change,
-4. no UART packet is sent.
+2. routing policy classifies that command as local (a new or existing route value),
+3. `ActionFactory` creates the matching concrete command,
+4. `IAction::execute(ctx)` performs the hardware or state change,
+5. no UART packet is sent.
 
 ## 7. Step-By-Step: Check Routing Classification
 

@@ -102,7 +102,12 @@ bool UartTransport::initUart(uart_port_t uartNum,
         s_isrServiceInstalled = true;
     }
 
-    ESP_ERROR_CHECK(gpio_isr_handler_add(PIN_RPI_DATA_READY, gpioIsrHandler, (void *)this));
+    ret = gpio_isr_handler_add(PIN_RPI_DATA_READY, gpioIsrHandler, (void *)this);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(k_logTag, "Failed to add GPIO ISR handler (err=0x%x)", ret);
+        return false;
+    }
 
     gpio_config_t io_conf_out = {};
     io_conf_out.pin_bit_mask = (1ULL << PIN_ESP32_DATA_READY);
@@ -118,9 +123,24 @@ bool UartTransport::initUart(uart_port_t uartNum,
     }
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
 
-    ESP_ERROR_CHECK(uart_driver_install(m_uartNumber, bufferSize * 2, 0, 0, nullptr, 0));
-    ESP_ERROR_CHECK(uart_param_config(m_uartNumber, &uart_config));
-    ESP_ERROR_CHECK(uart_set_pin(m_uartNumber, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ret = uart_driver_install(m_uartNumber, bufferSize * 2, 0, 0, nullptr, 0);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(k_logTag, "Failed to install UART driver (err=0x%x)", ret);
+        return false;
+    }
+    ret = uart_param_config(m_uartNumber, &uart_config);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(k_logTag, "Failed to configure UART parameters (err=0x%x)", ret);
+        return false;
+    }
+    ret = uart_set_pin(m_uartNumber, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(k_logTag, "Failed to set UART pins (err=0x%x)", ret);
+        return false;
+    }
 
     ESP_LOGI(k_logTag, "UART%d initialized at %d baud.", m_uartNumber, baudRate);
     m_initialized.store(true, std::memory_order_release);
@@ -210,7 +230,7 @@ bool UartTransport::sendData(const uint8_t *p_data, size_t len)
     int written = uart_write_bytes(m_uartNumber, p_data, len);
 
     ESP_LOGI(k_logTag, "Data sent, signaling Raspberry Pi.");
-    ESP_ERROR_CHECK(gpio_set_level(PIN_ESP32_DATA_READY, 1));
+    gpio_set_level(PIN_ESP32_DATA_READY, 1);
     vTaskDelay(pdMS_TO_TICKS(k_dataReadySignalHoldMs));
     gpio_set_level(PIN_ESP32_DATA_READY, 0);
     return written == len;
