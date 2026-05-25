@@ -15,7 +15,7 @@ namespace controlSystem::controlBoardButtons
     inline constexpr uint8_t k_repeat = 8;
     inline constexpr uint8_t k_toggleRandom = 9;
     inline constexpr uint8_t k_toggleDac = 10;
-    inline constexpr uint8_t k_toggleDisplay = 11;
+    inline constexpr uint8_t k_nextPanel = 11;
     inline constexpr uint8_t k_toggleMeter = 12;
     inline constexpr uint8_t k_rotaryEventLeft = 13;
     inline constexpr uint8_t k_rotaryEventRight = 14;
