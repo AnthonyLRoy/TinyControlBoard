@@ -37,7 +37,10 @@ Current handled actions include:
 - seek forward/back,
 - rotary next/previous,
 - meter toggle,
-- cover view toggle.
+- cover view toggle,
+- repeat toggle,
+- random toggle,
+- panel cycling (prev/next moOde UI panel via CDP WebSocket on port 9222).
 
 Reference:
 
@@ -63,7 +66,8 @@ The Pi setup docs currently require:
 - `dtoverlay=uart5` in `/boot/firmware/config.txt`,
 - Python serial support,
 - `pigpiod`,
-- systemd services for listener and heartbeat sender.
+- systemd services for listener and heartbeat sender,
+- `--remote-debugging-port=9222` added to the Chromium launch command in `~/.xinitrc` (required for panel cycling via CDP).
 
 The config file included in the repo also shows `dtoverlay=uart5`.
 
@@ -83,7 +87,7 @@ Current intended services:
 
 From the current setup notes, the service start commands are based on:
 
-- `/usr/bin/python3 /home/antho/uart5_listener.py`
+- `/usr/bin/python3 /home/antho/UAart5Listener.py`
 - `/usr/bin/python3 /home/antho/heartbeat_sender.py`
 
 ## 6. Important Pi File Locations
@@ -93,7 +97,7 @@ Current documented paths:
 | Purpose | Path |
 |---|---|
 | UART5 overlay config | `/boot/firmware/config.txt` |
-| listener script | `/home/antho/uart5_listener.py` |
+| listener script | `/home/antho/UAart5Listener.py` |
 | listener service | `/etc/systemd/system/uart_listener.service` |
 | heartbeat service | `/etc/systemd/system/heartbeat.service` |
 | pigpio daemon | `/usr/local/bin/pigpiod` |

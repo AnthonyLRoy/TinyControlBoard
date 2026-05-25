@@ -25,17 +25,17 @@ Current startup sequence:
 
 1. `app_main()` waits 5 seconds for power to settle.
 2. A `ControlBoard` instance is created.
-3. `ControlBoard::init()` sets initial LED state and brightness.
-4. The serial singleton and relay singleton are acquired.
-5. The serial receive callback is registered.
-6. Heartbeat monitoring is started.
-7. The action processor is created.
-8. Relays are initialized and set to default off states.
-9. The MCP input handler is initialized.
-10. Button and rotary callbacks are registered.
-11. UART is initialized.
-12. The button-to-action map is created.
-13. After `kInitDelayMs`, the power LED is moved to `SLEEP`.
+3. NVS flash is initialized.
+4. `bootstrap::prepareStartupIndicators()` sets the power LED to `TURNING_ON`.
+5. The UART and relay singletons are acquired; serial RX and heartbeat-timeout callbacks are registered.
+6. `ActionProcessor` and `ControlBoardInputDispatcher` are constructed.
+7. Relays are initialized and set to default off states.
+8. The MCP input handler is initialized.
+9. The `ButtonEventQueue` task is started.
+10. Button press, release, and rotary callbacks are registered.
+11. UART hardware is initialized.
+12. The button-to-action map is populated via `ControlBoardActionRegistry`.
+13. After a `board::timing::k_initDelayMs` delay, `triggerInitialPowerOn()` is called which starts the full power-on sequence.
 
 Note: if any critical init step fails (MCP handler or serial setup), `SpiBootIndicator::notifyFailure()` is called immediately, which flashes all SPI LEDs rapidly to signal the fault before the firmware aborts init.
 
@@ -43,44 +43,60 @@ References:
 
 - [src/main.cpp](../src/main.cpp)
 - [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
+- [lib/app/ControlBoardBootstrap.cpp](../lib/app/ControlBoardBootstrap.cpp)
 - [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
 
 ## 3. Main Components
 
 ### 3.1 `ControlBoard`
 
-`ControlBoard` is the integration layer. It owns callback registration and connects the input, serial, relay, and action-processing subsystems.
+`ControlBoard` is the top-level integration class. It owns the component instances and routes events. Initialization logic is split into helper namespaces:
+
+- `bootstrap::` functions (in `ControlBoardBootstrap.cpp`) handle startup step sequencing.
+- `ControlBoardActionRegistry` populates the button-to-action map.
+- `ControlBoardInputDispatcher` translates button/rotary events into `IAction` objects and manages per-button LED state.
+- `ButtonEventQueue` serializes press, release, and rotary events onto a FreeRTOS queue processed by `ControlBoardInputDispatcher`.
 
 Main responsibilities:
 
-- initialize relays,
-- initialize UART and serial callbacks,
+- initialize NVS, relays, UART, and serial callbacks,
 - initialize the MCP input handler,
-- route button press, button release, and rotary events,
-- route incoming UART messages,
-- maintain the button-action lookup table.
+- start the `ButtonEventQueue` and register MCP callbacks,
+- populate the button-to-action registry,
+- trigger the initial power-on sequence.
 
 References:
 
 - [lib/app/ControlBoard.hpp](../lib/app/ControlBoard.hpp)
 - [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
+- [lib/app/ControlBoardBootstrap.hpp](../lib/app/ControlBoardBootstrap.hpp)
+- [lib/app/ControlBoardActionRegistry.hpp](../lib/app/ControlBoardActionRegistry.hpp)
+- [lib/app/ControlBoardInputDispatcher.hpp](../lib/app/ControlBoardInputDispatcher.hpp)
+- [lib/app/ButtonEventQueue.hpp](../lib/app/ButtonEventQueue.hpp)
 
 ### 3.2 `ActionProcessor`
 
-`ActionProcessor` takes an `ActionResponse` and decides what side effect should happen.
+`ActionProcessor` receives a `std::unique_ptr<actions::IAction>` and executes it via the `ActionContext` services struct.
 
-That can include:
+Side effects are implemented in concrete `IAction` subclasses under `lib/app/commands/`:
 
-- local relay changes,
-- local brightness changes,
-- sending UART commands to the Raspberry Pi,
-- handling power-state transitions,
-- waiting for Raspberry Pi heartbeat during boot/shutdown coordination.
+- `RelayAction` — local relay changes,
+- `BrightnessAction` — local brightness changes,
+- `UartDispatchAction` — sends UART commands to the Raspberry Pi,
+- `PowerTransitionAction` — handles power-state transitions,
+- `DisplayAction` — display on/off control,
+- `SystemAction` — system-level commands.
 
-Reference:
+`ActionFactory::createAction()` maps a `CommandId` to the appropriate concrete type via `ActionCommandRoutingPolicy`.
+
+References:
 
 - [lib/app/actionProcessor.hpp](../lib/app/actionProcessor.hpp)
 - [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
+- [lib/app/ActionFactory.hpp](../lib/app/ActionFactory.hpp)
+- [lib/app/ActionContext.hpp](../lib/app/ActionContext.hpp)
+- [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp)
+- [lib/app/commands/](../lib/app/commands/)
 
 ### 3.3 `Serial`
 
@@ -156,7 +172,7 @@ References:
 - [lib/indicators/spiLedDriver.hpp](../lib/indicators/spiLedDriver.hpp)
 - [lib/indicators/spiLedDriver.cpp](../lib/indicators/spiLedDriver.cpp)
 
-### 3.5 `RelayController`
+### 3.6 `RelayController`
 
 `RelayController` is a thin helper around the relay abstraction. It currently provides:
 
@@ -174,20 +190,27 @@ References:
 
 The current input path is:
 
-1. MCP input or rotary movement is detected.
-2. `ControlBoard` callback receives the event.
-3. The button index is used to find a `ButtonAction` object.
-4. The action returns an `ActionResponse`.
-5. `ActionProcessor::process()` applies the result.
+1. MCP interrupt fires; `McpInputHandler` decodes it as a press, release, or rotary event.
+2. The event is enqueued into `ButtonEventQueue`.
+3. `ControlBoardInputDispatcher` dequeues the event and looks up the `ButtonConfig` for that button index.
+4. `ButtonConfig::action->produce(isPressed)` is called on the `IActionSource` to obtain a `std::unique_ptr<actions::IAction>`.
+5. `ControlBoardInputDispatcher` applies `LedPolicy` (None / Momentary / Toggle) to the SPI LED state for that button.
+6. The `IAction` is passed to `ActionProcessor::process()`.
+7. `ActionProcessor` builds an `ActionContext` and calls `iaction->execute(ctx)`.
+8. The concrete command class performs the side effect (relay, UART, brightness, power transition, etc.).
 
 Related files:
 
 - [lib/input/buttons/mcpInputHandler.hpp](../lib/input/buttons/mcpInputHandler.hpp)
 - [lib/input/buttons/mcpInputHandler.cpp](../lib/input/buttons/mcpInputHandler.cpp)
+- [lib/app/ButtonEventQueue.hpp](../lib/app/ButtonEventQueue.hpp)
+- [lib/app/ControlBoardInputDispatcher.hpp](../lib/app/ControlBoardInputDispatcher.hpp)
 - [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
 - [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
 - [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
-- [lib/input/actions/actionsResponse.hpp](../lib/input/actions/actionsResponse.hpp)
+- [lib/input/actions/IAction.hpp](../lib/input/actions/IAction.hpp)
+- [lib/app/ActionFactory.hpp](../lib/app/ActionFactory.hpp)
+- [lib/app/ActionContext.hpp](../lib/app/ActionContext.hpp)
 
 ## 5. UART Flow
 

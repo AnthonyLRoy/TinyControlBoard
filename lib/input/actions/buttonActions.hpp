@@ -7,7 +7,6 @@
 namespace actions
 {
     using ToggleDac = ToggleAction<CMD_TOGGLE_DAC_ON, CMD_TOGGLE_DAC_OFF>;
-    using ToggleDisplay = ToggleAction<CMD_DISPLAY_OFF, CMD_DISPLAY_ON>;
     using ToggleMeterDisplay = ToggleAction<CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF>;
     using CoverView = ToggleAction<CMD_COVER_VIEW_ON, CMD_COVER_VIEW_OFF>;
     using ToggleRepeat = ToggleAction<CMD_REPEAT_ON, CMD_REPEAT_OFF>;
@@ -16,7 +15,6 @@ namespace actions
     using PowerButton = TimedAction<CMD_SYS_POWER>;
 
     extern ToggleDac ToggleDacInstance;
-    extern ToggleDisplay ToggleDisplayInstance;
     extern ToggleMeterDisplay ToggleMeterDisplayInstance;
     extern CoverView CoverViewInstance;
     extern ToggleRepeat RepeatInstance;
@@ -31,6 +29,7 @@ namespace actions
     extern SimpleCommandAction PlayPauseInstance;
     extern SimpleCommandAction StopInstance;
     extern SimpleCommandAction PreviousMenuInstance;
+    extern SimpleCommandAction NextMenuInstance;
     extern SimpleCommandAction MenuSelectInstance;
     extern SimpleCommandAction CycleBrightnessInstance;
 }

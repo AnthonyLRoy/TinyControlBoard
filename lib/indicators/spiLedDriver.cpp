@@ -115,7 +115,12 @@ namespace indicators
         spi_transaction_t transaction = {};
             transaction.length = 16;
             transaction.tx_buffer = m_txBuf;
-        ESP_ERROR_CHECK(spi_device_transmit(mp_spiHandle, &transaction));
+        const esp_err_t err = spi_device_transmit(mp_spiHandle, &transaction);
+        if (err != ESP_OK)
+        {
+            ESP_LOGE(k_logTag, "SPI transmit failed (err=0x%x); LED state may be stale", err);
+            return;
+        }
 
         esp_rom_delay_us(5);
         gpio_set_level(m_latchPin, 1);

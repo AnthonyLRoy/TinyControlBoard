@@ -39,8 +39,8 @@ The main runtime flow is:
 1. The ESP32 boots and waits briefly for power to settle.
 2. `app_main()` creates a `ControlBoard` instance.
 3. `ControlBoard::init()` initializes LEDs, relays, input handling, and serial communication.
-4. Button and rotary events are converted into `ActionResponse` objects.
-5. `ActionProcessor` decides what to do with those responses.
+4. Button and rotary events are converted into `std::unique_ptr<actions::IAction>` objects via `ActionFactory::createAction()`.
+5. `ActionProcessor::process()` executes the action via `IAction::execute(ActionContext&)`.
 6. Some actions change local hardware state, and others send UART commands to the Raspberry Pi.
 7. The Raspberry Pi sends heartbeat packets back so the ESP32 knows the Pi is still online.
 
@@ -81,12 +81,16 @@ References:
 
 ### 3.3 `ActionProcessor`
 
-`ActionProcessor` is the decision layer between input events and side effects. It receives `ActionResponse` objects and performs the next step, such as:
+`ActionProcessor` is the decision layer between input events and side effects. It receives `std::unique_ptr<actions::IAction>` objects and dispatches them via `IAction::execute(ActionContext&)`.
 
-- changing relays,
-- coordinating Raspberry Pi boot and shutdown behavior,
-- sending UART commands,
-- reacting to heartbeat received or heartbeat timeout.
+Concrete command classes in `lib/app/commands/` carry out the actual work:
+
+- `RelayAction` — local relay changes,
+- `UartDispatchAction` — sends UART commands to the Raspberry Pi,
+- `PowerTransitionAction` — coordinates Raspberry Pi boot and shutdown,
+- `BrightnessAction` — local brightness cycling,
+- `DisplayAction` — display on/off,
+- `SystemAction` — system-level commands.
 
 References:
 

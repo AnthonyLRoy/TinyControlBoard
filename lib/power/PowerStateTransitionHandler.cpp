@@ -51,6 +51,7 @@ namespace controlSystem
                 indicators::getSpiBootIndicator().notifySuccess();
                 indicators::getPowerLed().setState(ControlBoardPowerState::ON);
                 indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
+                indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::SolidIdle);
                 reportStatus(ControlBoardWorkingStatus::Active);
                 return true;
             }
@@ -76,6 +77,8 @@ namespace controlSystem
             vTaskDelay(pdMS_TO_TICKS(board::timing::k_rpiShutdownSettleDelayMs));
             mr_relayController.shutdownScreen(false);
             vTaskDelay(pdMS_TO_TICKS(board::timing::k_screenPowerOffDelayMs));
+            indicators::getSpiLedDriver().setAllLeds(false);
+            indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
             reportStatus(ControlBoardWorkingStatus::sleeping);
@@ -94,6 +97,8 @@ namespace controlSystem
             mr_relayController.shutdownScreen(false);
             mr_relayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
+            indicators::getSpiLedDriver().setAllLeds(false);
+            indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
             indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::DEEPSLEEP);
             reportStatus(ControlBoardWorkingStatus::sleeping);

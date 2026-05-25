@@ -83,11 +83,11 @@ This is the same logical mapping documented in [docs/button-command-map.md](./bu
 | 5 | Play/Pause | MCP input index 5 | bit 5 | `0x0020` | `0x20 0x00` | `0x0102` | `CMD_PLAY_PAUSE` | UART command |
 | 6 | Stop | MCP input index 6 | bit 6 | `0x0040` | `0x40 0x00` | `0x0103` | `CMD_STOP_TRACK` | UART command |
 | 7 | Cover | MCP input index 7 | bit 7 | `0x0080` | `0x80 0x00` | `0x0117` or `0x0118` | `CMD_COVER_VIEW_ON` or `CMD_COVER_VIEW_OFF` | normalized to `CMD_TOGGLE_COVER_VIEW` on UART |
-| 8 | Next Menu | MCP input index 8 | bit 8 | `0x0100` | `0x00 0x01` | `0x0107` | `CMD_NEXT_MENU_ITEM` | UART command |
-| 9 | Menu Select | MCP input index 9 | bit 9 | `0x0200` | `0x00 0x02` | `0x0108` | `CMD_ITEM_SELECT` | UART command |
+| 8 | Repeat | MCP input index 8 | bit 8 | `0x0100` | `0x00 0x01` | `0x011A` or `0x011B` | `CMD_REPEAT_ON` or `CMD_REPEAT_OFF` | normalized to `CMD_TOGGLE_REPEAT` with param `1` or `0` |
+| 9 | Toggle Random | MCP input index 9 | bit 9 | `0x0200` | `0x00 0x02` | `0x011D` or `0x011E` | `CMD_RANDOM_ON` or `CMD_RANDOM_OFF` | normalized to `CMD_TOGGLE_RANDOM` with param `1` or `0` |
 | 10 | Toggle DAC | MCP input index 10 | bit 10 | `0x0400` | `0x00 0x04` | `0x010A` or `0x010F` | `CMD_TOGGLE_DAC_ON` or `CMD_TOGGLE_DAC_OFF` | local relay control |
-| 11 | Toggle Display | MCP input index 11 | bit 11 | `0x0800` | `0x00 0x08` | `0x010B` or `0x010E` | `CMD_DISPLAY_OFF` or `CMD_DISPLAY_ON` | normalized to `CMD_TOGGLE_DISPLAY` on UART |
-| 12 | Toggle Meter | MCP input index 12 | bit 12 | `0x1000` | `0x00 0x10` | `0x010C` or `0x010D` | `CMD_TOGGLE_METER_ON` or `CMD_TOGGLE_METER_OFF` | normalized to `CMD_TOGGLE_METER` on UART |
+| 11 | Next Panel | MCP input index 11 | bit 11 | `0x0800` | `0x00 0x08` | `0x0107` | `CMD_NEXT_MENU_ITEM` | UART command; Pi cycles to next moOde panel |
+| 12 | Toggle Meter | MCP input index 12 | bit 12 | `0x1000` | `0x00 0x10` | `0x010C` or `0x010D` | `CMD_TOGGLE_METER_ON` or `CMD_TOGGLE_METER_OFF` | normalized to `CMD_TOGGLE_METER` with param `1` or `0` |
 | 13 | Rotary Left | MCP input index 13 | none in current rotary path | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | sent with param `0`, no SPI LED write |
 | 14 | Rotary Right | MCP input index 14 | none in current rotary path | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | sent with param `1`, no SPI LED write |
 | 15 | Cycle Brightness | MCP input index 15 | bit 15 | `0x8000` | `0x00 0x80` | `0x0116` | `CMD_CYCLE_BRIGHTNESS` | local brightness control |

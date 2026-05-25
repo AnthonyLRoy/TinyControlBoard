@@ -3,7 +3,6 @@
 namespace actions
 {
     ToggleDac ToggleDacInstance;
-    ToggleDisplay ToggleDisplayInstance;
     ToggleMeterDisplay ToggleMeterDisplayInstance;
     CoverView CoverViewInstance;
     ToggleRepeat RepeatInstance;
@@ -18,6 +17,7 @@ namespace actions
     SimpleCommandAction PlayPauseInstance(CMD_PLAY_PAUSE);
     SimpleCommandAction StopInstance(CMD_STOP_TRACK);
     SimpleCommandAction PreviousMenuInstance(CMD_PREV_MENU_ITEM);
+    SimpleCommandAction NextMenuInstance(CMD_NEXT_MENU_ITEM);
     SimpleCommandAction MenuSelectInstance(CMD_ITEM_SELECT);
     SimpleCommandAction CycleBrightnessInstance(CMD_CYCLE_BRIGHTNESS);
 }

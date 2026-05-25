@@ -4,10 +4,10 @@ This document explains the current power-state behavior implemented in the firmw
 
 Source files:
 
-- [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
+- [lib/power/PowerStateTransitionHandler.cpp](../lib/power/PowerStateTransitionHandler.cpp)
+- [lib/power/PowerStateTransitionPolicy.hpp](../lib/power/PowerStateTransitionPolicy.hpp)
 - [lib/power/RPIBootManager.cpp](../lib/power/RPIBootManager.cpp)
 - [lib/power/RelayController.cpp](../lib/power/RelayController.cpp)
-- [lib/power/PowerStateTransitionHandler.cpp](../lib/power/PowerStateTransitionHandler.cpp)
 - [lib/power/powerState.hpp](../lib/power/powerState.hpp)
 - [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
 - [lib/indicators/SpiBootIndicator.cpp](../lib/indicators/SpiBootIndicator.cpp)
@@ -35,15 +35,19 @@ In practice, the code paths currently used most clearly are:
 
 ## 2. Timing Constants Used Today
 
-Current power-related timing constants in [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp):
+All power-related timing constants live in the `board::timing` namespace in [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp).
+The long-press threshold lives in [lib/power/PowerStateTransitionPolicy.hpp](../lib/power/PowerStateTransitionPolicy.hpp).
 
-| Constant | Value | Meaning |
+| Constant | Value (ms) | Meaning |
 |---|---:|---|
-| `POWER_SETTLE_DELAY_MS` | 1500 | delay used after enabling some relays |
-| `SCREEN_ON_DELAY_MS` | 1000 | delay used during power-on for screen and Pi relay steps |
-| `LONG_PRESS_THRESHOLD_MS` | 3000 | separates sleep from deep sleep |
-| `RPI_BOOT_TIMEOUT_MS` | 60000 | max time to wait for heartbeat after power-on |
-| `RPI_SHUTDOWN_TIMEOUT_MS` | 60000 | max time to wait for heartbeat timeout during shutdown |
+| `board::timing::k_powerSettleDelayMs` | 1500 | delay used after enabling DAC and output-stage relays |
+| `board::timing::k_screenOnDelayMs` | 1000 | delay used for screen and Pi relay steps during power-on |
+| `board::timing::k_rpiBootTimeoutMs` | 60000 | max time to wait for heartbeat after power-on |
+| `board::timing::k_rpiShutdownTimeoutMs` | 60000 | max time to wait for heartbeat timeout during shutdown |
+| `board::timing::k_rpiShutdownSettleDelayMs` | 500 | delay between Pi relay off and screen relay off |
+| `board::timing::k_screenPowerOffDelayMs` | 5000 | delay after screen relay off before LED state changes |
+| `board::timing::k_heartbeatTimeoutMs` | 30000 | inactivity window after which heartbeat is considered lost |
+| `kLongPressThresholdMs` | 3000 | separates sleep from deep sleep on power-button release |
 
 ## 3. How The Power Button Works
 
@@ -75,12 +79,8 @@ Current sequence:
 7. firmware waits up to 60 seconds for Pi heartbeat,
 8. if heartbeat received: `SpiBootIndicator::notifySuccess()` is called, flashing stops and all LEDs clear,
 9. if timeout: `SpiBootIndicator::notifyFailure()` is called, LEDs switch to fast flashing (~3.3 Hz),
-10. power LED moves to `ON`,
-11. activity status becomes `Active`.
-
-Note:
-
-- the power LED is moved to `ON` in both the success and timeout cases. The fast-flashing SPI LEDs remain as the only ongoing failure indicator if the heartbeat was not received.
+10. on success: power LED moves to `ON`, activity status becomes `Active`,
+11. on timeout: power LED moves to `SLEEP`, activity status becomes `sleeping`, and the fast-flashing SPI LEDs remain as the only ongoing failure indicator.
 
 ## 5. Sleep Sequence
 
