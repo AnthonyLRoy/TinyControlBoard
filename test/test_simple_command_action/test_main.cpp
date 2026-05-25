@@ -1,6 +1,6 @@
 #include <unity.h>
 
-#include "input/actions/SimpleCommandAction.hpp"
+#include "input/actions/actionTemplates.hpp"
 
 using actions::ActionResponse;
 using actions::SimpleCommandAction;

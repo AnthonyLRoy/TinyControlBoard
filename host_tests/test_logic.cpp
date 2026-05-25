@@ -8,7 +8,7 @@
 
 #include "indicators/activityStatus.hpp"
 #include "input/actions/actionsResponse.hpp"
-#include "input/actions/SimpleCommandAction.hpp"
+#include "input/actions/actionTemplates.hpp"
 #include "app/ActionCommandRoutingPolicy.hpp"
 #include "app/ActionFactory.hpp"
 #include "app/ActionUartDispatcher.hpp"

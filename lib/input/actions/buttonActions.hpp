@@ -2,7 +2,7 @@
 
 #include "input/actions/actionsResponse.hpp"
 #include "input/actions/actionTemplates.hpp"
-#include "input/actions/SimpleCommandAction.hpp"
+#include "input/actions/actionTemplates.hpp"
 
 namespace actions
 {

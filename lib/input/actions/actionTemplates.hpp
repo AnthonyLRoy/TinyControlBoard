@@ -2,12 +2,30 @@
 
 #include "input/actions/buttonAction.hpp"
 #include "app/ActionFactory.hpp"
-#include <esp_timer.h>
 #include "protocol/commandCatalog.hpp"
+#if __has_include(<esp_timer.h>)
+#include <esp_timer.h>
 #include "esp_log.h"
+#endif
 
 namespace actions
 {
+    class SimpleCommandAction : public IActionSource
+    {
+    public:
+        explicit SimpleCommandAction(CommandId commandId) : m_commandId(commandId) {}
+
+        std::unique_ptr<IAction> produce(bool isPressed) override
+        {
+            if (!isPressed)
+                return nullptr;
+            return controlSystem::createAction(m_commandId);
+        }
+
+    private:
+        CommandId m_commandId;
+    };
+
     template <CommandId CMD_ON, CommandId CMD_OFF>
     class ToggleAction : public IActionSource
     {
@@ -38,20 +56,6 @@ namespace actions
             auto iaction = controlSystem::createAction(CMD_ROTARY_ACTION);
             iaction->parameters[0] = isLeft ? 0 : 1;
             return iaction;
-        }
-    };
-
-    template <CommandId CMD>
-    class MomentaryAction : public IActionSource
-    {
-    public:
-        MomentaryAction() = default;
-
-        std::unique_ptr<IAction> produce(bool isPressed) override
-        {
-            if (!isPressed)
-                return nullptr;
-            return controlSystem::createAction(CMD);
         }
     };
 
