@@ -1,6 +1,6 @@
 #pragma once
 
-#include "relay.hpp"
+#include "hal/relay/relay.hpp"
 #include "input/actions/IAction.hpp"
 #include "app/ActionContext.hpp"
 #include "app/ActionUartDispatcher.hpp"
@@ -13,9 +13,9 @@
 #include "power/RelayController.hpp"
 #include <driver/gpio.h>
 #include "indicators/ledManager.hpp"
-#include "activityStatus.hpp"
+#include "indicators/activityStatus.hpp"
 #include "protocol/uartProtocol.hpp"
-#include "transport/uart/serial.hpp"
+#include "hal/uart/serial.hpp"
 #include <memory>
 
 namespace controlSystem

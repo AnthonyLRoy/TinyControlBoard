@@ -2,7 +2,7 @@
 #include "driver/ledc.h"
 #include "esp_err.h"
 
-#include "indicators/pwm/pwmLed.hpp"
+#include "pwmLed.hpp"
 
 namespace led
 {

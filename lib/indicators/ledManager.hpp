@@ -1,10 +1,10 @@
 #pragma once
 
-#include "statusLed.hpp"
-#include "monitorBrightnessController.hpp"
-#include "powerLed.hpp"
-#include "spiLedDriver.hpp"
-#include "SpiBootIndicator.hpp"
+#include "indicators/statusLed.hpp"
+#include "indicators/monitorBrightnessController.hpp"
+#include "indicators/powerLed.hpp"
+#include "hal/leds/spiLedDriver.hpp"
+#include "indicators/SpiBootIndicator.hpp"
 
 namespace indicators
 {

@@ -3,7 +3,7 @@
 #include "input/actions/buttonAction.hpp"
 #include "app/ActionFactory.hpp"
 #include <esp_timer.h>
-#include "support/controlSystemHelpers.hpp"
+#include "protocol/commandCatalog.hpp"
 #include "esp_log.h"
 
 namespace actions

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "relay.hpp"
-#include "transport/uart/serial.hpp"
+#include "hal/relay/relay.hpp"
+#include "hal/uart/serial.hpp"
 #include <driver/gpio.h>
 #include <cstdint>
 

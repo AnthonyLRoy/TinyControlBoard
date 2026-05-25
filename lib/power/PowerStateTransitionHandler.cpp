@@ -1,8 +1,8 @@
 #include "power/PowerStateTransitionHandler.hpp"
 
 #include "board/boardConfig.hpp"
-#include "ledManager.hpp"
-#include "powerLed.hpp"
+#include "indicators/ledManager.hpp"
+#include "indicators/powerLed.hpp"
 #include "power/PowerStateTransitionPolicy.hpp"
 #include <inttypes.h>
 

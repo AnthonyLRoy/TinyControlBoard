@@ -1,6 +1,6 @@
 #include "app/SerialUartCommandSink.hpp"
 
-#include "transport/uart/serial.hpp"
+#include "hal/uart/serial.hpp"
 
 namespace controlSystem
 {

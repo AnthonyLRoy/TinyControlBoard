@@ -9,7 +9,7 @@
 #include "esp_Check.h"
 #include <esp_log.h>
 #include "board/boardConfig.hpp"
-#include "input/buttons/project_cfg.hpp"
+#include "project_cfg.hpp"
 
 constexpr uint8_t MCP_IODIRA = 0x00;
 constexpr uint8_t MCP_IODIRB = 0x01;

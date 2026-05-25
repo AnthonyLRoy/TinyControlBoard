@@ -1,4 +1,4 @@
-#include "transport/uart/serial.hpp"
+#include "serial.hpp"
 
 #include <cstring>
 #include <esp_timer.h>

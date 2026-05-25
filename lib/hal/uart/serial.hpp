@@ -5,7 +5,7 @@
 #include "driver/uart.h"
 #include "esp_log.h"
 #include "protocol/uartProtocol.hpp"
-#include "transport/uart/uartReceiver.hpp"
+#include "uartReceiver.hpp"
 
 #include <atomic>
 #include <functional>

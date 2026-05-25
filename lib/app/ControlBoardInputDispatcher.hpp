@@ -1,6 +1,6 @@
 #pragma once
 
-#include "activityStatus.hpp"
+#include "indicators/activityStatus.hpp"
 #include "input/actions/buttonAction.hpp"
 #include "app/ControlBoardButtonIds.hpp"
 #include <array>

@@ -3,7 +3,7 @@
 #include "app/ActionUartDispatcher.hpp"
 #include "power/PowerStateTransitionHandler.hpp"
 #include "power/RelayController.hpp"
-#include "transport/uart/serial.hpp"
+#include "hal/uart/serial.hpp"
 #include "app/SystemState.hpp"
 
 namespace controlSystem

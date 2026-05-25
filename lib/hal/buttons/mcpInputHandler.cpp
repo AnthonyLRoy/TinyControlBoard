@@ -5,7 +5,7 @@
 
 
 
-#include "input/buttons/mcpInputHandler.hpp"
+#include "mcpInputHandler.hpp"
 
 namespace buttons {
 

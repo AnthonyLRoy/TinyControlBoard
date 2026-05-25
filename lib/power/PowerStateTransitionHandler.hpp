@@ -3,8 +3,8 @@
 #include "input/actions/IAction.hpp"
 #include "power/RelayController.hpp"
 #include "power/RPIBootManager.hpp"
-#include "transport/uart/serial.hpp"
-#include "activityStatus.hpp"
+#include "hal/uart/serial.hpp"
+#include "indicators/activityStatus.hpp"
 
 namespace controlSystem
 {
