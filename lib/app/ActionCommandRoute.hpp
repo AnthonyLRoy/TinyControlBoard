@@ -14,7 +14,6 @@ namespace controlSystem
         IgnoreWhileNotOn,
         System,
         Relay,
-        Display,
         Brightness,
         UartDispatch,
     };

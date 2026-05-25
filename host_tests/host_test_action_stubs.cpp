@@ -6,7 +6,6 @@
 #include "app/commands/RelayAction.hpp"
 #include "app/commands/PowerTransitionAction.hpp"
 #include "app/commands/SystemAction.hpp"
-#include "app/commands/DisplayAction.hpp"
 #include "app/commands/BrightnessAction.hpp"
 
 namespace actions
@@ -15,6 +14,5 @@ namespace actions
     void RelayAction::execute(controlSystem::ActionContext &) {}
     void PowerTransitionAction::execute(controlSystem::ActionContext &) {}
     void SystemAction::execute(controlSystem::ActionContext &) {}
-    void DisplayAction::execute(controlSystem::ActionContext &) {}
     void BrightnessAction::execute(controlSystem::ActionContext &) {}
 }

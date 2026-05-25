@@ -34,11 +34,6 @@ namespace controlSystem
             return ActionCommandRoute::Relay;
         }
 
-        if (command == CMD_DISPLAY_OFF || command == CMD_DISPLAY_ON)
-        {
-            return ActionCommandRoute::Display;
-        }
-
         if (command == CMD_CYCLE_BRIGHTNESS)
         {
             return ActionCommandRoute::Brightness;

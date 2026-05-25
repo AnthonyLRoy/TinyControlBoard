@@ -4,7 +4,6 @@
 #include "app/commands/RelayAction.hpp"
 #include "app/commands/PowerTransitionAction.hpp"
 #include "app/commands/SystemAction.hpp"
-#include "app/commands/DisplayAction.hpp"
 #include "app/commands/BrightnessAction.hpp"
 
 namespace controlSystem
@@ -24,9 +23,6 @@ namespace controlSystem
 
         case ActionCommandRoute::Relay:
             return std::make_unique<actions::RelayAction>(command);
-
-        case ActionCommandRoute::Display:
-            return std::make_unique<actions::DisplayAction>(command);
 
         case ActionCommandRoute::Brightness:
             return std::make_unique<actions::BrightnessAction>(command);

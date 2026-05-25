@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "activityStatus.hpp"
+#include "indicators/activityStatus.hpp"
 #include "input/actions/actionsResponse.hpp"
 #include "input/actions/SimpleCommandAction.hpp"
 #include "app/ActionCommandRoutingPolicy.hpp"
@@ -549,9 +549,6 @@ void test_action_command_routing_policy_classifies_on_state_handlers()
     expect_true(controlSystem::classifyCommand(CMD_TOGGLE_DAC_ON, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::Relay,
                 "DAC toggle should use the relay handler");
-    expect_true(controlSystem::classifyCommand(CMD_DISPLAY_OFF, ControlBoardPowerState::ON) ==
-                    controlSystem::ActionCommandRoute::Display,
-                "Display toggle should use the display handler");
     expect_true(controlSystem::classifyCommand(CMD_CYCLE_BRIGHTNESS, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::Brightness,
                 "Cycle brightness should use the brightness handler");
