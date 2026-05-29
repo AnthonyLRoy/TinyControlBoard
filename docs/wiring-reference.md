@@ -130,7 +130,7 @@ The main exception is rotary movement: those inputs are still read as indices `1
 | `btn_in_4` | 3 | `kSkipForward` | `CMD_SKIP_FORWARD` | lights SPI bit 3, register `0x0008`, LED output 3 |
 | `btn_in_5` | 4 | `kSkipBack` | `CMD_SKIP_BACK` | lights SPI bit 4, register `0x0010`, LED output 4 |
 | `btn_in_6` | 5 | `kPlayPause` | `CMD_PLAY_PAUSE` | lights SPI bit 5, register `0x0020`, LED output 5 |
-| `btn_in_7` | 6 | `kStop` | `CMD_STOP_TRACK` | lights SPI bit 6, register `0x0040`, LED output 6 |
+| `btn_in_7` | 6 | `kToggleDisplay` | `CMD_STOP_TRACK` | lights SPI bit 6, register `0x0040`, LED output 6 |
 | `btn_in_8` | 7 | `kCover` | `CMD_COVER_VIEW_ON` or `CMD_COVER_VIEW_OFF` | lights SPI bit 7, register `0x0080`, LED output 7 |
 | `btn_in_9` | 8 | `kNextMenu` | `CMD_NEXT_MENU_ITEM` | lights SPI bit 8, register `0x0100`, LED output 8 |
 | `btn_in_10` | 9 | `kMenuSelect` | `CMD_ITEM_SELECT` | lights SPI bit 9, register `0x0200`, LED output 9 |
@@ -170,7 +170,7 @@ Button and command inputs:
 | 9 | `CMD_Skip_Forrard` | 3 | `kSkipForward` -> `CMD_SKIP_FORWARD` | matches |
 | 11 | `CMD_Skip_Back` | 4 | `kSkipBack` -> `CMD_SKIP_BACK` | matches |
 | 13 | `CMD_Play_Pause` | 5 | `kPlayPause` -> `CMD_PLAY_PAUSE` | matches |
-| 15 | `CMD_Stop_Track` | 6 | `kStop` -> `CMD_STOP_TRACK` | matches |
+| 15 | `CMD_Stop_Track` | 6 | `kToggleDisplay` -> `CMD_STOP_TRACK` | matches |
 | 17 | `CMD_Prev_Menu_Item` | 7 | current firmware uses `kCover` -> `CMD_COVER_VIEW_ON/OFF` | mismatch |
 | 4 | `CMD_Next_Menu_Item` | 8 | `kNextMenu` -> `CMD_NEXT_MENU_ITEM` | matches |
 | 6 | `CMD_Item_Select` | 9 | `kMenuSelect` -> `CMD_ITEM_SELECT` | matches |

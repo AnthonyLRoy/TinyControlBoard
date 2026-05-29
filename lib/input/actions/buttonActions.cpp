@@ -15,7 +15,7 @@ namespace actions
     SimpleCommandAction SkipForwardInstance(CMD_SKIP_FORWARD);
     SimpleCommandAction SkipBackInstance(CMD_SKIP_BACK);
     SimpleCommandAction PlayPauseInstance(CMD_PLAY_PAUSE);
-    SimpleCommandAction StopInstance(CMD_STOP_TRACK);
+    SimpleCommandAction DisplayOffOnInstance(CMD_TOGGLE_DISPLAY);
     SimpleCommandAction PreviousMenuInstance(CMD_PREV_MENU_ITEM);
     SimpleCommandAction NextMenuInstance(CMD_NEXT_MENU_ITEM);
     SimpleCommandAction MenuSelectInstance(CMD_ITEM_SELECT);

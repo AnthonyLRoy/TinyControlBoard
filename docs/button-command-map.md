@@ -51,7 +51,7 @@ Current button indices from [lib/board/boardConfig.hpp](../lib/board/boardConfig
 | 3 | `kSkipForward` |
 | 4 | `kSkipBack` |
 | 5 | `kPlayPause` |
-| 6 | `kStop` |
+| 6 | `kToggleDisplay` |
 | 7 | `kCover` |
 | 8 | `kRepeat` |
 | 9 | `kToggleRandom` |

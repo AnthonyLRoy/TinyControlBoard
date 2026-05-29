@@ -1,5 +1,6 @@
 #include "app/commands/SystemAction.hpp"
 #include "app/ActionContext.hpp"
+#include "indicators/ledManager.hpp"
 #include "esp_log.h"
 
 namespace actions
@@ -8,6 +9,7 @@ namespace actions
     {
         if (command == CMD_SYS_RPI_SHUTDOWN)
         {
+            indicators::getMonitorBrightnessController().clearDisplayOffMode();
             ctx.serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
             ctx.relayController.shutdownRpi(true);
         }

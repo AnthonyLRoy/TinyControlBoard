@@ -6,6 +6,17 @@ namespace actions
 {
     void BrightnessAction::execute(controlSystem::ActionContext &)
     {
-        indicators::getMonitorBrightnessController().cycleBrightness();
+        auto &brightnessController = indicators::getMonitorBrightnessController();
+
+        if (command == CMD_TOGGLE_DISPLAY)
+        {
+            brightnessController.toggleDisplayOffOn();
+            return;
+        }
+
+        if (command == CMD_CYCLE_BRIGHTNESS)
+        {
+            brightnessController.cycleBrightness();
+        }
     }
 }

@@ -27,7 +27,7 @@ namespace actions
     extern SimpleCommandAction SkipForwardInstance;
     extern SimpleCommandAction SkipBackInstance;
     extern SimpleCommandAction PlayPauseInstance;
-    extern SimpleCommandAction StopInstance;
+    extern SimpleCommandAction DisplayOffOnInstance;
     extern SimpleCommandAction PreviousMenuInstance;
     extern SimpleCommandAction NextMenuInstance;
     extern SimpleCommandAction MenuSelectInstance;

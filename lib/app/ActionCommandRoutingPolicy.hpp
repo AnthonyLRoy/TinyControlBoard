@@ -34,7 +34,7 @@ namespace controlSystem
             return ActionCommandRoute::Relay;
         }
 
-        if (command == CMD_CYCLE_BRIGHTNESS)
+        if (command == CMD_CYCLE_BRIGHTNESS || command == CMD_TOGGLE_DISPLAY)
         {
             return ActionCommandRoute::Brightness;
         }
