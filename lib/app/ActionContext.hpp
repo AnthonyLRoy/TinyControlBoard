@@ -5,6 +5,8 @@
 #include "power/RelayController.hpp"
 #include "hal/uart/serial.hpp"
 #include "app/SystemState.hpp"
+#include "indicators/powerLed.hpp"
+#include "indicators/monitorBrightnessController.hpp"
 
 namespace controlSystem
 {
@@ -13,10 +15,12 @@ namespace controlSystem
     /// so execute() has no dependency on ActionProcessor itself.
     struct ActionContext
     {
-        ActionUartDispatcher        &uartDispatcher;
-        PowerStateTransitionHandler &powerHandler;
-        RelayController             &relayController;
-        transport::uart::UartTransport &serial;
-        SystemState                 &systemState;
+        ActionUartDispatcher                    &uartDispatcher;
+        PowerStateTransitionHandler             &powerHandler;
+        RelayController                         &relayController;
+        transport::uart::UartTransport          &serial;
+        SystemState                             &systemState;
+        indicators::PowerLed                    &powerLed;
+        indicators::MonitorBrightnessController &brightnessController;
     };
 }

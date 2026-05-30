@@ -38,7 +38,9 @@ namespace controlSystem
             *mp_powerStateTransitionHandler,
             *mp_relayController,
             mr_serial,
-            mr_systemState
+            mr_systemState,
+            indicators::getPowerLed(),
+            indicators::getMonitorBrightnessController()
         };
 
         iaction->execute(ctx);
@@ -92,8 +94,8 @@ namespace controlSystem
         // Force LED to OFF so PowerStateTransitionPolicy treats this as a power-on request.
         indicators::getPowerLed().setState(ControlBoardPowerState::OFF);
         auto syntheticAction = createAction(CMD_SYS_POWER);
-        const bool result = mp_powerStateTransitionHandler->handle(*syntheticAction);
-        mr_systemState.powerState.store(indicators::getPowerLed().getState());
-        return result;
+        const auto newState = mp_powerStateTransitionHandler->handle(*syntheticAction);
+        mr_systemState.powerState.store(newState);
+        return newState == ControlBoardPowerState::ON;
     }
 }

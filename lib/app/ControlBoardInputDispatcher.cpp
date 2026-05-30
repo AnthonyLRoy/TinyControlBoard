@@ -40,17 +40,17 @@ namespace controlSystem
 
     void ControlBoardInputDispatcher::handleButtonPressed(uint8_t buttonPressedId)
     {
-        if (buttonPressedId >= controlBoardButtons::k_count)
-        {
-            return;
-        }
-
         if (isInputSuppressedInSleep(buttonPressedId))
         {
             return;
         }
 
         mr_indicators.setActivityStatus(ControlBoardWorkingStatus::doingWork);
+
+        if (buttonPressedId >= controlBoardButtons::k_count)
+        {
+            return;
+        }
 
         const ButtonConfig &config = mr_actionMap[buttonPressedId];
         applyLedOnPress(buttonPressedId, config.ledPolicy);
