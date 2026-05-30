@@ -611,6 +611,100 @@ void test_control_board_in_range_unmapped_button_release_does_not_dispatch_respo
     expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(),
                  "In-range unmapped release should still set background status");
 }
+
+void test_control_board_sleep_blocks_non_power_button_press_and_toggle_led_change()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction coverAction(CMD_NO_ACTION);
+    actionMap[controlSystem::controlBoardButtons::k_cover] = {&coverAction, controlSystem::LedPolicy::Toggle};
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
+
+    dispatcher.setBackgroundStatus(ControlBoardWorkingStatus::sleeping);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
+
+    expect_equal(0, coverAction.callCount, "Sleeping mode should not evaluate non-power button actions");
+    expect_equal(0, responseSink.callCount, "Sleeping mode should not dispatch non-power button responses");
+    expect_equal(0, indicators.ledCallCount, "Sleeping mode should not change toggle LED state for non-power button");
+    expect_equal(static_cast<size_t>(0), indicators.activityHistory.size(),
+                 "Sleeping mode should not change activity status for blocked non-power button press");
+}
+
+void test_control_board_sleep_blocks_non_power_button_release()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction playPauseAction(CMD_NO_ACTION);
+    actionMap[controlSystem::controlBoardButtons::k_playPause] = {&playPauseAction, controlSystem::LedPolicy::Momentary};
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
+
+    dispatcher.setBackgroundStatus(ControlBoardWorkingStatus::sleeping);
+    dispatcher.handleButtonReleased(controlSystem::controlBoardButtons::k_playPause);
+
+    expect_equal(0, playPauseAction.callCount, "Sleeping mode should not evaluate non-power button release actions");
+    expect_equal(0, responseSink.callCount, "Sleeping mode should not dispatch non-power button release responses");
+    expect_equal(0, indicators.ledCallCount, "Sleeping mode should not update LEDs for blocked non-power button release");
+    expect_equal(static_cast<size_t>(0), indicators.activityHistory.size(),
+                 "Sleeping mode should not change activity status for blocked non-power button release");
+}
+
+void test_control_board_sleep_allows_power_button_action()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction powerAction(CMD_SYS_POWER);
+    actionMap[controlSystem::controlBoardButtons::k_power] = {&powerAction, controlSystem::LedPolicy::None};
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
+
+    dispatcher.setBackgroundStatus(ControlBoardWorkingStatus::sleeping);
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_power);
+
+    expect_equal(1, powerAction.callCount, "Power button should still be processed while sleeping");
+    expect_equal(1, responseSink.callCount, "Power button press while sleeping should dispatch an action");
+    expect_equal(CMD_SYS_POWER, responseSink.lastAction->command,
+                 "Power button press while sleeping should dispatch CMD_SYS_POWER");
+    expect_equal(static_cast<size_t>(1), indicators.activityHistory.size(),
+                 "Power button press while sleeping should still set activity status");
+    expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::doingWork,
+                "Power button press while sleeping should set doingWork status");
+}
+
+void test_control_board_sleep_blocks_rotary_input()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction rotaryAction(CMD_ROTARY_ACTION);
+    actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft] = {&rotaryAction, controlSystem::LedPolicy::None};
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
+
+    dispatcher.setBackgroundStatus(ControlBoardWorkingStatus::sleeping);
+    dispatcher.handleRotaryMovement(1);
+
+    expect_equal(0, rotaryAction.callCount, "Sleeping mode should block rotary action evaluation");
+    expect_equal(0, responseSink.callCount, "Sleeping mode should block rotary response dispatch");
+    expect_equal(static_cast<size_t>(0), indicators.activityHistory.size(),
+                 "Sleeping mode should not change activity status for blocked rotary input");
+}
 } // namespace
 
 int main()
@@ -646,6 +740,10 @@ int main()
         {"test_control_board_rotary_negative_direction_passes_false_to_action", test_control_board_rotary_negative_direction_passes_false_to_action},
         {"test_control_board_in_range_unmapped_button_press_does_not_dispatch_response", test_control_board_in_range_unmapped_button_press_does_not_dispatch_response},
         {"test_control_board_in_range_unmapped_button_release_does_not_dispatch_response", test_control_board_in_range_unmapped_button_release_does_not_dispatch_response},
+        {"test_control_board_sleep_blocks_non_power_button_press_and_toggle_led_change", test_control_board_sleep_blocks_non_power_button_press_and_toggle_led_change},
+        {"test_control_board_sleep_blocks_non_power_button_release", test_control_board_sleep_blocks_non_power_button_release},
+        {"test_control_board_sleep_allows_power_button_action", test_control_board_sleep_allows_power_button_action},
+        {"test_control_board_sleep_blocks_rotary_input", test_control_board_sleep_blocks_rotary_input},
     };
 
     int failures = 0;
