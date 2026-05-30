@@ -20,13 +20,16 @@ public:
 
     void setStatus(ControlBoardWorkingStatus newStatus);
     void sendStatus(ControlBoardWorkingStatus status);
+    /// Updates the duty applied in SolidIdle state. Thread-safe; takes effect
+    /// immediately if the LED is currently in SolidIdle.
+    void setIdleDuty(uint32_t duty);
     void init();
 private:
     gpio_num_t m_pin;
     ledc_channel_t m_channel;
-    uint32_t m_idleDuty;
+    std::atomic<uint32_t> m_idleDuty;
     ControlBoardWorkingStatus m_defaultStatus;
-    ControlBoardWorkingStatus m_currentStatus;
+    std::atomic<ControlBoardWorkingStatus> m_currentStatus;
     bool m_ledOn = true;
     QueueHandle_t mp_statusQueue = nullptr;
     TimerHandle_t mp_blinkTimer = nullptr;

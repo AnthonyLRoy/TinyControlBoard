@@ -1,10 +1,20 @@
 #include "monitorBrightnessController.hpp"
+#include "indicators/ledManager.hpp"
 #include <cmath>
 #include <algorithm>
 
 namespace
 {
     constexpr const char *k_nvsKeyLevel = "level";
+
+    // Maps a monitor brightness level (0-9) to an LEDC duty for the button LEDs.
+    // The button LED driver is active-low (higher duty = dimmer), so the mapping
+    // is inverted: level 0 (dimmest screen) → max duty → dim buttons,
+    // level 9 (brightest screen) → 0 duty → bright buttons.
+    uint32_t buttonDutyForLevel(int level)
+    {
+        return 8191u - static_cast<uint32_t>(level) * 8191u / 9u;
+    }
 }
 
 static constexpr const char *k_logTag = "Monitor_Bright  ";
@@ -77,6 +87,7 @@ namespace indicators
         // Apply the loaded level
         m_monitorLed.setDuty(m_brightnessLevels[m_currentBrightnessLevel]);
         m_monitorLed.updateDuty();
+        getButtonStatusLed().setIdleDuty(buttonDutyForLevel(m_currentBrightnessLevel));
 
         m_started = true;
     }
@@ -94,6 +105,7 @@ namespace indicators
         m_blanked = false;
         m_monitorLed.setDuty(m_brightnessLevels[m_currentBrightnessLevel]);
         m_monitorLed.updateDuty();
+        getButtonStatusLed().setIdleDuty(buttonDutyForLevel(m_currentBrightnessLevel));
         m_nvsStorage.writeInt8(k_nvsKeyLevel, static_cast<int8_t>(m_currentBrightnessLevel));
         ESP_LOGI(k_logTag, "Saved brightness level %d to NVS", m_currentBrightnessLevel);
     }
@@ -110,6 +122,7 @@ namespace indicators
         m_blanked = false;
         m_monitorLed.setDuty(m_brightnessLevels[m_currentBrightnessLevel]);
         m_monitorLed.updateDuty();
+        getButtonStatusLed().setIdleDuty(buttonDutyForLevel(m_currentBrightnessLevel));
         m_nvsStorage.writeInt8(k_nvsKeyLevel, static_cast<int8_t>(m_currentBrightnessLevel));
         ESP_LOGI(k_logTag, "Saved brightness level %d to NVS", m_currentBrightnessLevel);
     }
@@ -135,6 +148,7 @@ namespace indicators
             m_blanked = false;
             m_monitorLed.setDuty(m_brightnessLevels[m_currentBrightnessLevel]);
             m_monitorLed.updateDuty();
+            getButtonStatusLed().setIdleDuty(buttonDutyForLevel(m_currentBrightnessLevel));
             ESP_LOGI(k_logTag, "Restored brightness level %d", m_currentBrightnessLevel);
             break;
         default:
@@ -151,6 +165,7 @@ namespace indicators
             m_blanked = true;
             m_monitorLed.setDuty(0);
             m_monitorLed.updateDuty();
+            getButtonStatusLed().setIdleDuty(0);
             ESP_LOGI(k_logTag, "Display Off/On enabled, brightness temporarily forced to 0");
             return;
         }
@@ -160,6 +175,7 @@ namespace indicators
         m_blanked = false;
         m_monitorLed.setDuty(m_brightnessLevels[m_currentBrightnessLevel]);
         m_monitorLed.updateDuty();
+        getButtonStatusLed().setIdleDuty(buttonDutyForLevel(m_currentBrightnessLevel));
         ESP_LOGI(k_logTag, "Display Off/On disabled, restored brightness level %d", m_currentBrightnessLevel);
     }
 
@@ -175,6 +191,7 @@ namespace indicators
         m_blanked = false;
         m_monitorLed.setDuty(m_brightnessLevels[m_currentBrightnessLevel]);
         m_monitorLed.updateDuty();
+        getButtonStatusLed().setIdleDuty(buttonDutyForLevel(m_currentBrightnessLevel));
         ESP_LOGI(k_logTag, "Cleared Display Off/On before power transition, restored brightness level %d", m_currentBrightnessLevel);
     }
 
