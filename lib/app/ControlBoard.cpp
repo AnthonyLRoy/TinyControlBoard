@@ -50,7 +50,11 @@ namespace controlSystem
 
         m_actionRegistry.populate(mp_buttonActions);
         bootstrap::finalizeStartupIndicators();
-        mp_responseProcessor->triggerInitialPowerOn(); 
+        if (!mp_responseProcessor->triggerInitialPowerOn())
+        {
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
+        }
         return true;
     }
 
@@ -64,7 +68,7 @@ namespace controlSystem
         }
         if (nvsErr != ESP_OK)
         {
-            ESP_LOGW(k_logTag, "NVS flash init failed (0x%x) u{2014} brightness will not persist", nvsErr);
+            ESP_LOGW(k_logTag, "NVS flash init failed (0x%x) -- brightness will not persist", nvsErr);
         }
     }
 
@@ -106,9 +110,11 @@ namespace controlSystem
     void ControlBoard::deinit()
     {
         m_buttonQueue.stop();
-        assert(mp_serialHandler != nullptr);
-        mp_serialHandler->deinitUart();
-        mp_serialHandler = nullptr;
+        if (mp_serialHandler != nullptr)
+        {
+            mp_serialHandler->deinitUart();
+            mp_serialHandler = nullptr;
+        }
         mp_inputDispatcher.reset();
         mp_responseProcessor.reset();
     }

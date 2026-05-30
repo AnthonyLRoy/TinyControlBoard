@@ -14,8 +14,8 @@ namespace controlSystem
 
         void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs);
         bool handleToggleDac(bool state);
-        bool shutdownRpi(bool wait);
-        bool shutdownScreen(bool wait);
+        bool shutdownRpi();
+        bool shutdownScreen();
 
     private:
         transport::uart::UartTransport &mr_serial;

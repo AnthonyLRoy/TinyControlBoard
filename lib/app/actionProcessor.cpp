@@ -1,5 +1,6 @@
 #include "app/actionProcessor.hpp"
 #include "app/ActionFactory.hpp"
+#include "board/boardConfig.hpp"
 #include "indicators/ledManager.hpp"
 #include <inttypes.h>
 
@@ -68,6 +69,20 @@ namespace controlSystem
         if (mp_rpiBootManager)
         {
             mp_rpiBootManager->handleHeartbeatTimeout();
+        }
+
+        if constexpr (board::debug::k_simulateRpiBoot)
+        {
+            // In debug/simulate mode no real RPi is connected, so heartbeat timeouts
+            // are expected and must not force the power state down.
+            return;
+        }
+
+        const auto state = mr_systemState.powerState.load();
+        if (state == ControlBoardPowerState::ON || state == ControlBoardPowerState::TURNING_ON)
+        {
+            ESP_LOGW(k_logTag, "Heartbeat lost while system was ON -- forcing power state to SLEEP");
+            mr_systemState.powerState.store(ControlBoardPowerState::SLEEP);
         }
     }
 

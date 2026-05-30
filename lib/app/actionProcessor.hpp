@@ -29,7 +29,6 @@ namespace controlSystem
                         IActivityStatusSink *p_activitySink = nullptr);
         void process(std::unique_ptr<actions::IAction> iaction);
         bool handleInboundUartMessage(const UartMessage &message);
-        const char *getCommandNameForPin(uint8_t pin);
 
         void handleHeartbeatReceived();
         void handleHeartbeatTimeout();

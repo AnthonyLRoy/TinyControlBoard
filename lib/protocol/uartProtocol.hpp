@@ -83,7 +83,7 @@ enum PowerCommand : uint8_t
 {
     POWER_ACTIVE = 0x01,
     POWER_SLEEP = 0x02,
-    POSER_DEEP_SLEEP = 0x03
+    POWER_DEEP_SLEEP = 0x03
 };
 
 enum AppId : uint8_t

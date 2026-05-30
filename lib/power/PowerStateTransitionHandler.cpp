@@ -34,9 +34,9 @@ namespace controlSystem
         indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::GOING_TO_SLEEP);
         mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
         mr_rpiBootManager.waitForRpiShutdown(board::timing::k_rpiShutdownTimeoutMs);
-        mr_relayController.shutdownRpi(true);
+        mr_relayController.shutdownRpi();
         vTaskDelay(pdMS_TO_TICKS(board::timing::k_rpiShutdownSettleDelayMs));
-        mr_relayController.shutdownScreen(false);
+        mr_relayController.shutdownScreen();
     }
 
     ControlBoardPowerState PowerStateTransitionHandler::handle(const actions::IAction &action)

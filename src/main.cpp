@@ -18,9 +18,14 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(DELAY_STARTUP_TIME_MS));  //this is really unfortunate , but we need to wait for the power to stabilise before we start doing anything
 
     controlSystem::ControlBoard board;
-    board.init();
+    while (!board.init())
+    {
+        ESP_LOGE("main", "ControlBoard init failed; retrying in 1s...");
+        board.deinit();
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 
-    // loop to  keep the app alive, do not put anything here as it will block the main thread and fuck everything up
+    // Keep the app_main task alive; all work is done in FreeRTOS tasks.
     while (true)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
