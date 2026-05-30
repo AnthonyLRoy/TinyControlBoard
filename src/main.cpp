@@ -8,6 +8,8 @@
 
 extern "C" void app_main(void)
 {
+
+    // does not work :(  does not save any power at all 
     esp_pm_config_t pmConfig = {
         .max_freq_mhz = MAX_CLOCK_FREQ_MHZ,
         .min_freq_mhz = MIN_CLOCK_FREQ_MHZ,
