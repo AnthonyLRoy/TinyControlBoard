@@ -101,7 +101,7 @@ namespace indicators
         }
 
         ESP_LOGI(k_logTag, "Changing brightness level by %d", change);
-        m_currentBrightnessLevel = std::clamp(m_currentBrightnessLevel + change, 0, 9);
+        m_currentBrightnessLevel = std::clamp(m_currentBrightnessLevel + change, 1, 9);
         m_blanked = false;
         m_monitorLed.setDuty(m_brightnessLevels[m_currentBrightnessLevel]);
         m_monitorLed.updateDuty();
@@ -118,7 +118,7 @@ namespace indicators
             return;
         }
 
-        m_currentBrightnessLevel = (m_currentBrightnessLevel + 1) % 10;
+        m_currentBrightnessLevel = (m_currentBrightnessLevel % 9) + 1; // cycles 1-9; level 0 reserved for display on/off
         m_blanked = false;
         m_monitorLed.setDuty(m_brightnessLevels[m_currentBrightnessLevel]);
         m_monitorLed.updateDuty();
@@ -165,7 +165,7 @@ namespace indicators
             m_blanked = true;
             m_monitorLed.setDuty(0);
             m_monitorLed.updateDuty();
-            getButtonStatusLed().setIdleDuty(0);
+            // Button LEDs stay at their current level when display is toggled off
             ESP_LOGI(k_logTag, "Display Off/On enabled, brightness temporarily forced to 0");
             return;
         }
