@@ -53,23 +53,23 @@ Related Raspberry Pi references:
 
 ### 1.4 Indicator Outputs
 
-| Function | ESP32-S3 Pin |
-|---|---:|
-| App active LED | `GPIO3` |
-| App standby LED | `GPIO4` |
-| Working status LED | `GPIO48` |
-| Button LED PWM | `GPIO21` |
-| Monitor brightness control | `GPIO43` |
-| SPI LED data | `GPIO7` |
-| SPI LED clock | `GPIO6` |
-| SPI LED latch | `GPIO5` |
+| Function | ESP32-S3 Pin | Notes |
+|---|---:|---|
+| App active LED | `GPIO3` | |
+| App standby LED | `GPIO4` | |
+| Working status LED | `GPIO48` | |
+| Button LED PWM | `GPIO21` | overall brightness for all 16 SPI button LEDs; duty tracks monitor brightness level |
+| Monitor brightness control | `GPIO43` | |
+| SPI LED data | `GPIO7` | |
+| SPI LED clock | `GPIO6` | |
+| SPI LED latch | `GPIO5` | |
 
 ### 1.5 Button Inputs And SPI LED Drive
 
 From the firmware side, the button path is split into two hardware blocks:
 
-- button inputs are read through the I2C GPIO expander and reported as button indices `0..15`,
-- button LEDs are driven by a 16-bit SPI-backed shift-register state where `ControlBoard` now passes `buttonId` directly as `ledIndex` for non-power buttons.
+- button inputs are read through the I2C GPIO expander (MCP23017 at address `0x20`) and reported as button indices `0..15`,
+- button LEDs are driven by a 16-bit SPI-backed shift-register state where `ControlBoardInputDispatcher` passes `buttonId` directly as `ledIndex` for non-power buttons.
 
 This is the same logical mapping documented in [docs/button-command-map.md](./button-command-map.md), placed here so it can be read alongside the physical circuit diagram.
 

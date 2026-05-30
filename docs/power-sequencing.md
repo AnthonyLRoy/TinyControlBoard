@@ -156,6 +156,8 @@ Current relay assignments from [lib/board/boardConfig.hpp](../lib/board/boardCon
 | General 1 | 47 |
 | General 2 | 39 |
 
+`StandardRelay::setRelayState()` (in [lib/hal/relay/relay.cpp](../lib/hal/relay/relay.cpp)) returns `true` on success and `false` if the ESP-IDF GPIO driver reports an error. A failure indicates a firmware misconfiguration (wrong pin, unconfigured GPIO) rather than a physically faulted relay — physical contact state is not detectable without dedicated feedback hardware.
+
 Current dedicated relay helper methods:
 
 - `shutdownRpi()` turns off the Raspberry Pi relay,

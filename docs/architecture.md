@@ -154,7 +154,7 @@ References:
 - [lib/indicators/SpiBootIndicator.hpp](../lib/indicators/SpiBootIndicator.hpp)
 - [lib/indicators/SpiBootIndicator.cpp](../lib/indicators/SpiBootIndicator.cpp)
 - [lib/indicators/ledManager.hpp](../lib/indicators/ledManager.hpp)
-- [lib/indicators/led_manager.cpp](../lib/indicators/led_manager.cpp)
+- [lib/indicators/ledManager.cpp](../lib/indicators/ledManager.cpp)
 
 ### 3.6 `SpiLedDriver`
 
@@ -167,12 +167,39 @@ Key methods:
 - `setAllLeds(on)` — atomically sets all 16 LEDs on or off. Used by `SpiBootIndicator` for whole-panel flashing.
 - `update()` — pushes the current 16-bit state to the shift register via SPI.
 
+The overall brightness of all button LEDs is controlled by a PWM duty on GPIO 21 (`k_buttonLedPwmPin`) through the `StatusLed` instance registered as `s_buttonStatusLed`. The duty is updated by `MonitorBrightnessController` whenever screen brightness changes so the two track together (see §3.7).
+
 References:
 
-- [lib/indicators/spiLedDriver.hpp](../lib/indicators/spiLedDriver.hpp)
-- [lib/indicators/spiLedDriver.cpp](../lib/indicators/spiLedDriver.cpp)
+- [lib/hal/leds/spiLedDriver.hpp](../lib/hal/leds/spiLedDriver.hpp)
+- [lib/hal/leds/spiLedDriver.cpp](../lib/hal/leds/spiLedDriver.cpp)
 
-### 3.6 `RelayController`
+### 3.7 `MonitorBrightnessController` And Button LED Coupling
+
+`MonitorBrightnessController` owns the PWM duty on the monitor brightness pin and also drives the button LED brightness level. Every method that changes screen brightness calls `getButtonStatusLed().setIdleDuty()` with an inverted mapping:
+
+- level 0 (screen dimmest) → button LEDs dimmest,
+- level 9 (screen brightest) → button LEDs brightest.
+
+The inversion is applied inside `buttonDutyForLevel()` in `MonitorBrightnessController.cpp` because the button LED circuit is active-low (higher LEDC duty → dimmer output).
+
+`setIdleDuty()` on `StatusLed` is thread-safe (`std::atomic<uint32_t> m_idleDuty`) and takes effect immediately when the LED task is in `SolidIdle` state.
+
+The coupling is active through:
+
+- `init()` — applies the NVS-restored level to both outputs on startup,
+- `changeBrightnessLevel()` / `cycleBrightness()` — user brightness steps,
+- `setState()` ON path — restores saved level on wake,
+- `toggleDisplayOffOn()` — drives both to zero when display-off is active, restores on toggle-off,
+- `clearDisplayOffMode()` — restores both before a power transition.
+
+References:
+
+- [lib/indicators/monitorBrightnessController.hpp](../lib/indicators/monitorBrightnessController.hpp)
+- [lib/indicators/MonitorBrightnessController.cpp](../lib/indicators/MonitorBrightnessController.cpp)
+- [lib/indicators/statusLed.hpp](../lib/indicators/statusLed.hpp)
+
+### 3.8 `RelayController`
 
 `RelayController` is a thin helper around the relay abstraction. It currently provides:
 
@@ -181,10 +208,14 @@ References:
 - Raspberry Pi relay shutdown,
 - screen relay shutdown.
 
+`StandardRelay::setRelayState()` returns a `bool` — `true` if `gpio_set_level()` succeeded, `false` on driver error (e.g. pin not configured or invalid pin number). Physical contact state is not detectable without dedicated feedback hardware.
+
 References:
 
 - [lib/power/RelayController.hpp](../lib/power/RelayController.hpp)
 - [lib/power/RelayController.cpp](../lib/power/RelayController.cpp)
+- [lib/hal/relay/relay.hpp](../lib/hal/relay/relay.hpp)
+- [lib/hal/relay/relay.cpp](../lib/hal/relay/relay.cpp)
 
 ## 4. Input Flow
 
@@ -201,12 +232,10 @@ The current input path is:
 
 Related files:
 
-- [lib/input/buttons/mcpInputHandler.hpp](../lib/input/buttons/mcpInputHandler.hpp)
-- [lib/input/buttons/mcpInputHandler.cpp](../lib/input/buttons/mcpInputHandler.cpp)
+- [lib/hal/buttons/mcpInputHandler.hpp](../lib/hal/buttons/mcpInputHandler.hpp)
+- [lib/hal/buttons/mcpInputHandler.cpp](../lib/hal/buttons/mcpInputHandler.cpp)
 - [lib/app/ButtonEventQueue.hpp](../lib/app/ButtonEventQueue.hpp)
 - [lib/app/ControlBoardInputDispatcher.hpp](../lib/app/ControlBoardInputDispatcher.hpp)
-- [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
-- [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
 - [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
 - [lib/input/actions/IAction.hpp](../lib/input/actions/IAction.hpp)
 - [lib/app/ActionFactory.hpp](../lib/app/ActionFactory.hpp)
@@ -282,13 +311,14 @@ This is the practical ownership model for the current codebase.
 | `lib/board/` | board constants, identity, and debug flags |
 | `lib/app/` | orchestration and integration layer |
 | `lib/input/actions/` | reusable button action objects and templates |
-| `lib/input/buttons/` | input expander and input capture |
-| `lib/transport/uart/` | UART transport and handshake logic |
+| `lib/hal/buttons/` | MCP23017 input expander driver |
+| `lib/hal/leds/` | SPI and PWM LED drivers |
+| `lib/hal/relay/` | low-level relay GPIO abstraction |
+| `lib/hal/uart/` | UART transport and handshake logic |
+| `lib/hal/storage/` | NVS storage helper |
 | `lib/protocol/` | wire format and command IDs |
-| `lib/indicators/` | LEDs, status behavior, brightness control, boot indication |
+| `lib/indicators/` | LED services, brightness control, and boot indication |
 | `lib/power/` | power state, relay sequencing, and Pi boot/shutdown coordination |
-| `lib/relays/` | low-level relay abstraction |
-| `lib/support/` | NVS storage helper and other shared utilities |
 | `scripts/rpi/` | Raspberry Pi listener, sender, and setup docs |
 | `host_tests/` | pure C++ host-side tests (no ESP-IDF required) |
 | `test/` | PlatformIO device tests (run on connected ESP32-S3) |
@@ -302,6 +332,8 @@ This is the practical ownership model for the current codebase.
 - Non-heartbeat Pi-originated commands are not yet fully consumed on the ESP32 side.
 - Boot and init failures are signalled visually via `SpiBootIndicator`: slow flashing (~1 Hz) during normal boot wait, fast flashing (~3.3 Hz) on timeout or firmware init failure.
 - The `board::debug::kSimulateRpiBoot` compile-time flag allows full firmware testing without a connected Raspberry Pi. When `true`, the 60-second heartbeat wait is skipped instantly.
+- Button LED brightness tracks monitor brightness automatically. `MonitorBrightnessController` calls `getButtonStatusLed().setIdleDuty()` at every brightness-change site using an inverted active-low mapping.
+- `StandardRelay::setRelayState()` returns a bool indicating GPIO driver success. Physical relay contact state cannot be detected without additional feedback hardware (current sense or optocoupler on the switched output).
 
 ## 9. Related Docs
 

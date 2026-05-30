@@ -136,12 +136,12 @@ Reference:
 
 ### 4.1 Inputs
 
-User input appears to come primarily from an MCP23018-based input expander and rotary input handling.
+User input appears to come primarily from an MCP23017-based I2C input expander and rotary input handling.
 
 Relevant code:
 
-- [lib/input/buttons/mcpInputHandler.hpp](../lib/input/buttons/mcpInputHandler.hpp)
-- [lib/input/buttons/mcpInputHandler.cpp](../lib/input/buttons/mcpInputHandler.cpp)
+- [lib/hal/buttons/mcpInputHandler.hpp](../lib/hal/buttons/mcpInputHandler.hpp)
+- [lib/hal/buttons/mcpInputHandler.cpp](../lib/hal/buttons/mcpInputHandler.cpp)
 
 The button index mapping currently lives in:
 
@@ -164,7 +164,7 @@ The current relay pin assignments live in:
 
 Related code:
 
-- [lib/relays/relay.hpp](../lib/relays/relay.hpp)
+- [lib/hal/relay/relay.hpp](../lib/hal/relay/relay.hpp)
 - [lib/power/RelayController.hpp](../lib/power/RelayController.hpp)
 - [lib/power/RPIBootManager.hpp](../lib/power/RPIBootManager.hpp)
 
@@ -174,8 +174,8 @@ The board drives several visual feedback outputs:
 
 - **Status LEDs** — activity and button status indicators.
 - **Power LED** — reflects the current power state (off, sleep, on, transitioning).
-- **SPI button LEDs** — 16 LEDs driven via SPI shift registers, used for per-button lighting.
-- **Monitor brightness controller** — PWM-controlled brightness for the attached display.
+- **SPI button LEDs** — 16 LEDs driven via SPI shift registers, used for per-button lighting. Overall brightness is PWM-controlled via GPIO 21 and automatically tracks the screen brightness level.
+- **Monitor brightness controller** — PWM-controlled brightness for the attached display. Level 0–9 is persisted to NVS and restored on boot. Changing the level also updates the button LED brightness so both outputs stay in sync.
 - **SpiBootIndicator** — flashes all SPI LEDs during the Raspberry Pi boot wait. Slow flash (~1 Hz) while waiting; fast flash (~3.3 Hz) on timeout or firmware init failure. Stops and clears on successful boot.
 
 Relevant code lives mainly under:
