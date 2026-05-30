@@ -1,7 +1,7 @@
 #pragma once
 
-#include "relay.hpp"
-#include "transport/uart/serial.hpp"
+#include "hal/relay/relay.hpp"
+#include "hal/uart/serial.hpp"
 #include <driver/gpio.h>
 #include <cstdint>
 
@@ -14,8 +14,8 @@ namespace controlSystem
 
         void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs);
         bool handleToggleDac(bool state);
-        bool shutdownRpi(bool wait);
-        bool shutdownScreen(bool wait);
+        bool shutdownRpi();
+        bool shutdownScreen();
 
     private:
         transport::uart::UartTransport &mr_serial;

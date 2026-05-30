@@ -6,6 +6,7 @@
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 #include "driver/uart.h"
+#include "board/boardButtonIds.hpp"
 
 namespace board {
 
@@ -61,26 +62,6 @@ inline constexpr gpio_num_t k_spiData = GPIO_NUM_7;
 inline constexpr gpio_num_t k_spiClock = GPIO_NUM_6;
 inline constexpr gpio_num_t k_spiLatch = GPIO_NUM_5;
 } // namespace indicators
-
-namespace buttons {
-inline constexpr uint8_t k_power = 0;
-inline constexpr uint8_t k_prevTrack = 1;
-inline constexpr uint8_t k_nextTrack = 2;
-inline constexpr uint8_t k_skipForward = 3;
-inline constexpr uint8_t k_skipBack = 4;
-inline constexpr uint8_t k_playPause = 5;
-inline constexpr uint8_t k_stop = 6;
-inline constexpr uint8_t k_cover = 7;
-inline constexpr uint8_t k_repeat = 8;
-inline constexpr uint8_t k_toggleRandom = 9;
-inline constexpr uint8_t k_toggleDac = 10;
-inline constexpr uint8_t k_toggleDisplay = 11;
-inline constexpr uint8_t k_toggleMeter = 12;
-inline constexpr uint8_t k_rotaryEventLeft = 13;
-inline constexpr uint8_t k_rotaryEventRight = 14;
-inline constexpr uint8_t k_cycleBrightness = 15;
-inline constexpr uint8_t k_count = 16;
-} // namespace buttons
 
 namespace debug {
     // Skips waiting for the RPi heartbeat during boot.

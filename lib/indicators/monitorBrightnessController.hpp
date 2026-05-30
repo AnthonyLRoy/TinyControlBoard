@@ -3,10 +3,10 @@
 #include "driver/ledc.h"
 #include "esp_timer.h"
 #include "power/powerState.hpp"
-#include "indicators/pwm/pwmLed.hpp"
-#include "ledDefinitions.hpp"
+#include "hal/leds/pwmLed.hpp"
+#include "indicators/ledDefinitions.hpp"
 #include "esp_log.h"
-#include "support/nvsStorage.hpp"
+#include "hal/storage/nvsStorage.hpp"
 
 namespace indicators
 {
@@ -28,6 +28,9 @@ namespace indicators
         void setBrightness(int brightness);
         void setBlanked(bool blanked);
         bool isBlanked() const { return m_blanked; }
+        void toggleDisplayOffOn();
+        void clearDisplayOffMode();
+        bool isDisplayOffActive() const { return m_displayOffActive; }
 
         void changeBrightnessLevel(int change);
         void cycleBrightness();
@@ -39,7 +42,9 @@ namespace indicators
 
         int m_currentBrightnessLevel = 2; // Start at medium brightness
         int m_savedBrightnessLevel = 2;   // Saved before sleep/off, restored on wake/on
+        int m_displayOffSavedBrightnessLevel = 2;
         bool m_blanked = false;
+        bool m_displayOffActive = false;
 
         ControlBoardPowerState m_currentPowerState = ControlBoardPowerState::OFF;
 

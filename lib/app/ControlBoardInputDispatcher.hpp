@@ -1,6 +1,6 @@
 #pragma once
 
-#include "activityStatus.hpp"
+#include "indicators/activityStatus.hpp"
 #include "input/actions/buttonAction.hpp"
 #include "app/ControlBoardButtonIds.hpp"
 #include <array>
@@ -57,6 +57,7 @@ namespace controlSystem
         void setBackgroundStatus(ControlBoardWorkingStatus status) { m_backgroundStatus = status; }
 
     private:
+        bool isInputSuppressedInSleep(uint8_t buttonId) const;
         void applyLedOnPress(uint8_t buttonId, LedPolicy policy);
         void applyLedOnRelease(uint8_t buttonId, LedPolicy policy);
 

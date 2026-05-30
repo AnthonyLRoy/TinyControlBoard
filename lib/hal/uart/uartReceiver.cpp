@@ -1,4 +1,4 @@
-#include "transport/uart/uartReceiver.hpp"
+#include "uartReceiver.hpp"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 

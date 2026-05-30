@@ -7,15 +7,11 @@ FILE(GLOB_RECURSE app_sources
 
 FILE(GLOB_RECURSE canonical_sources
 	${CMAKE_SOURCE_DIR}/lib/app/*.cpp
+	${CMAKE_SOURCE_DIR}/lib/hal/*.cpp
 	${CMAKE_SOURCE_DIR}/lib/indicators/*.cpp
-	${CMAKE_SOURCE_DIR}/lib/indicators/pwm/*.cpp
 	${CMAKE_SOURCE_DIR}/lib/input/actions/*.cpp
-	${CMAKE_SOURCE_DIR}/lib/input/buttons/*.cpp
 	${CMAKE_SOURCE_DIR}/lib/power/*.cpp
-	${CMAKE_SOURCE_DIR}/lib/protocol/*.cpp
-	${CMAKE_SOURCE_DIR}/lib/relays/*.cpp
-	${CMAKE_SOURCE_DIR}/lib/support/*.cpp
-	${CMAKE_SOURCE_DIR}/lib/transport/uart/*.cpp)
+	${CMAKE_SOURCE_DIR}/lib/protocol/*.cpp)
 
 idf_component_register(
 	SRCS

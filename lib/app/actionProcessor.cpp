@@ -1,5 +1,6 @@
 #include "app/actionProcessor.hpp"
 #include "app/ActionFactory.hpp"
+#include "board/boardConfig.hpp"
 #include "indicators/ledManager.hpp"
 #include <inttypes.h>
 
@@ -38,7 +39,9 @@ namespace controlSystem
             *mp_powerStateTransitionHandler,
             *mp_relayController,
             mr_serial,
-            mr_systemState
+            mr_systemState,
+            indicators::getPowerLed(),
+            indicators::getMonitorBrightnessController()
         };
 
         iaction->execute(ctx);
@@ -67,6 +70,20 @@ namespace controlSystem
         {
             mp_rpiBootManager->handleHeartbeatTimeout();
         }
+
+        if constexpr (board::debug::k_simulateRpiBoot)
+        {
+            // In debug/simulate mode no real RPi is connected, so heartbeat timeouts
+            // are expected and must not force the power state down.
+            return;
+        }
+
+        const auto state = mr_systemState.powerState.load();
+        if (state == ControlBoardPowerState::ON || state == ControlBoardPowerState::TURNING_ON)
+        {
+            ESP_LOGW(k_logTag, "Heartbeat lost while system was ON -- forcing power state to SLEEP");
+            mr_systemState.powerState.store(ControlBoardPowerState::SLEEP);
+        }
     }
 
     bool ActionProcessor::waitForRpiToBoot(uint32_t timeoutMs)
@@ -92,8 +109,8 @@ namespace controlSystem
         // Force LED to OFF so PowerStateTransitionPolicy treats this as a power-on request.
         indicators::getPowerLed().setState(ControlBoardPowerState::OFF);
         auto syntheticAction = createAction(CMD_SYS_POWER);
-        const bool result = mp_powerStateTransitionHandler->handle(*syntheticAction);
-        mr_systemState.powerState.store(indicators::getPowerLed().getState());
-        return result;
+        const auto newState = mp_powerStateTransitionHandler->handle(*syntheticAction);
+        mr_systemState.powerState.store(newState);
+        return newState == ControlBoardPowerState::ON;
     }
 }

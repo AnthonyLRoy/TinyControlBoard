@@ -2,6 +2,12 @@
 
 namespace controlSystem
 {
+    bool ControlBoardInputDispatcher::isInputSuppressedInSleep(uint8_t buttonId) const
+    {
+        return m_backgroundStatus == ControlBoardWorkingStatus::sleeping &&
+               buttonId != controlBoardButtons::k_power;
+    }
+
     void ControlBoardInputDispatcher::applyLedOnPress(uint8_t buttonId, LedPolicy policy)
     {
         switch (policy)
@@ -34,6 +40,11 @@ namespace controlSystem
 
     void ControlBoardInputDispatcher::handleButtonPressed(uint8_t buttonPressedId)
     {
+        if (isInputSuppressedInSleep(buttonPressedId))
+        {
+            return;
+        }
+
         mr_indicators.setActivityStatus(ControlBoardWorkingStatus::doingWork);
 
         if (buttonPressedId >= controlBoardButtons::k_count)
@@ -56,12 +67,17 @@ namespace controlSystem
 
     void ControlBoardInputDispatcher::handleButtonReleased(uint8_t buttonReleasedId)
     {
-        mr_indicators.setActivityStatus(m_backgroundStatus);
-
         if (buttonReleasedId >= controlBoardButtons::k_count)
         {
             return;
         }
+
+        if (isInputSuppressedInSleep(buttonReleasedId))
+        {
+            return;
+        }
+
+        mr_indicators.setActivityStatus(m_backgroundStatus);
 
         const ButtonConfig &config = mr_actionMap[buttonReleasedId];
         if (config.action)
@@ -77,6 +93,11 @@ namespace controlSystem
 
     void ControlBoardInputDispatcher::handleRotaryMovement(int direction)
     {
+        if (m_backgroundStatus == ControlBoardWorkingStatus::sleeping)
+        {
+            return;
+        }
+
         mr_indicators.setActivityStatus(ControlBoardWorkingStatus::doingWork);
 
         const ButtonConfig &config = mr_actionMap[controlBoardButtons::k_rotaryEventLeft];

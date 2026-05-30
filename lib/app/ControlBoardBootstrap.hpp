@@ -1,10 +1,10 @@
 #pragma once
 
-#include "activityStatus.hpp"
-#include "input/buttons/mcpInputHandler.hpp"
-#include "powerLed.hpp"
-#include "relay.hpp"
-#include "transport/uart/serial.hpp"
+#include "indicators/activityStatus.hpp"
+#include "hal/buttons/mcpInputHandler.hpp"
+#include "indicators/powerLed.hpp"
+#include "hal/relay/relay.hpp"
+#include "hal/uart/serial.hpp"
 #include <functional>
 
 namespace controlSystem

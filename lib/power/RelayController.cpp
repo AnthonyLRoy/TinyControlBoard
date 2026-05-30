@@ -27,14 +27,14 @@ namespace controlSystem
         return true;
     }
 
-    bool RelayController::shutdownRpi(bool wait)
+    bool RelayController::shutdownRpi()
     {
         mr_relays.setRelayState(PIN_RELAY_RPI_POWER, false);
         ESP_LOGI(k_logTag, "RPI relay disabled");
         return true;
     }
 
-    bool RelayController::shutdownScreen(bool wait)
+    bool RelayController::shutdownScreen()
     {
         mr_relays.setRelayState(PIN_RELAY_SCREEN_POWER, false);
         ESP_LOGI(k_logTag, "Screen relay disabled");

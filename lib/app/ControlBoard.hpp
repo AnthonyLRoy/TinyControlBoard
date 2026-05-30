@@ -1,10 +1,10 @@
 #pragma once
 
-#include "powerLed.hpp"
-#include "statusLed.hpp"
-#include "relay.hpp"
+#include "indicators/powerLed.hpp"
+#include "indicators/statusLed.hpp"
+#include "hal/relay/relay.hpp"
 #include "input/input.hpp"
-#include "transport/uart/serial.hpp"
+#include "hal/uart/serial.hpp"
 #include "input/actions/actionsResponse.hpp"
 #include "app/actionProcessor.hpp"
 #include "app/ControlBoardActionRegistry.hpp"

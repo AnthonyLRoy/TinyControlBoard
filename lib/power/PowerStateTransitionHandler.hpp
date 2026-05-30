@@ -3,8 +3,9 @@
 #include "input/actions/IAction.hpp"
 #include "power/RelayController.hpp"
 #include "power/RPIBootManager.hpp"
-#include "transport/uart/serial.hpp"
-#include "activityStatus.hpp"
+#include "power/powerState.hpp"
+#include "hal/uart/serial.hpp"
+#include "indicators/activityStatus.hpp"
 
 namespace controlSystem
 {
@@ -16,10 +17,15 @@ namespace controlSystem
                                     RpiBootManager &rRpiBootManager,
                                     IActivityStatusSink *p_activitySink = nullptr);
 
-        bool handle(const actions::IAction &action);
+        /// Evaluates the requested power transition and executes the appropriate
+        /// sequence. Returns the resulting ControlBoardPowerState.
+        ControlBoardPowerState handle(const actions::IAction &action);
 
     private:
         void reportStatus(ControlBoardWorkingStatus status);
+        /// Shared preamble for both Sleep and DeepSleep: notifies the RPi,
+        /// waits for its shutdown, then cuts the RPi and screen relays.
+        void runRpiShutdownSequence();
 
         transport::uart::UartTransport &mr_serial;
         RelayController &mr_relayController;

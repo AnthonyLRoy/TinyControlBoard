@@ -1,11 +1,19 @@
 #include "app/commands/BrightnessAction.hpp"
 #include "app/ActionContext.hpp"
-#include "indicators/ledManager.hpp"
 
 namespace actions
 {
-    void BrightnessAction::execute(controlSystem::ActionContext &)
+    void BrightnessAction::execute(controlSystem::ActionContext &ctx)
     {
-        indicators::getMonitorBrightnessController().cycleBrightness();
+        if (command == CMD_TOGGLE_DISPLAY)
+        {
+            ctx.brightnessController.toggleDisplayOffOn();
+            return;
+        }
+
+        if (command == CMD_CYCLE_BRIGHTNESS)
+        {
+            ctx.brightnessController.cycleBrightness();
+        }
     }
 }

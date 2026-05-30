@@ -1,4 +1,4 @@
-#include "support/commandCatalog.hpp"
+#include "commandCatalog.hpp"
 
 #include <cstddef>
 

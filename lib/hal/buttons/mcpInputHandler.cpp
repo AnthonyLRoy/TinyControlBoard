@@ -5,7 +5,7 @@
 
 
 
-#include "input/buttons/mcpInputHandler.hpp"
+#include "mcpInputHandler.hpp"
 
 namespace buttons {
 
@@ -140,8 +140,15 @@ void McpInputHandler::createInterruptTask() {
 }
 
 void McpInputHandler::clearInitialInterrupts() {
-    readRegister(MCP_GPIOA);
-    readRegister(MCP_GPIOB);
+    // Synchronize software state with current hardware pin state so the
+    // first interrupt does not generate synthetic press events.
+    const uint8_t gpioa = readRegister(MCP_GPIOA);
+    const uint8_t gpiob = readRegister(MCP_GPIOB);
+    m_prevState = static_cast<uint16_t>((gpiob << 8) | gpioa);
+
+    const uint8_t a = static_cast<uint8_t>((m_prevState >> ROTARY_A_PIN) & 1u) ? 0u : 1u;
+    const uint8_t b = static_cast<uint8_t>((m_prevState >> ROTARY_B_PIN) & 1u) ? 0u : 1u;
+    m_rotaryLast = static_cast<uint8_t>((a << 1) | b);
 }
 
 void IRAM_ATTR McpInputHandler::gpioIsr(void *p_arg) {

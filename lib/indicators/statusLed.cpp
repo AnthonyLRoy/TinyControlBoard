@@ -44,7 +44,7 @@ StatusLed::~StatusLed()
 
     if (mp_statusQueue)
     {
-        const ControlBoardWorkingStatus wakeStatus = m_currentStatus;
+        const ControlBoardWorkingStatus wakeStatus = m_currentStatus.load();
         xQueueOverwrite(mp_statusQueue, &wakeStatus);
     }
 
@@ -98,7 +98,7 @@ void StatusLed::init()
     if (m_defaultStatus == ControlBoardWorkingStatus::SolidIdle)
     {
         m_ledOn = true;
-        updateDuty(m_idleDuty);
+        updateDuty(m_idleDuty.load());
     }
 
     mp_statusQueue = xQueueCreate(1, sizeof(ControlBoardWorkingStatus));
@@ -168,7 +168,7 @@ void StatusLed::runLedTask(void *p_param)
                 break;
             }
 
-            p_self->m_currentStatus = receivedStatus;
+            p_self->m_currentStatus.store(receivedStatus);
             ESP_LOGI(k_logTag, "LED status updated to %d", static_cast<int>(receivedStatus));
             ESP_LOGI(k_logTag, "Handling status change for pin %d", p_self->m_pin);
             xTimerStop(p_self->mp_blinkTimer, 0);
@@ -190,7 +190,7 @@ void StatusLed::runLedTask(void *p_param)
                 break;
             case ControlBoardWorkingStatus::SolidIdle:
                 p_self->m_ledOn = true;
-                p_self->updateDuty(p_self->m_idleDuty);
+                p_self->updateDuty(p_self->m_idleDuty.load());
                 break;
             case ControlBoardWorkingStatus::Idle:
                 // LED stays off — system is idle/off
@@ -219,16 +219,16 @@ void StatusLed::handleTimer(TimerHandle_t timerHandle)
     auto *p_self = static_cast<StatusLed *>(pvTimerGetTimerID(timerHandle));
     p_self->m_ledOn = !p_self->m_ledOn;
     uint32_t duty = p_self->m_ledOn
-                        ? p_self->getBlinkDuty(p_self->m_currentStatus)
+                        ? p_self->getBlinkDuty(p_self->m_currentStatus.load())
                         : 0;
     p_self->updateDuty(duty);
 
-    if (p_self->m_currentStatus == ControlBoardWorkingStatus::Active)
+    if (p_self->m_currentStatus.load() == ControlBoardWorkingStatus::Active)
     {
         const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : BLIP_OFF_MS;
         xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
     }
-    else if (p_self->m_currentStatus == ControlBoardWorkingStatus::sleeping)
+    else if (p_self->m_currentStatus.load() == ControlBoardWorkingStatus::sleeping)
     {
         const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : SLEEP_BLIP_OFF_MS;
         xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
@@ -335,11 +335,19 @@ uint32_t StatusLed::getBlinkDuty(ControlBoardWorkingStatus status)
     {
     case ControlBoardWorkingStatus::SolidIdle:
     case ControlBoardWorkingStatus::Idle:
-        return m_idleDuty;
+        return m_idleDuty.load();
     case ControlBoardWorkingStatus::Active:
     case ControlBoardWorkingStatus::sleeping:
         return MAX_DUTY;
     default:
         return MAX_DUTY;
     }
+}
+
+void StatusLed::setIdleDuty(uint32_t duty)
+{
+    m_idleDuty.store(duty, std::memory_order_relaxed);
+    // If currently showing SolidIdle, re-send so the task applies the new duty immediately.
+    if (m_currentStatus.load(std::memory_order_relaxed) == ControlBoardWorkingStatus::SolidIdle)
+        sendStatus(ControlBoardWorkingStatus::SolidIdle);
 }

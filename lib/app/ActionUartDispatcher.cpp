@@ -1,5 +1,5 @@
 #include "app/ActionUartDispatcher.hpp"
-#include "support/controlSystemHelpers.hpp"
+#include "protocol/commandCatalog.hpp"
 
 #if __has_include("esp_log.h")
 #include "esp_log.h"

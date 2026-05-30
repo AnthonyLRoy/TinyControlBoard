@@ -4,7 +4,7 @@
 
 // Expose private members for white-box testing
 #define private public
-#include "spiLedDriver.hpp"
+#include "hal/leds/spiLedDriver.hpp"
 #undef private
 
 using indicators::SpiLedDriver;

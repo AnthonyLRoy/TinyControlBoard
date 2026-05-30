@@ -228,10 +228,10 @@ void PowerLed::update()
         uint64_t elapsed = now - m_breathingStartTime;
         uint32_t phase = elapsed % BREATHING_PERIOD;
         
-        // Use sine-like breathing: 0->max->0 over the period
+        // create breathing: 0->max->0 over the period
         // phase goes from 0 to BREATHING_PERIOD
         float ratio = (float)phase / BREATHING_PERIOD;
-        // Create smooth breathing curve (sine wave from 0 to 1 to 0)
+        // Create sine wave
         float sineValue = sinf(ratio * 3.14159f); // 0 to pi gives 0->1->0
         int breathingDuty = (int)(2048 * sineValue); // 50% brightness
 

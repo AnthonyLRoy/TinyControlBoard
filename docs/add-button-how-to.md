@@ -39,7 +39,7 @@ Examples already in the codebase:
 Typical action type:
 
 - `SimpleCommandAction` in [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
-- or `MomentaryAction<CMD>` from [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
+- or `SimpleCommandAction` from [lib/input/actions/SimpleCommandAction.hpp](../lib/input/actions/SimpleCommandAction.hpp)
 
 ### 1.2 Parameterized UART Command
 

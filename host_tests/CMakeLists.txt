@@ -12,17 +12,15 @@ add_executable(tiny_control_board_host_tests
     test_logic.cpp
     host_test_action_stubs.cpp
     ../lib/protocol/uartProtocol.cpp
+    ../lib/protocol/commandCatalog.cpp
     ../lib/app/ActionFactory.cpp
     ../lib/app/ActionUartDispatcher.cpp
     ../lib/app/ControlBoardInputDispatcher.cpp
-    ../lib/support/commandCatalog.cpp
 )
 
 target_include_directories(tiny_control_board_host_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/../lib/actions
     ${CMAKE_CURRENT_SOURCE_DIR}/../lib/app
-    ${CMAKE_CURRENT_SOURCE_DIR}/../lib/indicators
     ${CMAKE_CURRENT_SOURCE_DIR}/../lib/protocol
 )
 

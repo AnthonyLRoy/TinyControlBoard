@@ -1,6 +1,6 @@
 #pragma once
 
-#include "relay.hpp"
+#include "hal/relay/relay.hpp"
 #include "input/actions/IAction.hpp"
 #include "app/ActionContext.hpp"
 #include "app/ActionUartDispatcher.hpp"
@@ -13,9 +13,9 @@
 #include "power/RelayController.hpp"
 #include <driver/gpio.h>
 #include "indicators/ledManager.hpp"
-#include "activityStatus.hpp"
+#include "indicators/activityStatus.hpp"
 #include "protocol/uartProtocol.hpp"
-#include "transport/uart/serial.hpp"
+#include "hal/uart/serial.hpp"
 #include <memory>
 
 namespace controlSystem
@@ -29,7 +29,6 @@ namespace controlSystem
                         IActivityStatusSink *p_activitySink = nullptr);
         void process(std::unique_ptr<actions::IAction> iaction);
         bool handleInboundUartMessage(const UartMessage &message);
-        const char *getCommandNameForPin(uint8_t pin);
 
         void handleHeartbeatReceived();
         void handleHeartbeatTimeout();

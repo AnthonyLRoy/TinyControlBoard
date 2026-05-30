@@ -3,8 +3,8 @@
 #include "driver/ledc.h"
 #include "esp_timer.h"
 #include "power/powerState.hpp"
-#include "indicators/pwm/pwmLed.hpp"
-#include "ledDefinitions.hpp"
+#include "hal/leds/pwmLed.hpp"
+#include "indicators/ledDefinitions.hpp"
 #include "esp_log.h"
 
 namespace indicators

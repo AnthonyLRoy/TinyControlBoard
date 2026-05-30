@@ -51,12 +51,12 @@ Current button indices from [lib/board/boardConfig.hpp](../lib/board/boardConfig
 | 3 | `kSkipForward` |
 | 4 | `kSkipBack` |
 | 5 | `kPlayPause` |
-| 6 | `kStop` |
+| 6 | `kToggleDisplay` |
 | 7 | `kCover` |
 | 8 | `kRepeat` |
 | 9 | `kToggleRandom` |
 | 10 | `kToggleDac` |
-| 11 | `kToggleDisplay` |
+| 11 | `kNextPanel` |
 | 12 | `kToggleMeter` |
 | 13 | `kRotaryEventLeft` |
 | 14 | `kRotaryEventRight` |
@@ -163,7 +163,7 @@ Examples from an idle LED state:
 
 - pressing Previous Track (button 1) sets LED index 1, register value `0x0002`, transmitted as `0x02 0x00`,
 - pressing Cover (button 7) sets LED index 7, register value `0x0080`, transmitted as `0x80 0x00`,
-- pressing Toggle Display (button 11) sets LED index 11, register value `0x0800`, transmitted as `0x00 0x08`,
+- pressing Next Panel (button 11) sets LED index 11, register value `0x0800`, transmitted as `0x00 0x08`,
 - pressing Cycle Brightness (button 15) sets LED index 15, register value `0x8000`, transmitted as `0x00 0x80`.
 
 If another toggle-backed LED is already latched on, the transmitted SPI value will be the OR-combination of the active bits instead of the single-bit value shown in the table.
