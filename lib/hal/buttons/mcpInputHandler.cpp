@@ -140,8 +140,6 @@ void McpInputHandler::createInterruptTask() {
 }
 
 void McpInputHandler::clearInitialInterrupts() {
-    // Synchronize software state with current hardware pin state so the
-    // first interrupt does not generate synthetic press events.
     const uint8_t gpioa = readRegister(MCP_GPIOA);
     const uint8_t gpiob = readRegister(MCP_GPIOB);
     m_prevState = static_cast<uint16_t>((gpiob << 8) | gpioa);

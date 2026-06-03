@@ -16,8 +16,8 @@ namespace controlSystem
     {
         ESP_LOGI(k_logTag, "Starting ControlBoard init...");
 
-        initNvs();
         bootstrap::prepareStartupIndicators();
+        initNvs();
         initTransport();
         initComponents();
 

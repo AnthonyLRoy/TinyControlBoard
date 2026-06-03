@@ -5,21 +5,24 @@ This guide shows the current firmware path for adding another button-driven acti
 It covers three common cases:
 
 - a button that sends a simple UART command to the Raspberry Pi,
-- a button that sends a UART message with parameters,
+- a button that sends a UART message with parameters (e.g. a toggle that carries ON/OFF state),
 - a button that stays local on the ESP32 and does not send UART.
 
 The current canonical ownership is:
 
-- button IDs and hardware pin constants: [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
-- control-board button constants: [lib/app/ControlBoardButtonIds.hpp](../lib/app/ControlBoardButtonIds.hpp)
-- action object declarations: [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
-- action object definitions: [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
-- button-to-action map: [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp)
-- command routing and side effects: [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
-- UART translation layer: [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp)
-- protocol command IDs: [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp)
+| Concern | File |
+|---|---|
+| Physical button ID constants | [lib/board/boardButtonIds.hpp](../lib/board/boardButtonIds.hpp) |
+| Button ID namespace alias | [lib/app/ControlBoardButtonIds.hpp](../lib/app/ControlBoardButtonIds.hpp) |
+| Button registration table | [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp) |
+| Action source templates | [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp) |
+| Command routing table | [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp) |
+| Action factory (route → concrete IAction) | [lib/app/ActionFactory.cpp](../lib/app/ActionFactory.cpp) |
+| Concrete command implementations | [lib/app/commands/](../lib/app/commands/) |
+| UART toggle/rotary dispatch | [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp) |
+| Protocol command IDs | [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp) |
 
-Do not add new work to the legacy compatibility wrappers under `lib/controlSystem`, `lib/actions`, or `lib/buttons` unless you are intentionally maintaining backward compatibility. The canonical implementation lives in the files listed above.
+There are **no** global action singleton files (`buttonActions.hpp`/`buttonActions.cpp`). Those have been removed. Actions are created dynamically from the registration table.
 
 ## 1. Decide What Kind Of Button You Are Adding
 
@@ -27,49 +30,35 @@ Before editing code, decide which of these paths matches the behavior you want.
 
 ### 1.1 Simple UART Command
 
-Use this when one press should produce one command ID and send it to the Raspberry Pi.
+Use this when one press should produce one command ID and send it to the Raspberry Pi with no extra parameters.
 
-Examples already in the codebase:
+Examples already in the codebase: `k_prevTrack`, `k_nextTrack`, `k_playPause`, `k_nextPanel`.
 
-- next track,
-- play/pause,
-- next menu,
-- cycle brightness if it were remote instead of local.
+Registry `ActionSourceType`: `Simple`
 
-Typical action type:
+### 1.2 Toggle UART Command
 
-- `SimpleCommandAction` in [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
-- or `SimpleCommandAction` from [lib/input/actions/SimpleCommandAction.hpp](../lib/input/actions/SimpleCommandAction.hpp)
+Use this when a button alternates between two states and the UART packet needs to carry the current state as a parameter (ON=1 / OFF=0).
 
-### 1.2 Parameterized UART Command
+Examples already in the codebase: `k_cover`, `k_repeat`, `k_toggleRandom`, `k_toggleMeter`.
 
-Use this when the button action needs more than a raw command ID, such as a toggle state or a direction value.
+Registry `ActionSourceType`: `Toggle` — requires a paired `CMD_*_ON` / `CMD_*_OFF` constant and a row in `ActionUartDispatcher`'s `k_toggleTable[]`.
 
-Examples already in the codebase:
+### 1.3 Timed UART Command
 
-- cover view toggle,
-- meter toggle,
-- rotary direction.
+Use this when the button measures how long it was held and sends the hold duration as a parameter (e.g. the power button).
 
-Typical action type:
+Example: `k_power` with `CMD_SYS_POWER`.
 
-- `ToggleAction<CMD_ON, CMD_OFF>`
-- `RotaryAction<CMD_ROTARY_ACTION>`
+Registry `ActionSourceType`: `Timed`
 
-These actions usually need a translation step in [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp) so the final UART packet can carry parameters.
+### 1.4 Local-Only Action
 
-### 1.3 Local-Only Action
+Use this when the button should affect hardware or firmware state on the ESP32 without sending anything to the Raspberry Pi.
 
-Use this when the button should affect hardware or local firmware state without sending anything to the Raspberry Pi.
+Examples already in the codebase: `k_toggleDac` (relay), `k_cycleBrightness` / `k_toggleDisplay` (brightness controller).
 
-Examples already in the codebase:
-
-- DAC relay toggle,
-- display blank/unblank,
-- brightness cycling,
-- power state transitions.
-
-These actions still produce an `ActionResponse`, but the side effect happens in [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp) rather than in the UART dispatcher.
+These commands are classified away from `UartDispatch` in [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp), and a concrete `IAction` subclass in `lib/app/commands/` performs the side effect.
 
 ## 2. Step-By-Step: Add The Command ID First
 
@@ -80,205 +69,123 @@ Steps:
 1. Pick a command name consistent with the current naming scheme, such as `CMD_FOO_BAR`.
 2. Pick a unique numeric value that does not collide with existing commands.
 3. If the Raspberry Pi is involved, update the Pi-side listener script so it recognizes the new command.
-4. If the command should appear in docs, update [docs/protocol-reference.md](./protocol-reference.md) and later update [docs/button-command-map.md](./button-command-map.md).
-
-Rule of thumb:
-
-- if the command is purely local and never crosses UART, it can still use a `CMD_*` identifier, because the action routing layer classifies commands by meaning, not only by transport.
+4. Update [docs/protocol-reference.md](./protocol-reference.md) and later [docs/button-command-map.md](./button-command-map.md).
 
 ## 3. Step-By-Step: Add Or Reserve A Button ID
 
-If you are adding a brand-new physical button, reserve its ID in both of these files:
-
-- [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
-- [lib/app/ControlBoardButtonIds.hpp](../lib/app/ControlBoardButtonIds.hpp)
+If you are adding a brand-new physical button, reserve its ID in [lib/board/boardButtonIds.hpp](../lib/board/boardButtonIds.hpp).
 
 Steps:
 
-1. Add a new constant in `board::buttons`, for example `kMute = 16`.
-2. Add the matching constant in `controlSystem::controlBoardButtons`, using the same numeric value.
-3. Increase `kCount` if the total button count changed.
-4. If the new button corresponds to a real MCP input or LED position, make sure the wiring and caller assumptions still hold.
+1. Add a new constant in `board::buttons`, for example `inline constexpr uint8_t k_mute = 16;`.
+2. Increment `k_count` to match the new total.
 
-Important note:
+Notes:
 
-- the current button LED logic uses the button ID as the SPI LED index for non-power buttons, so changing indices also changes LED bit positions.
+- `ControlBoardButtonIds.hpp` is just a namespace alias (`controlBoardButtons = ::board::buttons`). You do **not** need to edit it — it picks up new constants automatically.
+- The SPI LED bitmask uses the button ID as a bit index for non-power buttons, so changing existing indices also shifts LED positions. Reserve new IDs at the end of the list.
 
-## 4. Step-By-Step: Create The Action Object
+## 4. Step-By-Step: Register The Button
 
-Define the action object in the canonical input action files.
+All button wiring lives in the `constexpr ButtonRegistration k_buttons[]` table in [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp).
 
-Files:
-
-- declarations: [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
-- definitions: [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
-
-Choose the smallest action type that matches the behavior.
-
-### 4.1 For A Simple UART Command
-
-In [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp), add a `SimpleCommandAction` instance:
+**Add one row — no other file needs to change for paths 1.1 and 1.3** (beyond steps 2 and 3).
 
 ```cpp
-SimpleCommandAction MuteInstance(CMD_MUTE);
+constexpr ButtonRegistration k_buttons[] = {
+    // ... existing rows ...
+    { controlBoardButtons::k_mute, ActionSourceType::Simple, CMD_MUTE, CMD_NO_ACTION, LedPolicy::Momentary },
+};
 ```
 
-In [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp), declare it:
+Column meanings:
+
+| Column | Purpose |
+|---|---|
+| `buttonId` | Physical button constant from `board::buttons` |
+| `type` | `Simple`, `Toggle`, `Timed`, or `Rotary` |
+| `cmd1` | Main command (or `CMD_ON` for `Toggle`) |
+| `cmd2` | `CMD_OFF` for `Toggle`; use `CMD_NO_ACTION` otherwise |
+| `ledPolicy` | `None`, `Momentary`, or `Toggle` |
+
+`LedPolicy` controls the SPI LED feedback:
+
+- `None` — no LED feedback (power button, rotary).
+- `Momentary` — LED on while held, off on release.
+- `Toggle` — LED state flips on each press.
+
+The registry allocates action sources dynamically from the table, so there are no global singleton instances to declare or define.
+
+## 5. Step-By-Step: Wire The Behavior
+
+This is where the three paths diverge.
+
+### 5.1 Path A: Simple UART Command
+
+No extra work is required beyond steps 2–4. Commands not listed in `k_commandRouteTable[]` default to `ActionCommandRoute::UartDispatch`, and `UartDispatchAction::execute()` sends them as raw UART with no parameters.
+
+### 5.2 Path B: Toggle UART Command
+
+A `Toggle` row in the registry emits either `CMD_*_ON` or `CMD_*_OFF` on alternating presses. The UART layer must collapse these into a single wire command with a boolean parameter.
+
+Add one row to `k_toggleTable[]` in [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp):
 
 ```cpp
-extern SimpleCommandAction MuteInstance;
+constexpr ToggleMapping k_toggleTable[] = {
+    // ... existing rows ...
+    {CMD_MUTE_ON, CMD_MUTE_OFF, CMD_TOGGLE_MUTE, "Mute"},
+};
 ```
 
-### 4.2 For A Toggle Or Timed Action
+The dispatcher will:
+1. match `CMD_MUTE_ON` or `CMD_MUTE_OFF`,
+2. send a UART packet with `commandId = CMD_TOGGLE_MUTE` and `params[0] = 1` (ON) or `0` (OFF).
 
-In [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp), add a type alias if needed:
+### 5.3 Path C: Local-Only Action
+
+Local actions need three additional edits.
+
+**1. Classify the command** — add a row to `k_commandRouteTable[]` in [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp):
 
 ```cpp
-using ToggleMute = ToggleAction<CMD_MUTE_ON, CMD_MUTE_OFF>;
-extern ToggleMute ToggleMuteInstance;
+constexpr CommandRouteEntry k_commandRouteTable[] = {
+    // ... existing rows ...
+    { CMD_TOGGLE_FAN, ActionCommandRoute::Relay },
+};
 ```
 
-In [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp), define it:
+Use an existing route value when the behavior fits an existing concrete class, or add a new `ActionCommandRoute` enum value and a new class if it does not.
+
+**2. Map the route in the factory** — if you added a new `ActionCommandRoute` value, add a case to `createAction()` in [lib/app/ActionFactory.cpp](../lib/app/ActionFactory.cpp):
 
 ```cpp
-ToggleMute ToggleMuteInstance;
+case ActionCommandRoute::Fan:
+    return std::make_unique<actions::FanAction>(command);
 ```
 
-### 4.3 For A Local-Only Action
-
-You still create an action object the same way. The difference is where it is handled later.
-
-Example pattern:
-
-```cpp
-SimpleCommandAction ToggleFanInstance(CMD_TOGGLE_FAN);
-```
-
-## 5. Step-By-Step: Add The Button To The Registry
-
-Bind the physical button ID to the action instance in [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp).
-
-Steps:
-
-1. Find `ControlBoardActionRegistry::populate(...)`.
-2. Add a map entry using the canonical button ID.
-3. Point it at the action object you created and choose a `LedPolicy`.
-
-Example:
-
-```cpp
-rActionMap[controlBoardButtons::k_mute] = {&actions::MuteInstance, LedPolicy::Momentary};
-```
-
-`LedPolicy` controls the SPI LED feedback for that button:
-
-- `LedPolicy::None` — no LED feedback (e.g. power button, rotary).
-- `LedPolicy::Momentary` — LED on while held, off on release.
-- `LedPolicy::Toggle` — LED state flips on each press.
-
-At this point, the input side knows which action to execute when that button is pressed.
-
-## 6. Step-By-Step: Wire The Behavior
-
-This is where the three paths split.
-
-### 6.1 Path A: Simple UART Command
-
-If the action returns a command ID that should be sent directly as UART, update [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp).
-
-Steps:
-
-1. Add an entry to `commandConfigs[]`.
-2. Choose a short log tag string used for UART logging.
-3. Make sure the command is classified as `UartDispatch` by the routing policy.
-
-Example:
-
-```cpp
-{"MUTE", CMD_MUTE}
-```
-
-If the command is already routed to `ActionCommandRoute::UartDispatch`, `handleSimpleCommand()` will send it automatically.
-
-### 6.2 Path B: UART Message With Parameters
-
-If the action needs parameters, add a dedicated handler in [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp).
-
-Current examples to copy:
-
-- `handleCoverViewCommand(...)`
-- `handleMeterCommand(...)`
-- `handleRotaryCommand(...)`
-
-Steps:
-
-1. Add a small handler that recognizes the action response command.
-2. Build a `UartMessage`.
-3. Fill `commandId` and any `params[]` entries.
-4. Send it through `mrUartCommandSink.sendUartMessage(...)`.
-5. Call that handler from `ActionUartDispatcher::handle(...)`.
-
-Use this path when a raw `sendUartCommand()` would lose necessary state.
-
-### 6.3 Path C: Local-Only Action
-
-Add a new concrete command class under [lib/app/commands/](../lib/app/commands/).
-
-Steps:
-
-1. Add a classification case for the new command in [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp).
-2. Add the new `ActionCommandRoute` enum value to [lib/app/ActionCommandRoute.hpp](../lib/app/ActionCommandRoute.hpp).
-3. Create a `.hpp` / `.cpp` pair in `lib/app/commands/` and implement `execute(ActionContext &ctx)` to perform the local side effect.
-4. Add the new route case to `ActionFactory::createAction()` in [lib/app/ActionFactory.cpp](../lib/app/ActionFactory.cpp) so the factory instantiates the new type.
-
-Current local command examples to copy:
+**3. Implement the action** — create `lib/app/commands/FanAction.hpp` and `FanAction.cpp` following the pattern of the existing commands:
 
 - `RelayAction` — [lib/app/commands/RelayAction.cpp](../lib/app/commands/RelayAction.cpp)
-- `DisplayAction` — [lib/app/commands/DisplayAction.cpp](../lib/app/commands/DisplayAction.cpp)
 - `BrightnessAction` — [lib/app/commands/BrightnessAction.cpp](../lib/app/commands/BrightnessAction.cpp)
-- `PowerTransitionAction` — [lib/app/commands/PowerTransitionAction.cpp](../lib/app/commands/PowerTransitionAction.cpp)
+- `SystemAction` — [lib/app/commands/SystemAction.cpp](../lib/app/commands/SystemAction.cpp)
 
-For a local-only button, the usual shape is:
+The class inherits `actions::IAction` and implements `execute(ActionContext &ctx)` to perform the local side effect.
 
-1. action object emits `CMD_*`,
-2. routing policy classifies that command as local (a new or existing route value),
-3. `ActionFactory` creates the matching concrete command,
-4. `IAction::execute(ctx)` performs the hardware or state change,
-5. no UART packet is sent.
+> Note: `BrightnessAction` handles both `CMD_CYCLE_BRIGHTNESS` and `CMD_TOGGLE_DISPLAY` — both are routed as `ActionCommandRoute::Brightness`. Check whether your new local command fits an existing concrete class before adding a new one.
 
-## 7. Step-By-Step: Check Routing Classification
+## 6. Step-By-Step: Update The Raspberry Pi Side When Needed
 
-If the new command is not behaving correctly, the first thing to verify is its route classification.
+If the new button sends UART, update the Pi-side listener.
 
-The decision point is the routing layer used by [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp), via [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp).
-
-You will typically want one of these outcomes:
-
-- `UartDispatch` for remote commands,
-- `Relay` for local relay changes,
-- `Display` for local display actions,
-- `Brightness` for local brightness changes,
-- `PowerStateTransition` for power-button-style behavior,
-- `System` for system-level commands.
-
-If a new command is silently ignored or sent over the wrong path, this classification is usually the reason.
-
-## 8. Step-By-Step: Update The Raspberry Pi Side When Needed
-
-If the new button sends UART, update the corresponding Pi-side logic.
-
-Typical files:
-
-- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
-- any Pi-side application code that reacts to the command
+Typical file: [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
 
 Steps:
 
 1. Add support for the new command ID.
-2. If parameters are used, document and decode them consistently.
-3. Keep the firmware-side name, numeric ID, and parameter meaning aligned.
+2. If parameters are used, decode them consistently with the firmware encoding.
+3. Keep the firmware-side name, numeric ID, and parameter meaning aligned with the protocol reference.
 
-## 9. Step-By-Step: Update The Docs
+## 7. Step-By-Step: Update The Docs
 
 Once the button works, update the two reference docs.
 
@@ -287,79 +194,70 @@ Files:
 - [docs/button-command-map.md](./button-command-map.md)
 - [docs/protocol-reference.md](./protocol-reference.md)
 
-Update:
+## 8. Worked Examples
 
-1. button index,
-2. action type,
-3. raw command ID,
-4. final routed command,
-5. final effect,
-6. whether it is UART or local.
+### 8.1 Example: Add A Simple UART Button (Mute)
 
-## 10. Worked Examples
-
-### 10.1 Example: Add A Simple UART Button
-
-Goal:
-
-- add a `Mute` button that sends `CMD_MUTE` to the Raspberry Pi.
+Goal: add a `Mute` button that sends `CMD_MUTE` to the Raspberry Pi.
 
 Files to touch:
 
-1. [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp)
-2. [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
-3. [lib/app/ControlBoardButtonIds.hpp](../lib/app/ControlBoardButtonIds.hpp)
-4. [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
-5. [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
-6. [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp)
-7. [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp)
-8. Pi-side listener file
-9. [docs/button-command-map.md](./button-command-map.md)
-10. [docs/protocol-reference.md](./protocol-reference.md)
+1. [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp) — add `CMD_MUTE = 0x0120`
+2. [lib/board/boardButtonIds.hpp](../lib/board/boardButtonIds.hpp) — add `k_mute = 16`, increment `k_count`
+3. [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp) — add one row to `k_buttons[]`
+4. Pi-side listener
+5. [docs/button-command-map.md](./button-command-map.md) and [docs/protocol-reference.md](./protocol-reference.md)
 
-### 10.2 Example: Add A Local Relay Button
+### 8.2 Example: Add A Toggle UART Button (Mute with state)
 
-Goal:
-
-- add a `Toggle Fan` button that flips a relay on the ESP32 and never sends UART.
+Goal: add a `Mute` button that sends `CMD_TOGGLE_MUTE` with `params[0] = 1/0`.
 
 Files to touch:
 
-1. [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp)
-2. [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
-3. [lib/app/ControlBoardButtonIds.hpp](../lib/app/ControlBoardButtonIds.hpp)
-4. [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
-5. [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
-6. [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp)
-7. routing policy if needed
-8. [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
-9. [docs/button-command-map.md](./button-command-map.md)
+1. [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp) — add `CMD_MUTE_ON`, `CMD_MUTE_OFF`, `CMD_TOGGLE_MUTE`
+2. [lib/board/boardButtonIds.hpp](../lib/board/boardButtonIds.hpp) — add `k_mute`, increment `k_count`
+3. [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp) — add `Toggle` row
+4. [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp) — add row to `k_toggleTable[]`
+5. Pi-side listener
+6. Docs
 
-## 11. Quick Checklist
+### 8.3 Example: Add A Local Relay Button (Fan)
+
+Goal: add a `Fan` button that flips a relay on the ESP32 and never sends UART.
+
+Files to touch:
+
+1. [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp) — add `CMD_TOGGLE_FAN`
+2. [lib/board/boardButtonIds.hpp](../lib/board/boardButtonIds.hpp) — add `k_fan`, increment `k_count`
+3. [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp) — add `Simple` row for `CMD_TOGGLE_FAN`
+4. [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp) — add `{ CMD_TOGGLE_FAN, ActionCommandRoute::Relay }` (or reuse an existing route)
+5. `RelayAction.cpp` — extend `execute()` to handle `CMD_TOGGLE_FAN` if reusing `Relay` route, or create a new command class
+6. [docs/button-command-map.md](./button-command-map.md)
+
+## 9. Quick Checklist
 
 Use this checklist when adding a button:
 
-1. Add or confirm the `CMD_*` ID.
-2. Add or confirm the physical/control-board button ID.
-3. Declare and define the action object.
-4. Register the button in `ControlBoardActionRegistry`.
-5. Route it to either UART dispatch or local handling.
+1. Add or confirm the `CMD_*` constant in `uartProtocol.hpp`.
+2. Add or confirm the button ID in `boardButtonIds.hpp`; increment `k_count`.
+3. Add one row to `k_buttons[]` in `ControlBoardActionRegistry.cpp`.
+4. **If toggle UART**: add a row to `k_toggleTable[]` in `ActionUartDispatcher.cpp`.
+5. **If local-only**: classify the command in `ActionCommandRoutingPolicy.hpp`, map it in `ActionFactory.cpp`, and implement `execute()`.
 6. Update Pi-side handling if UART is involved.
-7. Update the button and protocol docs.
-8. Run a firmware build and verify the expected side effect.
+7. Update `button-command-map.md` and `protocol-reference.md`.
+8. Run the `PlatformIO Build` task and verify the expected side effect.
 
-## 12. Validation
+## 10. Validation
 
-The normal validation step for this repo is the `PlatformIO Build` task from the workspace root.
+The normal validation step is the `PlatformIO Build` task from the workspace root.
 
 If the button is UART-backed, also verify:
 
-- the log tag exists in `ActionUartDispatcher`,
-- the Raspberry Pi side understands the command,
-- any parameter encoding is documented.
+- toggle commands appear correctly in `k_toggleTable[]` if they carry state,
+- the Raspberry Pi side understands the command and parameter encoding.
 
 If the button is local-only, verify:
 
-- the routing policy sends it to the local handler,
-- no accidental UART command is emitted,
-- the correct relay, indicator, or state change actually occurs.
+- the command appears in `k_commandRouteTable[]` with the correct route,
+- the correct relay, indicator, or state change actually occurs,
+- no accidental UART packet is emitted.
