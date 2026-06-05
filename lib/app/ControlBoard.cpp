@@ -26,13 +26,13 @@ namespace controlSystem
 
         if (!bootstrap::setupMcpHandler(m_mcpHandler))
         {
-            indicators::getSpiBootIndicator().notifyFailure();
+            indicators::getBootDiagnosticLeds().firmwareInitFailed();
             return false;
         }
 
         if (!m_buttonQueue.start(*mp_inputDispatcher))
         {
-            indicators::getSpiBootIndicator().notifyFailure();
+            indicators::getBootDiagnosticLeds().firmwareInitFailed();
             return false;
         }
 
@@ -44,7 +44,7 @@ namespace controlSystem
 
         if (!bootstrap::setupSerial(*mp_serialHandler))
         {
-            indicators::getSpiBootIndicator().notifyFailure();
+            indicators::getBootDiagnosticLeds().firmwareInitFailed();
             return false;
         }
 
@@ -52,7 +52,7 @@ namespace controlSystem
         bootstrap::finalizeStartupIndicators();
         if (!mp_responseProcessor->triggerInitialPowerOn())
         {
-            indicators::getSpiBootIndicator().notifyFailure();
+            indicators::getBootDiagnosticLeds().firmwareInitFailed();
             return false;
         }
         return true;

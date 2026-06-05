@@ -50,16 +50,25 @@ namespace controlSystem
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::TURNING_ON);
             ESP_LOGI(k_logTag, "Initiating Power ON sequence");
 
+            // Illuminate all eight boot diagnostic LEDs.
+            indicators::getBootDiagnosticLeds().begin();
+
             mr_relayController.setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, board::timing::k_screenOnDelayMs);
+            indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::ScreenRelay);
+
             mr_relayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, true, board::timing::k_powerSettleDelayMs);
+            indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::DacRelay);
+
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, true, board::timing::k_powerSettleDelayMs);
+            indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::OutputStage);
+
             mr_relayController.setRelayWithDelay(PIN_RELAY_RPI_POWER, true, board::timing::k_screenOnDelayMs);
 
-            indicators::getSpiBootIndicator().startWaiting();
+            // Stage 4: wait for Raspberry Pi communication.
             const bool booted = mr_rpiBootManager.waitForRpiToBoot(board::timing::k_rpiBootTimeoutMs);
             if (booted)
             {
-                indicators::getSpiBootIndicator().notifySuccess();
+                indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::RpiComms);
                 indicators::getPowerLed().setState(ControlBoardPowerState::ON);
                 indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
                 indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::SolidIdle);
@@ -67,7 +76,7 @@ namespace controlSystem
                 return ControlBoardPowerState::ON;
             }
 
-            indicators::getSpiBootIndicator().notifyFailure();
+            indicators::getBootDiagnosticLeds().stageFailure(indicators::BootStage::RpiComms);
             indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
             indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
             reportStatus(ControlBoardWorkingStatus::sleeping);

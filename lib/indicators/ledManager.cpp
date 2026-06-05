@@ -12,7 +12,7 @@ namespace indicators {
     static PowerLed s_powerLed(board::indicators::k_appActiveLed, LEDC_CHANNEL_ON, board::indicators::k_appStandbyLed, LEDC_CHANNEL_STANDBY);
     static SpiLedDriver s_spiLedDriver(SPI_HOST, board::indicators::k_spiData, board::indicators::k_spiClock, board::indicators::k_spiLatch);
     static MonitorBrightnessController s_monitorBrightnessController(board::indicators::k_monitorBrightness, LEDC_CHANNEL_MONITOR_BRIGHTNESS);
-    static SpiBootIndicator s_spiBootIndicator;
+    static BootDiagnosticLeds s_bootDiagnosticLeds;
 
 
     MonitorBrightnessController& getMonitorBrightnessController() {
@@ -48,7 +48,7 @@ namespace indicators {
         return s_spiLedDriver;
     }
 
-    SpiBootIndicator& getSpiBootIndicator() {
-        return s_spiBootIndicator;
+    BootDiagnosticLeds& getBootDiagnosticLeds() {
+        return s_bootDiagnosticLeds;
     }
 }

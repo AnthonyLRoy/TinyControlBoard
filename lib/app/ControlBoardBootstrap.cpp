@@ -17,6 +17,7 @@ namespace controlSystem
         {
             indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
             // Brightness level is restored from NVS inside MonitorBrightnessController::init()
+            indicators::getBootDiagnosticLeds().begin();
         }
 
         void finalizeStartupIndicators()
