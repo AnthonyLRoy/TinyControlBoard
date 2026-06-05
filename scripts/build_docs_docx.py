@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import json
+import re
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
+import requests
 import markdown
 from bs4 import BeautifulSoup, NavigableString, Tag
 from docx import Document
@@ -18,6 +23,9 @@ from docx.shared import Inches, Pt, RGBColor
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "docs" / "TinyControlBoard-Documentation.docx"
+
+_MERMAID_RE = re.compile(r"```mermaid\n(.*?)```", re.DOTALL)
+_mermaid_temp_files: list[Path] = []
 
 SOURCE_ORDER = [
     Path("docs/project-guide.md"),
@@ -44,10 +52,50 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=DEFAULT_OUTPUT,
+        default=None,
         help="Destination DOCX path.",
     )
+    parser.add_argument(
+        "--source",
+        type=Path,
+        default=None,
+        help="Single Markdown file to convert (overrides SOURCE_ORDER).",
+    )
     return parser.parse_args()
+
+
+def render_mermaid_to_png(mermaid_source: str) -> Path | None:
+    """Render a Mermaid diagram to a temporary PNG via mermaid.ink."""
+    try:
+        payload = json.dumps({"code": mermaid_source.strip(), "mermaid": {"theme": "default"}})
+        encoded = base64.urlsafe_b64encode(payload.encode()).decode().rstrip("=")
+        url = f"https://mermaid.ink/img/{encoded}?type=png"
+        response = requests.get(url, timeout=20)
+        response.raise_for_status()
+        tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        tmp.write(response.content)
+        tmp.close()
+        tmp_path = Path(tmp.name)
+        _mermaid_temp_files.append(tmp_path)
+        return tmp_path
+    except Exception as exc:
+        print(f"Warning: could not render mermaid diagram: {exc}")
+        return None
+
+
+def preprocess_mermaid(markdown_text: str) -> str:
+    """Replace mermaid fenced blocks with embedded image references."""
+    counter = [0]
+
+    def replacer(match: re.Match) -> str:
+        counter[0] += 1
+        source = match.group(1)
+        image_path = render_mermaid_to_png(source)
+        if image_path:
+            return f"![Diagram {counter[0]}]({image_path.as_posix()})"
+        return f"```\n{source}```"
+
+    return _MERMAID_RE.sub(replacer, markdown_text)
 
 
 def ensure_custom_styles(document: Document) -> None:
@@ -446,6 +494,7 @@ def render_html_block(document: Document, node, base_dir: Path) -> None:
 
 def render_markdown_file(document: Document, source: Path) -> None:
     markdown_text = source.read_text(encoding="utf-8")
+    markdown_text = preprocess_mermaid(markdown_text)
     html = markdown.markdown(
         markdown_text,
         extensions=["tables", "fenced_code", "sane_lists"],
@@ -490,8 +539,9 @@ def add_headers_and_footers(document: Document) -> None:
         add_page_number(footer_paragraph)
 
 
-def build_document(output_path: Path) -> Path:
-    sources = [ROOT / relative_path for relative_path in SOURCE_ORDER if (ROOT / relative_path).exists()]
+def build_document(output_path: Path, sources: list[Path] | None = None) -> Path:
+    if sources is None:
+        sources = [ROOT / relative_path for relative_path in SOURCE_ORDER if (ROOT / relative_path).exists()]
     document = Document()
     ensure_custom_styles(document)
     document.core_properties.title = "TinyControlBoard Documentation"
@@ -517,12 +567,28 @@ def build_document(output_path: Path) -> Path:
 
 def main() -> int:
     args = parse_args()
-    output_path = args.output
+
+    if args.source:
+        source_path = args.source if args.source.is_absolute() else (ROOT / args.source).resolve()
+        sources = [source_path]
+        output_path = args.output or source_path.with_suffix(".docx")
+    else:
+        sources = None
+        output_path = args.output or DEFAULT_OUTPUT
+
     if not output_path.is_absolute():
         output_path = (ROOT / output_path).resolve()
 
-    saved_path = build_document(output_path)
-    print(f"Wrote {saved_path}")
+    try:
+        saved_path = build_document(output_path, sources=sources)
+        print(f"Wrote {saved_path}")
+    finally:
+        for tmp in _mermaid_temp_files:
+            try:
+                tmp.unlink(missing_ok=True)
+            except OSError:
+                pass
+
     return 0
 
 
