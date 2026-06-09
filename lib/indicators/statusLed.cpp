@@ -223,15 +223,22 @@ void StatusLed::handleTimer(TimerHandle_t timerHandle)
                         : 0;
     p_self->updateDuty(duty);
 
-    if (p_self->m_currentStatus.load() == ControlBoardWorkingStatus::Active)
+    switch (p_self->m_currentStatus.load())
+    {
+    case ControlBoardWorkingStatus::Active:
     {
         const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : BLIP_OFF_MS;
         xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
+        break;
     }
-    else if (p_self->m_currentStatus.load() == ControlBoardWorkingStatus::sleeping)
+    case ControlBoardWorkingStatus::sleeping:
     {
         const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : SLEEP_BLIP_OFF_MS;
         xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
+        break;
+    }
+    default:
+        break;
     }
 }
 
@@ -241,7 +248,10 @@ void StatusLed::startBreatheEffect()
     {
         return;
     }
+    
     m_stopBreatheTask.store(false, std::memory_order_release);
+
+
     if (xTaskCreate(runBreatheTask, "BreatheTask", 2048, this, 5, &mp_breatheTaskHandle) != pdPASS)
     {
         mp_breatheTaskHandle = nullptr;
