@@ -26,6 +26,9 @@ namespace controlSystem
         /// Shared preamble for both Sleep and DeepSleep: notifies the RPi,
         /// waits for its shutdown, then cuts the RPi and screen relays.
         void runRpiShutdownSequence();
+        /// Sets both the power LED and monitor brightness controller to the
+        /// given state in one call.
+        void setIndicatorState(ControlBoardPowerState state);
 
         transport::uart::UartTransport &mr_serial;
         RelayController &mr_relayController;

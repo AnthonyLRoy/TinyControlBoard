@@ -36,21 +36,22 @@ namespace controlSystem
         bool setupRelays()
         {
             ESP_LOGI(k_logTag, "Setting up relays...");
-            relays::StandardRelay::init(PIN_RELAY_SCREEN_POWER);
-            relays::StandardRelay::init(PIN_RELAY_RPI_POWER);
-            relays::StandardRelay::init(PIN_RELAY_DAC_POWER);
-            relays::StandardRelay::init(PIN_RELAY_OUTPUT_STAGE_POWER);
-            relays::StandardRelay::init(PIN_RELAY_PROTO_DAC_ENABLED);
-            relays::StandardRelay::init(PIN_RELAY_GENERAL_1);
-            relays::StandardRelay::init(PIN_RELAY_GENERAL_2);
 
-            relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_2, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_SCREEN_POWER, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_RPI_POWER, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_DAC_POWER, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_OUTPUT_STAGE_POWER, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_PROTO_DAC_ENABLED, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_1, false);
+            static constexpr gpio_num_t k_relayPins[] = {
+                PIN_RELAY_SCREEN_POWER,
+                PIN_RELAY_RPI_POWER,
+                PIN_RELAY_DAC_POWER,
+                PIN_RELAY_OUTPUT_STAGE_POWER,
+                PIN_RELAY_PROTO_DAC_ENABLED,
+                PIN_RELAY_GENERAL_1,
+                PIN_RELAY_GENERAL_2,
+            };
+
+            for (const gpio_num_t pin : k_relayPins)
+            {
+                relays::StandardRelay::init(pin);
+                relays::StandardRelay::setRelayState(pin, false);
+            }
 
             indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
             return true;

@@ -36,6 +36,7 @@ namespace indicators
         void cycleBrightness();
 
     private:
+        void applyCurrentBrightnessLevel();
         support::NvsStorage m_nvsStorage{"brightness"};
         led::LedPwm m_monitorLed;
         int m_brightnessLevels[12] = {10, 109, 568, 1127, 1486, 1845, 2205, 2564, 2923, 3282, 3641, 4000};
