@@ -32,7 +32,6 @@ inline constexpr uint8_t ROTARY_B_PIN = board::buttons::k_rotaryEventRight;
 inline constexpr uint8_t ROTARY_ACTION = board::buttons::k_rotaryEventLeft;
 inline constexpr uint32_t I2C_CLK_SPEED_HZ = board::i2c::k_clockSpeedHz;
 inline constexpr uint8_t ALL_INPUTS = 0xFF;
-inline constexpr gpio_num_t PIN_I2C_ENABLE = board::i2c::k_enablePin;
 
 namespace buttons {
 

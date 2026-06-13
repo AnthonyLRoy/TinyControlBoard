@@ -63,7 +63,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_POSEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = (1ULL << PIN_RPI_DATA_READY);
+    io_conf.pin_bit_mask = (1ULL << board::serial::k_rpiDataReadyPin);
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
     esp_err_t ret = gpio_config(&io_conf);
@@ -102,7 +102,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
         s_isrServiceInstalled = true;
     }
 
-    ret = gpio_isr_handler_add(PIN_RPI_DATA_READY, gpioIsrHandler, (void *)this);
+    ret = gpio_isr_handler_add(board::serial::k_rpiDataReadyPin, gpioIsrHandler, (void *)this);
     if (ret != ESP_OK)
     {
         ESP_LOGE(k_logTag, "Failed to add GPIO ISR handler (err=0x%x)", ret);
@@ -110,7 +110,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
     }
 
     gpio_config_t io_conf_out = {};
-    io_conf_out.pin_bit_mask = (1ULL << PIN_ESP32_DATA_READY);
+    io_conf_out.pin_bit_mask = (1ULL << board::serial::k_esp32DataReadyPin);
     io_conf_out.mode = GPIO_MODE_OUTPUT;
     io_conf_out.pull_up_en = GPIO_PULLUP_DISABLE;
     io_conf_out.pull_down_en = GPIO_PULLDOWN_DISABLE;
@@ -121,7 +121,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
         ESP_LOGE(k_logTag, "Failed to configure ESP32 data-ready output (err=0x%x)", ret);
         return false;
     }
-    gpio_set_level(PIN_ESP32_DATA_READY, 0);
+    gpio_set_level(board::serial::k_esp32DataReadyPin, 0);
 
     ret = uart_driver_install(m_uartNumber, bufferSize * 2, 0, 0, nullptr, 0);
     if (ret != ESP_OK)
@@ -150,7 +150,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
 void UartTransport::initDataReadyPin()
 {
     gpio_config_t io_conf = {
-        .pin_bit_mask = 1ULL << PIN_ESP32_DATA_READY,
+        .pin_bit_mask = 1ULL << board::serial::k_esp32DataReadyPin,
         .mode = GPIO_MODE_INPUT_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -161,7 +161,7 @@ void UartTransport::initDataReadyPin()
         ESP_LOGE(k_logTag, "Failed to initialize data-ready pin (err=0x%x)", err);
         return;
     }
-    gpio_set_level(PIN_ESP32_DATA_READY, 0);
+    gpio_set_level(board::serial::k_esp32DataReadyPin, 0);
 }
 
 void UartTransport::deinitUart()
@@ -220,7 +220,7 @@ bool UartTransport::sendData(const uint8_t *p_data, size_t len)
         return false;
     }
 
-    if (gpio_get_level(PIN_ESP32_DATA_READY) == 1)
+    if (gpio_get_level(board::serial::k_esp32DataReadyPin) == 1)
     {
         ESP_LOGW(k_logTag, "Raspberry Pi not ready to receive data");
         return false;
@@ -230,9 +230,9 @@ bool UartTransport::sendData(const uint8_t *p_data, size_t len)
     int written = uart_write_bytes(m_uartNumber, p_data, len);
 
     ESP_LOGI(k_logTag, "Data sent, signaling Raspberry Pi.");
-    gpio_set_level(PIN_ESP32_DATA_READY, 1);
+    gpio_set_level(board::serial::k_esp32DataReadyPin, 1);
     vTaskDelay(pdMS_TO_TICKS(k_dataReadySignalHoldMs));
-    gpio_set_level(PIN_ESP32_DATA_READY, 0);
+    gpio_set_level(board::serial::k_esp32DataReadyPin, 0);
     return written == len;
 }
 

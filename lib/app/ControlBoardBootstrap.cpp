@@ -38,13 +38,13 @@ namespace controlSystem
             ESP_LOGI(k_logTag, "Setting up relays...");
 
             static constexpr gpio_num_t k_relayPins[] = {
-                PIN_RELAY_SCREEN_POWER,
-                PIN_RELAY_RPI_POWER,
-                PIN_RELAY_DAC_POWER,
-                PIN_RELAY_OUTPUT_STAGE_POWER,
-                PIN_RELAY_PROTO_DAC_ENABLED,
-                PIN_RELAY_GENERAL_1,
-                PIN_RELAY_GENERAL_2,
+                board::relays::k_screenPower,
+                board::relays::k_rpiPower,
+                board::relays::k_dacPower,
+                board::relays::k_outputStagePower,
+                board::relays::k_protoDacEnabled,
+                board::relays::k_general1,
+                board::relays::k_general2,
             };
 
             for (const gpio_num_t pin : k_relayPins)

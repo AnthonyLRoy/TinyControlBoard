@@ -266,7 +266,6 @@ Technical debt worth calling out:
 
 - Power-management configuration in `app_main()` is annotated by the source as ineffective.
 - A fixed 5-second startup delay exists solely to wait for power to stabilize.
-- Hardware pin aliases are split between `board::...` namespaces and legacy `PIN_*` macros.
 - Command routing rules are distributed across multiple places: the registration table, `ActionCommandRoutingPolicy`, and `ActionUartDispatcher` toggle normalization.
 
 ## 5. Application Startup Sequence

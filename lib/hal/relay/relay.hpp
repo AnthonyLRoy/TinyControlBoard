@@ -3,15 +3,6 @@
 #include "board/boardConfig.hpp"
 #include "esp_log.h"
 
-// relay pinout mapping
-inline constexpr gpio_num_t PIN_RELAY_SCREEN_POWER = board::relays::k_screenPower;
-inline constexpr gpio_num_t PIN_RELAY_DAC_POWER = board::relays::k_dacPower;
-inline constexpr gpio_num_t PIN_RELAY_RPI_POWER = board::relays::k_rpiPower;
-inline constexpr gpio_num_t PIN_RELAY_OUTPUT_STAGE_POWER = board::relays::k_outputStagePower;
-inline constexpr gpio_num_t PIN_RELAY_PROTO_DAC_ENABLED = board::relays::k_protoDacEnabled;
-inline constexpr gpio_num_t PIN_RELAY_GENERAL_1 = board::relays::k_general1;
-inline constexpr gpio_num_t PIN_RELAY_GENERAL_2 = board::relays::k_general2;
-
 namespace relays
 {
     class StandardRelay

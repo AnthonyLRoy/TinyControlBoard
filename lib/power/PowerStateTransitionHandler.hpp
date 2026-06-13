@@ -28,8 +28,9 @@ namespace controlSystem
         void enterOnState();
         void reportStatus(ControlBoardWorkingStatus status);
         /// Shared preamble for both Sleep and DeepSleep: notifies the RPi,
-        /// waits for its shutdown, then cuts the RPi and screen relays.
-        void runRpiShutdownSequence();
+        /// waits for its shutdown, enters the target standby transition state,
+        /// then cuts the RPi and screen relays.
+        void runRpiShutdownSequence(ControlBoardPowerState postShutdownState);
         /// Sets both the power LED and monitor brightness controller to the
         /// given state in one call.
         void setIndicatorState(ControlBoardPowerState state);

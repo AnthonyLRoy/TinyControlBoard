@@ -70,7 +70,4 @@ namespace transport::uart
         void onMessageReceived(const UartMessage &rMsg);
     };
 
-    inline constexpr gpio_num_t PIN_RPI_DATA_READY = board::serial::k_rpiDataReadyPin;
-    inline constexpr gpio_num_t PIN_ESP32_DATA_READY = board::serial::k_esp32DataReadyPin;
-
 } // namespace transport::uart

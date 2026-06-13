@@ -9,6 +9,7 @@
 #include "indicators/activityStatus.hpp"
 #include "input/actions/actionsResponse.hpp"
 #include "input/actions/actionTemplates.hpp"
+#include "app/ActionCommandCatalog.hpp"
 #include "app/ActionCommandRoutingPolicy.hpp"
 #include "app/ActionFactory.hpp"
 #include "app/ActionUartDispatcher.hpp"
@@ -572,6 +573,53 @@ void test_power_state_transition_policy_returns_none_for_non_on_intermediate_sta
                 "Intermediate states should not trigger a transition");
 }
 
+void test_action_command_catalog_centralizes_toggle_specs()
+{
+    const auto *coverSpec = controlSystem::findToggleCommandSpecBySemanticCommand(CMD_TOGGLE_COVER_VIEW);
+    expect_true(coverSpec != nullptr, "Cover view toggle should have a shared command spec");
+    expect_equal(static_cast<uint16_t>(CMD_COVER_VIEW_ON), static_cast<uint16_t>(coverSpec->onCommand),
+                 "Cover view shared spec should define the ON command");
+    expect_equal(static_cast<uint16_t>(CMD_COVER_VIEW_OFF), static_cast<uint16_t>(coverSpec->offCommand),
+                 "Cover view shared spec should define the OFF command");
+    expect_true(controlSystem::classifyCommand(CMD_COVER_VIEW_ON, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::UartDispatch,
+                "Cover view ON should route through UART dispatch");
+
+    const auto *dacSpec = controlSystem::findToggleCommandSpecBySemanticCommand(CMD_TOGGLE_DAC);
+    expect_true(dacSpec != nullptr, "DAC toggle should have a shared command spec");
+    expect_equal(static_cast<uint16_t>(CMD_TOGGLE_DAC_ON), static_cast<uint16_t>(dacSpec->onCommand),
+                 "DAC shared spec should define the ON command");
+    expect_equal(static_cast<uint16_t>(CMD_TOGGLE_DAC_OFF), static_cast<uint16_t>(dacSpec->offCommand),
+                 "DAC shared spec should define the OFF command");
+    expect_true(controlSystem::classifyCommand(CMD_TOGGLE_DAC_OFF, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::Relay,
+                "DAC OFF should route through the relay handler");
+}
+
+void test_power_state_transition_policy_reports_transitional_indicator_states()
+{
+    expect_true(controlSystem::getTransitionEntryState(controlSystem::PowerTransitionAction::PowerOn,
+                                                       ControlBoardPowerState::OFF) ==
+                    ControlBoardPowerState::TURNING_ON,
+                "Power-on transitions should enter TURNING_ON");
+    expect_true(controlSystem::getTransitionEntryState(controlSystem::PowerTransitionAction::Sleep,
+                                                       ControlBoardPowerState::ON) ==
+                    ControlBoardPowerState::SHUTTING_DOWN,
+                "Sleep transitions should first enter SHUTTING_DOWN");
+    expect_true(controlSystem::getTransitionEntryState(controlSystem::PowerTransitionAction::DeepSleep,
+                                                       ControlBoardPowerState::ON) ==
+                    ControlBoardPowerState::SHUTTING_DOWN,
+                "Deep-sleep transitions should first enter SHUTTING_DOWN");
+    expect_true(controlSystem::getPostShutdownTransitionState(controlSystem::PowerTransitionAction::Sleep,
+                                                              ControlBoardPowerState::ON) ==
+                    ControlBoardPowerState::GOING_TO_SLEEP,
+                "Sleep transitions should enter GOING_TO_SLEEP after Pi shutdown");
+    expect_true(controlSystem::getPostShutdownTransitionState(controlSystem::PowerTransitionAction::DeepSleep,
+                                                              ControlBoardPowerState::ON) ==
+                    ControlBoardPowerState::GOING_INTO_DEEP_SLEEP,
+                "Deep-sleep transitions should enter GOING_INTO_DEEP_SLEEP after Pi shutdown");
+}
+
 void test_action_command_routing_policy_handles_pre_on_routes()
 {
     expect_true(controlSystem::classifyCommand(CMD_NO_ACTION, ControlBoardPowerState::ON) ==
@@ -782,6 +830,8 @@ int main()
         {"test_power_state_transition_policy_selects_sleep_for_short_press", test_power_state_transition_policy_selects_sleep_for_short_press},
         {"test_power_state_transition_policy_selects_deep_sleep_for_long_press", test_power_state_transition_policy_selects_deep_sleep_for_long_press},
         {"test_power_state_transition_policy_returns_none_for_non_on_intermediate_states", test_power_state_transition_policy_returns_none_for_non_on_intermediate_states},
+        {"test_action_command_catalog_centralizes_toggle_specs", test_action_command_catalog_centralizes_toggle_specs},
+        {"test_power_state_transition_policy_reports_transitional_indicator_states", test_power_state_transition_policy_reports_transitional_indicator_states},
         {"test_action_command_routing_policy_handles_pre_on_routes", test_action_command_routing_policy_handles_pre_on_routes},
         {"test_action_command_routing_policy_classifies_on_state_handlers", test_action_command_routing_policy_classifies_on_state_handlers},
         {"test_control_board_rotary_negative_direction_passes_false_to_action", test_control_board_rotary_negative_direction_passes_false_to_action},

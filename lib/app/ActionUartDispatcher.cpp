@@ -1,4 +1,6 @@
 #include "app/ActionUartDispatcher.hpp"
+
+#include "app/ActionCommandCatalog.hpp"
 #include "protocol/commandCatalog.hpp"
 
 #if __has_include("esp_log.h")
@@ -14,40 +16,20 @@ namespace controlSystem
     {
     }
 
-    namespace
-    {
-        // Toggle commands: a logical ON/OFF pair maps to one normalized wire command
-        // with a boolean parameter. Adding a new toggle is one table row.
-        struct ToggleMapping
-        {
-            CommandId onCmd;
-            CommandId offCmd;
-            CommandId wireCmd;
-            const char *logTag;
-        };
-
-        constexpr ToggleMapping k_toggleTable[] = {
-            {CMD_COVER_VIEW_ON,   CMD_COVER_VIEW_OFF,   CMD_TOGGLE_COVER_VIEW, "Cover_View"},
-            {CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF, CMD_TOGGLE_METER,      "Meter"},
-            {CMD_REPEAT_ON,       CMD_REPEAT_OFF,       CMD_TOGGLE_REPEAT,     "Repeat"},
-            {CMD_RANDOM_ON,       CMD_RANDOM_OFF,       CMD_TOGGLE_RANDOM,     "Random"},
-        };
-    } // namespace
-
     bool ActionUartDispatcher::handle(const actions::IAction &action)
     {
-        for (const auto &m : k_toggleTable)
+        if (const auto *toggleSpec = findToggleCommandSpecByStateCommand(action.command);
+            toggleSpec != nullptr &&
+            toggleSpec->route == ActionCommandRoute::UartDispatch &&
+            toggleSpec->p_uartLogTag != nullptr)
         {
-            if (action.command == m.onCmd || action.command == m.offCmd)
-            {
-                ESP_LOGI(k_logTag, "Processing %s toggle (%s)", m.logTag,
-                         action.command == m.onCmd ? "ON" : "OFF");
-                UartMessage message;
-                message.commandId = m.wireCmd;
-                message.params[0] = (action.command == m.onCmd) ? 1 : 0;
-                mr_uartCommandSink.sendUartMessage(m.logTag, message);
-                return true;
-            }
+            ESP_LOGI(k_logTag, "Processing %s toggle (%s)", toggleSpec->p_uartLogTag,
+                     action.command == toggleSpec->onCommand ? "ON" : "OFF");
+            UartMessage message;
+            message.commandId = toggleSpec->semanticCommand;
+            message.params[0] = (action.command == toggleSpec->onCommand) ? 1 : 0;
+            mr_uartCommandSink.sendUartMessage(toggleSpec->p_uartLogTag, message);
+            return true;
         }
 
         if (action.command == CMD_ROTARY_ACTION)
