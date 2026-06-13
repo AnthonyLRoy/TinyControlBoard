@@ -62,6 +62,11 @@ namespace controlSystem
         {
             mp_rpiBootManager->handleHeartbeatReceived();
         }
+
+        if (mp_powerStateTransitionHandler && mp_powerStateTransitionHandler->completePendingBootOnHeartbeat())
+        {
+            mr_systemState.powerState.store(ControlBoardPowerState::ON);
+        }
     }
 
     void ActionProcessor::handleHeartbeatTimeout()
@@ -111,6 +116,19 @@ namespace controlSystem
         auto syntheticAction = createAction(CMD_SYS_POWER);
         const auto newState = mp_powerStateTransitionHandler->handle(*syntheticAction);
         mr_systemState.powerState.store(newState);
-        return newState == ControlBoardPowerState::ON;
+
+        if (newState == ControlBoardPowerState::ON)
+        {
+            return true;
+        }
+
+        if (newState == ControlBoardPowerState::SLEEP &&
+            mp_powerStateTransitionHandler->isAwaitingLateBootHeartbeat())
+        {
+            ESP_LOGW(k_logTag, "Initial power-on is running in degraded mode while waiting for a delayed RPi heartbeat");
+            return true;
+        }
+
+        return false;
     }
 }

@@ -1,6 +1,6 @@
 # TinyControlBoard Firmware Technical Design
 
-This document was generated from source-code analysis of the PlatformIO firmware project on 2026-06-12. Existing markdown documents in `docs/` were intentionally not used as source material. All behavior descriptions below are derived from the code under `src/`, `lib/`, `host_tests/`, and `test/`.
+This document was generated from source-code analysis of the PlatformIO firmware project on 2026-06-13. Existing markdown documents in `docs/` were intentionally not used as source material. All behavior descriptions below are derived from the code under `src/`, `lib/`, `host_tests/`, and `test/`.
 
 ## 1. Executive Summary
 
@@ -29,7 +29,7 @@ The hardware target is `Espressif ESP32-S3-DevKitC-1-N16 (16 MB flash, no PSRAM)
 
 The firmware uses a layered architecture rather than a monolithic loop.
 
-- `app_main()` delays startup, enables ESP-IDF power-management settings, constructs `ControlBoard`, retries initialization until it succeeds, and then stays alive.
+- `app_main()` delays startup, enables ESP-IDF power-management settings, constructs `ControlBoard`, retries initialization only when board bring-up fails, and then stays alive.
 - `ControlBoard` wires the singleton transport and indicator services together with action processing and input dispatch.
 - `McpInputHandler` handles the MCP23018-style input expander on I2C and converts its interrupt-driven pin changes into button and rotary callbacks.
 - `ButtonEventQueue` decouples the interrupt-facing callbacks from application logic using a FreeRTOS queue and worker task.
@@ -217,6 +217,7 @@ graph LR
 | `UartTransport` | UART framing, handshake, RX task, heartbeat monitor | bytes from UART, GPIO42 IRQ | parsed `UartMessage` objects and heartbeat timeout callback | UART driver, GPIO ISR, `UartReceiver` |
 | `McpInputHandler` | I2C expander access and rotary decode | GPIO18 IRQ and I2C reads | button and rotary callbacks | I2C driver, GPIO ISR |
 | `PowerStateTransitionHandler` | Boot, sleep, and deep-sleep sequencing | power actions and current state | relay operations, LED state changes, waits | relay controller, boot manager, serial |
+| `DelayedBootRecoveryState` | Tracks whether a timed-out boot may still be completed by a late heartbeat | boot-time timeout and heartbeat state | one-shot degraded-boot recovery decision | atomic flag, `ControlBoardPowerState` |
 | `RpiBootManager` | Synchronizes heartbeat-based waits | heartbeat received/timeout events | boot/shutdown wait results | FreeRTOS event group |
 | `RelayController` | Encapsulates relay operations | action/power requests | GPIO changes | `StandardRelay` |
 | `MonitorBrightnessController` | Brightness persistence and display-off mode | brightness commands, power state changes | PWM duty changes, NVS writes | LEDC, NVS |
@@ -291,9 +292,12 @@ Technical debt worth calling out:
 17. `ActionProcessor::triggerInitialPowerOn()` synthesizes a power command.
 18. Power-on sequencing enables screen, DAC, output stage, and Pi relays in order.
 19. `SpiBootIndicator` flashes all button LEDs while the firmware waits for heartbeat.
-20. If heartbeat arrives, the system enters `ON`; otherwise it falls back to `SLEEP` and initialization is reported as failed.
-21. If initialization fails, `app_main()` deinitializes portions of the board, waits 1 second, and retries indefinitely.
-22. If initialization succeeds, `app_main()` remains alive and all runtime work is performed by background tasks.
+20. If heartbeat arrives, the system enters `ON`; otherwise it falls back to a stable degraded `SLEEP` state with the Pi still allowed to finish booting.
+21. If a delayed heartbeat arrives after the timeout, `ActionProcessor::handleHeartbeatReceived()` completes the deferred boot and promotes the system from degraded `SLEEP` to `ON` without re-running initialization.
+22. If board bring-up fails for another reason, `app_main()` deinitializes portions of the board, waits 1 second, and retries.
+23. Once initialization succeeds, `app_main()` remains alive and all runtime work is performed by background tasks.
+
+The late-heartbeat promotion path is now partly isolated behind `DelayedBootRecoveryState`, which gives the host-side CMake test suite direct coverage over the one-shot degraded-boot recovery decision without needing the ESP-IDF runtime.
 
 ### 5.2 Startup Sequence Diagram
 
@@ -329,10 +333,15 @@ sequenceDiagram
         UART-->>Board: RX callback
         Board-->>Power: boot complete via RpiBootManager
     else Timeout
-        Power-->>Board: boot failed
+        Power-->>Board: degraded SLEEP state
     end
     Board-->>Main: init result
-    Main->>Main: retry or idle loop
+    opt delayed heartbeat after timeout
+        RPi-->>UART: late heartbeat frame
+        UART-->>Board: RX callback
+        Board-->>Power: complete deferred boot
+    end
+    Main->>Main: retry only on board bring-up failure, otherwise idle loop
 ```
 
 ### 5.3 Network Initialization
@@ -463,6 +472,7 @@ stateDiagram-v2
     DEEPSLEEP --> TURNING_ON: CMD_SYS_POWER
     TURNING_ON --> ON: heartbeat received
     TURNING_ON --> SLEEP: boot timeout
+    SLEEP --> ON: delayed heartbeat after degraded boot
     ON --> GOING_TO_SLEEP: short press
     GOING_TO_SLEEP --> SLEEP: shutdown path complete
     ON --> GOING_TO_SLEEP: long press
@@ -473,7 +483,8 @@ Entry and exit behavior:
 
 - Enter `TURNING_ON`: set LED indicators, enable relays in order, start boot-wait SPI blink.
 - Enter `ON`: stop boot indicator, restore brightness, set activity to active.
-- Enter `SLEEP`: screen and Pi off, LEDs cleared, activity becomes sleeping.
+- Enter `SLEEP` from shutdown: screen and Pi are off, LEDs are cleared, and activity becomes sleeping.
+- Enter `SLEEP` from boot timeout: degraded-mode indicators stay active, the Pi relay remains on, and a later heartbeat can still promote the system to `ON`.
 - Enter `DEEPSLEEP`: screen, Pi, DAC, and output-stage rails off, activity becomes sleeping.
 
 ### 8.2 Input Action-State Machines
@@ -629,6 +640,7 @@ No network communication interface exists in the current firmware. There is no W
 | `ActionContext` | Dependency bundle for `IAction::execute()` | UART dispatcher, power handler, relays, serial, state, LEDs, brightness |
 | `IAction` | Executable command object | `command`, `parameters`, `releaseTimeMillis`, virtual `execute()` |
 | `IActionSource` | Event-to-action factory | virtual `produce(bool)` |
+| `DelayedBootRecoveryState` | One-shot late-heartbeat gate for degraded boot recovery | atomic pending flag and `consumeIfRecoverableState()` |
 
 ### 10.2 Relationships
 
@@ -774,22 +786,23 @@ When the background status is `sleeping`, all inputs except the power button are
 | MCP init failure | I2C or GPIO interrupt setup failure | `begin()` returns error | fail init, flash failure indicator, retry from `app_main()` |
 | Button queue full | bursty input or blocked consumer | `xQueueSend()` failure | drop event and log every 16th drop |
 | UART checksum or framing error | corrupted or partial byte stream | `deserializeMessage()` false | byte-by-byte resynchronization in `UartReceiver` |
-| No Pi heartbeat during boot | Pi absent or link down | `waitForRpiToBoot()` timeout | set boot-failure blink pattern, move to `SLEEP`, report init failure |
+| No Pi heartbeat during boot | Pi absent or link down | `waitForRpiToBoot()` timeout | enter degraded `SLEEP`, keep the boot-failure indicator active, and allow a later heartbeat to complete startup |
 | No Pi heartbeat while ON | Pi crash, cable issue, or heartbeat loss | `heartbeat_task` timeout callback | set event bit and force `SystemState` to `SLEEP` unless debug simulate mode is enabled |
 | SPI LED driver not initialized | premature caller use | `m_started` guard | log warning and ignore request |
 | Status LED task creation failure | heap or RTOS failure | `xTaskCreate()` return | log error; corresponding indicator may not function |
 
 ### 12.2 Recovery Strategy Summary
 
-- Initialization errors are mostly handled by failing `ControlBoard::init()` and letting `app_main()` retry forever.
+- Initialization errors other than boot-heartbeat timeout are handled by failing `ControlBoard::init()` and letting `app_main()` retry.
 - Runtime UART corruption is handled by frame resynchronization rather than transport reset.
 - Heartbeat loss is treated as a semantic system-state event, not just a communication error.
+- Boot-heartbeat timeout is treated as a degraded operating mode rather than a fatal startup failure.
 - Several low-level errors only log and continue, especially LED and NVS failures.
 
 ### 12.3 Potential Bugs and Behavioral Risks
 
 1. `UartTransport::sendData()` checks `PIN_ESP32_DATA_READY` before transmit even though the log says it is testing whether the Raspberry Pi is ready. That condition appears to inspect the ESP32 output line rather than the Pi input-ready line, so the readiness guard is likely wrong.
-2. `ActionProcessor::triggerInitialPowerOn()` returns failure when boot heartbeat times out, and `app_main()` responds by retrying initialization indefinitely. On a bench without a Pi, this can create repeated power-cycle behavior rather than a stable degraded mode.
+2. Delayed-heartbeat recovery now depends on `DelayedBootRecoveryState` plus the current `ControlBoardPowerState`. Future changes that cut Pi power or repurpose `SLEEP` during boot timeout could silently break that recovery path if they do not update both sides.
 3. `StatusLed` objects are global statics and call `init()` from their constructors. That means FreeRTOS objects and LEDC configuration are created during static initialization, which is an unusual lifetime model and increases startup-order risk.
 4. `test/test_simple_command_action/test_main.cpp` still targets an old `ActionResponse`/`execute()` API, which suggests the embedded test suite contains drifted or stale tests.
 5. `PowerStateTransitionHandler::runRpiShutdownSequence()` ignores the boolean result of `waitForRpiShutdown()`. The shutdown path proceeds even if no heartbeat-timeout confirmation ever arrives.
@@ -809,7 +822,7 @@ Diagnostic capabilities visible in code:
 
 Available test assets:
 
-- host-side CMake test target for protocol, routing, and dispatcher logic,
+- host-side CMake test target for protocol, routing, dispatcher, and delayed-boot recovery helper logic,
 - Unity-based embedded tests for UART protocol, SPI LED driver, SPI boot indicator, and power LED.
 
 Diagnostic limitations:
@@ -1148,6 +1161,7 @@ For a new button-driven command:
 | File | Purpose |
 |---|---|
 | `lib/power/powerState.hpp` | Power-state enum. |
+| `lib/power/DelayedBootRecoveryState.hpp` | Host-testable helper that tracks whether a timed-out boot may still be completed by a delayed heartbeat. |
 | `lib/power/PowerStateTransitionHandler.cpp` | Boot, sleep, and deep-sleep sequencing logic. |
 | `lib/power/PowerStateTransitionHandler.hpp` | Power transition handler declaration. |
 | `lib/power/PowerStateTransitionPolicy.hpp` | Power-button decision policy based on current state and hold time. |
@@ -1170,7 +1184,7 @@ For a new button-driven command:
 | File | Purpose |
 |---|---|
 | `host_tests/host_test_action_stubs.cpp` | Desktop-link stubs for action execute methods. |
-| `host_tests/test_logic.cpp` | Host-side unit tests for protocol, routing, dispatcher, and heartbeat helpers. |
+| `host_tests/test_logic.cpp` | Host-side unit tests for protocol, routing, dispatcher, heartbeat helpers, and delayed-boot recovery logic. |
 
 #### `test`
 
@@ -1219,7 +1233,7 @@ For a new button-driven command:
 ### 20.4 Summary of Highest-Value Follow-Up Work
 
 1. Fix the UART handshake readiness check so transmit gating uses the correct peer-ready signal.
-2. Decide whether missing Pi heartbeat at boot should produce a stable degraded mode instead of perpetual init retries.
+2. Add end-to-end coverage for delayed-heartbeat recovery and degraded-mode indicators so the full boot path remains stable as power-sequencing logic evolves.
 3. Replace or validate stale embedded tests, especially the simple-command action test target.
 4. Consolidate command-routing rules so adding a new command does not require touching multiple disconnected tables.
 5. Remove or explicitly classify dormant helper code to reduce ambiguity for future maintainers.

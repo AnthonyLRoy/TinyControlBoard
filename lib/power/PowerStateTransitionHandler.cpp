@@ -20,6 +20,32 @@ namespace controlSystem
     {
     }
 
+    bool PowerStateTransitionHandler::isAwaitingLateBootHeartbeat() const
+    {
+        return m_delayedBootRecovery.isPending();
+    }
+
+    void PowerStateTransitionHandler::enterOnState()
+    {
+        setIndicatorState(ControlBoardPowerState::ON);
+        indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::SolidIdle);
+        reportStatus(ControlBoardWorkingStatus::Active);
+    }
+
+    bool PowerStateTransitionHandler::completePendingBootOnHeartbeat()
+    {
+        const auto state = indicators::getPowerLed().getState();
+        if (!m_delayedBootRecovery.consumeIfRecoverableState(state))
+        {
+            return false;
+        }
+
+        ESP_LOGI(k_logTag, "Delayed RPi heartbeat received; resuming deferred power-on completion");
+        indicators::getSpiBootIndicator().notifySuccess();
+        enterOnState();
+        return true;
+    }
+
     void PowerStateTransitionHandler::reportStatus(ControlBoardWorkingStatus status)
     {
         if (mp_activitySink)
@@ -36,6 +62,7 @@ namespace controlSystem
 
     void PowerStateTransitionHandler::runRpiShutdownSequence()
     {
+        m_delayedBootRecovery.clear();
         setIndicatorState(ControlBoardPowerState::GOING_TO_SLEEP);
         mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
         mr_rpiBootManager.waitForRpiShutdown(board::timing::k_rpiShutdownTimeoutMs);
@@ -51,6 +78,7 @@ namespace controlSystem
 
         if (transition == PowerTransitionAction::PowerOn)
         {
+            m_delayedBootRecovery.clear();
             setIndicatorState(ControlBoardPowerState::TURNING_ON);
             ESP_LOGI(k_logTag, "Initiating Power ON sequence");
 
@@ -65,16 +93,15 @@ namespace controlSystem
             if (booted)
             {
                 indicators::getSpiBootIndicator().notifySuccess();
-                setIndicatorState(ControlBoardPowerState::ON);
-                indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::SolidIdle);
-                reportStatus(ControlBoardWorkingStatus::Active);
+                enterOnState();
                 return ControlBoardPowerState::ON;
             }
 
             indicators::getSpiBootIndicator().notifyFailure();
+            m_delayedBootRecovery.markBootTimedOut();
             setIndicatorState(ControlBoardPowerState::SLEEP);
             reportStatus(ControlBoardWorkingStatus::sleeping);
-            ESP_LOGW(k_logTag, "Power ON sequence aborted because no RPi heartbeat was received");
+            ESP_LOGW(k_logTag, "Power ON sequence entered degraded mode because no RPi heartbeat was received");
             return ControlBoardPowerState::SLEEP;
         }
 

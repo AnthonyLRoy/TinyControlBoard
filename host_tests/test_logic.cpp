@@ -14,6 +14,7 @@
 #include "app/ActionUartDispatcher.hpp"
 #include "app/ControlBoardButtonIds.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
+#include "power/DelayedBootRecoveryState.hpp"
 #include "power/PowerStateTransitionPolicy.hpp"
 #include "app/SerialHeartbeatRouter.hpp"
 #include "protocol/uartProtocol.hpp"
@@ -393,6 +394,49 @@ void test_heartbeat_helper_ignores_non_heartbeat_messages()
                 "Non-heartbeat command should not be recognized");
 }
 
+void test_delayed_boot_recovery_arms_after_timeout()
+{
+    controlSystem::DelayedBootRecoveryState recovery;
+
+    expect_true(!recovery.isPending(), "Recovery should start inactive");
+
+    recovery.markBootTimedOut();
+
+    expect_true(recovery.isPending(), "Timeout should arm delayed boot recovery");
+}
+
+void test_delayed_boot_recovery_completes_once_for_recoverable_states()
+{
+    controlSystem::DelayedBootRecoveryState recovery;
+
+    recovery.markBootTimedOut();
+    expect_true(recovery.consumeIfRecoverableState(ControlBoardPowerState::SLEEP),
+                "Sleep state should allow a delayed heartbeat to complete boot");
+    expect_true(!recovery.isPending(), "Successful completion should clear the pending flag");
+    expect_true(!recovery.consumeIfRecoverableState(ControlBoardPowerState::SLEEP),
+                "Recovery should only complete once per timeout");
+
+    recovery.markBootTimedOut();
+    expect_true(recovery.consumeIfRecoverableState(ControlBoardPowerState::TURNING_ON),
+                "Turning-on state should also allow delayed boot completion");
+}
+
+void test_delayed_boot_recovery_ignores_unrecoverable_states_and_clear()
+{
+    controlSystem::DelayedBootRecoveryState recovery;
+
+    recovery.markBootTimedOut();
+    expect_true(!recovery.consumeIfRecoverableState(ControlBoardPowerState::OFF),
+                "Off state should not consume delayed boot recovery");
+    expect_true(recovery.isPending(), "Unrecoverable states should leave recovery armed");
+
+    recovery.clear();
+
+    expect_true(!recovery.isPending(), "Clear should disarm delayed boot recovery");
+    expect_true(!recovery.consumeIfRecoverableState(ControlBoardPowerState::SLEEP),
+                "No recovery should complete once the pending flag is cleared");
+}
+
 void test_action_uart_dispatcher_routes_simple_command()
 {
     FakeUartCommandSink uartSink;
@@ -725,6 +769,9 @@ int main()
         {"test_heartbeat_helper_handles_current_heartbeat", test_heartbeat_helper_handles_current_heartbeat},
         {"test_heartbeat_helper_handles_legacy_heartbeat", test_heartbeat_helper_handles_legacy_heartbeat},
         {"test_heartbeat_helper_ignores_non_heartbeat_messages", test_heartbeat_helper_ignores_non_heartbeat_messages},
+        {"test_delayed_boot_recovery_arms_after_timeout", test_delayed_boot_recovery_arms_after_timeout},
+        {"test_delayed_boot_recovery_completes_once_for_recoverable_states", test_delayed_boot_recovery_completes_once_for_recoverable_states},
+        {"test_delayed_boot_recovery_ignores_unrecoverable_states_and_clear", test_delayed_boot_recovery_ignores_unrecoverable_states_and_clear},
         {"test_action_uart_dispatcher_routes_simple_command", test_action_uart_dispatcher_routes_simple_command},
         {"test_action_uart_dispatcher_routes_cover_view_message", test_action_uart_dispatcher_routes_cover_view_message},
         {"test_action_uart_dispatcher_routes_meter_message", test_action_uart_dispatcher_routes_meter_message},

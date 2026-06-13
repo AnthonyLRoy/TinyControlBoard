@@ -1,6 +1,7 @@
 #pragma once
 
 #include "input/actions/IAction.hpp"
+#include "power/DelayedBootRecoveryState.hpp"
 #include "power/RelayController.hpp"
 #include "power/RPIBootManager.hpp"
 #include "power/powerState.hpp"
@@ -20,8 +21,11 @@ namespace controlSystem
         /// Evaluates the requested power transition and executes the appropriate
         /// sequence. Returns the resulting ControlBoardPowerState.
         ControlBoardPowerState handle(const actions::IAction &action);
+        bool isAwaitingLateBootHeartbeat() const;
+        bool completePendingBootOnHeartbeat();
 
     private:
+        void enterOnState();
         void reportStatus(ControlBoardWorkingStatus status);
         /// Shared preamble for both Sleep and DeepSleep: notifies the RPi,
         /// waits for its shutdown, then cuts the RPi and screen relays.
@@ -34,6 +38,7 @@ namespace controlSystem
         RelayController &mr_relayController;
         RpiBootManager &mr_rpiBootManager;
         IActivityStatusSink *mp_activitySink;
+        DelayedBootRecoveryState m_delayedBootRecovery;
 
         static constexpr const char *k_logTag = "Power_State_Hdlr";
     };

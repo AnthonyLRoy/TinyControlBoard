@@ -80,7 +80,8 @@ Current sequence:
 8. if heartbeat received: `SpiBootIndicator::notifySuccess()` is called, flashing stops and all LEDs clear,
 9. if timeout: `SpiBootIndicator::notifyFailure()` is called, LEDs switch to fast flashing (~3.3 Hz),
 10. on success: power LED moves to `ON`, activity status becomes `Active`,
-11. on timeout: power LED moves to `SLEEP`, activity status becomes `sleeping`, and the fast-flashing SPI LEDs remain as the only ongoing failure indicator.
+11. on timeout: power LED moves to `SLEEP`, activity status becomes `sleeping`, and the fast-flashing SPI LEDs remain as the ongoing degraded-mode indicator while the Pi is still allowed to finish booting,
+12. if a delayed heartbeat arrives after the timeout, the firmware clears the failure indicator, promotes the power state to `ON`, and resumes normal active operation without re-running board initialization.
 
 ## 5. Sleep Sequence
 
