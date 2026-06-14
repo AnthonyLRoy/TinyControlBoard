@@ -8,6 +8,9 @@ namespace controlSystem
 {
     namespace
     {
+        using ActionMap = ControlBoardInputDispatcher::ActionMap;
+        using OwnedActions = std::vector<std::unique_ptr<actions::IActionSource>>;
+
         enum class ActionSourceType : uint8_t { Simple, Toggle, Timed, Rotary };
 
         struct ButtonRegistration
@@ -41,6 +44,57 @@ namespace controlSystem
             { controlBoardButtons::k_rotaryEventRight, ActionSourceType::Rotary,  CMD_ROTARY_ACTION,     LedPolicy::None      },
             { controlBoardButtons::k_cycleBrightness,  ActionSourceType::Simple,  CMD_CYCLE_BRIGHTNESS,  LedPolicy::Momentary },
         };
+
+        actions::IActionSource *registerOwnedAction(OwnedActions &rOwnedActions,
+                                                    ActionMap &rActionMap,
+                                                    uint8_t buttonId,
+                                                    LedPolicy ledPolicy,
+                                                    std::unique_ptr<actions::IActionSource> action)
+        {
+            if (!action)
+            {
+                return nullptr;
+            }
+
+            auto *p_action = action.get();
+            rActionMap[buttonId] = {p_action, ledPolicy};
+            rOwnedActions.push_back(std::move(action));
+            return p_action;
+        }
+
+        std::unique_ptr<actions::IActionSource> createActionSource(const ButtonRegistration &reg)
+        {
+            switch (reg.type)
+            {
+            case ActionSourceType::Simple:
+                return std::make_unique<actions::SimpleCommandAction>(reg.command);
+
+            case ActionSourceType::Toggle:
+            {
+                const auto *toggleSpec = findToggleCommandSpecBySemanticCommand(reg.command);
+                if (toggleSpec == nullptr)
+                {
+                    return nullptr;
+                }
+                return std::make_unique<actions::DynamicToggleAction>(toggleSpec->onCommand, toggleSpec->offCommand);
+            }
+
+            case ActionSourceType::Timed:
+                return std::make_unique<actions::DynamicTimedAction>(reg.command);
+
+            case ActionSourceType::Rotary:
+            default:
+                return nullptr;
+            }
+        }
+
+        actions::IActionSource *ensureSharedRotaryAction(OwnedActions &rOwnedActions)
+        {
+            auto rotary = std::make_unique<actions::DynamicRotaryAction>();
+            auto *p_action = rotary.get();
+            rOwnedActions.push_back(std::move(rotary));
+            return p_action;
+        }
     } // namespace
 
     void ControlBoardActionRegistry::populate(ControlBoardInputDispatcher::ActionMap &rActionMap)
@@ -58,39 +112,18 @@ namespace controlSystem
             {
                 if (p_sharedRotary == nullptr)
                 {
-                    auto rotary = std::make_unique<actions::DynamicRotaryAction>();
-                    p_sharedRotary = rotary.get();
-                    m_ownedActions.push_back(std::move(rotary));
+                    p_sharedRotary = ensureSharedRotaryAction(m_ownedActions);
                 }
                 rActionMap[reg.buttonId] = {p_sharedRotary, reg.ledPolicy};
                 continue;
             }
 
-            std::unique_ptr<actions::IActionSource> action;
-            switch (reg.type)
-            {
-            case ActionSourceType::Simple:
-                action = std::make_unique<actions::SimpleCommandAction>(reg.command);
-                break;
-            case ActionSourceType::Toggle:
-            {
-                const auto *toggleSpec = findToggleCommandSpecBySemanticCommand(reg.command);
-                if (toggleSpec == nullptr)
-                {
-                    continue;
-                }
-                action = std::make_unique<actions::DynamicToggleAction>(toggleSpec->onCommand, toggleSpec->offCommand);
-                break;
-            }
-            case ActionSourceType::Timed:
-                action = std::make_unique<actions::DynamicTimedAction>(reg.command);
-                break;
-            default:
-                break;
-            }
-
-            rActionMap[reg.buttonId] = {action.get(), reg.ledPolicy};
-            m_ownedActions.push_back(std::move(action));
+            registerOwnedAction(
+                m_ownedActions,
+                rActionMap,
+                reg.buttonId,
+                reg.ledPolicy,
+                createActionSource(reg));
         }
     }
 }

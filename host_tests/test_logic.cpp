@@ -13,6 +13,7 @@
 #include "app/ActionCommandRoutingPolicy.hpp"
 #include "app/ActionFactory.hpp"
 #include "app/ActionUartDispatcher.hpp"
+#include "app/ControlBoardActionRegistry.hpp"
 #include "app/ControlBoardButtonIds.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
 #include "power/DelayedBootRecoveryState.hpp"
@@ -229,7 +230,7 @@ public:
     bool lastLedState = false;
 };
 
-class FakeUartCommandSink : public controlSystem::IUartCommandSink
+class FakeUartCommandSink : public transport::uart::IUartCommandSink
 {
 public:
     void sendUartCommand(const char *p_logTag, uint32_t commandId) override
@@ -539,6 +540,19 @@ void test_action_uart_dispatcher_ignores_unknown_command()
     expect_equal(0, uartSink.messageCount, "Unknown command should not send a message");
 }
 
+void test_action_uart_dispatcher_ignores_relay_routed_toggle_command()
+{
+    FakeUartCommandSink uartSink;
+    controlSystem::ActionUartDispatcher dispatcher(uartSink);
+    const auto action = makeAction(CMD_TOGGLE_DAC_ON);
+
+    const bool handled = dispatcher.handle(*action);
+
+    expect_true(!handled, "Relay-routed toggle should not be handled by UART dispatcher");
+    expect_equal(0, uartSink.commandCount, "Relay-routed toggle should not send a command");
+    expect_equal(0, uartSink.messageCount, "Relay-routed toggle should not send a message");
+}
+
 void test_power_state_transition_policy_selects_power_on_for_sleeping_states()
 {
     expect_true(controlSystem::evaluatePowerTransition(ControlBoardPowerState::OFF, 0) ==
@@ -797,6 +811,74 @@ void test_control_board_sleep_blocks_rotary_input()
     expect_equal(static_cast<size_t>(0), indicators.activityHistory.size(),
                  "Sleeping mode should not change activity status for blocked rotary input");
 }
+
+void test_control_board_action_registry_populate_maps_expected_buttons()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    controlSystem::ControlBoardActionRegistry registry;
+
+    registry.populate(actionMap);
+
+    const auto &playPause = actionMap[controlSystem::controlBoardButtons::k_playPause];
+    expect_true(playPause.action != nullptr, "Play/pause should be mapped to an action source");
+    expect_true(playPause.ledPolicy == controlSystem::LedPolicy::Momentary,
+                "Play/pause should keep momentary LED policy");
+    const auto playPauseAction = playPause.action->produce(true);
+    expect_true(playPauseAction != nullptr, "Play/pause press should produce an action");
+    expect_equal(static_cast<uint16_t>(CMD_PLAY_PAUSE), static_cast<uint16_t>(playPauseAction->command),
+                 "Play/pause should dispatch the play/pause command");
+
+    const auto &cover = actionMap[controlSystem::controlBoardButtons::k_cover];
+    expect_true(cover.action != nullptr, "Cover button should be mapped to a toggle action source");
+    expect_true(cover.ledPolicy == controlSystem::LedPolicy::Toggle,
+                "Cover button should keep toggle LED policy");
+    const auto coverOnAction = cover.action->produce(true);
+    expect_true(coverOnAction != nullptr, "First cover press should produce an action");
+    expect_equal(static_cast<uint16_t>(CMD_COVER_VIEW_ON), static_cast<uint16_t>(coverOnAction->command),
+                 "First cover press should produce the ON command");
+    const auto coverOffAction = cover.action->produce(true);
+    expect_true(coverOffAction != nullptr, "Second cover press should produce an action");
+    expect_equal(static_cast<uint16_t>(CMD_COVER_VIEW_OFF), static_cast<uint16_t>(coverOffAction->command),
+                 "Second cover press should produce the OFF command");
+
+    const auto &power = actionMap[controlSystem::controlBoardButtons::k_power];
+    expect_true(power.action != nullptr, "Power button should be mapped to an action source");
+    expect_true(power.ledPolicy == controlSystem::LedPolicy::None,
+                "Power button should not drive a button LED");
+}
+
+void test_control_board_action_registry_populate_shares_rotary_action_slots()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    controlSystem::ControlBoardActionRegistry registry;
+
+    registry.populate(actionMap);
+
+    const auto &rotaryLeft = actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft];
+    const auto &rotaryRight = actionMap[controlSystem::controlBoardButtons::k_rotaryEventRight];
+
+    expect_true(rotaryLeft.action != nullptr, "Left rotary slot should be mapped");
+    expect_true(rotaryLeft.action == rotaryRight.action,
+                "Left and right rotary slots should share the same action source");
+    expect_true(rotaryLeft.ledPolicy == controlSystem::LedPolicy::None,
+                "Left rotary slot should not drive LEDs");
+    expect_true(rotaryRight.ledPolicy == controlSystem::LedPolicy::None,
+                "Right rotary slot should not drive LEDs");
+
+    const auto leftAction = rotaryLeft.action->produce(true);
+    expect_true(leftAction != nullptr, "Shared rotary source should produce an action for left rotation");
+    expect_equal(static_cast<uint16_t>(CMD_ROTARY_ACTION), static_cast<uint16_t>(leftAction->command),
+                 "Left rotary slot should produce the rotary action command");
+    expect_equal(static_cast<uint16_t>(0), leftAction->parameters[0],
+                 "Left rotary slot should encode left direction as parameter 0");
+
+    const auto rightAction = rotaryRight.action->produce(false);
+    expect_true(rightAction != nullptr, "Shared rotary source should produce an action for right rotation");
+    expect_equal(static_cast<uint16_t>(CMD_ROTARY_ACTION), static_cast<uint16_t>(rightAction->command),
+                 "Right rotary slot should produce the rotary action command");
+    expect_equal(static_cast<uint16_t>(1), rightAction->parameters[0],
+                 "Right rotary slot should encode right direction as parameter 1");
+}
 } // namespace
 
 int main()
@@ -826,6 +908,7 @@ int main()
         {"test_action_uart_dispatcher_routes_meter_on_message", test_action_uart_dispatcher_routes_meter_on_message},
         {"test_action_uart_dispatcher_routes_rotary_message", test_action_uart_dispatcher_routes_rotary_message},
         {"test_action_uart_dispatcher_ignores_unknown_command", test_action_uart_dispatcher_ignores_unknown_command},
+        {"test_action_uart_dispatcher_ignores_relay_routed_toggle_command", test_action_uart_dispatcher_ignores_relay_routed_toggle_command},
         {"test_power_state_transition_policy_selects_power_on_for_sleeping_states", test_power_state_transition_policy_selects_power_on_for_sleeping_states},
         {"test_power_state_transition_policy_selects_sleep_for_short_press", test_power_state_transition_policy_selects_sleep_for_short_press},
         {"test_power_state_transition_policy_selects_deep_sleep_for_long_press", test_power_state_transition_policy_selects_deep_sleep_for_long_press},
@@ -841,6 +924,8 @@ int main()
         {"test_control_board_sleep_blocks_non_power_button_release", test_control_board_sleep_blocks_non_power_button_release},
         {"test_control_board_sleep_allows_power_button_action", test_control_board_sleep_allows_power_button_action},
         {"test_control_board_sleep_blocks_rotary_input", test_control_board_sleep_blocks_rotary_input},
+        {"test_control_board_action_registry_populate_maps_expected_buttons", test_control_board_action_registry_populate_maps_expected_buttons},
+        {"test_control_board_action_registry_populate_shares_rotary_action_slots", test_control_board_action_registry_populate_shares_rotary_action_slots},
     };
 
     int failures = 0;

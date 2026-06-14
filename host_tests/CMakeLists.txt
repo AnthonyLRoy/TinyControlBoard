@@ -15,6 +15,7 @@ add_executable(tiny_control_board_host_tests
     ../lib/protocol/commandCatalog.cpp
     ../lib/app/ActionFactory.cpp
     ../lib/app/ActionUartDispatcher.cpp
+    ../lib/app/ControlBoardActionRegistry.cpp
     ../lib/app/ControlBoardInputDispatcher.cpp
 )
 

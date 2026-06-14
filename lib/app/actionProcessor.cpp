@@ -9,8 +9,7 @@ namespace controlSystem
     ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, SystemState &rSystemState, IActivityStatusSink *p_activitySink)
         : mr_serial(rSerialBus), mr_relays(rRelays), mr_systemState(rSystemState)
     {
-        mp_serialUartCommandSink = std::make_unique<SerialUartCommandSink>(mr_serial);
-        mp_actionUartDispatcher = std::make_unique<ActionUartDispatcher>(*mp_serialUartCommandSink);
+        mp_actionUartDispatcher = std::make_unique<ActionUartDispatcher>(mr_serial);
         mp_rpiBootManager = std::make_unique<RpiBootManager>();
         mp_relayController = std::make_unique<RelayController>(mr_serial, mr_relays);
         mp_powerStateTransitionHandler = std::make_unique<PowerStateTransitionHandler>(

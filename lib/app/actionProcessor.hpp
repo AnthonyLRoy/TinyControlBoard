@@ -4,7 +4,6 @@
 #include "input/actions/IAction.hpp"
 #include "app/ActionContext.hpp"
 #include "app/ActionUartDispatcher.hpp"
-#include "app/SerialUartCommandSink.hpp"
 #include "app/SystemState.hpp"
 #include "esp_log.h"
 #include "power/powerState.hpp"
@@ -38,7 +37,6 @@ namespace controlSystem
 
     private:
         std::unique_ptr<ActionUartDispatcher> mp_actionUartDispatcher;
-        std::unique_ptr<SerialUartCommandSink> mp_serialUartCommandSink;
         std::unique_ptr<RpiBootManager> mp_rpiBootManager;
         std::unique_ptr<RelayController> mp_relayController;
         std::unique_ptr<PowerStateTransitionHandler> mp_powerStateTransitionHandler;

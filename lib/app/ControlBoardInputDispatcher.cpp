@@ -29,13 +29,27 @@ namespace controlSystem
         }
     }
 
-    void ControlBoardInputDispatcher::applyLedOnRelease(uint8_t buttonId, LedPolicy policy)
+    void ControlBoardInputDispatcher::clearMomentaryLedOnRelease(uint8_t buttonId, LedPolicy policy)
     {
         if (policy != LedPolicy::Momentary)
         {
             return;
         }
         mr_indicators.setButtonLed(buttonId, false);
+    }
+
+    void ControlBoardInputDispatcher::dispatchButtonAction(const ButtonConfig &config, bool isPressed)
+    {
+        if (!config.action)
+        {
+            return;
+        }
+
+        auto iaction = config.action->produce(isPressed);
+        if (iaction)
+        {
+            m_onResponse(std::move(iaction));
+        }
     }
 
     void ControlBoardInputDispatcher::handleButtonPressed(uint8_t buttonPressedId)
@@ -54,15 +68,7 @@ namespace controlSystem
 
         const ButtonConfig &config = mr_actionMap[buttonPressedId];
         applyLedOnPress(buttonPressedId, config.ledPolicy);
-
-        if (config.action)
-        {
-            auto iaction = config.action->produce(true);
-            if (iaction)
-            {
-                m_onResponse(std::move(iaction));
-            }
-        }
+        dispatchButtonAction(config, true);
     }
 
     void ControlBoardInputDispatcher::handleButtonReleased(uint8_t buttonReleasedId)
@@ -80,15 +86,8 @@ namespace controlSystem
         mr_indicators.setActivityStatus(m_backgroundStatus);
 
         const ButtonConfig &config = mr_actionMap[buttonReleasedId];
-        if (config.action)
-        {
-            auto iaction = config.action->produce(false);
-            if (iaction)
-            {
-                m_onResponse(std::move(iaction));
-            }
-            applyLedOnRelease(buttonReleasedId, config.ledPolicy);
-        }
+        dispatchButtonAction(config, false);
+        clearMomentaryLedOnRelease(buttonReleasedId, config.ledPolicy);
     }
 
     void ControlBoardInputDispatcher::handleRotaryMovement(int direction)
