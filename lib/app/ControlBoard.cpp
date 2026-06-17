@@ -16,13 +16,8 @@ namespace controlSystem
     {
         ESP_LOGI(k_logTag, "Starting ControlBoard init...");
 
-        const auto failStartupStage = []() {
-            indicators::getSpiBootIndicator().notifyFailure();
-            return false;
-        };
-
-        initNvs();
         bootstrap::prepareStartupIndicators();
+        initNvs();
         initTransport();
         initComponents();
 
@@ -31,12 +26,14 @@ namespace controlSystem
 
         if (!bootstrap::setupMcpHandler(m_mcpHandler))
         {
-            return failStartupStage();
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
         }
 
         if (!m_buttonQueue.start(*mp_inputDispatcher))
         {
-            return failStartupStage();
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
         }
 
         bootstrap::configureMcpCallbacks(
@@ -47,14 +44,16 @@ namespace controlSystem
 
         if (!bootstrap::setupSerial(*mp_serialHandler))
         {
-            return failStartupStage();
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
         }
 
         m_actionRegistry.populate(mp_buttonActions);
         bootstrap::finalizeStartupIndicators();
         if (!mp_responseProcessor->triggerInitialPowerOn())
         {
-            return failStartupStage();
+            indicators::getSpiBootIndicator().notifyFailure();
+            return false;
         }
         return true;
     }

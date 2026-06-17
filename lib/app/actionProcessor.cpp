@@ -48,8 +48,7 @@ namespace controlSystem
 
     bool ActionProcessor::handleInboundUartMessage(const UartMessage &message)
     {
-        // Scaffold only: protocol-specific inbound handling will be added in a
-        // dedicated pass once ACK/STATUS semantics are finalized.
+        // Scaffold only: 
         ESP_LOGI(k_logTag, "Inbound UART message received (type=%u cmd=0x%04X seq=%u)",
                  message.msgType, message.commandId, message.sequence);
         return false;
