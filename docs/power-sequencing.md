@@ -6,6 +6,7 @@ Source files:
 
 - [lib/power/PowerStateTransitionHandler.cpp](../lib/power/PowerStateTransitionHandler.cpp)
 - [lib/power/PowerStateTransitionPolicy.hpp](../lib/power/PowerStateTransitionPolicy.hpp)
+- [lib/power/DelayedBootRecoveryState.hpp](../lib/power/DelayedBootRecoveryState.hpp)
 - [lib/power/RPIBootManager.cpp](../lib/power/RPIBootManager.cpp)
 - [lib/power/RelayController.cpp](../lib/power/RelayController.cpp)
 - [lib/power/powerState.hpp](../lib/power/powerState.hpp)
@@ -28,9 +29,11 @@ The current power state enum is:
 In practice, the code paths currently used most clearly are:
 
 - `TURNING_ON`
+- `SHUTTING_DOWN`
 - `ON`
-- `SLEEP`
 - `GOING_TO_SLEEP`
+- `GOING_INTO_DEEP_SLEEP`
+- `SLEEP`
 - `DEEPSLEEP`
 
 ## 2. Timing Constants Used Today
@@ -89,15 +92,17 @@ If the current state is `ON` and the power button hold time is less than 3000 ms
 
 Current sequence:
 
-1. power LED state becomes `GOING_TO_SLEEP`,
+1. power LED state becomes `SHUTTING_DOWN`,
 2. `CMD_SYS_RPI_SHUTDOWN` is sent over UART,
 3. firmware waits up to 60 seconds for shutdown confirmation via heartbeat timeout,
-4. Raspberry Pi power relay is turned off,
-5. firmware delays 500 ms,
-6. screen power relay is turned off,
-7. firmware delays 5000 ms,
-8. power LED state becomes `SLEEP`,
-9. activity status becomes `sleeping`.
+4. power LED state becomes `GOING_TO_SLEEP`,
+5. Raspberry Pi power relay is turned off,
+6. firmware delays 500 ms,
+7. screen power relay is turned off,
+8. firmware delays 5000 ms,
+9. SPI LEDs are cleared and the button-status LED is set back to `Idle`,
+10. power LED state becomes `SLEEP`,
+11. activity status becomes `sleeping`.
 
 Practical result:
 
@@ -111,16 +116,18 @@ If the current state is `ON` and the power button hold time is 3000 ms or more, 
 
 Current sequence:
 
-1. power LED state becomes `GOING_TO_SLEEP`,
+1. power LED state becomes `SHUTTING_DOWN`,
 2. `CMD_SYS_RPI_SHUTDOWN` is sent over UART,
 3. firmware waits up to 60 seconds for shutdown confirmation via heartbeat timeout,
-4. Raspberry Pi power relay is turned off,
-5. firmware delays 500 ms,
-6. screen power relay is turned off,
-7. DAC relay is turned off,
-8. output stage relay is turned off,
-9. power LED state becomes `DEEPSLEEP`,
-10. activity status becomes `sleeping`.
+4. power LED state becomes `GOING_INTO_DEEP_SLEEP`,
+5. Raspberry Pi power relay is turned off,
+6. firmware delays 500 ms,
+7. screen power relay is turned off,
+8. DAC relay is turned off,
+9. output stage relay is turned off,
+10. SPI LEDs are cleared and the button-status LED is set back to `Idle`,
+11. power LED state becomes `DEEPSLEEP`,
+12. activity status becomes `sleeping`.
 
 Practical result:
 
@@ -165,19 +172,18 @@ Current dedicated relay helper methods:
 
 ## 9. Current Behavior Caveats
 
-- `wait` parameters in relay shutdown helpers are currently unused.
-- The code path sets `GOING_TO_SLEEP` for both sleep and deep-sleep paths.
-- The enum includes states like `SHUTTING_DOWN` and `GOING_INTO_DEEP_SLEEP`, but the current processor code does not clearly transition through them.
+- Shutdown waits are advisory today: `waitForRpiShutdown()` is called, but the result is not checked before power is removed.
+- The state machine uses `SHUTTING_DOWN` before both sleep and deep-sleep, then diverges into `GOING_TO_SLEEP` or `GOING_INTO_DEEP_SLEEP` after the Pi shutdown wait.
 - `waitForRpiShutdown()` is satisfied by heartbeat timeout, which is a practical signal but not a strong explicit shutdown acknowledgment packet.
-- On boot timeout, the power LED still transitions to `ON`. The fast-flashing SPI LEDs from `SpiBootIndicator::notifyFailure()` are the only persistent failure indicator.
+- On boot timeout, the power LED transitions to `SLEEP`. The fast-flashing SPI LEDs from `SpiBootIndicator::notifyFailure()` remain as the persistent degraded-mode indicator until a later heartbeat arrives.
 
 ## 10. Debug Flag: Simulating Pi Boot
 
-To test the full firmware on the bench without a connected Raspberry Pi, set the following flag in [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp):
+To test the full firmware on the bench without a connected Raspberry Pi, use the debug flag in [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp):
 
 ```cpp
 namespace board::debug {
-    inline constexpr bool kSimulateRpiBoot = true; // set false for production
+    inline constexpr bool k_simulateRpiBoot = true;
 }
 ```
 
@@ -185,16 +191,16 @@ When `true`:
 
 - `RpiBootManager::waitForRpiToBoot()` returns `true` immediately without waiting for a heartbeat,
 - `SpiBootIndicator::notifySuccess()` is called and the boot flash stops normally,
-- a warning is logged: `DEBUG: kSimulateRpiBoot is set — skipping RPi heartbeat wait`.
+- a warning is logged: `Debug mode enabled: skipping RPi heartbeat wait (k_simulateRpiBoot=true)`.
 
-When `false` (default/production): this code path is optimized away entirely by the compiler (`if constexpr`).
+Current default behavior:
 
-- `wait` parameters in relay shutdown helpers are currently unused.
-- The code path sets `GOING_TO_SLEEP` for both sleep and deep-sleep paths.
-- The enum includes states like `SHUTTING_DOWN` and `GOING_INTO_DEEP_SLEEP`, but the current processor code does not clearly transition through them.
-- `waitForRpiShutdown()` is satisfied by heartbeat timeout, which is a practical signal but not a strong explicit shutdown acknowledgment packet.
+- debug builds default `k_simulateRpiBoot` to `true`,
+- release builds default `k_simulateRpiBoot` to `false`,
+- defining `SIMULATE_RPI_BOOT=1` or `SIMULATE_RPI_BOOT=0` overrides either default at compile time,
+- the branch is still compiled as an `if constexpr`, so the selected behavior is fixed at build time.
 
-## 10. Recommended Future Documentation Additions
+## 11. Recommended Future Documentation Additions
 
 Useful follow-ups for this file later:
 
@@ -203,8 +209,8 @@ Useful follow-ups for this file later:
 3. document which subsystems remain powered in each state,
 4. document recovery behavior if heartbeat never appears during boot.
 
-## 11. Related Docs
+## 12. Related Docs
 
 - [docs/project-guide.md](./project-guide.md)
-- [docs/architecture.md](./architecture.md)
+- [docs/firmware-technical-design.md](./firmware-technical-design.md)
 - [docs/wiring-reference.md](./wiring-reference.md)
