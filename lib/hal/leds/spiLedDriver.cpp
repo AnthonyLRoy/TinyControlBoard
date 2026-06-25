@@ -122,6 +122,25 @@ namespace indicators
             return;
         }
 
+        ESP_LOGI(k_logTag, "SPI LED pattern sent: 0x%04X [b15..b0=%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d]",
+                 m_ledBitState,
+                 (m_ledBitState >> 15) & 0x1,
+                 (m_ledBitState >> 14) & 0x1,
+                 (m_ledBitState >> 13) & 0x1,
+                 (m_ledBitState >> 12) & 0x1,
+                 (m_ledBitState >> 11) & 0x1,
+                 (m_ledBitState >> 10) & 0x1,
+                 (m_ledBitState >> 9) & 0x1,
+                 (m_ledBitState >> 8) & 0x1,
+                 (m_ledBitState >> 7) & 0x1,
+                 (m_ledBitState >> 6) & 0x1,
+                 (m_ledBitState >> 5) & 0x1,
+                 (m_ledBitState >> 4) & 0x1,
+                 (m_ledBitState >> 3) & 0x1,
+                 (m_ledBitState >> 2) & 0x1,
+                 (m_ledBitState >> 1) & 0x1,
+                 m_ledBitState & 0x1);
+
         esp_rom_delay_us(5);
         gpio_set_level(m_latchPin, 1);
         esp_rom_delay_us(20);
