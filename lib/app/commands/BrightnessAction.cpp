@@ -5,15 +5,16 @@ namespace actions
 {
     void BrightnessAction::execute(controlSystem::ActionContext &ctx)
     {
-        if (command == CMD_TOGGLE_DISPLAY)
+        switch (command)
         {
+        case CMD_TOGGLE_DISPLAY:
             ctx.brightnessController.toggleDisplayOffOn();
-            return;
-        }
-
-        if (command == CMD_CYCLE_BRIGHTNESS)
-        {
+            break;
+        case CMD_CYCLE_BRIGHTNESS:
             ctx.brightnessController.cycleBrightness();
+            break;
+        default:
+            break;
         }
     }
 }

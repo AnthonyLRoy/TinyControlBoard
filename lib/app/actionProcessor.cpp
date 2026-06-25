@@ -9,8 +9,7 @@ namespace controlSystem
     ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, SystemState &rSystemState, IActivityStatusSink *p_activitySink)
         : mr_serial(rSerialBus), mr_relays(rRelays), mr_systemState(rSystemState)
     {
-        mp_serialUartCommandSink = std::make_unique<SerialUartCommandSink>(mr_serial);
-        mp_actionUartDispatcher = std::make_unique<ActionUartDispatcher>(*mp_serialUartCommandSink);
+        mp_actionUartDispatcher = std::make_unique<ActionUartDispatcher>(mr_serial);
         mp_rpiBootManager = std::make_unique<RpiBootManager>();
         mp_relayController = std::make_unique<RelayController>(mr_serial, mr_relays);
         mp_powerStateTransitionHandler = std::make_unique<PowerStateTransitionHandler>(
@@ -49,8 +48,7 @@ namespace controlSystem
 
     bool ActionProcessor::handleInboundUartMessage(const UartMessage &message)
     {
-        // Scaffold only: protocol-specific inbound handling will be added in a
-        // dedicated pass once ACK/STATUS semantics are finalized.
+        // Scaffold only: 
         ESP_LOGI(k_logTag, "Inbound UART message received (type=%u cmd=0x%04X seq=%u)",
                  message.msgType, message.commandId, message.sequence);
         return false;
@@ -61,6 +59,11 @@ namespace controlSystem
         if (mp_rpiBootManager)
         {
             mp_rpiBootManager->handleHeartbeatReceived();
+        }
+
+        if (mp_powerStateTransitionHandler && mp_powerStateTransitionHandler->completePendingBootOnHeartbeat())
+        {
+            mr_systemState.powerState.store(ControlBoardPowerState::ON);
         }
     }
 
@@ -111,6 +114,19 @@ namespace controlSystem
         auto syntheticAction = createAction(CMD_SYS_POWER);
         const auto newState = mp_powerStateTransitionHandler->handle(*syntheticAction);
         mr_systemState.powerState.store(newState);
-        return newState == ControlBoardPowerState::ON;
+
+        if (newState == ControlBoardPowerState::ON)
+        {
+            return true;
+        }
+
+        if (newState == ControlBoardPowerState::SLEEP &&
+            mp_powerStateTransitionHandler->isAwaitingLateBootHeartbeat())
+        {
+            ESP_LOGW(k_logTag, "Initial power-on is running in degraded mode while waiting for a delayed RPi heartbeat");
+            return true;
+        }
+
+        return false;
     }
 }

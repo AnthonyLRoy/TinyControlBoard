@@ -22,21 +22,21 @@ namespace controlSystem
 
     bool RelayController::handleToggleDac(bool state)
     {
-        mr_relays.setRelayState(PIN_RELAY_DAC_POWER, state);
+        mr_relays.setRelayState(board::relays::k_dacPower, state);
         ESP_LOGI(k_logTag, "DAC relay set to %s", state ? "ON" : "OFF");
         return true;
     }
 
     bool RelayController::shutdownRpi()
     {
-        mr_relays.setRelayState(PIN_RELAY_RPI_POWER, false);
+        mr_relays.setRelayState(board::relays::k_rpiPower, false);
         ESP_LOGI(k_logTag, "RPI relay disabled");
         return true;
     }
 
     bool RelayController::shutdownScreen()
     {
-        mr_relays.setRelayState(PIN_RELAY_SCREEN_POWER, false);
+        mr_relays.setRelayState(board::relays::k_screenPower, false);
         ESP_LOGI(k_logTag, "Screen relay disabled");
         return true;
     }

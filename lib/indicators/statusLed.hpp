@@ -47,6 +47,7 @@ private:
 
     uint32_t getBlinkInterval(ControlBoardWorkingStatus status);
     uint32_t getBlinkDuty(ControlBoardWorkingStatus status);
+    void handleStatusChange(ControlBoardWorkingStatus status);
 };
 
 } // namespace indicators

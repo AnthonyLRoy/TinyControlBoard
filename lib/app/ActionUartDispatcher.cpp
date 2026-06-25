@@ -1,4 +1,6 @@
 #include "app/ActionUartDispatcher.hpp"
+
+#include "app/ActionCommandCatalog.hpp"
 #include "protocol/commandCatalog.hpp"
 
 #if __has_include("esp_log.h")
@@ -9,66 +11,69 @@
 
 namespace controlSystem
 {
-    ActionUartDispatcher::ActionUartDispatcher(IUartCommandSink &rUartCommandSink)
-        : mr_uartCommandSink(rUartCommandSink)
-    {
-    }
-
     namespace
     {
-        // Toggle commands: a logical ON/OFF pair maps to one normalized wire command
-        // with a boolean parameter. Adding a new toggle is one table row.
-        struct ToggleMapping
-        {
-            CommandId onCmd;
-            CommandId offCmd;
-            CommandId wireCmd;
-            const char *logTag;
-        };
+        constexpr const char *k_dispatchLogTag = "Uart_Dispatcher ";
 
-        constexpr ToggleMapping k_toggleTable[] = {
-            {CMD_COVER_VIEW_ON,   CMD_COVER_VIEW_OFF,   CMD_TOGGLE_COVER_VIEW, "Cover_View"},
-            {CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF, CMD_TOGGLE_METER,      "Meter"},
-            {CMD_REPEAT_ON,       CMD_REPEAT_OFF,       CMD_TOGGLE_REPEAT,     "Repeat"},
-            {CMD_RANDOM_ON,       CMD_RANDOM_OFF,       CMD_TOGGLE_RANDOM,     "Random"},
-        };
-    } // namespace
-
-    bool ActionUartDispatcher::handle(const actions::IAction &action)
-    {
-        for (const auto &m : k_toggleTable)
+        bool tryHandleToggleAction(transport::uart::IUartCommandSink &rUartCommandSink, const actions::IAction &action)
         {
-            if (action.command == m.onCmd || action.command == m.offCmd)
+            const auto *toggleSpec = findToggleCommandSpecByStateCommand(action.command);
+            if (toggleSpec == nullptr ||
+                toggleSpec->route != ActionCommandRoute::UartDispatch ||
+                toggleSpec->p_uartLogTag == nullptr)
             {
-                ESP_LOGI(k_logTag, "Processing %s toggle (%s)", m.logTag,
-                         action.command == m.onCmd ? "ON" : "OFF");
-                UartMessage message;
-                message.commandId = m.wireCmd;
-                message.params[0] = (action.command == m.onCmd) ? 1 : 0;
-                mr_uartCommandSink.sendUartMessage(m.logTag, message);
-                return true;
+                return false;
             }
+
+            ESP_LOGI(k_dispatchLogTag, "Processing %s toggle (%s)", toggleSpec->p_uartLogTag,
+                     action.command == toggleSpec->onCommand ? "ON" : "OFF");
+
+            UartMessage message;
+            message.commandId = toggleSpec->semanticCommand;
+            message.params[0] = (action.command == toggleSpec->onCommand) ? 1 : 0;
+            rUartCommandSink.sendUartMessage(toggleSpec->p_uartLogTag, message);
+            return true;
         }
 
-        if (action.command == CMD_ROTARY_ACTION)
+        bool tryHandleRotaryAction(transport::uart::IUartCommandSink &rUartCommandSink, const actions::IAction &action)
         {
+            if (action.command != CMD_ROTARY_ACTION)
+            {
+                return false;
+            }
+
             UartMessage message;
             message.commandId = action.command;
             message.params[0] = action.parameters[0];
-            mr_uartCommandSink.sendUartMessage("Rotary", message);
-            ESP_LOGI(k_logTag, "Processing Rotary Action Command (%s)",
+            rUartCommandSink.sendUartMessage("Rotary", message);
+            ESP_LOGI(k_dispatchLogTag, "Processing Rotary Action Command (%s)",
                      action.parameters[0] == 0 ? "LEFT" : "RIGHT");
             return true;
         }
 
-        const char *p_commandTag = getSimpleCommandLogTag(action.command);
-        if (p_commandTag)
+        bool tryHandleSimpleCommand(transport::uart::IUartCommandSink &rUartCommandSink, const actions::IAction &action)
         {
-            mr_uartCommandSink.sendUartCommand(p_commandTag, action.command);
-            ESP_LOGI(k_logTag, "Sending command: %s", p_commandTag);
+            const char *p_commandTag = getSimpleCommandLogTag(action.command);
+            if (p_commandTag == nullptr)
+            {
+                return false;
+            }
+
+            rUartCommandSink.sendUartCommand(p_commandTag, action.command);
+            ESP_LOGI(k_dispatchLogTag, "Sending command: %s", p_commandTag);
             return true;
         }
+    } // namespace
 
-        return false;
+    ActionUartDispatcher::ActionUartDispatcher(transport::uart::IUartCommandSink &rUartCommandSink)
+        : mr_uartCommandSink(rUartCommandSink)
+    {
+    }
+
+    bool ActionUartDispatcher::handle(const actions::IAction &action)
+    {
+        return tryHandleToggleAction(mr_uartCommandSink, action) ||
+               tryHandleRotaryAction(mr_uartCommandSink, action) ||
+               tryHandleSimpleCommand(mr_uartCommandSink, action);
     }
 }

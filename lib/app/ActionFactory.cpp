@@ -1,5 +1,5 @@
 #include "app/ActionFactory.hpp"
-#include "app/ActionCommandRoutingPolicy.hpp"
+#include "app/ActionCommandCatalog.hpp"
 #include "app/commands/UartDispatchAction.hpp"
 #include "app/commands/RelayAction.hpp"
 #include "app/commands/PowerTransitionAction.hpp"
@@ -10,7 +10,7 @@ namespace controlSystem
 {
     std::unique_ptr<actions::IAction> createAction(CommandId command, uint16_t releaseTimeMs)
     {
-        switch (classifyCommand(command, ControlBoardPowerState::ON))
+        switch (classifyOnStateCommand(command))
         {
         case ActionCommandRoute::None:
             return nullptr;
@@ -28,7 +28,6 @@ namespace controlSystem
             return std::make_unique<actions::BrightnessAction>(command);
 
         case ActionCommandRoute::UartDispatch:
-        case ActionCommandRoute::IgnoreWhileNotOn: // never reached (ON passed above)
         default:
             return std::make_unique<actions::UartDispatchAction>(command);
         }

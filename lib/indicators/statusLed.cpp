@@ -171,41 +171,46 @@ void StatusLed::runLedTask(void *p_param)
             p_self->m_currentStatus.store(receivedStatus);
             ESP_LOGI(k_logTag, "LED status updated to %d", static_cast<int>(receivedStatus));
             ESP_LOGI(k_logTag, "Handling status change for pin %d", p_self->m_pin);
-            xTimerStop(p_self->mp_blinkTimer, 0);
-            p_self->stopBreatheEffect();
-            p_self->m_ledOn = false;
-            p_self->updateDuty(0);
-
-            switch (receivedStatus)
-            {
-            case ControlBoardWorkingStatus::doingWork:
-                p_self->m_ledOn = true;
-                p_self->updateDuty(MAX_DUTY);
-                break;
-            case ControlBoardWorkingStatus::Active:
-                // Blip: brief flash once per second (off 900ms, on 100ms)
-                p_self->updateDuty(ACT_DUTY);
-                xTimerChangePeriod(p_self->mp_blinkTimer, pdMS_TO_TICKS(BLIP_OFF_MS), 0);
-                xTimerStart(p_self->mp_blinkTimer, 0);
-                break;
-            case ControlBoardWorkingStatus::SolidIdle:
-                p_self->m_ledOn = true;
-                p_self->updateDuty(p_self->m_idleDuty.load());
-                break;
-            case ControlBoardWorkingStatus::Idle:
-                // LED stays off — system is idle/off
-                break;
-            case ControlBoardWorkingStatus::sleeping:
-                p_self->updateDuty(MAX_DUTY);
-                xTimerChangePeriod(p_self->mp_blinkTimer, pdMS_TO_TICKS(SLEEP_BLIP_OFF_MS), 0);
-                xTimerStart(p_self->mp_blinkTimer, 0);
-                break;
-            }
+            p_self->handleStatusChange(receivedStatus);
         }
     }
 
     p_self->mp_ledTaskHandle = nullptr;
     vTaskDelete(nullptr);
+}
+
+void StatusLed::handleStatusChange(ControlBoardWorkingStatus status)
+{
+    xTimerStop(mp_blinkTimer, 0);
+    stopBreatheEffect();
+    m_ledOn = false;
+    updateDuty(0);
+
+    switch (status)
+    {
+    case ControlBoardWorkingStatus::doingWork:
+        m_ledOn = true;
+        updateDuty(MAX_DUTY);
+        break;
+    case ControlBoardWorkingStatus::Active:
+        // Blip: brief flash once per second (off 900ms, on 100ms)
+        updateDuty(ACT_DUTY);
+        xTimerChangePeriod(mp_blinkTimer, pdMS_TO_TICKS(BLIP_OFF_MS), 0);
+        xTimerStart(mp_blinkTimer, 0);
+        break;
+    case ControlBoardWorkingStatus::SolidIdle:
+        m_ledOn = true;
+        updateDuty(m_idleDuty.load());
+        break;
+    case ControlBoardWorkingStatus::Idle:
+        // LED stays off — system is idle/off
+        break;
+    case ControlBoardWorkingStatus::sleeping:
+        updateDuty(MAX_DUTY);
+        xTimerChangePeriod(mp_blinkTimer, pdMS_TO_TICKS(SLEEP_BLIP_OFF_MS), 0);
+        xTimerStart(mp_blinkTimer, 0);
+        break;
+    }
 }
 
 void StatusLed::updateDuty(uint32_t duty)
@@ -223,15 +228,22 @@ void StatusLed::handleTimer(TimerHandle_t timerHandle)
                         : 0;
     p_self->updateDuty(duty);
 
-    if (p_self->m_currentStatus.load() == ControlBoardWorkingStatus::Active)
+    switch (p_self->m_currentStatus.load())
+    {
+    case ControlBoardWorkingStatus::Active:
     {
         const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : BLIP_OFF_MS;
         xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
+        break;
     }
-    else if (p_self->m_currentStatus.load() == ControlBoardWorkingStatus::sleeping)
+    case ControlBoardWorkingStatus::sleeping:
     {
         const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : SLEEP_BLIP_OFF_MS;
         xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
+        break;
+    }
+    default:
+        break;
     }
 }
 
@@ -241,7 +253,10 @@ void StatusLed::startBreatheEffect()
     {
         return;
     }
+
     m_stopBreatheTask.store(false, std::memory_order_release);
+
+
     if (xTaskCreate(runBreatheTask, "BreatheTask", 2048, this, 5, &mp_breatheTaskHandle) != pdPASS)
     {
         mp_breatheTaskHandle = nullptr;

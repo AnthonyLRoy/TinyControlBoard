@@ -45,7 +45,7 @@ void McpInputHandler::setRotaryCallback(std::function<void(int)> cb) { m_rotaryC
 void McpInputHandler::setTimeout(uint32_t ms) { m_ticksToWait = pdMS_TO_TICKS(ms); }
 
 void McpInputHandler::enableI2c(bool enable) {
-    gpio_set_level(PIN_I2C_ENABLE, enable ? 1 : 0);
+    gpio_set_level(board::i2c::k_enablePin, enable ? 1 : 0);
     ESP_LOGI(k_logTag, "I2C %s", enable ? "enabled" : "disabled");
 }
 #ifdef DEBUG_MCP_SCAN
@@ -98,8 +98,8 @@ esp_err_t McpInputHandler::initI2cBus(gpio_num_t sda, gpio_num_t scl) {
     ESP_RETURN_ON_ERROR(i2c_param_config(m_i2cPort, &conf), k_logTag, "I2C config failed");
     ESP_RETURN_ON_ERROR(i2c_driver_install(m_i2cPort, I2C_MODE_MASTER, 0, 0, 0), k_logTag, "I2C install failed");
 
-    gpio_set_direction(PIN_I2C_ENABLE, GPIO_MODE_OUTPUT);
-    gpio_set_level(PIN_I2C_ENABLE, 1);
+    gpio_set_direction(board::i2c::k_enablePin, GPIO_MODE_OUTPUT);
+    gpio_set_level(board::i2c::k_enablePin, 1);
     return ESP_OK;
 }
 

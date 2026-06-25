@@ -5,6 +5,7 @@
 #include "driver/uart.h"
 #include "esp_log.h"
 #include "protocol/uartProtocol.hpp"
+#include "hal/uart/UartCommandSink.hpp"
 #include "uartReceiver.hpp"
 
 #include <atomic>
@@ -12,7 +13,7 @@
 
 namespace transport::uart
 {
-    class UartTransport
+    class UartTransport : public IUartCommandSink
     {
     public:
         static UartTransport &getInstance();
@@ -32,8 +33,8 @@ namespace transport::uart
 
         bool sendData(const uint8_t *p_data, size_t len);
         bool sendData(const char *p_message);
-        void sendUartCommand(const char *p_logTag, uint32_t commandId);
-        void sendUartMessage(const char *p_logTag, UartMessage &rMessage);
+        void sendUartCommand(const char *p_logTag, uint32_t commandId) override;
+        void sendUartMessage(const char *p_logTag, UartMessage &rMessage) override;
         void setRxCallback(std::function<void(const UartMessage &)> callback);
 
         uint64_t getLastRxTimeUs() const { return m_lastRxTimeUs.load(std::memory_order_relaxed); }
@@ -69,8 +70,5 @@ namespace transport::uart
         void handleUartRx();
         void onMessageReceived(const UartMessage &rMsg);
     };
-
-    inline constexpr gpio_num_t PIN_RPI_DATA_READY = board::serial::k_rpiDataReadyPin;
-    inline constexpr gpio_num_t PIN_ESP32_DATA_READY = board::serial::k_esp32DataReadyPin;
 
 } // namespace transport::uart
