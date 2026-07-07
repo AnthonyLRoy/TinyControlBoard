@@ -16,6 +16,11 @@ namespace controlSystem
         void prepareStartupIndicators()
         {
             indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
+            indicators::getSpiLedDriver().setAllLeds(false);
+            // Flash all button LEDs on for 1 second at the very start of bootup.
+            indicators::getSpiLedDriver().setAllLeds(true);
+            vTaskDelay(pdMS_TO_TICKS(500));
+            indicators::getSpiLedDriver().setAllLeds(false);
             // Brightness level is restored from NVS inside MonitorBrightnessController::init()
             indicators::getBootDiagnosticLeds().begin();
         }
