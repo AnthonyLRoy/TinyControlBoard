@@ -2,7 +2,6 @@
 
 enum class ControlBoardPowerState
 {
-    
     OFF,
     SHUTTING_DOWN,
     ON,
