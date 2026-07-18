@@ -1,5 +1,6 @@
 #include "main.h"
 #include "input/input.hpp"
+#include "ble/BleServer.hpp"
 #include "esp_pm.h"
 
 #define DELAY_STARTUP_TIME_MS 5000
@@ -26,6 +27,9 @@ extern "C" void app_main(void)
         board.deinit();
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
+
+    static ble::BleServer bleServer;
+    bleServer.start(board.getActionProcessor(), board.getSystemState());
 
     // Keep the app_main task alive; all work is done in FreeRTOS tasks.
     while (true)

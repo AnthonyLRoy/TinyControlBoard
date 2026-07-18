@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">TinyRemote</string>
+    <string name="scan_title">TinyRemote</string>
+    <string name="scan_subtitle">Searching for TinyControlBoard…</string>
+    <string name="scan_button">Scan</string>
+    <string name="scan_empty">No devices found yet</string>
+    <string name="connect">Connect</string>
+    <string name="connected">CONNECTED</string>
+    <string name="disconnected">DISCONNECTED</string>
+    <string name="power_state">Power: %1$s</string>
+    <string name="btn_power">Power</string>
+    <string name="btn_prev">Prev</string>
+    <string name="btn_next">Next</string>
+    <string name="btn_skip_fwd">Skip ▶▶</string>
+    <string name="btn_skip_back">◀◀ Skip</string>
+    <string name="btn_play_pause">Play / Pause</string>
+    <string name="btn_stop">Stop</string>
+    <string name="btn_cover">Cover</string>
+    <string name="btn_repeat">Repeat</string>
+    <string name="btn_random">Shuffle</string>
+    <string name="btn_dac">DAC</string>
+    <string name="btn_next_panel">Menu ▶</string>
+    <string name="btn_meter">Meter</string>
+    <string name="btn_vol_down">Vol –</string>
+    <string name="btn_vol_up">Vol +</string>
+    <string name="btn_brightness">Bright</string>
+</resources>

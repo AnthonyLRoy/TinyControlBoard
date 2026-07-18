@@ -138,6 +138,11 @@ namespace controlSystem
     void ControlBoard::setButtonLed(uint8_t pin, bool enabled)
     {
         indicators::getSpiLedDriver().setLed(pin, enabled);
+        const auto mask = static_cast<uint16_t>(1u << pin);
+        if (enabled)
+            m_systemState.buttonLedBitmask.fetch_or(mask, std::memory_order_relaxed);
+        else
+            m_systemState.buttonLedBitmask.fetch_and(static_cast<uint16_t>(~mask), std::memory_order_relaxed);
     }
 
     void ControlBoard::handleHeartbeatReceived()

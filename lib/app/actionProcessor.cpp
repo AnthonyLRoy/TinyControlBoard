@@ -3,6 +3,7 @@
 #include "board/boardConfig.hpp"
 #include "indicators/ledManager.hpp"
 #include <inttypes.h>
+#include <atomic>
 
 namespace controlSystem
 {
@@ -45,6 +46,24 @@ namespace controlSystem
         };
 
         iaction->execute(ctx);
+    }
+
+    void ActionProcessor::injectCommand(CommandId cmd, uint16_t releaseMs)
+    {
+        // Best-effort injection from external tasks (e.g. BLE). Uses an atomic
+        // flag to prevent concurrent execution without blocking long operations.
+        static std::atomic_bool s_busy{false};
+        if (s_busy.exchange(true, std::memory_order_acquire))
+        {
+            ESP_LOGW(k_logTag, "injectCommand: processor busy, dropping cmd 0x%04X", cmd);
+            return;
+        }
+        auto action = createAction(cmd, releaseMs);
+        if (action)
+        {
+            process(std::move(action));
+        }
+        s_busy.store(false, std::memory_order_release);
     }
 
     bool ActionProcessor::handleInboundUartMessage(const UartMessage &message)

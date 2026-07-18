@@ -25,6 +25,7 @@ namespace controlSystem
         bool init();
         void deinit();
         ActionProcessor &getActionProcessor() { return *mp_responseProcessor; }
+        SystemState &getSystemState() { return m_systemState; }
 
     private:
         void initNvs();

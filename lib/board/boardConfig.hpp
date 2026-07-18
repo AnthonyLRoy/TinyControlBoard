@@ -76,4 +76,9 @@ namespace debug {
 #endif
 } // namespace debug
 
+namespace ble {
+    inline constexpr char k_deviceName[] = "TinyControlBoard";
+    inline constexpr int  k_maxConnections = 1;
+} // namespace ble
+
 } // namespace board

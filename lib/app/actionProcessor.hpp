@@ -30,6 +30,10 @@ namespace controlSystem
         void process(std::unique_ptr<actions::IAction> iaction);
         bool handleInboundUartMessage(const UartMessage &message);
 
+        /// Thread-safe entry point for injecting commands from external tasks (e.g. BLE).
+        /// Best-effort: if the processor is busy, the command is dropped.
+        void injectCommand(CommandId cmd, uint16_t releaseMs = 0);
+
         void handleHeartbeatReceived();
         void handleHeartbeatTimeout();
         bool triggerInitialPowerOn();

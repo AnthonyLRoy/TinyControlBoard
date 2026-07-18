@@ -11,7 +11,8 @@ FILE(GLOB_RECURSE canonical_sources
 	${CMAKE_SOURCE_DIR}/lib/indicators/*.cpp
 	${CMAKE_SOURCE_DIR}/lib/input/actions/*.cpp
 	${CMAKE_SOURCE_DIR}/lib/power/*.cpp
-	${CMAKE_SOURCE_DIR}/lib/protocol/*.cpp)
+	${CMAKE_SOURCE_DIR}/lib/protocol/*.cpp
+	${CMAKE_SOURCE_DIR}/lib/ble/*.cpp)
 
 idf_component_register(
 	SRCS
@@ -19,4 +20,7 @@ idf_component_register(
 		${canonical_sources}
 	INCLUDE_DIRS
 		"."
-		"../lib")
+		"../lib"
+	REQUIRES
+		bt
+		nvs_flash)
