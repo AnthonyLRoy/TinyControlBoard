@@ -1,7 +1,6 @@
 package com.tinycb.remote.ui
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.os.Build
@@ -132,8 +131,8 @@ class ScanActivity : AppCompatActivity() {
     }
 
     private fun startScan() {
-        val btAdapter = BluetoothAdapter.getDefaultAdapter()
-        if (btAdapter == null || !btAdapter.isEnabled) {
+        val btManager = getSystemService(BLUETOOTH_SERVICE) as? android.bluetooth.BluetoothManager
+        if (btManager?.adapter?.isEnabled != true) {
             Toast.makeText(this, "Please enable Bluetooth", Toast.LENGTH_SHORT).show()
             return
         }

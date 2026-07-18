@@ -118,7 +118,7 @@ class BoardBleManager(context: Context) {
         }
 
         // Android < 13 fallback
-        @Suppress("DEPRECATION")
+        @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
         override fun onCharacteristicChanged(
             g: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
