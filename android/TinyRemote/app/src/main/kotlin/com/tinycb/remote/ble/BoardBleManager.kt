@@ -5,6 +5,8 @@ import android.bluetooth.*
 import android.bluetooth.le.*
 import android.content.Context
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
 import com.tinycb.remote.model.BoardStatus
@@ -38,6 +40,18 @@ class BoardBleManager(context: Context) {
     private var leScanner: BluetoothLeScanner? = null
     private var gatt: BluetoothGatt? = null
     private var cmdChar: BluetoothGattCharacteristic? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val connectTimeoutMs = 15_000L
+    private val connectTimeoutRunnable = Runnable {
+        if (_connectionState.value is ConnectionState.Connecting) {
+            Log.w(TAG, "Connection timed out after ${connectTimeoutMs}ms")
+            gatt?.close()
+            gatt = null
+            _connectionState.value = ConnectionState.Error(
+                "Connection timed out.\nMake sure the board is powered on and BLE firmware is running."
+            )
+        }
+    }
 
     // ── Scan callback ───────────────────────────────────────────────────────
     private val scanCallback = object : ScanCallback() {
@@ -59,18 +73,23 @@ class BoardBleManager(context: Context) {
     private val gattCallback = object : BluetoothGattCallback() {
 
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
+            mainHandler.removeCallbacks(connectTimeoutRunnable)
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    Log.i(TAG, "GATT connected; discovering services…")
+                    Log.i(TAG, "GATT connected (status=$status); discovering services…")
                     _connectionState.value = ConnectionState.Connected
                     g.discoverServices()
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    Log.i(TAG, "GATT disconnected (status=$status)")
+                    Log.w(TAG, "GATT disconnected (status=$status)")
                     gatt?.close()
                     gatt = null
                     cmdChar = null
-                    _connectionState.value = ConnectionState.Disconnected
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        _connectionState.value = ConnectionState.Error("Connection failed (GATT status $status)")
+                    } else {
+                        _connectionState.value = ConnectionState.Disconnected
+                    }
                     _status.value = null
                 }
             }
@@ -177,6 +196,15 @@ class BoardBleManager(context: Context) {
         stopScan()
         _connectionState.value = ConnectionState.Connecting(device)
         gatt = device.connectGatt(appContext, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+        if (gatt == null) {
+            Log.e(TAG, "connectGatt returned null — BLUETOOTH_CONNECT permission likely missing")
+            _connectionState.value = ConnectionState.Error(
+                "Could not start connection.\nGrant Bluetooth permission in Settings and retry."
+            )
+            return
+        }
+        // Start timeout watchdog
+        mainHandler.postDelayed(connectTimeoutRunnable, connectTimeoutMs)
     }
 
     @SuppressLint("MissingPermission")
@@ -200,6 +228,7 @@ class BoardBleManager(context: Context) {
     }
 
     fun disconnect() {
+        mainHandler.removeCallbacks(connectTimeoutRunnable)
         stopScan()
         gatt?.disconnect()
         gatt?.close()

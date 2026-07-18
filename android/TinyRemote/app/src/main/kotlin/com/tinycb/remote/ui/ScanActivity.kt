@@ -71,13 +71,14 @@ class ScanActivity : AppCompatActivity() {
                     }
                     is ConnectionState.Connecting -> {
                         b.progressScan.visibility = android.view.View.VISIBLE
-                        b.tvScanSubtitle.text = "Connecting…"
+                        b.btnScan.isEnabled = false
+                        b.tvScanSubtitle.text = "Connecting\u2026"
                     }
                     is ConnectionState.Connected -> {
                         b.progressScan.visibility = android.view.View.GONE
                         val intent = Intent(this@ScanActivity, MainActivity::class.java)
                         startActivity(intent)
-                        // Do not finish — back from MainActivity returns here
+                        // Do not finish \u2014 back from MainActivity returns here
                     }
                     is ConnectionState.Disconnected -> {
                         b.progressScan.visibility = android.view.View.GONE
@@ -88,7 +89,8 @@ class ScanActivity : AppCompatActivity() {
                     is ConnectionState.Error -> {
                         b.progressScan.visibility = android.view.View.GONE
                         b.btnScan.isEnabled = true
-                        Toast.makeText(this@ScanActivity, state.message, Toast.LENGTH_LONG).show()
+                        b.tvScanSubtitle.text = state.message
+                        deviceAdapter.submitList(emptyList())
                     }
                 }
             }
