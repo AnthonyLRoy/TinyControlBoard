@@ -3,7 +3,7 @@ package com.tinycb.remote.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.tinycb.remote.ble.BoardBleManager
+import com.tinycb.remote.ble.BoardBleManagerHolder
 import com.tinycb.remote.ble.ConnectionState
 import com.tinycb.remote.data.ButtonCatalog
 import com.tinycb.remote.model.BoardStatus
@@ -14,7 +14,9 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    val bleManager = BoardBleManager(application)
+    // Shared singleton — ScanActivity and MainActivity must talk to the SAME
+    // BLE connection, not two independently-connected instances.
+    val bleManager = BoardBleManagerHolder.get(application)
 
     val connectionState: StateFlow<ConnectionState> = bleManager.connectionState
     val boardStatus: StateFlow<BoardStatus?> = bleManager.status

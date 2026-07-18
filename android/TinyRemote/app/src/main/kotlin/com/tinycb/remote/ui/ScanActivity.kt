@@ -72,7 +72,7 @@ class ScanActivity : AppCompatActivity() {
                     is ConnectionState.Connecting -> {
                         b.progressScan.visibility = android.view.View.VISIBLE
                         b.btnScan.isEnabled = false
-                        b.tvScanSubtitle.text = "Connecting\u2026"
+                        b.tvScanSubtitle.text = "Connecting & discovering services\u2026"
                     }
                     is ConnectionState.Connected -> {
                         b.progressScan.visibility = android.view.View.GONE

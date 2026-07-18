@@ -47,6 +47,7 @@ static controlSystem::ActionProcessor *s_processor  = nullptr;
 static controlSystem::SystemState     *s_state       = nullptr;
 static uint16_t                        s_connHandle  = BLE_HS_CONN_HANDLE_NONE;
 static uint16_t                        s_statusValHandle = 0;
+static volatile bool                   s_subscribed  = false; // set true only after CCCD write confirmed
 
 // ---------------------------------------------------------------------------
 // Forward declarations for the GATT table
@@ -116,10 +117,44 @@ static int statusChrAccess(uint16_t conn, uint16_t attr,
     return 0;
 }
 
+// Helper: build and send a single status notification to the current connection
+static bool pushStatusNotification()
+{
+    if (!s_state || s_connHandle == BLE_HS_CONN_HANDLE_NONE)
+        return false;
+    if (s_statusValHandle == 0)
+    {
+        ESP_LOGE(k_logTag, "pushStatus: val_handle is 0 — GATT service not registered correctly!");
+        return false;
+    }
+    const auto     ps = static_cast<uint8_t>(s_state->powerState.load());
+    const uint16_t bm = s_state->buttonLedBitmask.load();
+    const uint8_t  buf[3] = { ps,
+                               static_cast<uint8_t>(bm & 0xFF),
+                               static_cast<uint8_t>((bm >> 8) & 0xFF) };
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(buf, sizeof(buf));
+    if (!om)
+    {
+        ESP_LOGW(k_logTag, "pushStatus: ble_hs_mbuf_from_flat returned NULL");
+        return false;
+    }
+    int rc = ble_gatts_notify_custom(s_connHandle, s_statusValHandle, om);
+    if (rc != 0)
+    {
+        ESP_LOGW(k_logTag, "ble_gatts_notify_custom failed: %d (conn=%u val=%u)",
+                 rc, s_connHandle, s_statusValHandle);
+        return false;
+    }
+    ESP_LOGI(k_logTag, "Status notification sent: powerState=%u bitmask=0x%04X", ps, bm);
+    return true;
+}
+
 // ---------------------------------------------------------------------------
 // GAP event handler
 // ---------------------------------------------------------------------------
 static int gapEventHandler(struct ble_gap_event *event, void *arg);
+
+static uint8_t s_ownAddrType = BLE_OWN_ADDR_PUBLIC;
 
 static void startAdvertising()
 {
@@ -153,12 +188,13 @@ static void startAdvertising()
     params.conn_mode = BLE_GAP_CONN_MODE_UND;
     params.disc_mode = BLE_GAP_DISC_MODE_GEN;
 
-    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, nullptr, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(s_ownAddrType, nullptr, BLE_HS_FOREVER,
                            &params, gapEventHandler, nullptr);
     if (rc != 0 && rc != BLE_HS_EALREADY)
         ESP_LOGE(k_logTag, "ble_gap_adv_start: %d", rc);
     else
-        ESP_LOGI(k_logTag, "BLE advertising as \"%s\"", board::ble::k_deviceName);
+        ESP_LOGI(k_logTag, "BLE advertising as \"%s\" (addr_type=%d)",
+                 board::ble::k_deviceName, s_ownAddrType);
 }
 
 static int gapEventHandler(struct ble_gap_event *event, void *arg)
@@ -178,9 +214,27 @@ static int gapEventHandler(struct ble_gap_event *event, void *arg)
         }
         break;
 
+    case BLE_GAP_EVENT_SUBSCRIBE:
+        if (event->subscribe.cur_notify)
+        {
+            // Mark subscribed so the notify task will push on its next cycle.
+            // Do NOT push here — the CCCD write response may still be in flight,
+            // and some Android stacks drop notifications received while a write
+            // response is pending on the same connection.
+            ESP_LOGI(k_logTag, "BLE notifications subscribed (attr=%u) — task will push shortly",
+                     event->subscribe.attr_handle);
+            s_subscribed = true;
+        }
+        else
+        {
+            s_subscribed = false;
+        }
+        break;
+
     case BLE_GAP_EVENT_DISCONNECT:
         ESP_LOGI(k_logTag, "BLE client disconnected (reason=%d)", event->disconnect.reason);
         s_connHandle = BLE_HS_CONN_HANDLE_NONE;
+        s_subscribed = false;
         startAdvertising();
         break;
 
@@ -195,7 +249,13 @@ static int gapEventHandler(struct ble_gap_event *event, void *arg)
 // ---------------------------------------------------------------------------
 static void onSync()
 {
-    ble_hs_util_ensure_addr(0);
+    // Determine the correct address type (public if available, random otherwise)
+    int rc = ble_hs_id_infer_auto(0, &s_ownAddrType);
+    if (rc != 0)
+    {
+        ESP_LOGW(k_logTag, "ble_hs_id_infer_auto failed (%d); using PUBLIC", rc);
+        s_ownAddrType = BLE_OWN_ADDR_PUBLIC;
+    }
     startAdvertising();
 }
 
@@ -215,13 +275,25 @@ static void statusNotifyTask(void *arg)
 {
     uint16_t lastBitmask    = 0xFFFF;
     uint8_t  lastPowerState = 0xFF;
+    bool     wasSubscribed  = false;
 
     while (true)
     {
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(200));  // 200 ms poll — fast enough, less aggressive
 
-        if (!s_state || s_connHandle == BLE_HS_CONN_HANDLE_NONE)
+        if (!s_state || !s_subscribed)
             continue;
+
+        // Freshly subscribed: wait an extra 100 ms to let the CCCD write response
+        // fully clear from Android's ATT queue, then force an initial push.
+        if (!wasSubscribed)
+        {
+            wasSubscribed = true;
+            vTaskDelay(pdMS_TO_TICKS(100));
+            lastBitmask    = 0xFFFF;  // force push
+            lastPowerState = 0xFF;
+            ESP_LOGI(k_logTag, "Subscription confirmed — sending initial status");
+        }
 
         const auto     ps = static_cast<uint8_t>(s_state->powerState.load());
         const uint16_t bm = s_state->buttonLedBitmask.load();
@@ -229,15 +301,19 @@ static void statusNotifyTask(void *arg)
         if (ps == lastPowerState && bm == lastBitmask)
             continue;
 
-        lastPowerState = ps;
-        lastBitmask    = bm;
+        ESP_LOGI(k_logTag, "Pushing status: powerState=%u bitmask=0x%04X", ps, bm);
+        bool sent = pushStatusNotification();
 
-        const uint8_t buf[3] = { ps,
-                                  static_cast<uint8_t>(bm & 0xFF),
-                                  static_cast<uint8_t>((bm >> 8) & 0xFF) };
-        struct os_mbuf *om = ble_hs_mbuf_from_flat(buf, sizeof(buf));
-        if (om)
-            ble_gatts_notify_custom(s_connHandle, s_statusValHandle, om);
+        if (sent)
+        {
+            lastPowerState = ps;
+            lastBitmask    = bm;
+        }
+
+        // If we lose the subscription between cycles, reset so the next
+        // subscription gets a fresh initial push.
+        if (!s_subscribed)
+            wasSubscribed = false;
     }
 }
 
@@ -266,11 +342,13 @@ void ble::BleServer::start(controlSystem::ActionProcessor &processor,
     rc = ble_gatts_add_svcs(k_gattSvcs);
     if (rc != 0) { ESP_LOGE(k_logTag, "ble_gatts_add_svcs: %d", rc); return; }
 
+    ESP_LOGI(k_logTag, "GATT services registered — status val_handle=%u", s_statusValHandle);
+
     ble_hs_cfg.sync_cb = onSync;
     ble_svc_gap_device_name_set(board::ble::k_deviceName);
 
     nimble_port_freertos_init(bleHostTask);
-    xTaskCreate(statusNotifyTask, "ble_status", 2048, nullptr, 3, nullptr);
+    xTaskCreate(statusNotifyTask, "ble_status", 4096, nullptr, 3, nullptr);
 
     ESP_LOGI(k_logTag, "BLE server initialised");
 }

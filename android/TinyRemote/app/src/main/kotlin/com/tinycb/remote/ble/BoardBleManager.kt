@@ -38,8 +38,8 @@ class BoardBleManager(context: Context) {
     // ── Internal state ──────────────────────────────────────────────────────
     private val discoveredDevices = mutableListOf<BluetoothDevice>()
     private var leScanner: BluetoothLeScanner? = null
-    private var gatt: BluetoothGatt? = null
-    private var cmdChar: BluetoothGattCharacteristic? = null
+    @Volatile private var gatt: BluetoothGatt? = null
+    @Volatile private var cmdChar: BluetoothGattCharacteristic? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val connectTimeoutMs = 15_000L
     private val connectTimeoutRunnable = Runnable {
@@ -77,7 +77,8 @@ class BoardBleManager(context: Context) {
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     Log.i(TAG, "GATT connected (status=$status); discovering services…")
-                    _connectionState.value = ConnectionState.Connected
+                    // Stay in Connecting — emit Connected only after onServicesDiscovered
+                    // confirms both characteristics are ready (prevents null cmdChar race).
                     g.discoverServices()
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
@@ -102,19 +103,38 @@ class BoardBleManager(context: Context) {
             }
             val svc = g.getService(BleUuids.SERVICE)
             if (svc == null) {
-                Log.e(TAG, "TinyControlBoard service not found")
+                Log.e(TAG, "TinyControlBoard service not found — UUIDs: ${g.services.map { it.uuid }}")
                 return
             }
+
+            // Log all characteristics for diagnosis
+            Log.i(TAG, "Service found with ${svc.characteristics.size} characteristics:")
+            svc.characteristics.forEach { chr ->
+                Log.i(TAG, "  uuid=${chr.uuid}  props=${chr.properties}")
+            }
+
             cmdChar = svc.getCharacteristic(BleUuids.CMD_CHAR)
+            if (cmdChar == null) {
+                Log.e(TAG, "CMD characteristic NOT found \u2014 refreshing GATT cache and re-discovering")
+                refreshGattCache(g)
+                g.discoverServices()
+                return
+            }
+
             val statusChar = svc.getCharacteristic(BleUuids.STATUS_CHAR) ?: run {
                 Log.e(TAG, "Status characteristic not found")
                 return
             }
 
+            // Both characteristics ready \u2014 now it is safe to open the control panel
+            Log.i(TAG, "All characteristics found \u2014 emitting Connected")
+            _connectionState.value = ConnectionState.Connected
+
             // Subscribe to status notifications
             g.setCharacteristicNotification(statusChar, true)
             val cccd = statusChar.getDescriptor(BleUuids.CCCD)
             if (cccd != null) {
+                Log.d(TAG, "Writing CCCD to enable notifications on status char")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     g.writeDescriptor(cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
                 } else {
@@ -123,8 +143,18 @@ class BoardBleManager(context: Context) {
                     @Suppress("DEPRECATION")
                     g.writeDescriptor(cccd)
                 }
+            } else {
+                Log.e(TAG, "CCCD descriptor not found on status characteristic!")
             }
-            Log.i(TAG, "Services set up; notifications enabled")
+            Log.i(TAG, "Services set up; cmdChar and notifications enabled")
+        }
+
+        override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.i(TAG, "CCCD write confirmed (handle=${descriptor.characteristic?.uuid}) — notifications active")
+            } else {
+                Log.e(TAG, "CCCD write FAILED status=$status — notifications will not arrive!")
+            }
         }
 
         // Android 13+ (API 33) overload — preferred
@@ -133,6 +163,7 @@ class BoardBleManager(context: Context) {
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
+            Log.d(TAG, "onCharacteristicChanged (API33+): uuid=${characteristic.uuid} bytes=${value.size}")
             if (characteristic.uuid == BleUuids.STATUS_CHAR) parseStatus(value)
         }
 
@@ -142,6 +173,7 @@ class BoardBleManager(context: Context) {
             g: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            Log.d(TAG, "onCharacteristicChanged (legacy): uuid=${characteristic.uuid}")
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
                 && characteristic.uuid == BleUuids.STATUS_CHAR) {
                 parseStatus(characteristic.value ?: return)
@@ -150,6 +182,18 @@ class BoardBleManager(context: Context) {
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
+    /** Clears the Android GATT service cache via the hidden refresh() API.
+     *  Silently ignored if the API is unavailable. */
+    private fun refreshGattCache(g: BluetoothGatt) {
+        try {
+            val method = g.javaClass.getMethod("refresh")
+            val result = method.invoke(g) as Boolean
+            Log.i(TAG, "BluetoothGatt.refresh() = $result — stale service cache cleared")
+        } catch (e: Exception) {
+            Log.w(TAG, "BluetoothGatt.refresh() unavailable: ${e.message}")
+        }
+    }
+
     private fun parseStatus(value: ByteArray) {
         if (value.size < 3) return
         val powerStateOrdinal = value[0].toInt() and 0xFF
@@ -209,8 +253,9 @@ class BoardBleManager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun sendCommand(commandId: Int) {
-        val char = cmdChar ?: return
-        val g    = gatt    ?: return
+        val char = cmdChar ?: run { Log.w(TAG, "sendCommand 0x%04X: cmdChar is null".format(commandId)); return }
+        val g    = gatt    ?: run { Log.w(TAG, "sendCommand 0x%04X: gatt is null".format(commandId)); return }
+        Log.d(TAG, "sendCommand: writing 0x%04X to CMD characteristic".format(commandId))
         val bytes = byteArrayOf(
             (commandId and 0xFF).toByte(),
             ((commandId shr 8) and 0xFF).toByte()
