@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.tinycb.remote.BuildConfig
 import com.tinycb.remote.ble.ConnectionState
 import com.tinycb.remote.databinding.ActivityScanBinding
 import com.tinycb.remote.databinding.ItemBleDeviceBinding
@@ -51,6 +52,14 @@ class ScanActivity : AppCompatActivity() {
         b.rvDevices.adapter = deviceAdapter
 
         b.btnScan.setOnClickListener { requestPermissionsAndScan() }
+
+        // Debug-only: skip BLE entirely and preview the button-grid UI (no board required)
+        if (BuildConfig.DEBUG) {
+            b.tvPreviewUi.visibility = android.view.View.VISIBLE
+            b.tvPreviewUi.setOnClickListener {
+                startActivity(Intent(this@ScanActivity, MainActivity::class.java))
+            }
+        }
 
         lifecycleScope.launch {
             vm.connectionState.collectLatest { state ->
