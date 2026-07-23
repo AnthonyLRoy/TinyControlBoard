@@ -1,24 +1,26 @@
 <resources>
+    <!-- Light theme (used when system Dark mode is off) -->
+
     <!-- Background shades -->
-    <color name="bg_primary">#0D0D0D</color>
-    <color name="bg_surface">#1A1A1A</color>
-    <color name="bg_card">#242424</color>
-    <color name="bg_card_pressed">#2E2E2E</color>
+    <color name="bg_primary">#FAFAFA</color>
+    <color name="bg_surface">#FFFFFF</color>
+    <color name="bg_card">#F0F0F0</color>
+    <color name="bg_card_pressed">#E2E2E2</color>
 
     <!-- Accent / LED -->
-    <color name="amber">#FFA726</color>
-    <color name="amber_dim">#5C3A00</color>
-    <color name="led_active">#FFA726</color>
-    <color name="led_inactive">#3A3A3A</color>
+    <color name="amber">#FB8C00</color>
+    <color name="amber_dim">#FFE0B2</color>
+    <color name="led_active">#FB8C00</color>
+    <color name="led_inactive">#D0D0D0</color>
 
     <!-- Text -->
-    <color name="text_primary">#EEEEEE</color>
-    <color name="text_secondary">#888888</color>
-    <color name="text_accent">#FFA726</color>
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_accent">#E65100</color>
 
     <!-- Power state badge colours -->
-    <color name="state_on">#4CAF50</color>
-    <color name="state_off">#F44336</color>
-    <color name="state_sleep">#FF9800</color>
-    <color name="state_busy">#2196F3</color>
+    <color name="state_on">#2E7D32</color>
+    <color name="state_off">#C62828</color>
+    <color name="state_sleep">#EF6C00</color>
+    <color name="state_busy">#1565C0</color>
 </resources>

@@ -11,10 +11,10 @@
         <item name="android:navigationBarColor">@color/bg_primary</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
-        <!-- Ripple on light backgrounds -->
-        <item name="colorControlHighlight">#33FB8C00</item>
-        <!-- Light backgrounds need dark status/nav bar icons -->
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+        <!-- Ripple on dark backgrounds -->
+        <item name="colorControlHighlight">#33FFA726</item>
+        <!-- Dark backgrounds need light (white) status/nav bar icons -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
     </style>
 </resources>
