@@ -32,7 +32,12 @@ class MainActivity : AppCompatActivity() {
         buttonAdapter.submitList(vm.buttons)
 
         b.rvButtons.apply {
-            layoutManager = GridLayoutManager(this@MainActivity, 4)
+            layoutManager = GridLayoutManager(this@MainActivity, 4).apply {
+                spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                    override fun getSpanSize(position: Int): Int =
+                        buttonAdapter.currentList.getOrNull(position)?.spanSize ?: 1
+                }
+            }
             adapter = buttonAdapter
             setHasFixedSize(true)
         }

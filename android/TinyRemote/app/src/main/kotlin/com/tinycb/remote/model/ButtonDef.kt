@@ -6,5 +6,7 @@ data class ButtonDef(
     val commandId: Int,
     /** Bit index in buttonLedBitmask, or -1 if this button has no LED. */
     val bitmaskBit: Int,
-    val iconRes: Int
+    val iconRes: Int,
+    /** Number of grid columns this button spans (out of 4). */
+    val spanSize: Int = 1
 )
