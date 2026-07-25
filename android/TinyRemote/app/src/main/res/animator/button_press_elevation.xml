@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pressed state sinks the card down slightly (like a physical button being pushed in);
+     released state pops it back up. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <set>
+            <objectAnimator
+                android:propertyName="translationY"
+                android:valueTo="2dp"
+                android:valueType="floatType"
+                android:duration="100" />
+        </set>
+    </item>
+    <item>
+        <set>
+            <objectAnimator
+                android:propertyName="translationY"
+                android:valueTo="0dp"
+                android:valueType="floatType"
+                android:duration="100" />
+        </set>
+    </item>
+</selector>

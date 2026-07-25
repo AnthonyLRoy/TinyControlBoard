@@ -23,4 +23,8 @@
     <color name="state_off">#C62828</color>
     <color name="state_sleep">#EF6C00</color>
     <color name="state_busy">#1565C0</color>
+
+    <!-- Button panel backgrounds -->
+    <color name="btn_bg_default">#1976D2</color>
+    <color name="btn_bg_power">#E57373</color>
 </resources>

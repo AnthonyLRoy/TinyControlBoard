@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Glossy highlight overlay: a soft sheen confined to the top of the button that
+     fades all the way to transparent before it ends, so there's no visible seam. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:startColor="#26FFFFFF"
+        android:endColor="#00FFFFFF"
+        android:angle="270" />
+</shape>

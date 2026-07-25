@@ -30,6 +30,6 @@ object ButtonCatalog {
         ButtonDef(14, "Vol +",      0x0111, -1, R.drawable.ic_add_circle),
         ButtonDef(15, "Bright",     0x0116, 15, R.drawable.ic_brightness),
         // Last row: power by itself, full width
-        ButtonDef(0,  "Power",      0x0001, -1, R.drawable.ic_power, spanSize = 4)
+        ButtonDef(0,  "Power",      0x0001, -1, R.drawable.ic_power, spanSize = 4, backgroundColorRes = R.color.btn_bg_power)
     )
 }

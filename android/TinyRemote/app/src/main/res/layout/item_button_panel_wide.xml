@@ -17,9 +17,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="96dp"
-        android:paddingHorizontal="8dp"
-        android:paddingBottom="14dp"
-        android:paddingTop="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="16dp">
 
         <!-- LED indicator dot (top-right) -->
         <View
@@ -30,29 +29,32 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Button icon -->
+        <!-- Icon + label as a centered horizontal group, so wide buttons fill their width -->
         <ImageView
             android:id="@+id/ivIcon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:tint="@android:color/white"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintEnd_toStartOf="@id/tvLabel"
+            app:layout_constraintTop_toTopOf="@id/tvLabel"
+            app:layout_constraintBottom_toBottomOf="@id/tvLabel" />
 
-        <!-- Button label -->
         <TextView
             android:id="@+id/tvLabel"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginStart="14dp"
             android:gravity="center"
-            android:maxLines="2"
+            android:maxLines="1"
             android:textColor="@android:color/white"
-            android:textSize="12sp"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/ivIcon"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/ivIcon" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

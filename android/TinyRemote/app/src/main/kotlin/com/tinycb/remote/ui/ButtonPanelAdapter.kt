@@ -1,11 +1,17 @@
 package com.tinycb.remote.ui
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.card.MaterialCardView
 import com.tinycb.remote.databinding.ItemButtonPanelBinding
+import com.tinycb.remote.databinding.ItemButtonPanelWideBinding
 import com.tinycb.remote.model.BoardStatus
 import com.tinycb.remote.model.ButtonDef
 import com.tinycb.remote.R
@@ -21,11 +27,18 @@ class ButtonPanelAdapter(
         notifyItemRangeChanged(0, itemCount, PAYLOAD_LED)
     }
 
+    override fun getItemViewType(position: Int): Int =
+        if (getItem(position).spanSize > 1) VIEW_TYPE_WIDE else VIEW_TYPE_NORMAL
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemButtonPanelBinding.inflate(
-            LayoutInflater.from(parent.context), parent, false
-        )
-        return ViewHolder(binding)
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == VIEW_TYPE_WIDE) {
+            val binding = ItemButtonPanelWideBinding.inflate(inflater, parent, false)
+            ViewHolder(binding.root, binding.ivIcon, binding.tvLabel, binding.ledDot)
+        } else {
+            val binding = ItemButtonPanelBinding.inflate(inflater, parent, false)
+            ViewHolder(binding.root, binding.ivIcon, binding.tvLabel, binding.ledDot)
+        }
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -40,13 +53,20 @@ class ButtonPanelAdapter(
         }
     }
 
-    inner class ViewHolder(private val b: ItemButtonPanelBinding) :
-        RecyclerView.ViewHolder(b.root) {
+    inner class ViewHolder(
+        private val root: MaterialCardView,
+        private val ivIcon: ImageView,
+        private val tvLabel: TextView,
+        private val ledDot: View
+    ) : RecyclerView.ViewHolder(root) {
 
         fun bind(btn: ButtonDef, status: BoardStatus?) {
-            b.ivIcon.setImageResource(btn.iconRes)
-            b.tvLabel.text = btn.name
-            b.root.setOnClickListener { onButtonClick(btn) }
+            ivIcon.setImageResource(btn.iconRes)
+            tvLabel.text = btn.name
+            root.setCardBackgroundColor(
+                ContextCompat.getColor(root.context, btn.backgroundColorRes)
+            )
+            root.setOnClickListener { onButtonClick(btn) }
             updateLed(btn, status)
         }
 
@@ -54,13 +74,15 @@ class ButtonPanelAdapter(
             val isActive = btn.bitmaskBit >= 0 &&
                     status != null &&
                     (status.buttonLedBitmask and (1 shl btn.bitmaskBit)) != 0
-            b.ledDot.setBackgroundResource(
+            ledDot.setBackgroundResource(
                 if (isActive) R.drawable.led_dot_active else R.drawable.led_dot
             )
         }
     }
 
     companion object {
+        private const val VIEW_TYPE_NORMAL = 0
+        private const val VIEW_TYPE_WIDE = 1
         private const val PAYLOAD_LED = "LED"
 
         private val DIFF = object : DiffUtil.ItemCallback<ButtonDef>() {
