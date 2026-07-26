@@ -128,7 +128,7 @@ class BoardBleManager(context: Context) {
 
             // Both characteristics ready \u2014 now it is safe to open the control panel
             Log.i(TAG, "All characteristics found \u2014 emitting Connected")
-            _connectionState.value = ConnectionState.Connected
+            _connectionState.value = ConnectionState.Connected(g.device.name)
 
             // Subscribe to status notifications
             g.setCharacteristicNotification(statusChar, true)

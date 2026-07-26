@@ -62,6 +62,7 @@ class ButtonPanelAdapter(
 
         fun bind(btn: ButtonDef, status: BoardStatus?) {
             ivIcon.setImageResource(btn.iconRes)
+            ivIcon.contentDescription = btn.name
             tvLabel.text = btn.name
             root.setCardBackgroundColor(
                 ContextCompat.getColor(root.context, btn.backgroundColorRes)

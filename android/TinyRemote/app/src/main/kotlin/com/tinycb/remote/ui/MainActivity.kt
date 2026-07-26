@@ -1,9 +1,11 @@
 package com.tinycb.remote.ui
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.tinycb.remote.ble.ConnectionState
@@ -42,17 +44,24 @@ class MainActivity : AppCompatActivity() {
             setHasFixedSize(true)
         }
 
-        // Observe board status → update power state label + LED dots
+        // Observe board status → update power state chip + LED dots
         lifecycleScope.launch {
             vm.boardStatus.collectLatest { status ->
-                b.tvPowerState.text = "Power: ${status?.powerStateName ?: "–"}"
+                val style = PowerStateUi.styleFor(status?.powerStateName)
+                b.tvStateChip.text = style.label
+                b.tvStateChip.backgroundTintList =
+                    ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, style.colorRes))
                 buttonAdapter.updateStatus(status)
             }
         }
 
-        // If BLE disconnects, go back to scan screen
+        // Reflect connection state: show connected device name in toolbar subtitle;
+        // if BLE disconnects, go back to scan screen
         lifecycleScope.launch {
             vm.connectionState.collectLatest { state ->
+                if (state is ConnectionState.Connected) {
+                    supportActionBar?.subtitle = state.deviceName?.let { "Connected • $it" } ?: "Connected"
+                }
                 if (state is ConnectionState.Disconnected || state is ConnectionState.Error) {
                     finish()
                 }

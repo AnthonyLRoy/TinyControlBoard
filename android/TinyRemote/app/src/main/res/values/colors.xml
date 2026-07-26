@@ -24,7 +24,10 @@
     <color name="state_sleep">#EF6C00</color>
     <color name="state_busy">#1565C0</color>
 
-    <!-- Button panel backgrounds -->
-    <color name="btn_bg_default">#1976D2</color>
-    <color name="btn_bg_power">#E57373</color>
+    <!-- Button panel backgrounds, grouped by function for visual hierarchy -->
+    <color name="btn_bg_default">#37414A</color>
+    <color name="btn_bg_transport">#2C3A47</color>
+    <color name="btn_bg_nav">#4A3163</color>
+    <color name="btn_bg_utility">#3A3F42</color>
+    <color name="btn_bg_power">#B71E1E</color>
 </resources>
