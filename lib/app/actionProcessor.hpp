@@ -16,6 +16,7 @@
 #include "indicators/activityStatus.hpp"
 #include "protocol/uartProtocol.hpp"
 #include "hal/uart/serial.hpp"
+#include <functional>
 #include <memory>
 
 namespace controlSystem
@@ -26,7 +27,8 @@ namespace controlSystem
         ActionProcessor(transport::uart::UartTransport &rSerialBus,
                         relays::StandardRelay &rRelays,
                         SystemState &rSystemState,
-                        IActivityStatusSink *p_activitySink = nullptr);
+                        IActivityStatusSink *p_activitySink = nullptr,
+                        std::function<void(uint8_t)> onRemoteToggle = {});
         void process(std::unique_ptr<actions::IAction> iaction);
         bool handleInboundUartMessage(const UartMessage &message);
 
@@ -50,6 +52,7 @@ namespace controlSystem
         transport::uart::UartTransport &mr_serial;
         relays::StandardRelay &mr_relays;
         SystemState &mr_systemState;
+        std::function<void(uint8_t)> m_onRemoteToggle;
 
         static constexpr const char *k_logTag = "Action_Processor";
     };

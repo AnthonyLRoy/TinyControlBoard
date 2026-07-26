@@ -1,5 +1,6 @@
 #include "app/actionProcessor.hpp"
 #include "app/ActionFactory.hpp"
+#include "app/ControlBoardButtonIds.hpp"
 #include "board/boardConfig.hpp"
 #include "indicators/ledManager.hpp"
 #include <inttypes.h>
@@ -7,8 +8,38 @@
 
 namespace controlSystem
 {
-    ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, SystemState &rSystemState, IActivityStatusSink *p_activitySink)
-        : mr_serial(rSerialBus), mr_relays(rRelays), mr_systemState(rSystemState)
+    namespace
+    {
+        bool getToggleButtonId(CommandId command, uint8_t &buttonId)
+        {
+            switch (command)
+            {
+            case CMD_TOGGLE_DISPLAY:
+                buttonId = controlBoardButtons::k_toggleDisplay;
+                return true;
+            case CMD_TOGGLE_COVER_VIEW:
+                buttonId = controlBoardButtons::k_cover;
+                return true;
+            case CMD_TOGGLE_REPEAT:
+                buttonId = controlBoardButtons::k_repeat;
+                return true;
+            case CMD_TOGGLE_RANDOM:
+                buttonId = controlBoardButtons::k_toggleRandom;
+                return true;
+            case CMD_TOGGLE_DAC:
+                buttonId = controlBoardButtons::k_toggleDac;
+                return true;
+            case CMD_TOGGLE_METER:
+                buttonId = controlBoardButtons::k_toggleMeter;
+                return true;
+            default:
+                return false;
+            }
+        }
+    }
+
+    ActionProcessor::ActionProcessor(transport::uart::UartTransport &rSerialBus, relays::StandardRelay &rRelays, SystemState &rSystemState, IActivityStatusSink *p_activitySink, std::function<void(uint8_t)> onRemoteToggle)
+        : mr_serial(rSerialBus), mr_relays(rRelays), mr_systemState(rSystemState), m_onRemoteToggle(std::move(onRemoteToggle))
     {
         mp_serialUartCommandSink = std::make_unique<SerialUartCommandSink>(mr_serial);
         mp_actionUartDispatcher = std::make_unique<ActionUartDispatcher>(*mp_serialUartCommandSink);
@@ -46,6 +77,12 @@ namespace controlSystem
         };
 
         iaction->execute(ctx);
+
+        uint8_t buttonId = 0;
+        if (m_onRemoteToggle && getToggleButtonId(iaction->command, buttonId))
+        {
+            m_onRemoteToggle(buttonId);
+        }
     }
 
     void ActionProcessor::injectCommand(CommandId cmd, uint16_t releaseMs)

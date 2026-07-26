@@ -23,28 +23,34 @@ namespace controlSystem
             CommandId onCmd;
             CommandId offCmd;
             CommandId wireCmd;
+            CommandId toggleCmd;
             const char *logTag;
         };
 
         constexpr ToggleMapping k_toggleTable[] = {
-            {CMD_COVER_VIEW_ON,   CMD_COVER_VIEW_OFF,   CMD_TOGGLE_COVER_VIEW, "Cover_View"},
-            {CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF, CMD_TOGGLE_METER,      "Meter"},
-            {CMD_REPEAT_ON,       CMD_REPEAT_OFF,       CMD_TOGGLE_REPEAT,     "Repeat"},
-            {CMD_RANDOM_ON,       CMD_RANDOM_OFF,       CMD_TOGGLE_RANDOM,     "Random"},
+            {CMD_COVER_VIEW_ON,   CMD_COVER_VIEW_OFF,   CMD_TOGGLE_COVER_VIEW, CMD_TOGGLE_COVER_VIEW, "Cover_View"},
+            {CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF, CMD_TOGGLE_METER,      CMD_TOGGLE_METER,      "Meter"},
+            {CMD_REPEAT_ON,       CMD_REPEAT_OFF,       CMD_TOGGLE_REPEAT,     CMD_TOGGLE_REPEAT,     "Repeat"},
+            {CMD_RANDOM_ON,       CMD_RANDOM_OFF,       CMD_TOGGLE_RANDOM,     CMD_TOGGLE_RANDOM,     "Random"},
         };
     } // namespace
 
     bool ActionUartDispatcher::handle(const actions::IAction &action)
     {
-        for (const auto &m : k_toggleTable)
+        for (size_t index = 0; index < sizeof(k_toggleTable) / sizeof(k_toggleTable[0]); ++index)
         {
-            if (action.command == m.onCmd || action.command == m.offCmd)
+            const auto &m = k_toggleTable[index];
+            if (action.command == m.onCmd || action.command == m.offCmd || action.command == m.toggleCmd)
             {
+                const bool enabled = action.command == m.toggleCmd
+                    ? !(m_toggleStates[index])
+                    : action.command == m.onCmd;
+                m_toggleStates[index] = enabled;
                 ESP_LOGI(k_logTag, "Processing %s toggle (%s)", m.logTag,
-                         action.command == m.onCmd ? "ON" : "OFF");
+                         enabled ? "ON" : "OFF");
                 UartMessage message;
                 message.commandId = m.wireCmd;
-                message.params[0] = (action.command == m.onCmd) ? 1 : 0;
+                message.params[0] = enabled ? 1 : 0;
                 mr_uartCommandSink.sendUartMessage(m.logTag, message);
                 return true;
             }

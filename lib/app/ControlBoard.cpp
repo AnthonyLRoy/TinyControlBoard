@@ -98,7 +98,13 @@ namespace controlSystem
             *mp_serialHandler,
             *mp_relays,
             m_systemState,
-            static_cast<IControlBoardIndicators *>(this));
+            static_cast<IControlBoardIndicators *>(this),
+            [this](uint8_t buttonId) {
+                if (mp_inputDispatcher)
+                {
+                    mp_inputDispatcher->toggleButtonLed(buttonId);
+                }
+            });
         mp_inputDispatcher = std::make_unique<ControlBoardInputDispatcher>(
             mp_buttonActions,
             [this](std::unique_ptr<actions::IAction> iaction) {

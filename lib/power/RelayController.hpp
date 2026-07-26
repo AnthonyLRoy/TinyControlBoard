@@ -14,12 +14,14 @@ namespace controlSystem
 
         void setRelayWithDelay(gpio_num_t pin, bool state, uint32_t delayMs);
         bool handleToggleDac(bool state);
+        bool toggleDac();
         bool shutdownRpi();
         bool shutdownScreen();
 
     private:
         transport::uart::UartTransport &mr_serial;
         relays::StandardRelay &mr_relays;
+        bool m_dacEnabled{false};
         static constexpr const char *k_logTag = "Relay_Controller";
     };
 }

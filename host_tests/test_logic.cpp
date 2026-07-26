@@ -332,6 +332,29 @@ void test_control_board_toggle_button_press_flips_led_state()
     expect_true(!indicators.lastLedState, "Second press should turn toggle LED off");
 }
 
+void test_control_board_remote_toggle_updates_led_state()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
+
+    dispatcher.toggleButtonLed(controlSystem::controlBoardButtons::k_toggleDac);
+
+    expect_equal(1, indicators.ledCallCount, "Remote toggle should update the button LED");
+    expect_equal(controlSystem::controlBoardButtons::k_toggleDac, indicators.lastLedPin,
+                 "Remote toggle should update the matching button LED");
+    expect_true(indicators.lastLedState, "First remote toggle should turn the LED on");
+
+    dispatcher.toggleButtonLed(controlSystem::controlBoardButtons::k_toggleDac);
+
+    expect_equal(2, indicators.ledCallCount, "Second remote toggle should update the LED again");
+    expect_true(!indicators.lastLedState, "Second remote toggle should turn the LED off");
+}
+
 void test_control_board_out_of_range_press_keeps_existing_status_ordering()
 {
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
@@ -462,6 +485,25 @@ void test_action_uart_dispatcher_routes_meter_on_message()
                  "Meter ON should map to parameter 1");
 }
 
+void test_action_uart_dispatcher_toggles_generic_meter_command()
+{
+    FakeUartCommandSink uartSink;
+    controlSystem::ActionUartDispatcher dispatcher(uartSink);
+    const auto action = makeAction(CMD_TOGGLE_METER);
+
+    expect_true(dispatcher.handle(*action), "Generic Meter command should be handled");
+    expect_equal(1, uartSink.messageCount, "First Meter toggle should send one structured message");
+    expect_equal(static_cast<uint16_t>(CMD_TOGGLE_METER), uartSink.lastMessage.commandId,
+                 "Generic Meter toggle should keep the normalized command");
+    expect_equal(static_cast<uint16_t>(1), uartSink.lastMessage.params[0],
+                 "First Meter toggle should enable the meter");
+
+    expect_true(dispatcher.handle(*action), "Second generic Meter command should be handled");
+    expect_equal(2, uartSink.messageCount, "Second Meter toggle should send another structured message");
+    expect_equal(static_cast<uint16_t>(0), uartSink.lastMessage.params[0],
+                 "Second Meter toggle should disable the meter");
+}
+
 void test_action_uart_dispatcher_routes_rotary_message()
 {
     FakeUartCommandSink uartSink;
@@ -549,6 +591,9 @@ void test_action_command_routing_policy_classifies_on_state_handlers()
     expect_true(controlSystem::classifyCommand(CMD_TOGGLE_DAC_ON, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::Relay,
                 "DAC toggle should use the relay handler");
+    expect_true(controlSystem::classifyCommand(CMD_TOGGLE_DAC, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::Relay,
+                "Generic DAC toggle should use the relay handler");
     expect_true(controlSystem::classifyCommand(CMD_CYCLE_BRIGHTNESS, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::Brightness,
                 "Cycle brightness should use the brightness handler");
@@ -720,6 +765,7 @@ int main()
         {"test_control_board_button_press_dispatches_action_and_led", test_control_board_button_press_dispatches_action_and_led},
         {"test_control_board_momentary_button_release_turns_led_off", test_control_board_momentary_button_release_turns_led_off},
         {"test_control_board_toggle_button_press_flips_led_state", test_control_board_toggle_button_press_flips_led_state},
+        {"test_control_board_remote_toggle_updates_led_state", test_control_board_remote_toggle_updates_led_state},
         {"test_control_board_out_of_range_press_keeps_existing_status_ordering", test_control_board_out_of_range_press_keeps_existing_status_ordering},
         {"test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle", test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle},
         {"test_heartbeat_helper_handles_current_heartbeat", test_heartbeat_helper_handles_current_heartbeat},
@@ -729,6 +775,7 @@ int main()
         {"test_action_uart_dispatcher_routes_cover_view_message", test_action_uart_dispatcher_routes_cover_view_message},
         {"test_action_uart_dispatcher_routes_meter_message", test_action_uart_dispatcher_routes_meter_message},
         {"test_action_uart_dispatcher_routes_meter_on_message", test_action_uart_dispatcher_routes_meter_on_message},
+        {"test_action_uart_dispatcher_toggles_generic_meter_command", test_action_uart_dispatcher_toggles_generic_meter_command},
         {"test_action_uart_dispatcher_routes_rotary_message", test_action_uart_dispatcher_routes_rotary_message},
         {"test_action_uart_dispatcher_ignores_unknown_command", test_action_uart_dispatcher_ignores_unknown_command},
         {"test_power_state_transition_policy_selects_power_on_for_sleeping_states", test_power_state_transition_policy_selects_power_on_for_sleeping_states},

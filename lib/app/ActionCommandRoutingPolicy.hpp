@@ -17,6 +17,7 @@ namespace controlSystem
             { CMD_EXIT_ITEM,        ActionCommandRoute::System    },
             { CMD_TOGGLE_DAC_ON,    ActionCommandRoute::Relay     },
             { CMD_TOGGLE_DAC_OFF,   ActionCommandRoute::Relay     },
+            { CMD_TOGGLE_DAC,       ActionCommandRoute::Relay     },
             { CMD_CYCLE_BRIGHTNESS, ActionCommandRoute::Brightness},
             { CMD_TOGGLE_DISPLAY,   ActionCommandRoute::Brightness},
         };

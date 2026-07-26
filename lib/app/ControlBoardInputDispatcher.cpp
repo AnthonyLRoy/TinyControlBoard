@@ -112,4 +112,12 @@ namespace controlSystem
 
         mr_indicators.setActivityStatus(m_backgroundStatus);
     }
+
+    void ControlBoardInputDispatcher::toggleButtonLed(uint8_t buttonId)
+    {
+        if (buttonId < controlBoardButtons::k_count)
+        {
+            applyLedOnPress(buttonId, LedPolicy::Toggle);
+        }
+    }
 }

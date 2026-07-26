@@ -23,8 +23,14 @@ namespace controlSystem
     bool RelayController::handleToggleDac(bool state)
     {
         mr_relays.setRelayState(PIN_RELAY_DAC_POWER, state);
+        m_dacEnabled = state;
         ESP_LOGI(k_logTag, "DAC relay set to %s", state ? "ON" : "OFF");
         return true;
+    }
+
+    bool RelayController::toggleDac()
+    {
+        return handleToggleDac(!m_dacEnabled);
     }
 
     bool RelayController::shutdownRpi()

@@ -20,6 +20,7 @@ namespace controlSystem
 
     private:
         IUartCommandSink &mr_uartCommandSink;
+        bool m_toggleStates[4]{};
 
         static constexpr const char *k_logTag = "Uart_Dispatcher ";
     };

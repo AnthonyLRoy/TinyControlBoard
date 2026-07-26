@@ -6,6 +6,12 @@ namespace actions
 {
     void RelayAction::execute(controlSystem::ActionContext &ctx)
     {
+        if (command == CMD_TOGGLE_DAC)
+        {
+            ctx.relayController.toggleDac();
+            return;
+        }
+
         ctx.relayController.handleToggleDac(command == CMD_TOGGLE_DAC_ON);
     }
 }

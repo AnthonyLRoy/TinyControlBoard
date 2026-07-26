@@ -54,6 +54,7 @@ namespace controlSystem
         void handleButtonPressed(uint8_t buttonPressedId);
         void handleButtonReleased(uint8_t buttonReleasedId);
         void handleRotaryMovement(int direction);
+        void toggleButtonLed(uint8_t buttonId);
         void setBackgroundStatus(ControlBoardWorkingStatus status) { m_backgroundStatus = status; }
 
     private:
