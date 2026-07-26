@@ -23,13 +23,15 @@ object ButtonCatalog {
         // Row 3: dac, menu (stretched to fill the row) — navigation group
         ButtonDef(10, "DAC",        0x0113, 10, R.drawable.ic_tune, spanSize = 2, backgroundColorRes = R.color.btn_bg_nav),
         ButtonDef(11, "Menu ▶",    0x0107, 11, R.drawable.ic_navigate_next, spanSize = 2, backgroundColorRes = R.color.btn_bg_nav),
-        // Remaining buttons — navigation (Cover, Meter) + utility (Vol, Bright)
-        ButtonDef(7,  "Cover",      0x0119,  7, R.drawable.ic_album, backgroundColorRes = R.color.btn_bg_nav),
-        ButtonDef(12, "Meter",      0x0115, 12, R.drawable.ic_equalizer, backgroundColorRes = R.color.btn_bg_nav),
+        // Row 4: cover, meter (stretched to fill the row) — navigation group
+        ButtonDef(7,  "Cover",      0x0119,  7, R.drawable.ic_album, spanSize = 2, backgroundColorRes = R.color.btn_bg_nav),
+        ButtonDef(12, "Meter",      0x0115, 12, R.drawable.ic_equalizer, spanSize = 2, backgroundColorRes = R.color.btn_bg_nav),
+        // Row 5: vol down/up + brightness (stretched) — utility group
         ButtonDef(13, "Vol –",      0x0110, -1, R.drawable.ic_remove_circle, backgroundColorRes = R.color.btn_bg_utility),
         ButtonDef(14, "Vol +",      0x0111, -1, R.drawable.ic_add_circle, backgroundColorRes = R.color.btn_bg_utility),
-        ButtonDef(15, "Bright",     0x0116, 15, R.drawable.ic_brightness, backgroundColorRes = R.color.btn_bg_utility),
-        // Last row: power by itself, full width
-        ButtonDef(0,  "Power",      0x0001, -1, R.drawable.ic_power, spanSize = 4, backgroundColorRes = R.color.btn_bg_power)
+        ButtonDef(15, "Bright",     0x0116, 15, R.drawable.ic_brightness, spanSize = 2, backgroundColorRes = R.color.btn_bg_utility)
+        // Power (commandId 0x0001) moved out of the grid — it's now a small icon button in the
+        // top status strip (see activity_main.xml / MainActivity) so it can't be pressed by
+        // accident alongside the frequently-used transport buttons.
     )
 }

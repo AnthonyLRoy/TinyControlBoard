@@ -9,6 +9,7 @@
     <string name="disconnected">DISCONNECTED</string>
     <string name="power_state">Power: %1$s</string>
     <string name="btn_power">Power</string>
+    <string name="power_button_description">Power</string>
     <string name="btn_prev">Prev</string>
     <string name="btn_next">Next</string>
     <string name="btn_skip_fwd">Skip ▶▶</string>

@@ -16,6 +16,11 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        /** commandId for Power (matches ButtonCatalog's former Power entry). */
+        private const val POWER_COMMAND_ID = 0x0001
+    }
+
     private lateinit var b: ActivityMainBinding
     private val vm: MainViewModel by viewModels()
     private lateinit var buttonAdapter: ButtonPanelAdapter
@@ -32,6 +37,12 @@ class MainActivity : AppCompatActivity() {
             vm.sendCommand(btn.commandId)
         }
         buttonAdapter.submitList(vm.buttons)
+
+        // Power is deliberately NOT in the button grid — it's a small icon in the top status
+        // strip so it can't be pressed by accident alongside the frequently-used buttons.
+        b.btnPower.setOnClickListener {
+            vm.sendCommand(POWER_COMMAND_ID)
+        }
 
         b.rvButtons.apply {
             layoutManager = GridLayoutManager(this@MainActivity, 4).apply {
