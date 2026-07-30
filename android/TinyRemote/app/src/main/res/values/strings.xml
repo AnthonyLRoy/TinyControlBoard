@@ -22,9 +22,9 @@
     <string name="btn_dac">DAC</string>
     <string name="btn_next_panel">Menu ▶</string>
     <string name="btn_meter">Meter</string>
-    <string name="btn_vol_down">Vol –</string>
-    <string name="btn_vol_up">Vol +</string>
-    <string name="btn_brightness">Bright</string>
+    <string name="btn_bright_down">Bright –</string>
+    <string name="btn_bright_up">Bright +</string>
+    <string name="btn_bright_cycle">Cycle</string>
 
     <!-- View Selection Screen -->
     <string name="view_selection_title">Select display menu</string>
