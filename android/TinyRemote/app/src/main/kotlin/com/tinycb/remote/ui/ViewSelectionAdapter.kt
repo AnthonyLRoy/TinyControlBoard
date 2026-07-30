@@ -1,9 +1,7 @@
 package com.tinycb.remote.ui
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -36,13 +34,9 @@ class ViewSelectionAdapter(
             b.tvViewName.text = item.name
             val isSelected = item.commandId == selectedCommandId
             
-            b.cardRoot.strokeColor = if (isSelected) {
-                ContextCompat.getColor(b.root.context, R.color.mcintosh_green)
-            } else {
-                android.graphics.Color.TRANSPARENT
-            }
-            
-            b.ivCheck.visibility = if (isSelected) View.VISIBLE else View.INVISIBLE
+            b.ledDot.setBackgroundResource(
+                if (isSelected) R.drawable.led_dot_active else R.drawable.led_dot
+            )
             
             b.root.setOnClickListener { onSelected(item) }
         }

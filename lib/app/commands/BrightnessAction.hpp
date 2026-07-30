@@ -4,7 +4,7 @@
 
 namespace actions
 {
-    /// Advances the monitor brightness to the next step in the cycle.
+    /// manages brightness-related commands (e.g. toggle display, cycle brightness, etc.)
     class BrightnessAction : public IAction
     {
     public:
@@ -13,4 +13,7 @@ namespace actions
         bool requiresPowerOn() const override { return true; }
         void execute(controlSystem::ActionContext &ctx) override;
     };
+
+
+    
 }
