@@ -27,7 +27,7 @@
     <string name="btn_brightness">Bright</string>
 
     <!-- View Selection Screen -->
-    <string name="view_selection_title">Select View</string>
+    <string name="view_selection_title">Select display menu</string>
     <string name="view_default">Default View</string>
     <string name="view_radio">Radio Stations</string>
     <string name="view_playlist">Playlist</string>
