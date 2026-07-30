@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -7,11 +7,10 @@
     android:layout_margin="4dp"
     android:clickable="true"
     android:focusable="true"
-    android:stateListAnimator="@animator/button_press_elevation"
-    app:cardBackgroundColor="@color/btn_bg_default"
-    app:cardCornerRadius="10dp"
-    app:cardElevation="1dp"
-    app:rippleColor="#33FFFFFF">
+    android:background="@drawable/bg_button_aluminium"
+    android:foreground="?attr/selectableItemBackground"
+    android:clipToPadding="false"
+    android:elevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -26,6 +25,8 @@
             android:id="@+id/ledDot"
             android:layout_width="10dp"
             android:layout_height="10dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             android:background="@drawable/led_dot"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -35,7 +36,7 @@
             android:id="@+id/ivIcon"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:tint="@android:color/white"
+            app:tint="#FFFFFF"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -48,12 +49,17 @@
             android:layout_marginTop="8dp"
             android:gravity="center"
             android:maxLines="2"
-            android:textColor="@android:color/white"
+            android:textColor="#FFFFFF"
             android:textSize="12sp"
+            android:textStyle="bold"
+            android:shadowColor="#B0000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="1.5"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/ivIcon" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</com.google.android.material.card.MaterialCardView>
+</FrameLayout>

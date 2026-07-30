@@ -1,0 +1,9 @@
+- [x] Update color palette in `colors.xml` (Main & Night)
+- [x] Create `bg_button_aluminium.xml` and update LED drawables
+- [x] Update application themes in `themes.xml`
+- [x] Refactor layouts (`activity_main.xml`, `item_button_panel.xml`)
+- [x] Update `ButtonPanelAdapter.kt` logic
+- [x] Fix: Ensure buttons render as brushed aluminium (replaced MaterialCardView with FrameLayout)
+- [x] Refine buttons to "Black Brushed Aluminium" (Horizontal)
+- [x] Implement "Industrial Machined" inversion: Natural Aluminium Buttons on Black Chassis
+- [x] Verification and cleanup

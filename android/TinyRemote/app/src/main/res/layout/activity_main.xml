@@ -10,14 +10,14 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/bg_surface"
-        app:elevation="4dp">
+        android:background="@color/bg_primary"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/bg_surface"
+            android:background="@color/bg_primary"
             app:title="TinyRemote"
             app:titleTextColor="@color/text_primary"
             app:subtitleTextColor="@color/text_secondary" />
@@ -38,7 +38,7 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
             android:paddingVertical="10dp"
-            android:background="@color/bg_surface">
+            android:background="@color/bg_primary">
 
             <TextView
                 android:id="@+id/tvStateChip"
@@ -95,7 +95,7 @@
                 android:contentDescription="@string/power_button_description"
                 android:padding="8dp"
                 android:src="@drawable/ic_power"
-                app:tint="@color/btn_bg_power" />
+                app:tint="@color/text_primary" />
 
         </LinearLayout>
 

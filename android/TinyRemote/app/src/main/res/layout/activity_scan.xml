@@ -70,7 +70,8 @@
         android:text="@string/scan_button"
         android:textColor="@color/bg_primary"
         app:backgroundTint="@color/amber"
-        app:cornerRadius="24dp" />
+        app:cornerRadius="24dp"
+        app:elevation="4dp" />
 
     <TextView
         android:id="@+id/tvPreviewUi"

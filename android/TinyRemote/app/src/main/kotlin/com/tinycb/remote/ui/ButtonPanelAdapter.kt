@@ -3,13 +3,12 @@ package com.tinycb.remote.ui
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.card.MaterialCardView
 import com.tinycb.remote.databinding.ItemButtonPanelBinding
 import com.tinycb.remote.databinding.ItemButtonPanelWideBinding
 import com.tinycb.remote.model.BoardStatus
@@ -54,7 +53,7 @@ class ButtonPanelAdapter(
     }
 
     inner class ViewHolder(
-        private val root: MaterialCardView,
+        private val root: FrameLayout,
         private val ivIcon: ImageView,
         private val tvLabel: TextView,
         private val ledDot: View
@@ -64,9 +63,6 @@ class ButtonPanelAdapter(
             ivIcon.setImageResource(btn.iconRes)
             ivIcon.contentDescription = btn.name
             tvLabel.text = btn.name
-            root.setCardBackgroundColor(
-                ContextCompat.getColor(root.context, btn.backgroundColorRes)
-            )
             root.setOnClickListener { onButtonClick(btn) }
             updateLed(btn, status)
         }
