@@ -33,19 +33,13 @@ private:
     bool m_ledOn = true;
     QueueHandle_t mp_statusQueue = nullptr;
     TimerHandle_t mp_blinkTimer = nullptr;
-    TaskHandle_t mp_breatheTaskHandle = nullptr;
     std::atomic<bool> m_stopLedTask{false};
-    std::atomic<bool> m_stopBreatheTask{false};
 
     TaskHandle_t mp_ledTaskHandle = nullptr;
     static void runLedTask(void *p_param);
     void updateDuty(uint32_t duty);
     static void handleTimer(TimerHandle_t timerHandle);
-    static void runBreatheTask(void *p_parameter);
-    void startBreatheEffect();
-    void stopBreatheEffect();
 
-    uint32_t getBlinkInterval(ControlBoardWorkingStatus status);
     uint32_t getBlinkDuty(ControlBoardWorkingStatus status);
 };
 

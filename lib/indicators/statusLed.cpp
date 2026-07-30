@@ -9,8 +9,6 @@ static constexpr const char *k_logTag = "Status_Led      ";
 
 static constexpr uint32_t MAX_DUTY = 8191;
 static constexpr uint32_t ACT_DUTY = 2000;
-static constexpr uint32_t BREATHE_STEP = 64;
-static constexpr uint32_t BREATHE_DELAY_MS = 20;
 static constexpr uint32_t BLIP_ON_MS = 50;
 static constexpr uint32_t BLIP_OFF_MS = 1950;
 static constexpr uint32_t SLEEP_BLIP_OFF_MS = 9950;
@@ -31,7 +29,6 @@ StatusLed::StatusLed(gpio_num_t pin,
             m_ledOn(false),
             mp_statusQueue(nullptr),
             mp_blinkTimer(nullptr),
-            mp_breatheTaskHandle(nullptr),
             mp_ledTaskHandle(nullptr)
 {
     init();
@@ -40,7 +37,6 @@ StatusLed::StatusLed(gpio_num_t pin,
 StatusLed::~StatusLed()
 {
     m_stopLedTask.store(true, std::memory_order_release);
-    m_stopBreatheTask.store(true, std::memory_order_release);
 
     if (mp_statusQueue)
     {
@@ -62,8 +58,6 @@ StatusLed::~StatusLed()
         mp_ledTaskHandle = nullptr;
     }
 
-    stopBreatheEffect();
-
     if (mp_blinkTimer)
         xTimerDelete(mp_blinkTimer, portMAX_DELAY);
     if (mp_statusQueue)
@@ -73,7 +67,6 @@ StatusLed::~StatusLed()
 void StatusLed::init()
 {
     m_stopLedTask.store(false, std::memory_order_release);
-    m_stopBreatheTask.store(false, std::memory_order_release);
 
     ledc_timer_config_t timerConfig = {
         .speed_mode = LEDC_LOW_SPEED_MODE,
@@ -172,7 +165,6 @@ void StatusLed::runLedTask(void *p_param)
             ESP_LOGI(k_logTag, "LED status updated to %d", static_cast<int>(receivedStatus));
             ESP_LOGI(k_logTag, "Handling status change for pin %d", p_self->m_pin);
             xTimerStop(p_self->mp_blinkTimer, 0);
-            p_self->stopBreatheEffect();
             p_self->m_ledOn = false;
             p_self->updateDuty(0);
 
@@ -232,100 +224,6 @@ void StatusLed::handleTimer(TimerHandle_t timerHandle)
     {
         const uint32_t nextPeriod = p_self->m_ledOn ? BLIP_ON_MS : SLEEP_BLIP_OFF_MS;
         xTimerChangePeriod(timerHandle, pdMS_TO_TICKS(nextPeriod), 0);
-    }
-}
-
-void StatusLed::startBreatheEffect()
-{
-    if (mp_breatheTaskHandle)
-    {
-        return;
-    }
-    m_stopBreatheTask.store(false, std::memory_order_release);
-    if (xTaskCreate(runBreatheTask, "BreatheTask", 2048, this, 5, &mp_breatheTaskHandle) != pdPASS)
-    {
-        mp_breatheTaskHandle = nullptr;
-        ESP_LOGE(k_logTag, "Failed to create breathe task");
-    }
-}
-
-void StatusLed::stopBreatheEffect()
-{
-    if (mp_breatheTaskHandle)
-    {
-        m_stopBreatheTask.store(true, std::memory_order_release);
-        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING)
-        {
-            for (int i = 0; mp_breatheTaskHandle && i < 50; ++i)
-            {
-                vTaskDelay(pdMS_TO_TICKS(10));
-            }
-        }
-        if (mp_breatheTaskHandle)
-        {
-            ESP_LOGW(k_logTag, "Breathe task did not stop in time; forcing delete");
-            vTaskDelete(mp_breatheTaskHandle);
-            mp_breatheTaskHandle = nullptr;
-        }
-        updateDuty(0);
-    }
-}
-
-void StatusLed::runBreatheTask(void *p_parameter)
-{
-    auto *p_self = static_cast<StatusLed *>(p_parameter);
-    uint32_t duty = 0;
-    bool increasing = true;
-
-    while (!p_self->m_stopBreatheTask.load(std::memory_order_acquire))
-    {
-        p_self->updateDuty(duty);
-
-        if (increasing)
-        {
-            if (duty + BREATHE_STEP >= MAX_DUTY)
-            {
-                duty = MAX_DUTY;
-                increasing = false;
-            }
-            else
-            {
-                duty += BREATHE_STEP;
-            }
-        }
-        else
-        {
-            if (duty <= BREATHE_STEP)
-            {
-                duty = 0;
-                increasing = true;
-            }
-            else
-            {
-                duty -= BREATHE_STEP;
-            }
-        }
-        vTaskDelay(pdMS_TO_TICKS(BREATHE_DELAY_MS));
-    }
-
-    p_self->mp_breatheTaskHandle = nullptr;
-    p_self->updateDuty(0);
-    vTaskDelete(nullptr);
-}
-
-uint32_t StatusLed::getBlinkInterval(ControlBoardWorkingStatus status)
-{
-    switch (status)
-    {
-    case ControlBoardWorkingStatus::Idle:
-        return 1000;
-    case ControlBoardWorkingStatus::Active:
-        return 500;
-    case ControlBoardWorkingStatus::doingWork:
-    case ControlBoardWorkingStatus::SolidIdle:
-        return 100;
-    default:
-        return 1000;
     }
 }
 

@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import com.tinycb.remote.R
 import com.tinycb.remote.ble.ConnectionState
 import com.tinycb.remote.databinding.ActivityMainBinding
 import com.tinycb.remote.viewmodel.MainViewModel
@@ -62,6 +63,11 @@ class MainActivity : AppCompatActivity() {
                 b.tvStateChip.text = style.label
                 b.tvStateChip.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, style.colorRes))
+                
+                // Update power button tint based on state
+                val iconColorRes = if (status?.powerStateName == "ON") R.color.state_on else R.color.btn_bg_power
+                b.btnPower.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, iconColorRes))
+
                 buttonAdapter.updateStatus(status)
             }
         }
