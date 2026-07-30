@@ -15,5 +15,16 @@ namespace actions
         {
             ctx.brightnessController.cycleBrightness();
         }
+        if (command == CMD_SET_BRIGHTNESS_UP)
+        {
+            // For now, just set to a fixed level for testing; later, this will be parameterized
+            ctx.brightnessController.setBrightnessUp(1);
+        }
+        if (command == CMD_SET_BRIGHTNESS_DOWN)
+        {
+            // For now, just set to a fixed level for testing; later, this will be parameterized
+            ctx.brightnessController.setBrightnessDown(1);
+        }
+
     }
 }

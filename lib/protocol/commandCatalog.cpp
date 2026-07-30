@@ -52,6 +52,8 @@ namespace
         {CMD_RANDOM_ON, "Random_On", nullptr},
         {CMD_RANDOM_OFF, "Random_Off", nullptr},
         {CMD_TOGGLE_RANDOM, "Toggle_Random", nullptr},
+        {CMD_SET_BRIGHTNESS_UP, "Set_Brightness_Up", nullptr},
+        {CMD_SET_BRIGHTNESS_DOWN, "Set_Brightness_Down", nullptr}
     };
 
     const size_t k_commandCatalogCount = sizeof(s_commandCatalog) / sizeof(s_commandCatalog[0]);

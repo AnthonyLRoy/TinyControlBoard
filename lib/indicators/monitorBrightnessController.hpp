@@ -26,6 +26,8 @@ namespace indicators
         void setState(ControlBoardPowerState state);
         ControlBoardPowerState getState() const { return m_currentPowerState; }
         void setBrightness(int brightness);
+        void setBrightnessUp(int levels = 1);
+        void setBrightnessDown(int levels = 1);
         void setBlanked(bool blanked);
         bool isBlanked() const { return m_blanked; }
         void toggleDisplayOffOn();

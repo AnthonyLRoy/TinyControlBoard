@@ -126,6 +126,14 @@ namespace indicators
         m_nvsStorage.writeInt8(k_nvsKeyLevel, static_cast<int8_t>(m_currentBrightnessLevel));
         ESP_LOGI(k_logTag, "Saved brightness level %d to NVS", m_currentBrightnessLevel);
     }
+    void MonitorBrightnessController::setBrightnessUp(int levels)
+    {
+        changeBrightnessLevel(levels);
+    }
+    void MonitorBrightnessController::setBrightnessDown(int levels)
+    {
+        changeBrightnessLevel(-levels);
+    }
 
     void MonitorBrightnessController::setState(ControlBoardPowerState state)
     {
