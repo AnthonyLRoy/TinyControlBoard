@@ -1,6 +1,7 @@
 package com.tinycb.remote.ui
 
 import android.content.res.ColorStateList
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.viewModels
@@ -35,7 +36,12 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         buttonAdapter = ButtonPanelAdapter { btn ->
-            vm.sendCommand(btn.commandId)
+            // 0x0107 is CMD_NEXT_MENU_ITEM in uartProtocol.hpp
+            if (btn.commandId == 0x0107 || btn.name.contains("Menu")) {
+                startActivity(Intent(this@MainActivity, ViewSelectionActivity::class.java))
+            } else {
+                vm.sendCommand(btn.commandId)
+            }
         }
         buttonAdapter.submitList(vm.buttons)
 

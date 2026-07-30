@@ -22,6 +22,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val boardStatus: StateFlow<BoardStatus?> = bleManager.status
     val buttons: List<ButtonDef> = ButtonCatalog.buttons
 
+    val selectedViewId: StateFlow<Int?> = bleManager.selectedViewId
+
+    fun setSelectedView(commandId: Int) {
+        bleManager.setSelectedViewId(commandId)
+        sendCommand(commandId)
+    }
+
     fun sendCommand(commandId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             bleManager.sendCommand(commandId)

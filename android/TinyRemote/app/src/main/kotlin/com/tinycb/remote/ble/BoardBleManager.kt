@@ -35,6 +35,9 @@ class BoardBleManager(context: Context) {
     private val _status = MutableStateFlow<BoardStatus?>(null)
     val status: StateFlow<BoardStatus?> = _status
 
+    private val _selectedViewId = MutableStateFlow<Int?>(null)
+    val selectedViewId: StateFlow<Int?> = _selectedViewId
+
     // ── Internal state ──────────────────────────────────────────────────────
     private val discoveredDevices = mutableListOf<BluetoothDevice>()
     private var leScanner: BluetoothLeScanner? = null
@@ -281,6 +284,11 @@ class BoardBleManager(context: Context) {
         cmdChar = null
         _connectionState.value = ConnectionState.Idle
         _status.value = null
+        _selectedViewId.value = null
+    }
+
+    fun setSelectedViewId(id: Int?) {
+        _selectedViewId.value = id
     }
 
     companion object {

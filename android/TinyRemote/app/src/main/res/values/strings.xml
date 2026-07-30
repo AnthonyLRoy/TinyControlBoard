@@ -25,4 +25,13 @@
     <string name="btn_vol_down">Vol –</string>
     <string name="btn_vol_up">Vol +</string>
     <string name="btn_brightness">Bright</string>
+
+    <!-- View Selection Screen -->
+    <string name="view_selection_title">Select View</string>
+    <string name="view_default">Default View</string>
+    <string name="view_radio">Radio Stations</string>
+    <string name="view_playlist">Playlist</string>
+    <string name="view_folder">Folder View</string>
+    <string name="view_tag">Tag View</string>
+    <string name="view_album">Album View</string>
 </resources>

@@ -1,0 +1,9 @@
+- [x] Add strings for View Selection screen in `strings.xml`
+- [x] Add `selectedViewId` to `MainViewModel`
+- [x] Update `MainActivity` to launch `ViewSelectionActivity` on Menu button press
+- [x] Register `ViewSelectionActivity` in `AndroidManifest.xml`
+- [x] Create `item_view_selection_button.xml` layout
+- [x] Create `activity_view_selection.xml` layout
+- [x] Implement `ViewSelectionAdapter`
+- [x] Implement `ViewSelectionActivity`
+- [x] Verify implementation (build & manual check)
