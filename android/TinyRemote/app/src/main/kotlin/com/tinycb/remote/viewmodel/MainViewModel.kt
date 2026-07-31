@@ -25,12 +25,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val connectionState: StateFlow<ConnectionState> = bleManager.connectionState
     val boardStatus: StateFlow<BoardStatus?> = bleManager.status
     
-    private val _isDisplayOn = MutableStateFlow(false)
-    val isDisplayOn: StateFlow<Boolean> = _isDisplayOn
-
-    val buttons: StateFlow<List<ButtonDef>> = _isDisplayOn.combine(MutableStateFlow(ButtonCatalog.buttons)) { isOn, allButtons ->
+    val buttons: StateFlow<List<ButtonDef>> = boardStatus.combine(MutableStateFlow(ButtonCatalog.buttons)) { status, allButtons ->
         allButtons.map { btn ->
             if (btn.commandId == 0x0114) {
+                val isOn = status != null && (status.buttonLedBitmask and (1 shl btn.bitmaskBit)) != 0
                 btn.copy(name = if (isOn) "Display On" else "Display Off")
             } else {
                 btn
@@ -46,9 +44,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun toggleDisplay() {
-        android.util.Log.d("MainViewModel", "toggleDisplay: current state = ${_isDisplayOn.value}")
-        _isDisplayOn.value = !_isDisplayOn.value
-        android.util.Log.d("MainViewModel", "toggleDisplay: new state = ${_isDisplayOn.value}")
         sendCommand(0x0114)
     }
 

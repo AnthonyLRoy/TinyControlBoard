@@ -40,7 +40,6 @@ class MainActivity : AppCompatActivity() {
             if (btn.commandId == 0x0107 || btn.name.contains("Menu")) {
                 startActivity(Intent(this@MainActivity, ViewSelectionActivity::class.java))
             } else if (btn.commandId == 0x0114) {
-                android.util.Log.d("MainActivity", "Display button clicked")
                 vm.toggleDisplay()
             } else {
                 vm.sendCommand(btn.commandId)

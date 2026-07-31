@@ -79,7 +79,6 @@ enum CommandId : uint16_t
     CMD_TOGGLE_RANDOM = 0x011F,
     CMD_SET_BRIGHTNESS_UP = 0x0120,
     CMD_SET_BRIGHTNESS_DOWN = 0x0121
-
 };
 
 enum PowerCommand : uint8_t

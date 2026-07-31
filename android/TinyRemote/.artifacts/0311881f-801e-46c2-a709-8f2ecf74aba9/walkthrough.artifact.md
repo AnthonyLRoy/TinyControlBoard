@@ -1,27 +1,26 @@
-# Walkthrough - Repurpose Cycle Button to Display Toggle
+# Walkthrough - Display Button Text Driven by Board Status
 
-I have repurposed the "Cycle" button in the button grid to toggle the display.
+I have updated the Display button logic so that its text is now driven by the actual state reported by the TinyControlBoard.
 
 ## Changes
 
 ### [Android App]
 
-#### [ButtonCatalog.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/data/ButtonCatalog.kt)
-- Changed the name of the button at index 15 from `"Cycle"` to `"Display"`.
-- Updated its `commandId` from `0x0116` to `0x0114` (`CMD_TOGGLE_DISPLAY`).
-- Updated the group comment to reflect the change.
+#### [MainViewModel.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/viewmodel/MainViewModel.kt)
+- The `buttons` list is now a `StateFlow` that reacts to `boardStatus` updates.
+- When a status update is received, the app checks the 15th bit of the `buttonLedBitmask` (which corresponds to the Display button).
+- If the bit is set (LED is on), the button text changes to **"Display On"**.
+- If the bit is cleared or the board is disconnected, the text defaults to **"Display Off"**.
 
-#### [strings.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/values/strings.xml)
-- Replaced the unused `btn_bright_cycle` string with `btn_toggle_display` (set to "Display").
+#### [MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)
+- Subscribes to the dynamic `buttons` flow and updates the `RecyclerView` adapter whenever the state changes.
 
 ## Verification Results
 
-### Code Review
-- The `ButtonCatalog` now correctly maps the 16th button (index 15) to the display toggle command.
-- The UI will automatically pick up the new name "Display" because `ButtonPanelAdapter` binds `btn.name` to the label.
-- The command sending logic in `MainActivity` remains generic and will send the new `0x0114` command when the button is clicked.
+### Logic Verification
+- The button name is determined by: `status != null && (status.buttonLedBitmask and (1 shl 15)) != 0`.
+- This ensures that the UI reflects the **actual** state of the hardware.
+- Without a connection, `status` is null, so it correctly defaults to **"Display Off"**.
 
-```kotlin
-// In ButtonCatalog.kt
-ButtonDef(15, "Display", 0x0114, 15, R.drawable.ic_brightness, spanSize = 2, backgroundColorRes = R.color.btn_bg_utility)
-```
+> [!NOTE]
+> Since the emulator is not connected to a physical board, you will see "Display Off" by default. Once connected to a board that toggles the 15th bit of its LED bitmask when the display is toggled, the text will update automatically.

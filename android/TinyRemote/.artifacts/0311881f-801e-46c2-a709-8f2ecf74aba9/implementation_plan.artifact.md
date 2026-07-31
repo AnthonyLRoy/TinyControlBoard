@@ -1,34 +1,22 @@
-# Change Display Button Text Based on State
+# Drive Display Button Text from Board Status
 
-The goal is to update the "Display" button text to show "Display Off" by default and "Display On" after it is clicked (toggled).
+The user clarified that the "Display Off" text does not change because the board is not connected. This implies the button text should be driven by the actual board status (specifically the LED bitmask) rather than a local toggle.
 
 ## Proposed Changes
 
 ### [Android App]
 
-#### [MODIFY] [strings.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/values/strings.xml)
-- Add `btn_display_on` ("Display On") and `btn_display_off` ("Display Off").
-- Remove or keep `btn_toggle_display` (used for the generic "Display" text).
-
 #### [MODIFY] [MainViewModel.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/viewmodel/MainViewModel.kt)
-- Add a `isDisplayOn` `MutableStateFlow<Boolean>` initialized to `false`.
-- Transform the `buttons` list into a `StateFlow` that updates the "Display" button's name based on `isDisplayOn`.
-- Add a `toggleDisplay()` function that updates `isDisplayOn` and sends the command `0x0114`.
+- Remove the local `_isDisplayOn` state.
+- Update the `buttons` flow to combine `boardStatus` with the base button catalog.
+- If `boardStatus` is not null and bit 15 (associated with the Display button) is set in `buttonLedBitmask`, set the button name to "Display On". Otherwise, set it to "Display Off".
+- `toggleDisplay()` will now only send the command `0x0114` and wait for the board to report the status change.
 
 #### [MODIFY] [MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)
-- Update the button click listener to call `vm.toggleDisplay()` when the display button (command `0x0114`) is clicked.
-- Observe the `vm.buttons` flow and call `buttonAdapter.submitList()` whenever it changes.
-
-#### [MODIFY] [ButtonCatalog.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/data/ButtonCatalog.kt)
-- Update the default name of the button to "Display Off" to match the initial state.
+- No changes needed to the click handler (it already calls `vm.toggleDisplay()`).
 
 ## Verification Plan
 
 ### Manual Verification
-- Launch the app.
-- Verify the button says "Display Off".
-- Click the button.
-- Verify the button text changes to "Display On".
-- Click again.
-- Verify it changes back to "Display Off".
-- (If hardware is connected) Verify the command `0x0114` is sent each time.
+- Since we don't have a connected board in the emulator, the button should stay "Display Off".
+- We can simulate a board status update in a scratch script or by temporarily hardcoding a status in `MainViewModel` to verify the UI updates correctly when a status is received.
