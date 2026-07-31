@@ -24,7 +24,8 @@
     <string name="btn_meter">Meter</string>
     <string name="btn_bright_down">Bright –</string>
     <string name="btn_bright_up">Bright +</string>
-    <string name="btn_bright_cycle">Cycle</string>
+    <string name="btn_display_off">Display Off</string>
+    <string name="btn_display_on">Display On</string>
 
     <!-- View Selection Screen -->
     <string name="view_selection_title">Select display menu</string>

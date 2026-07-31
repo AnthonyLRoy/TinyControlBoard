@@ -1,0 +1,5 @@
+- [ ] Update `strings.xml` with "Display On/Off" strings
+- [ ] Update `ButtonCatalog.kt` default name
+- [ ] Update `MainViewModel.kt` to handle dynamic button list and state
+- [ ] Update `MainActivity.kt` to observe button changes and handle toggle
+- [ ] Verify functionality in emulator
