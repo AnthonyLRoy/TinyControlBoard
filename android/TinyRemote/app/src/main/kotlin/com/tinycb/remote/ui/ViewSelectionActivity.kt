@@ -34,12 +34,12 @@ class ViewSelectionActivity : AppCompatActivity() {
         b.rvViews.adapter = adapter
 
         val options = listOf(
-            ViewOption(getString(R.string.view_default),  0x0200),
-            ViewOption(getString(R.string.view_radio),    0x0201),
-            ViewOption(getString(R.string.view_playlist), 0x0202),
-            ViewOption(getString(R.string.view_folder),   0x0203),
-            ViewOption(getString(R.string.view_tag),      0x0204),
-            ViewOption(getString(R.string.view_album),    0x0205)
+            ViewOption(getString(R.string.view_default),  0x0122),
+            ViewOption(getString(R.string.view_radio),    0x0123),
+            ViewOption(getString(R.string.view_playlist), 0x0124),
+            ViewOption(getString(R.string.view_folder),   0x0125),
+            ViewOption(getString(R.string.view_tag),      0x0126),
+            ViewOption(getString(R.string.view_album),    0x0127)
         )
         adapter.submitList(options)
 

@@ -29,6 +29,12 @@ CMD_TOGGLE_METER = 0x0115
 CMD_TOGGLE_COVER_VIEW = 0x0119
 CMD_TOGGLE_REPEAT = 0x011C
 CMD_TOGGLE_RANDOM = 0x011F
+CMD_SELECT_PANEL_PLAYBACK = 0x0122
+CMD_SELECT_PANEL_RADIO    = 0x0123
+CMD_SELECT_PANEL_PLAYLIST = 0x0124
+CMD_SELECT_PANEL_FOLDER   = 0x0125
+CMD_SELECT_PANEL_TAG      = 0x0126
+CMD_SELECT_PANEL_ALBUM    = 0x0127
 
 # === PANEL NAVIGATION ===
 PANELS = [
@@ -119,6 +125,15 @@ def _click_panel(css_selector):
         _cdp_ws_url = None
         print(f"Panel switch failed: {e}", flush=True)
 
+def _make_select_panel_handler(idx):
+    def _handler(params):
+        global _panel_idx
+        _panel_idx = idx
+        selector, name = PANELS[idx]
+        print(f"Panel → {name}", flush=True)
+        _click_panel(selector)
+    return _handler
+
 def handle_next_panel(params):
     global _panel_idx
     _panel_idx = (_panel_idx + 1) % len(PANELS)
@@ -189,6 +204,12 @@ COMMAND_HANDLERS = {
     CMD_TOGGLE_COVER_VIEW: toggle_cover_view,
     CMD_TOGGLE_REPEAT: toggle_repeat,
     CMD_TOGGLE_RANDOM: toggle_random,
+    CMD_SELECT_PANEL_PLAYBACK: _make_select_panel_handler(0),
+    CMD_SELECT_PANEL_RADIO:    _make_select_panel_handler(1),
+    CMD_SELECT_PANEL_PLAYLIST: _make_select_panel_handler(2),
+    CMD_SELECT_PANEL_FOLDER:   _make_select_panel_handler(3),
+    CMD_SELECT_PANEL_TAG:      _make_select_panel_handler(4),
+    CMD_SELECT_PANEL_ALBUM:    _make_select_panel_handler(5),
 }
 
 def setup_gpio():

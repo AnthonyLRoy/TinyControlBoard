@@ -53,7 +53,13 @@ namespace
         {CMD_RANDOM_OFF, "Random_Off", nullptr},
         {CMD_TOGGLE_RANDOM, "Toggle_Random", nullptr},
         {CMD_SET_BRIGHTNESS_UP, "Set_Brightness_Up", nullptr},
-        {CMD_SET_BRIGHTNESS_DOWN, "Set_Brightness_Down", nullptr}
+        {CMD_SET_BRIGHTNESS_DOWN, "Set_Brightness_Down", nullptr},
+        {CMD_SELECT_PANEL_PLAYBACK, "Select_Panel_Playback", "Select_Panel_Playback"},
+        {CMD_SELECT_PANEL_RADIO,    "Select_Panel_Radio",    "Select_Panel_Radio"},
+        {CMD_SELECT_PANEL_PLAYLIST, "Select_Panel_Playlist", "Select_Panel_Playlist"},
+        {CMD_SELECT_PANEL_FOLDER,   "Select_Panel_Folder",   "Select_Panel_Folder"},
+        {CMD_SELECT_PANEL_TAG,      "Select_Panel_Tag",      "Select_Panel_Tag"},
+        {CMD_SELECT_PANEL_ALBUM,    "Select_Panel_Album",    "Select_Panel_Album"}
     };
 
     const size_t k_commandCatalogCount = sizeof(s_commandCatalog) / sizeof(s_commandCatalog[0]);
