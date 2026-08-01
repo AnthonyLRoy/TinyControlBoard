@@ -20,6 +20,8 @@ namespace controlSystem
             { CMD_TOGGLE_DAC,       ActionCommandRoute::Relay     },
             { CMD_CYCLE_BRIGHTNESS, ActionCommandRoute::Brightness},
             { CMD_TOGGLE_DISPLAY,   ActionCommandRoute::Brightness},
+            { CMD_SET_BRIGHTNESS_UP,   ActionCommandRoute::Brightness},
+            { CMD_SET_BRIGHTNESS_DOWN, ActionCommandRoute::Brightness},
         };
     } // namespace
 

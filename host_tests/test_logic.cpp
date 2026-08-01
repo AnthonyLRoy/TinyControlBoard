@@ -597,6 +597,12 @@ void test_action_command_routing_policy_classifies_on_state_handlers()
     expect_true(controlSystem::classifyCommand(CMD_CYCLE_BRIGHTNESS, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::Brightness,
                 "Cycle brightness should use the brightness handler");
+    expect_true(controlSystem::classifyCommand(CMD_SET_BRIGHTNESS_UP, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::Brightness,
+                "Brightness up should use the brightness handler");
+    expect_true(controlSystem::classifyCommand(CMD_SET_BRIGHTNESS_DOWN, ControlBoardPowerState::ON) ==
+                    controlSystem::ActionCommandRoute::Brightness,
+                "Brightness down should use the brightness handler");
     expect_true(controlSystem::classifyCommand(CMD_PLAY_PAUSE, ControlBoardPowerState::ON) ==
                     controlSystem::ActionCommandRoute::UartDispatch,
                 "Remaining ON-state commands should fall through to UART dispatch");

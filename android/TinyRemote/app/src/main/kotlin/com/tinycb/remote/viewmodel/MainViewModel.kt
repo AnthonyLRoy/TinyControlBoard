@@ -55,6 +55,5 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
-        bleManager.disconnect()
     }
 }
