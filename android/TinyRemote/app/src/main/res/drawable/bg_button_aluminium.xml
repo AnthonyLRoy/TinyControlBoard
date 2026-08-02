@@ -46,7 +46,16 @@
         </shape>
     </item>
 
-    <!-- 5. Fine metallic rim highlight -->
+    <!-- 5. Real brushed-aluminium photo texture (tiled) -->
+    <item android:bottom="2dp" android:right="2dp">
+        <bitmap
+            android:src="@drawable/aluminium_grain_real"
+            android:tileModeX="repeat"
+            android:tileModeY="repeat"
+            android:alpha="0.6" />
+    </item>
+
+    <!-- 6. Fine metallic rim highlight -->
     <item android:bottom="3dp" android:right="3dp" android:left="1dp" android:top="1dp">
         <shape android:shape="rectangle">
             <corners android:radius="11dp" />
