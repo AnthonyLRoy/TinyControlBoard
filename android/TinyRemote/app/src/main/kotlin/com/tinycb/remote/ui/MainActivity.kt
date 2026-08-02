@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.tinycb.remote.R
 import com.tinycb.remote.ble.ConnectionState
 import com.tinycb.remote.databinding.ActivityMainBinding
+import com.tinycb.remote.model.GridItem
 import com.tinycb.remote.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -35,14 +36,11 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(b.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        buttonAdapter = ButtonPanelAdapter { btn ->
-            // 0x0107 is CMD_NEXT_MENU_ITEM in uartProtocol.hpp
-            if (btn.commandId == 0x0107 || btn.name.contains("Menu")) {
-                startActivity(Intent(this@MainActivity, ViewSelectionActivity::class.java))
-            } else if (btn.commandId == 0x0114) {
-                vm.toggleDisplay()
-            } else {
-                vm.sendCommand(btn.commandId)
+        buttonAdapter = ButtonPanelAdapter { commandId ->
+            when (commandId) {
+                0x0107 -> startActivity(Intent(this@MainActivity, ViewSelectionActivity::class.java))
+                0x0114 -> vm.toggleDisplay()
+                else   -> vm.sendCommand(commandId)
             }
         }
         
@@ -62,7 +60,7 @@ class MainActivity : AppCompatActivity() {
             layoutManager = GridLayoutManager(this@MainActivity, 4).apply {
                 spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
                     override fun getSpanSize(position: Int): Int =
-                        buttonAdapter.currentList.getOrNull(position)?.spanSize ?: 1
+                        (buttonAdapter.currentList.getOrNull(position) as? GridItem)?.spanSize ?: 1
                 }
             }
             adapter = buttonAdapter

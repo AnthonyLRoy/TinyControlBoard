@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="6dp">
+
+    <TextView
+        android:id="@+id/tvGroupHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="true"
+        android:textSize="10sp"
+        android:letterSpacing="0.2"
+        android:textColor="@color/mcintosh_green"
+        android:textStyle="bold"
+        android:fontFamily="monospace" />
+
+    <!-- Divider rule that fills remaining space -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_weight="1"
+        android:layout_marginStart="10dp"
+        android:alpha="0.4"
+        android:background="@color/aluminium_edge_light" />
+
+</LinearLayout>

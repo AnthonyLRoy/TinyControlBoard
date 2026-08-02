@@ -12,5 +12,9 @@ data class ButtonDef(
     /** Number of grid columns this button spans (out of 4). */
     val spanSize: Int = 1,
     /** Card background color resource for this button. */
-    val backgroundColorRes: Int = R.color.btn_bg_default
+    val backgroundColorRes: Int = R.color.btn_bg_default,
+    /** Primary buttons (Play/Pause, Prev, Next) get a permanent green icon tint. */
+    val isPrimary: Boolean = false,
+    /** Toggle buttons swap to a green filled background when their LED is active. */
+    val isToggle: Boolean = false
 )

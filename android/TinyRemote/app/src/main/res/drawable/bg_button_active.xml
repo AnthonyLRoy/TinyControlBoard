@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Exterior shadow -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <solid android:color="#80000000" />
+        </shape>
+    </item>
+    <!-- McIntosh green fill -->
+    <item android:bottom="2dp" android:right="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <solid android:color="@color/mcintosh_green" />
+        </shape>
+    </item>
+    <!-- Radial sheen (same as aluminium body for consistency) -->
+    <item android:bottom="2dp" android:right="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <gradient
+                android:gradientRadius="200dp"
+                android:startColor="#1AFFFFFF"
+                android:endColor="#00FFFFFF"
+                android:type="radial"
+                android:centerX="0.4"
+                android:centerY="0.3" />
+        </shape>
+    </item>
+    <!-- Rim highlight -->
+    <item android:bottom="3dp" android:right="3dp" android:left="1dp" android:top="1dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="11dp" />
+            <stroke android:width="1dp" android:color="#40000000" />
+        </shape>
+    </item>
+</layer-list>
