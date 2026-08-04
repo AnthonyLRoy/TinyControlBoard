@@ -11,7 +11,7 @@ PowerLed::PowerLed(gpio_num_t aPin, ledc_channel_t aChannel,
         : m_activePin(aPin), m_activeChannel(aChannel),
             m_standbyPin(s_pin), m_standbyChannel(s_channel)
 {
-    // Just store values; do not create timers here
+    // Just store values; do not create timers here it won't work because the ESP32 timer system is not initialized yet.
 }
 
 
