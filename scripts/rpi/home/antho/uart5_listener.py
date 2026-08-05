@@ -268,6 +268,11 @@ def handle_command(command_id, params):
 def read_and_process_packet(ser):
     data = read_packet_with_resync(ser)
 
+    src_app = data[2]
+    if src_app != 0x01:  # APP_ESP32; drop looped-back RPi transmissions
+        print(f"⚠️ Dropping packet from src_app=0x{src_app:02X} (expected ESP32=0x01)", flush=True)
+        return
+
     payload_len = data[7]
     checksum = data[8 + payload_len]
 
@@ -286,7 +291,9 @@ def read_and_process_packet(ser):
     handle_command(cmd_id, params)
 
 def wait_for_data_ready():
-    GPIO.wait_for_edge(DRDY_PIN, GPIO.RISING)
+    result = GPIO.wait_for_edge(DRDY_PIN, GPIO.RISING, timeout=10000)
+    if result is None:
+        print(f"⚠️ No DRDY pulse on GPIO {DRDY_PIN} in 10 s — ESP32 not sending", flush=True)
 
 def main():
     ser = None
@@ -298,7 +305,6 @@ def main():
         print("🎧 UART5 listener started", flush=True)
 
         while True:
-            wait_for_data_ready()
             read_and_process_packet(ser)
             time.sleep(0.001)
     except KeyboardInterrupt:
