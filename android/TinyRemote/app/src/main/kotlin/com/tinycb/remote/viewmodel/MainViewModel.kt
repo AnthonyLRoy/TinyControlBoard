@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
@@ -25,6 +26,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val connectionState: StateFlow<ConnectionState> = bleManager.connectionState
     val boardStatus: StateFlow<BoardStatus?> = bleManager.status
+    val nowPlaying: StateFlow<String?> = boardStatus.map { it?.nowPlaying }
+        .stateIn(viewModelScope, SharingStarted.Lazily, null)
     
     val buttons: StateFlow<List<GridItem>> = boardStatus.combine(MutableStateFlow(ButtonCatalog.gridItems)) { status, items ->
         items.map { item ->

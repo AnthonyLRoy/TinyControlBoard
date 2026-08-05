@@ -162,6 +162,14 @@ namespace controlSystem
         ESP_LOGI(k_logTag, "Received UART message: cmd=0x%04X seq=%u type=%u",
                  rMsg.commandId, rMsg.sequence, rMsg.msgType);
 
+        if (rMsg.msgType == MSG_NOW_PLAYING)
+        {
+            memcpy(m_systemState.nowPlayingText, rMsg.nowPlayingText, rMsg.nowPlayingLen + 1);
+            m_systemState.nowPlayingVersion.fetch_add(1, std::memory_order_release);
+            ESP_LOGI(k_logTag, "Now playing: %s", m_systemState.nowPlayingText);
+            return;
+        }
+
         if (isHeartbeatCommand(rMsg.commandId))
         {
             handleHeartbeatReceived();

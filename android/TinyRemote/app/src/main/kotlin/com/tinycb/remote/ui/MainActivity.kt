@@ -95,6 +95,18 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        lifecycleScope.launch {
+            vm.nowPlaying.collectLatest { track ->
+                if (track.isNullOrEmpty()) {
+                    b.tvNowPlaying.visibility = android.view.View.GONE
+                } else {
+                    b.tvNowPlaying.text = track
+                    b.tvNowPlaying.visibility = android.view.View.VISIBLE
+                    b.tvNowPlaying.isSelected = true  // required for marquee scroll
+                }
+            }
+        }
     }
 
     override fun onDestroy() {

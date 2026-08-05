@@ -198,11 +198,11 @@ void UartTransport::deinitUart()
 void UartTransport::sendUartMessage(const char *p_logTag, UartMessage &rMessage)
 {
     uint8_t txBuffer[UART_PACKET_SIZE];
-    serializeMessage(rMessage, txBuffer);
+    const uint8_t packetSize = serializeMessage(rMessage, txBuffer);
 
     ESP_LOGI(p_logTag, "Sending %s message (cmd=0x%04X)", p_logTag, rMessage.commandId);
 
-    if (!sendData(txBuffer, UART_PACKET_SIZE))
+    if (!sendData(txBuffer, packetSize))
     {
         ESP_LOGE(p_logTag, "Failed to send %s message", p_logTag);
     }

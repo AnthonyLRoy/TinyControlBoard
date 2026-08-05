@@ -48,17 +48,58 @@ PARAM_ENABLED = 1
 ROTARY_ACTION_PREVIOUS = 0
 ROTARY_ACTION_NEXT = 1
 # ================================
-# UART packet structure:
-# [0] Start Byte (0xAA) 
+# Variable-length packet structure:
+# [0]      start byte (0xAA)
+# [1]      version
+# [2]      src_app
+# [3]      msg_type
+# [4]      sequence
+# [5-6]    command_id (LE uint16)
+# [7]      payload_len (N)
+# [8..8+N-1]  payload
+# [8+N]    checksum = sum(bytes[1..7+N]) % 256
 UART_START_BYTE = 0xAA
-PACKET_SIZE = 18
-PACKET_FORMAT = "<BBBBBH5HB"  
-# little-endian
+HEADER_SIZE = 8  # bytes 0-7
+HEADER_FORMAT = "<BBBBBHB"  # start, version, src, type, seq, cmd_id, payload_len
 
 
-# calculate the checksum to ensure data not currupted 
+def compute_checksum_cpp_style(data):
+    payload_len = data[7]
+    return sum(data[1:8 + payload_len]) % 256
 
-def _click_panel(css_selector):
+def read_packet_with_resync(ser):
+    # Sync to start byte
+    while True:
+        b = ser.read(1)
+        if not b:
+            time.sleep(0.001)
+            continue
+        if b[0] == UART_START_BYTE:
+            break
+
+    # Read the rest of the header (bytes 1-7)
+    header_rest = b''
+    while len(header_rest) < HEADER_SIZE - 1:
+        chunk = ser.read((HEADER_SIZE - 1) - len(header_rest))
+        if chunk:
+            header_rest += chunk
+        else:
+            time.sleep(0.001)
+
+    header = bytes([UART_START_BYTE]) + header_rest
+    payload_len = header[7]
+
+    # Read payload + checksum
+    remaining = payload_len + 1
+    rest = b''
+    while len(rest) < remaining:
+        chunk = ser.read(remaining - len(rest))
+        if chunk:
+            rest += chunk
+        else:
+            time.sleep(0.001)
+
+    return header + rest
     global _cdp_ws_url
     try:
         if _cdp_ws_url is None:
@@ -132,9 +173,6 @@ def handle_prev_panel(params):
     selector, name = PANELS[_panel_idx]
     print(f"Panel → {name}", flush=True)
     _click_panel(selector)
-
-def compute_checksum_cpp_style(packet_bytes):
-    return sum(packet_bytes[1:17]) & 0xFF
 
 def run_command(args):
     result = subprocess.run(args, check=False)
@@ -223,20 +261,21 @@ def handle_command(command_id, params):
 
 def read_and_process_packet(ser):
     data = read_packet_with_resync(ser)
-    try:
-        fields = struct.unpack(PACKET_FORMAT, data)
-    except struct.error as e:
-        print(f"⚠️ Struct unpack error: {e}", flush=True)
-        return
 
-    start_byte, version, src_app, msg_type, sequence, cmd_id, *params, checksum = fields
-
-    if start_byte != UART_START_BYTE:
-        return
+    payload_len = data[7]
+    checksum = data[8 + payload_len]
 
     if checksum != compute_checksum_cpp_style(data):
-        print("⚠️ Checksum mismatch", flush=True)
+        print("\u26a0\ufe0f Checksum mismatch", flush=True)
         return
+
+    cmd_id  = data[5] | (data[6] << 8)
+    payload = data[8:8 + payload_len]
+
+    # Decode params as 5\xd7LE uint16 for command packets with \u226510 payload bytes
+    params = [0, 0, 0, 0, 0]
+    for i in range(min(5, payload_len // 2)):
+        params[i] = payload[i * 2] | (payload[i * 2 + 1] << 8)
 
     handle_command(cmd_id, params)
 

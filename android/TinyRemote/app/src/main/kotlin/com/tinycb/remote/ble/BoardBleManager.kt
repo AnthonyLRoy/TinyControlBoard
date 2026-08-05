@@ -129,7 +129,9 @@ class BoardBleManager(context: Context) {
                 return
             }
 
-            // Both characteristics ready \u2014 now it is safe to open the control panel
+            val nowPlayingChar = svc.getCharacteristic(BleUuids.NOW_PLAYING_CHAR)
+
+            // Both required characteristics ready \u2014 now it is safe to open the control panel
             Log.i(TAG, "All characteristics found \u2014 emitting Connected")
             _connectionState.value = ConnectionState.Connected(g.device.name)
 
@@ -149,6 +151,25 @@ class BoardBleManager(context: Context) {
             } else {
                 Log.e(TAG, "CCCD descriptor not found on status characteristic!")
             }
+
+            // Subscribe to now-playing notifications (optional char — ignore if absent)
+            if (nowPlayingChar != null) {
+                g.setCharacteristicNotification(nowPlayingChar, true)
+                val npCccd = nowPlayingChar.getDescriptor(BleUuids.CCCD)
+                if (npCccd != null) {
+                    Log.d(TAG, "Writing CCCD to enable notifications on now-playing char")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        g.writeDescriptor(npCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        npCccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                        @Suppress("DEPRECATION")
+                        g.writeDescriptor(npCccd)
+                    }
+                }
+            } else {
+                Log.w(TAG, "Now-playing characteristic not found — track display unavailable")
+            }
             Log.i(TAG, "Services set up; cmdChar and notifications enabled")
         }
 
@@ -167,7 +188,10 @@ class BoardBleManager(context: Context) {
             value: ByteArray
         ) {
             Log.d(TAG, "onCharacteristicChanged (API33+): uuid=${characteristic.uuid} bytes=${value.size}")
-            if (characteristic.uuid == BleUuids.STATUS_CHAR) parseStatus(value)
+            when (characteristic.uuid) {
+                BleUuids.STATUS_CHAR      -> parseStatus(value)
+                BleUuids.NOW_PLAYING_CHAR -> parseNowPlaying(value)
+            }
         }
 
         // Android < 13 fallback
@@ -177,9 +201,12 @@ class BoardBleManager(context: Context) {
             characteristic: BluetoothGattCharacteristic
         ) {
             Log.d(TAG, "onCharacteristicChanged (legacy): uuid=${characteristic.uuid}")
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-                && characteristic.uuid == BleUuids.STATUS_CHAR) {
-                parseStatus(characteristic.value ?: return)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                val value = characteristic.value ?: return
+                when (characteristic.uuid) {
+                    BleUuids.STATUS_CHAR      -> parseStatus(value)
+                    BleUuids.NOW_PLAYING_CHAR -> parseNowPlaying(value)
+                }
             }
         }
     }
@@ -212,7 +239,15 @@ class BoardBleManager(context: Context) {
             7 -> "GOING INTO DEEP SLEEP"
             else -> "UNKNOWN"
         }
-        _status.value = BoardStatus(powerName, bitmask)
+        _status.value = BoardStatus(powerName, bitmask, _status.value?.nowPlaying)
+    }
+
+    private fun parseNowPlaying(value: ByteArray) {
+        val text = value.toString(Charsets.UTF_8).trim()
+        val current = _status.value
+        if (current != null) {
+            _status.value = current.copy(nowPlaying = text.ifEmpty { null })
+        }
     }
 
     // ── Public API ───────────────────────────────────────────────────────────

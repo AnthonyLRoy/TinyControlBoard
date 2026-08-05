@@ -8,7 +8,6 @@
 class UartReceiver
 {
 public:
-    static constexpr int FRAME_SIZE = 18;
     static constexpr int BUFFER_SIZE = 256;
 
     UartReceiver();

@@ -22,9 +22,10 @@
 
 // ---------------------------------------------------------------------------
 // UUIDs  (128-bit, little-endian byte order for BLE_UUID128_INIT)
-//   Service:     4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d0e
-//   CMD char:    4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d01
-//   Status char: 4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d02
+//   Service:          4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d0e
+//   CMD char:         4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d01
+//   Status char:      4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d02
+//   Now-playing char: 4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d03
 // ---------------------------------------------------------------------------
 static const ble_uuid128_t k_svcUuid =
     BLE_UUID128_INIT(0x0e, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
@@ -38,16 +39,21 @@ static const ble_uuid128_t k_statusChrUuid =
     BLE_UUID128_INIT(0x02, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
                      0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
 
+static const ble_uuid128_t k_nowPlayingChrUuid =
+    BLE_UUID128_INIT(0x03, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
+                     0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
+
 static constexpr const char *k_logTag = "BLE_Server";
 
 // ---------------------------------------------------------------------------
 // File-scope state (avoids NimBLE types in the class header)
 // ---------------------------------------------------------------------------
-static controlSystem::ActionProcessor *s_processor  = nullptr;
-static controlSystem::SystemState     *s_state       = nullptr;
-static uint16_t                        s_connHandle  = BLE_HS_CONN_HANDLE_NONE;
-static uint16_t                        s_statusValHandle = 0;
-static volatile bool                   s_subscribed  = false; // set true only after CCCD write confirmed
+static controlSystem::ActionProcessor *s_processor       = nullptr;
+static controlSystem::SystemState     *s_state            = nullptr;
+static uint16_t                        s_connHandle       = BLE_HS_CONN_HANDLE_NONE;
+static uint16_t                        s_statusValHandle  = 0;
+static uint16_t                        s_nowPlayingValHandle = 0;
+static volatile bool                   s_subscribed       = false; // set true only after CCCD write confirmed
 
 // ---------------------------------------------------------------------------
 // Forward declarations for the GATT table
@@ -56,6 +62,8 @@ static int cmdChrAccess(uint16_t conn, uint16_t attr,
                         struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int statusChrAccess(uint16_t conn, uint16_t attr,
                            struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int nowPlayingChrAccess(uint16_t conn, uint16_t attr,
+                               struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 // ---------------------------------------------------------------------------
 // GATT service table
@@ -75,6 +83,12 @@ static const struct ble_gatt_svc_def k_gattSvcs[] = {
                 .access_cb  = statusChrAccess,
                 .flags      = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
                 .val_handle = &s_statusValHandle,
+            },
+            {
+                .uuid       = &k_nowPlayingChrUuid.u,
+                .access_cb  = nowPlayingChrAccess,
+                .flags      = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .val_handle = &s_nowPlayingValHandle,
             },
             { 0 },
         },
@@ -117,6 +131,16 @@ static int statusChrAccess(uint16_t conn, uint16_t attr,
     return 0;
 }
 
+static int nowPlayingChrAccess(uint16_t conn, uint16_t attr,
+                               struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR || !s_state)
+        return BLE_ATT_ERR_UNLIKELY;
+    const char *text = s_state->nowPlayingText;
+    os_mbuf_append(ctxt->om, text, strlen(text));
+    return 0;
+}
+
 // Helper: build and send a single status notification to the current connection
 static bool pushStatusNotification()
 {
@@ -147,6 +171,21 @@ static bool pushStatusNotification()
     }
     ESP_LOGI(k_logTag, "Status notification sent: powerState=%u bitmask=0x%04X", ps, bm);
     return true;
+}
+
+static bool pushNowPlayingNotification()
+{
+    if (!s_state || s_connHandle == BLE_HS_CONN_HANDLE_NONE || s_nowPlayingValHandle == 0)
+        return false;
+    const char *text = s_state->nowPlayingText;
+    const size_t len = strlen(text);
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(text, len);
+    if (!om)
+        return false;
+    int rc = ble_gatts_notify_custom(s_connHandle, s_nowPlayingValHandle, om);
+    if (rc != 0)
+        ESP_LOGW(k_logTag, "now-playing notify failed: %d", rc);
+    return rc == 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -273,9 +312,10 @@ static void bleHostTask(void *param)
 // ---------------------------------------------------------------------------
 static void statusNotifyTask(void *arg)
 {
-    uint16_t lastBitmask    = 0xFFFF;
-    uint8_t  lastPowerState = 0xFF;
-    bool     wasSubscribed  = false;
+    uint16_t lastBitmask       = 0xFFFF;
+    uint8_t  lastPowerState    = 0xFF;
+    uint8_t  lastNowPlayingVer = 0xFF;
+    bool     wasSubscribed     = false;
 
     while (true)
     {
@@ -290,24 +330,31 @@ static void statusNotifyTask(void *arg)
         {
             wasSubscribed = true;
             vTaskDelay(pdMS_TO_TICKS(100));
-            lastBitmask    = 0xFFFF;  // force push
-            lastPowerState = 0xFF;
+            lastBitmask       = 0xFFFF;  // force push
+            lastPowerState    = 0xFF;
+            lastNowPlayingVer = 0xFF;
             ESP_LOGI(k_logTag, "Subscription confirmed — sending initial status");
         }
 
-        const auto     ps = static_cast<uint8_t>(s_state->powerState.load());
-        const uint16_t bm = s_state->buttonLedBitmask.load();
+        const auto     ps  = static_cast<uint8_t>(s_state->powerState.load());
+        const uint16_t bm  = s_state->buttonLedBitmask.load();
+        const uint8_t  npv = s_state->nowPlayingVersion.load(std::memory_order_acquire);
 
-        if (ps == lastPowerState && bm == lastBitmask)
-            continue;
-
-        ESP_LOGI(k_logTag, "Pushing status: powerState=%u bitmask=0x%04X", ps, bm);
-        bool sent = pushStatusNotification();
-
-        if (sent)
+        if (ps != lastPowerState || bm != lastBitmask)
         {
-            lastPowerState = ps;
-            lastBitmask    = bm;
+            ESP_LOGI(k_logTag, "Pushing status: powerState=%u bitmask=0x%04X", ps, bm);
+            if (pushStatusNotification())
+            {
+                lastPowerState = ps;
+                lastBitmask    = bm;
+            }
+        }
+
+        if (npv != lastNowPlayingVer)
+        {
+            ESP_LOGI(k_logTag, "Pushing now-playing: %s", s_state->nowPlayingText);
+            if (pushNowPlayingNotification())
+                lastNowPlayingVer = npv;
         }
 
         // If we lose the subscription between cycles, reset so the next

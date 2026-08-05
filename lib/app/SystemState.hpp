@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstdint>
 #include "power/powerState.hpp"
+#include "protocol/uartProtocol.hpp"
 
 namespace controlSystem
 {
@@ -12,5 +13,8 @@ namespace controlSystem
         std::atomic<ControlBoardPowerState> powerState{ControlBoardPowerState::OFF};
         // One bit per button (bit[n] = buttonId n). Updated by ControlBoard::setButtonLed.
         std::atomic<uint16_t> buttonLedBitmask{0};
+        // Incremented by UART RX task each time nowPlayingText is fully updated.
+        std::atomic<uint8_t>  nowPlayingVersion{0};
+        char nowPlayingText[protocol::k_maxNowPlayingLen + 1]{};
     };
 }
