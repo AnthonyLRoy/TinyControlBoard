@@ -3,6 +3,8 @@ package com.tinycb.remote.ui
 import android.content.res.ColorStateList
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +29,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var b: ActivityMainBinding
     private val vm: MainViewModel by viewModels()
     private lateinit var buttonAdapter: ButtonPanelAdapter
+
+    private val progressHandler = Handler(Looper.getMainLooper())
+    private var trackDurationSec = 0
+    private var trackElapsedSec = 0
+    private var isTrackPlaying = false
+    private var trackProgressUpdatedAtMs = 0L
+    private val progressTicker = object : Runnable {
+        override fun run() {
+            updateProgressBar()
+            progressHandler.postDelayed(this, 500L)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,6 +121,46 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        lifecycleScope.launch {
+            vm.boardStatus.collectLatest { status ->
+                trackDurationSec = status?.trackDurationSec ?: 0
+                trackElapsedSec = status?.trackElapsedSec ?: 0
+                isTrackPlaying = status?.isTrackPlaying ?: false
+                trackProgressUpdatedAtMs = status?.trackProgressUpdatedAtMs ?: 0L
+                b.layoutTrackProgress.visibility =
+                    if (trackDurationSec > 0) android.view.View.VISIBLE else android.view.View.GONE
+                updateProgressBar()
+            }
+        }
+    }
+
+    /** Interpolates elapsed time between BLE updates (which arrive every ~2s) for a smooth bar. */
+    private fun updateProgressBar() {
+        if (trackDurationSec <= 0) return
+        val driftSec = if (isTrackPlaying && trackProgressUpdatedAtMs > 0)
+            (System.currentTimeMillis() - trackProgressUpdatedAtMs) / 1000 else 0L
+        val interpolatedElapsed = (trackElapsedSec + driftSec).coerceIn(0L, trackDurationSec.toLong())
+        val remaining = trackDurationSec - interpolatedElapsed
+        b.progressTrack.progress = ((interpolatedElapsed * 1000) / trackDurationSec).toInt()
+        b.tvElapsed.text = formatSeconds(interpolatedElapsed)
+        b.tvRemaining.text = "-" + formatSeconds(remaining)
+    }
+
+    private fun formatSeconds(totalSeconds: Long): String {
+        val m = totalSeconds / 60
+        val s = totalSeconds % 60
+        return "%d:%02d".format(m, s)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        progressHandler.post(progressTicker)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        progressHandler.removeCallbacks(progressTicker)
     }
 
     override fun onDestroy() {

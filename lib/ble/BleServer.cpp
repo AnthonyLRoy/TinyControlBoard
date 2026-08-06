@@ -22,10 +22,11 @@
 
 // ---------------------------------------------------------------------------
 // UUIDs  (128-bit, little-endian byte order for BLE_UUID128_INIT)
-//   Service:          4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d0e
-//   CMD char:         4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d01
-//   Status char:      4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d02
-//   Now-playing char: 4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d03
+//   Service:           4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d0e
+//   CMD char:          4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d01
+//   Status char:       4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d02
+//   Now-playing char:  4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d03
+//   Track-progress char:4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d04
 // ---------------------------------------------------------------------------
 static const ble_uuid128_t k_svcUuid =
     BLE_UUID128_INIT(0x0e, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
@@ -43,6 +44,10 @@ static const ble_uuid128_t k_nowPlayingChrUuid =
     BLE_UUID128_INIT(0x03, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
                      0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
 
+static const ble_uuid128_t k_trackProgressChrUuid =
+    BLE_UUID128_INIT(0x04, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
+                     0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
+
 static constexpr const char *k_logTag = "BLE_Server";
 
 // ---------------------------------------------------------------------------
@@ -53,7 +58,10 @@ static controlSystem::SystemState     *s_state            = nullptr;
 static uint16_t                        s_connHandle       = BLE_HS_CONN_HANDLE_NONE;
 static uint16_t                        s_statusValHandle  = 0;
 static uint16_t                        s_nowPlayingValHandle = 0;
-static volatile bool                   s_subscribed       = false; // set true only after CCCD write confirmed
+static uint16_t                        s_trackProgressValHandle = 0;
+static volatile bool                   s_statusSubscribed = false;
+static volatile bool                   s_nowPlayingSubscribed = false;
+static volatile bool                   s_trackProgressSubscribed = false;
 
 // ---------------------------------------------------------------------------
 // Forward declarations for the GATT table
@@ -64,6 +72,8 @@ static int statusChrAccess(uint16_t conn, uint16_t attr,
                            struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int nowPlayingChrAccess(uint16_t conn, uint16_t attr,
                                struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int trackProgressChrAccess(uint16_t conn, uint16_t attr,
+                                  struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 // ---------------------------------------------------------------------------
 // GATT service table
@@ -89,6 +99,12 @@ static const struct ble_gatt_svc_def k_gattSvcs[] = {
                 .access_cb  = nowPlayingChrAccess,
                 .flags      = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
                 .val_handle = &s_nowPlayingValHandle,
+            },
+            {
+                .uuid       = &k_trackProgressChrUuid.u,
+                .access_cb  = trackProgressChrAccess,
+                .flags      = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .val_handle = &s_trackProgressValHandle,
             },
             { 0 },
         },
@@ -141,6 +157,32 @@ static int nowPlayingChrAccess(uint16_t conn, uint16_t attr,
     return 0;
 }
 
+static int trackProgressChrAccess(uint16_t conn, uint16_t attr,
+                                  struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR || !s_state)
+        return BLE_ATT_ERR_UNLIKELY;
+    uint16_t elapsed = 0;
+    uint16_t duration = 0;
+    bool isPlaying = false;
+    do
+    {
+        while (s_state->trackProgressUpdating.load(std::memory_order_acquire))
+        {
+        }
+        elapsed = s_state->trackElapsedSeconds.load(std::memory_order_relaxed);
+        duration = s_state->trackDurationSeconds.load(std::memory_order_relaxed);
+        isPlaying = s_state->trackIsPlaying.load(std::memory_order_relaxed);
+    } while (s_state->trackProgressUpdating.load(std::memory_order_acquire));
+    const uint8_t buf[5] = { static_cast<uint8_t>(elapsed & 0xFF),
+                             static_cast<uint8_t>(elapsed >> 8),
+                             static_cast<uint8_t>(duration & 0xFF),
+                             static_cast<uint8_t>(duration >> 8),
+                             static_cast<uint8_t>(isPlaying) };
+    os_mbuf_append(ctxt->om, buf, sizeof(buf));
+    return 0;
+}
+
 // Helper: build and send a single status notification to the current connection
 static bool pushStatusNotification()
 {
@@ -185,6 +227,36 @@ static bool pushNowPlayingNotification()
     int rc = ble_gatts_notify_custom(s_connHandle, s_nowPlayingValHandle, om);
     if (rc != 0)
         ESP_LOGW(k_logTag, "now-playing notify failed: %d", rc);
+    return rc == 0;
+}
+
+static bool pushTrackProgressNotification()
+{
+    if (!s_state || s_connHandle == BLE_HS_CONN_HANDLE_NONE || s_trackProgressValHandle == 0)
+        return false;
+    uint16_t elapsed = 0;
+    uint16_t duration = 0;
+    bool isPlaying = false;
+    do
+    {
+        while (s_state->trackProgressUpdating.load(std::memory_order_acquire))
+        {
+        }
+        elapsed = s_state->trackElapsedSeconds.load(std::memory_order_relaxed);
+        duration = s_state->trackDurationSeconds.load(std::memory_order_relaxed);
+        isPlaying = s_state->trackIsPlaying.load(std::memory_order_relaxed);
+    } while (s_state->trackProgressUpdating.load(std::memory_order_acquire));
+    const uint8_t buf[5] = { static_cast<uint8_t>(elapsed & 0xFF),
+                             static_cast<uint8_t>(elapsed >> 8),
+                             static_cast<uint8_t>(duration & 0xFF),
+                             static_cast<uint8_t>(duration >> 8),
+                             static_cast<uint8_t>(isPlaying) };
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(buf, sizeof(buf));
+    if (!om)
+        return false;
+    int rc = ble_gatts_notify_custom(s_connHandle, s_trackProgressValHandle, om);
+    if (rc != 0)
+        ESP_LOGW(k_logTag, "track-progress notify failed: %d", rc);
     return rc == 0;
 }
 
@@ -254,26 +326,20 @@ static int gapEventHandler(struct ble_gap_event *event, void *arg)
         break;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        if (event->subscribe.cur_notify)
-        {
-            // Mark subscribed so the notify task will push on its next cycle.
-            // Do NOT push here — the CCCD write response may still be in flight,
-            // and some Android stacks drop notifications received while a write
-            // response is pending on the same connection.
-            ESP_LOGI(k_logTag, "BLE notifications subscribed (attr=%u) — task will push shortly",
-                     event->subscribe.attr_handle);
-            s_subscribed = true;
-        }
-        else
-        {
-            s_subscribed = false;
-        }
+        if (event->subscribe.attr_handle == s_statusValHandle)
+            s_statusSubscribed = event->subscribe.cur_notify;
+        else if (event->subscribe.attr_handle == s_nowPlayingValHandle)
+            s_nowPlayingSubscribed = event->subscribe.cur_notify;
+        else if (event->subscribe.attr_handle == s_trackProgressValHandle)
+            s_trackProgressSubscribed = event->subscribe.cur_notify;
         break;
 
     case BLE_GAP_EVENT_DISCONNECT:
         ESP_LOGI(k_logTag, "BLE client disconnected (reason=%d)", event->disconnect.reason);
         s_connHandle = BLE_HS_CONN_HANDLE_NONE;
-        s_subscribed = false;
+        s_statusSubscribed = false;
+        s_nowPlayingSubscribed = false;
+        s_trackProgressSubscribed = false;
         startAdvertising();
         break;
 
@@ -308,20 +374,21 @@ static void bleHostTask(void *param)
 }
 
 // ---------------------------------------------------------------------------
-// Status notification task â€” polls SystemState every 500 ms
+// Status notification task — polls SystemState every 200 ms
 // ---------------------------------------------------------------------------
 static void statusNotifyTask(void *arg)
 {
     uint16_t lastBitmask       = 0xFFFF;
     uint8_t  lastPowerState    = 0xFF;
     uint8_t  lastNowPlayingVer = 0xFF;
+    uint8_t  lastTrackProgressVer = 0xFF;
     bool     wasSubscribed     = false;
 
     while (true)
     {
         vTaskDelay(pdMS_TO_TICKS(200));  // 200 ms poll — fast enough, less aggressive
 
-        if (!s_state || !s_subscribed)
+        if (!s_state || !(s_statusSubscribed || s_nowPlayingSubscribed || s_trackProgressSubscribed))
             continue;
 
         // Freshly subscribed: wait an extra 100 ms to let the CCCD write response
@@ -333,14 +400,16 @@ static void statusNotifyTask(void *arg)
             lastBitmask       = 0xFFFF;  // force push
             lastPowerState    = 0xFF;
             lastNowPlayingVer = 0xFF;
+            lastTrackProgressVer = 0xFF;
             ESP_LOGI(k_logTag, "Subscription confirmed — sending initial status");
         }
 
         const auto     ps  = static_cast<uint8_t>(s_state->powerState.load());
         const uint16_t bm  = s_state->buttonLedBitmask.load();
         const uint8_t  npv = s_state->nowPlayingVersion.load(std::memory_order_acquire);
+        const uint8_t  tpv = s_state->trackProgressVersion.load(std::memory_order_acquire);
 
-        if (ps != lastPowerState || bm != lastBitmask)
+        if (s_statusSubscribed && (ps != lastPowerState || bm != lastBitmask))
         {
             ESP_LOGI(k_logTag, "Pushing status: powerState=%u bitmask=0x%04X", ps, bm);
             if (pushStatusNotification())
@@ -350,16 +419,22 @@ static void statusNotifyTask(void *arg)
             }
         }
 
-        if (npv != lastNowPlayingVer)
+        if (s_nowPlayingSubscribed && npv != lastNowPlayingVer)
         {
             ESP_LOGI(k_logTag, "Pushing now-playing: %s", s_state->nowPlayingText);
             if (pushNowPlayingNotification())
                 lastNowPlayingVer = npv;
         }
 
+        if (s_trackProgressSubscribed && tpv != lastTrackProgressVer)
+        {
+            if (pushTrackProgressNotification())
+                lastTrackProgressVer = tpv;
+        }
+
         // If we lose the subscription between cycles, reset so the next
         // subscription gets a fresh initial push.
-        if (!s_subscribed)
+        if (!(s_statusSubscribed || s_nowPlayingSubscribed || s_trackProgressSubscribed))
             wasSubscribed = false;
     }
 }

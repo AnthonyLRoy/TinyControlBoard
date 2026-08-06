@@ -8,13 +8,13 @@ Primary source:
 
 Related implementations:
 
-- [lib/transport/uart/serial.cpp](../lib/transport/uart/serial.cpp)
-- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [lib/hal/uart/serial.cpp](../lib/hal/uart/serial.cpp)
+- [scripts/rpi/home/antho/uart5_listener.py](../scripts/rpi/home/antho/uart5_listener.py)
 - [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
 
 ## 1. Packet Format
 
-The current packet size is 18 bytes.
+Packets use a variable-length payload.
 
 Layout:
 
@@ -26,14 +26,16 @@ Layout:
 | 3 | message type | 1 |
 | 4 | sequence | 1 |
 | 5-6 | command ID | 2 |
-| 7-16 | five 16-bit parameters | 10 |
-| 17 | checksum | 1 |
+| 7 | payload length (`N`) | 1 |
+| 8..7+N | payload | `N` |
+| 8+N | checksum | 1 |
 
 Current constants:
 
 - start byte: `0xAA`
 - protocol version: `0x01`
-- packet size: `18`
+- command-packet size: `19` bytes (`N = 10`)
+- maximum packet size: `69` bytes (`N = 60`)
 
 ## 2. Message Structure
 
@@ -48,6 +50,8 @@ It contains:
 - `sequence`
 - `commandId`
 - `params[5]`
+- `nowPlayingText` / `nowPlayingLen`
+- `trackElapsedSec` / `trackDurationSec` / `trackIsPlaying`
 - `checksum`
 
 Reference:
@@ -64,6 +68,11 @@ Current message types are:
 | `MSG_STATUS` | `0x02` |
 | `MSG_ACK` | `0x03` |
 | `MSG_NACK` | `0x04` |
+| `MSG_NOW_PLAYING` | `0x05` |
+| `MSG_TRACK_PROGRESS` | `0x06` |
+
+`MSG_TRACK_PROGRESS` carries five bytes: elapsed seconds (`uint16` little-endian),
+duration seconds (`uint16` little-endian), and an `isPlaying` byte (`0` or `1`).
 
 ## 4. Application IDs
 
@@ -120,17 +129,12 @@ Current command catalog from [lib/protocol/uartProtocol.hpp](../lib/protocol/uar
 
 ## 6. Checksum
 
-The Pi listener script computes checksum as:
-
-- sum of bytes `1` through `16`, masked to 8 bits.
-
-Current Python expression:
-
-- `sum(packet_bytes[1:17]) & 0xFF`
+The checksum is the sum of bytes `1` through `7 + N`, modulo 256. It includes the
+payload-length byte and excludes the start byte and checksum itself.
 
 Reference:
 
-- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [scripts/rpi/home/antho/uart5_listener.py](../scripts/rpi/home/antho/uart5_listener.py)
 
 ## 7. Current Pi Script Expectations
 

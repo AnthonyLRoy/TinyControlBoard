@@ -2,6 +2,7 @@ import serial
 import time
 import struct
 import subprocess
+import re
 import RPi.GPIO as GPIO
 
 # === CONFIG ===
@@ -9,6 +10,8 @@ UART_PORT = "/dev/ttyAMA5"
 BAUD_RATE = 115200
 HEARTBEAT_INTERVAL_S = 10.0
 NOW_PLAYING_INTERVAL_S = 5.0
+TRACK_PROGRESS_INTERVAL_S = 2.0
+TICK_S = 1.0  # main-loop granularity; must be <= the smallest interval above
 
 DRDY_PIN = 24  # ESP32 data ready/busy line
 BLIP_TIME = 0.002  # 2 ms "data ready" pulse
@@ -19,8 +22,9 @@ HEADER_FORMAT = "<BBBBBHB"  # 8 bytes (includes payload_len)
 UART_START_BYTE = 0xAA
 VERSION = 0x01
 SRC_APP = 0x02
-MSG_COMMAND     = 0x01
-MSG_NOW_PLAYING = 0x05
+MSG_COMMAND        = 0x01
+MSG_NOW_PLAYING    = 0x05
+MSG_TRACK_PROGRESS = 0x06
 CMD_ID_HEARTBEAT = 0x0003
 
 # === GPIO SETUP ===
@@ -60,42 +64,77 @@ def send_packet(pkt):
     ser.flush()
     blip()
 
-def get_current_track():
-    """Returns the track name only when actively playing, empty string otherwise."""
+_TIME_RANGE_RE = re.compile(r"(\d+(?::\d+){1,2})/(\d+(?::\d+){1,2})")
+
+def _parse_time_token(token):
+    """Parses 'H:MM:SS' or 'M:SS' into total seconds."""
+    seconds = 0
+    for part in token.split(":"):
+        seconds = seconds * 60 + int(part)
+    return seconds
+
+def get_mpc_status():
+    """Runs `mpc status` once; returns (track_name, elapsed_s, duration_s, is_active)."""
     try:
         result = subprocess.run(["mpc", "status"], capture_output=True, text=True, timeout=2)
         lines = result.stdout.splitlines()
-        # mpc status: line 0 = track name (if something is cued), line 1 = [playing]/[paused] + position
-        if len(lines) >= 2 and "[playing]" in lines[1]:
-            return lines[0].strip()
-        return ""
+        if len(lines) < 2:
+            return "", 0, 0, False
+        state_line = lines[1]
+        is_playing = "[playing]" in state_line
+        track = lines[0].strip() if is_playing else ""
+
+        elapsed, duration = 0, 0
+        match = _TIME_RANGE_RE.search(state_line)
+        if match and ("[playing]" in state_line or "[paused]" in state_line):
+            elapsed = _parse_time_token(match.group(1))
+            duration = _parse_time_token(match.group(2))
+
+        return track, elapsed, duration, is_playing
     except Exception:
-        return ""
+        return "", 0, 0, False
 
 print("Heartbeat sender running...", flush=True)
 
 seq = 0
 last_now_playing_time = 0.0
 last_now_playing_text = None
+last_track_progress_time = 0.0
+last_heartbeat_time = 0.0
 
 try:
     while True:
-        send_packet(build_packet(MSG_COMMAND, seq, CMD_ID_HEARTBEAT))
-        print(f"Heartbeat sent (seq={seq})", flush=True)
-        seq = (seq + 1) & 0xFF
+        now = time.monotonic()
 
-        now = time.time()
-        if now - last_now_playing_time >= NOW_PLAYING_INTERVAL_S:
-            last_now_playing_time = now
-            track = get_current_track()
-            if track != last_now_playing_text:
-                last_now_playing_text = track
-                payload = track.encode("utf-8")[:60]
-                send_packet(build_packet(MSG_NOW_PLAYING, seq, 0, payload))
-                print(f"Now playing sent: {track!r}", flush=True)
+        if now - last_heartbeat_time >= HEARTBEAT_INTERVAL_S:
+            last_heartbeat_time = now
+            send_packet(build_packet(MSG_COMMAND, seq, CMD_ID_HEARTBEAT))
+            print(f"Heartbeat sent (seq={seq})", flush=True)
+            seq = (seq + 1) & 0xFF
+
+        need_now_playing = now - last_now_playing_time >= NOW_PLAYING_INTERVAL_S
+        need_progress = now - last_track_progress_time >= TRACK_PROGRESS_INTERVAL_S
+
+        if need_now_playing or need_progress:
+            track, elapsed, duration, is_playing = get_mpc_status()
+
+            if need_now_playing:
+                last_now_playing_time = now
+                if track != last_now_playing_text:
+                    last_now_playing_text = track
+                    payload = track.encode("utf-8")[:60]
+                    send_packet(build_packet(MSG_NOW_PLAYING, seq, 0, payload))
+                    print(f"Now playing sent: {track!r}", flush=True)
+                    seq = (seq + 1) & 0xFF
+
+            if need_progress:
+                last_track_progress_time = now
+                payload = struct.pack("<HHB", elapsed, duration, int(is_playing))
+                send_packet(build_packet(MSG_TRACK_PROGRESS, seq, 0, payload))
+                print(f"Track progress sent: {elapsed}s/{duration}s", flush=True)
                 seq = (seq + 1) & 0xFF
 
-        time.sleep(HEARTBEAT_INTERVAL_S)
+        time.sleep(TICK_S)
 
 except KeyboardInterrupt:
     print("Exiting heartbeat sender...")

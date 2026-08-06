@@ -170,6 +170,17 @@ namespace controlSystem
             return;
         }
 
+        if (rMsg.msgType == MSG_TRACK_PROGRESS)
+        {
+            m_systemState.trackProgressUpdating.store(true, std::memory_order_seq_cst);
+            m_systemState.trackElapsedSeconds.store(rMsg.trackElapsedSec, std::memory_order_relaxed);
+            m_systemState.trackDurationSeconds.store(rMsg.trackDurationSec, std::memory_order_relaxed);
+            m_systemState.trackIsPlaying.store(rMsg.trackIsPlaying, std::memory_order_relaxed);
+            m_systemState.trackProgressVersion.fetch_add(1, std::memory_order_release);
+            m_systemState.trackProgressUpdating.store(false, std::memory_order_seq_cst);
+            return;
+        }
+
         if (isHeartbeatCommand(rMsg.commandId))
         {
             handleHeartbeatReceived();

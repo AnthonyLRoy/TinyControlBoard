@@ -12,6 +12,7 @@ import android.util.Log
 import com.tinycb.remote.model.BoardStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.util.ArrayDeque
 
 /**
  * Manages BLE scan, connection, GATT operations, and status notifications
@@ -44,6 +45,8 @@ class BoardBleManager(context: Context) {
     @Volatile private var gatt: BluetoothGatt? = null
     @Volatile private var cmdChar: BluetoothGattCharacteristic? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val notificationQueue = ArrayDeque<BluetoothGattCharacteristic>()
+    private var notificationWriteInFlight = false
     private val connectTimeoutMs = 15_000L
     private val connectTimeoutRunnable = Runnable {
         if (_connectionState.value is ConnectionState.Connecting) {
@@ -79,16 +82,20 @@ class BoardBleManager(context: Context) {
             mainHandler.removeCallbacks(connectTimeoutRunnable)
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    Log.i(TAG, "GATT connected (status=$status); discovering services…")
+                    Log.i(TAG, "GATT connected (status=$status); requesting $REQUESTED_MTU-byte MTU…")
                     // Stay in Connecting — emit Connected only after onServicesDiscovered
                     // confirms both characteristics are ready (prevents null cmdChar race).
-                    g.discoverServices()
+                    if (!g.requestMtu(REQUESTED_MTU)) {
+                        Log.w(TAG, "MTU request could not be started; discovering services with the default MTU")
+                        g.discoverServices()
+                    }
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.w(TAG, "GATT disconnected (status=$status)")
                     gatt?.close()
                     gatt = null
                     cmdChar = null
+                    clearNotificationQueue()
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         _connectionState.value = ConnectionState.Error("Connection failed (GATT status $status)")
                     } else {
@@ -97,6 +104,15 @@ class BoardBleManager(context: Context) {
                     _status.value = null
                 }
             }
+        }
+
+        override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.i(TAG, "MTU negotiated: $mtu bytes")
+            } else {
+                Log.w(TAG, "MTU negotiation failed (status=$status); discovering services with the default MTU")
+            }
+            g.discoverServices()
         }
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
@@ -130,47 +146,25 @@ class BoardBleManager(context: Context) {
             }
 
             val nowPlayingChar = svc.getCharacteristic(BleUuids.NOW_PLAYING_CHAR)
+            val trackProgressChar = svc.getCharacteristic(BleUuids.TRACK_PROGRESS_CHAR)
 
             // Both required characteristics ready \u2014 now it is safe to open the control panel
             Log.i(TAG, "All characteristics found \u2014 emitting Connected")
             _connectionState.value = ConnectionState.Connected(g.device.name)
 
-            // Subscribe to status notifications
-            g.setCharacteristicNotification(statusChar, true)
-            val cccd = statusChar.getDescriptor(BleUuids.CCCD)
-            if (cccd != null) {
-                Log.d(TAG, "Writing CCCD to enable notifications on status char")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    g.writeDescriptor(cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-                } else {
-                    @Suppress("DEPRECATION")
-                    cccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                    @Suppress("DEPRECATION")
-                    g.writeDescriptor(cccd)
-                }
-            } else {
-                Log.e(TAG, "CCCD descriptor not found on status characteristic!")
-            }
-
-            // Subscribe to now-playing notifications (optional char — ignore if absent)
+            clearNotificationQueue()
+            enqueueNotification(statusChar)
             if (nowPlayingChar != null) {
-                g.setCharacteristicNotification(nowPlayingChar, true)
-                val npCccd = nowPlayingChar.getDescriptor(BleUuids.CCCD)
-                if (npCccd != null) {
-                    Log.d(TAG, "Writing CCCD to enable notifications on now-playing char")
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        g.writeDescriptor(npCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        npCccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                        @Suppress("DEPRECATION")
-                        g.writeDescriptor(npCccd)
-                    }
-                }
+                enqueueNotification(nowPlayingChar)
             } else {
                 Log.w(TAG, "Now-playing characteristic not found — track display unavailable")
             }
-            Log.i(TAG, "Services set up; cmdChar and notifications enabled")
+            if (trackProgressChar != null) {
+                enqueueNotification(trackProgressChar)
+            } else {
+                Log.w(TAG, "Track-progress characteristic not found — progress bar unavailable")
+            }
+            writeNextNotification(g)
         }
 
         override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
@@ -179,6 +173,8 @@ class BoardBleManager(context: Context) {
             } else {
                 Log.e(TAG, "CCCD write FAILED status=$status — notifications will not arrive!")
             }
+            notificationWriteInFlight = false
+            writeNextNotification(g)
         }
 
         // Android 13+ (API 33) overload — preferred
@@ -189,8 +185,9 @@ class BoardBleManager(context: Context) {
         ) {
             Log.d(TAG, "onCharacteristicChanged (API33+): uuid=${characteristic.uuid} bytes=${value.size}")
             when (characteristic.uuid) {
-                BleUuids.STATUS_CHAR      -> parseStatus(value)
-                BleUuids.NOW_PLAYING_CHAR -> parseNowPlaying(value)
+                BleUuids.STATUS_CHAR         -> parseStatus(value)
+                BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
+                BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
             }
         }
 
@@ -204,8 +201,9 @@ class BoardBleManager(context: Context) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 val value = characteristic.value ?: return
                 when (characteristic.uuid) {
-                    BleUuids.STATUS_CHAR      -> parseStatus(value)
-                    BleUuids.NOW_PLAYING_CHAR -> parseNowPlaying(value)
+                    BleUuids.STATUS_CHAR         -> parseStatus(value)
+                    BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
+                    BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
                 }
             }
         }
@@ -239,7 +237,16 @@ class BoardBleManager(context: Context) {
             7 -> "GOING INTO DEEP SLEEP"
             else -> "UNKNOWN"
         }
-        _status.value = BoardStatus(powerName, bitmask, _status.value?.nowPlaying)
+        val previous = _status.value
+        _status.value = BoardStatus(
+            powerStateName = powerName,
+            buttonLedBitmask = bitmask,
+            nowPlaying = previous?.nowPlaying,
+            trackElapsedSec = previous?.trackElapsedSec ?: 0,
+            trackDurationSec = previous?.trackDurationSec ?: 0,
+            isTrackPlaying = previous?.isTrackPlaying ?: false,
+            trackProgressUpdatedAtMs = previous?.trackProgressUpdatedAtMs ?: 0L
+        )
     }
 
     private fun parseNowPlaying(value: ByteArray) {
@@ -247,6 +254,58 @@ class BoardBleManager(context: Context) {
         val current = _status.value
         if (current != null) {
             _status.value = current.copy(nowPlaying = text.ifEmpty { null })
+        }
+    }
+
+    private fun parseTrackProgress(value: ByteArray) {
+        if (value.size != 5) return
+        val elapsed = (value[0].toInt() and 0xFF) or ((value[1].toInt() and 0xFF) shl 8)
+        val duration = (value[2].toInt() and 0xFF) or ((value[3].toInt() and 0xFF) shl 8)
+        val isPlaying = value[4].toInt() != 0
+        val current = _status.value
+        if (current != null) {
+            _status.value = current.copy(
+                trackElapsedSec = elapsed,
+                trackDurationSec = duration,
+                isTrackPlaying = isPlaying,
+                trackProgressUpdatedAtMs = System.currentTimeMillis()
+            )
+        }
+    }
+
+    private fun enqueueNotification(characteristic: BluetoothGattCharacteristic) {
+        notificationQueue.addLast(characteristic)
+    }
+
+    private fun clearNotificationQueue() {
+        notificationQueue.clear()
+        notificationWriteInFlight = false
+    }
+
+    private fun writeNextNotification(g: BluetoothGatt) {
+        if (notificationWriteInFlight || notificationQueue.isEmpty()) return
+
+        val characteristic = notificationQueue.removeFirst()
+        val descriptor = characteristic.getDescriptor(BleUuids.CCCD)
+        if (descriptor == null || !g.setCharacteristicNotification(characteristic, true)) {
+            Log.e(TAG, "Could not enable notifications for ${characteristic.uuid}")
+            writeNextNotification(g)
+            return
+        }
+
+        notificationWriteInFlight = true
+        val writeStarted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            g.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) == BluetoothStatusCodes.SUCCESS
+        } else {
+            @Suppress("DEPRECATION")
+            descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            @Suppress("DEPRECATION")
+            g.writeDescriptor(descriptor)
+        }
+        if (!writeStarted) {
+            Log.e(TAG, "Could not start CCCD write for ${characteristic.uuid}")
+            notificationWriteInFlight = false
+            writeNextNotification(g)
         }
     }
 
@@ -317,6 +376,7 @@ class BoardBleManager(context: Context) {
         gatt?.close()
         gatt = null
         cmdChar = null
+        clearNotificationQueue()
         _connectionState.value = ConnectionState.Idle
         _status.value = null
         _selectedViewId.value = null
@@ -328,5 +388,6 @@ class BoardBleManager(context: Context) {
 
     companion object {
         private const val TAG = "BoardBleManager"
+        private const val REQUESTED_MTU = 247
     }
 }

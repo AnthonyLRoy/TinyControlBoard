@@ -60,6 +60,16 @@ bool deserializeMessage(const uint8_t *p_buffer, UartMessage &rMsg)
         rMsg.nowPlayingText[len] = '\0';
         rMsg.nowPlayingLen = len;
     }
+    else if (rMsg.msgType == MSG_TRACK_PROGRESS)
+    {
+        if (payloadLen != 5)
+            return false;
+
+        const uint8_t *p = p_buffer + protocol::k_headerSize;
+        rMsg.trackElapsedSec  = static_cast<uint16_t>(p[0]) | (static_cast<uint16_t>(p[1]) << 8);
+        rMsg.trackDurationSec = static_cast<uint16_t>(p[2]) | (static_cast<uint16_t>(p[3]) << 8);
+        rMsg.trackIsPlaying   = p[4] != 0;
+    }
     else
     {
         const int pairs = (payloadLen / 2 < 5) ? payloadLen / 2 : 5;

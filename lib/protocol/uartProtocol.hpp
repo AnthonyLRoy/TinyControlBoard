@@ -36,11 +36,13 @@ inline constexpr uint8_t k_commandPacketSize = k_headerSize + k_legacyPayloadSiz
 
 enum MessageType : uint8_t
 {
-    MSG_COMMAND     = 0x01,
-    MSG_STATUS      = 0x02,
-    MSG_ACK         = 0x03,
-    MSG_NACK        = 0x04,
-    MSG_NOW_PLAYING = 0x05,
+    MSG_COMMAND        = 0x01,
+    MSG_STATUS         = 0x02,
+    MSG_ACK            = 0x03,
+    MSG_NACK           = 0x04,
+    MSG_NOW_PLAYING    = 0x05,
+    // payload: elapsed_s(u16 LE) + duration_s(u16 LE) + is_playing(u8)
+    MSG_TRACK_PROGRESS = 0x06,
 };
 
 #define UART_PACKET_SIZE protocol::k_maxPacketSize
@@ -120,11 +122,16 @@ struct UartMessage
     uint16_t params[5];
     uint8_t  nowPlayingText[protocol::k_maxNowPlayingLen + 1];
     uint8_t  nowPlayingLen;
+    // Incoming MSG_TRACK_PROGRESS: elapsed/duration in seconds and playback state.
+    uint16_t trackElapsedSec;
+    uint16_t trackDurationSec;
+    bool     trackIsPlaying;
     uint8_t  checksum;
 
     UartMessage()
         : startByte(UART_START_BYTE), version(UART_PROTOCOL_VERSION), srcApp(APP_ESP32),
-          msgType(MSG_COMMAND), sequence(0), commandId(0), nowPlayingLen(0), checksum(0)
+          msgType(MSG_COMMAND), sequence(0), commandId(0), nowPlayingLen(0),
+          trackElapsedSec(0), trackDurationSec(0), trackIsPlaying(false), checksum(0)
     {
         memset(params, 0, sizeof(params));
         memset(nowPlayingText, 0, sizeof(nowPlayingText));

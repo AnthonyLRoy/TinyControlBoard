@@ -10,6 +10,7 @@ Use this page as the overview, then jump into the focused reference docs as need
 
 Core documents:
 
+- [docs/android-tinyremote-user-manual.md](./android-tinyremote-user-manual.md)
 - [docs/architecture.md](./architecture.md)
 - [docs/add-button-how-to.md](./add-button-how-to.md)
 - [docs/button-command-map.md](./button-command-map.md)
