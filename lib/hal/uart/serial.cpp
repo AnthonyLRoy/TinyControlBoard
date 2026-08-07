@@ -257,32 +257,36 @@ void IRAM_ATTR UartTransport::gpioIsrHandler(void *p_arg)
 
 void UartTransport::handleUartRx()
 {
-    if (m_initialized.load(std::memory_order_acquire))
-    {
-        int receivedDataLength = uart_read_bytes(m_uartNumber, m_tmpBuffer, TMP_BUFFER_SIZE, UART_PACKET_SIZE / portTICK_PERIOD_MS);
-
-        if (receivedDataLength > 0)
-        {
-            m_rxBuffer.pushBytes(m_tmpBuffer, receivedDataLength);
-
-            UartMessage msg;
-            while (m_rxBuffer.getNextMessage(msg))
-            {
-                if (m_rxCallback)
-                {
-                    m_lastRxTimeUs.store(esp_timer_get_time(), std::memory_order_relaxed);
-                    m_rxCallback(msg);
-                }
-                else
-                {
-                    ESP_LOGW(k_logTag, "RX callback not set; dropping parsed message");
-                }
-            }
-        }
-    }
-    else
+    if (!m_initialized.load(std::memory_order_acquire))
     {
         ESP_LOGW(k_logTag, "UART not initialized; cannot handle RX");
+        return;
+    }
+
+    // A burst of many packets (e.g. a library listing) can arrive faster than this
+    // task is woken — GPIO wake notifications coalesce into a single wake-up — so
+    // drain everything currently buffered rather than reading one TMP_BUFFER_SIZE chunk.
+    TickType_t waitTicks = UART_PACKET_SIZE / portTICK_PERIOD_MS;
+    int receivedDataLength;
+    while ((receivedDataLength = uart_read_bytes(m_uartNumber, m_tmpBuffer, TMP_BUFFER_SIZE, waitTicks)) > 0)
+    {
+        m_rxBuffer.pushBytes(m_tmpBuffer, receivedDataLength);
+
+        UartMessage msg;
+        while (m_rxBuffer.getNextMessage(msg))
+        {
+            if (m_rxCallback)
+            {
+                m_lastRxTimeUs.store(esp_timer_get_time(), std::memory_order_relaxed);
+                m_rxCallback(msg);
+            }
+            else
+            {
+                ESP_LOGW(k_logTag, "RX callback not set; dropping parsed message");
+            }
+        }
+
+        waitTicks = 0; // further reads this wake only drain what's already buffered
     }
 }
 

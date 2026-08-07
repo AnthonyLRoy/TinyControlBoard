@@ -201,6 +201,7 @@ def handle_browse_request(params):
         name = posixpath.basename(full_path) or full_path
         entry_type = LIBRARY_ENTRY_FOLDER if is_dir else LIBRARY_ENTRY_TRACK
         send_library_entry(index, total, entry_type, name)
+        time.sleep(0.008)  # pace sends so the ESP32 RX/BLE-notify pipeline can keep up
 
 
 def handle_add_track(params):
