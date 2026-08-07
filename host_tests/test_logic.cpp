@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "indicators/activityStatus.hpp"
-#include "input/actions/actionsResponse.hpp"
 #include "input/actions/actionTemplates.hpp"
 #include "app/ActionCommandRoutingPolicy.hpp"
 #include "app/ActionFactory.hpp"
@@ -100,18 +99,19 @@ void test_serialize_message_writes_expected_fields_and_checksum()
     expect_equal(static_cast<uint8_t>(0x23), buffer[4], "Serialized sequence mismatch");
     expect_equal(static_cast<uint8_t>(0x03), buffer[5], "Serialized command low byte mismatch");
     expect_equal(static_cast<uint8_t>(0x00), buffer[6], "Serialized command high byte mismatch");
-    expect_equal(static_cast<uint8_t>(0x34), buffer[7], "Serialized parameter 0 low byte mismatch");
-    expect_equal(static_cast<uint8_t>(0x12), buffer[8], "Serialized parameter 0 high byte mismatch");
-    expect_equal(static_cast<uint8_t>(0x78), buffer[9], "Serialized parameter 1 low byte mismatch");
-    expect_equal(static_cast<uint8_t>(0x56), buffer[10], "Serialized parameter 1 high byte mismatch");
-    expect_equal(static_cast<uint8_t>(0xBC), buffer[11], "Serialized parameter 2 low byte mismatch");
-    expect_equal(static_cast<uint8_t>(0x9A), buffer[12], "Serialized parameter 2 high byte mismatch");
-    expect_equal(static_cast<uint8_t>(0xF0), buffer[13], "Serialized parameter 3 low byte mismatch");
-    expect_equal(static_cast<uint8_t>(0xDE), buffer[14], "Serialized parameter 3 high byte mismatch");
-    expect_equal(static_cast<uint8_t>(0x57), buffer[15], "Serialized parameter 4 low byte mismatch");
-    expect_equal(static_cast<uint8_t>(0x13), buffer[16], "Serialized parameter 4 high byte mismatch");
-    expect_equal(calculateChecksum(buffer), buffer[17], "Serialized checksum mismatch");
-    expect_equal(buffer[17], message.checksum, "Serialized checksum should be written back into the message");
+    expect_equal(static_cast<uint8_t>(protocol::k_legacyPayloadSize), buffer[7], "Serialized payload length mismatch");
+    expect_equal(static_cast<uint8_t>(0x34), buffer[8], "Serialized parameter 0 low byte mismatch");
+    expect_equal(static_cast<uint8_t>(0x12), buffer[9], "Serialized parameter 0 high byte mismatch");
+    expect_equal(static_cast<uint8_t>(0x78), buffer[10], "Serialized parameter 1 low byte mismatch");
+    expect_equal(static_cast<uint8_t>(0x56), buffer[11], "Serialized parameter 1 high byte mismatch");
+    expect_equal(static_cast<uint8_t>(0xBC), buffer[12], "Serialized parameter 2 low byte mismatch");
+    expect_equal(static_cast<uint8_t>(0x9A), buffer[13], "Serialized parameter 2 high byte mismatch");
+    expect_equal(static_cast<uint8_t>(0xF0), buffer[14], "Serialized parameter 3 low byte mismatch");
+    expect_equal(static_cast<uint8_t>(0xDE), buffer[15], "Serialized parameter 3 high byte mismatch");
+    expect_equal(static_cast<uint8_t>(0x57), buffer[16], "Serialized parameter 4 low byte mismatch");
+    expect_equal(static_cast<uint8_t>(0x13), buffer[17], "Serialized parameter 4 high byte mismatch");
+    expect_equal(calculateChecksum(buffer), buffer[18], "Serialized checksum mismatch");
+    expect_equal(buffer[18], message.checksum, "Serialized checksum should be written back into the message");
 }
 
 void test_deserialize_message_round_trips_serialized_message()
@@ -523,11 +523,22 @@ void test_action_uart_dispatcher_routes_rotary_message()
                  "Rotary command should preserve direction parameter");
 }
 
+namespace
+{
+    // Concrete no-op IAction: ActionUartDispatcher::handle() needs a real instance,
+    // and this DTO is not part of the live firmware pipeline.
+    struct NoOpAction : actions::IAction
+    {
+        bool requiresPowerOn() const override { return true; }
+        void execute(controlSystem::ActionContext &) override {}
+    };
+}
+
 void test_action_uart_dispatcher_ignores_unknown_command()
 {
     FakeUartCommandSink uartSink;
     controlSystem::ActionUartDispatcher dispatcher(uartSink);
-    actions::Action action;
+    NoOpAction action;
     action.command = CMD_NO_ACTION;
     const bool handled = dispatcher.handle(action);
 

@@ -5,7 +5,6 @@
 #include "hal/relay/relay.hpp"
 #include "input/input.hpp"
 #include "hal/uart/serial.hpp"
-#include "input/actions/actionsResponse.hpp"
 #include "app/actionProcessor.hpp"
 #include "app/ControlBoardActionRegistry.hpp"
 #include "app/ControlBoardBootstrap.hpp"
