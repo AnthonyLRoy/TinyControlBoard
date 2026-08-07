@@ -1,415 +1,47 @@
 import serial
 import time
 import RPi.GPIO as GPIO
-import struct
-import subprocess
-import json
-import os
-import posixpath
-import socket
-import base64
-import requests
+
+import command_ids as cmd
+import panel_control as panel
+import playback_commands as playback
+import library_browser as library
+from protocol import compute_checksum, read_packet_with_resync
 
 # === CONFIG ===
 UART_PORT = "/dev/ttyAMA5"   # UART5
 BAUD_RATE = 115200
 DRDY_PIN = 23
 DEFAULT_METER_ENABLED = False
-MPD_HOST = "localhost"
-MPD_PORT = 6600
-# GPIO24 (the ESP32 "data ready" line) + the serial write path are exclusively owned by
-# heartbeat_sender.py (lgpio only allows one process to claim a GPIO line at a time).
-# Outbound packets (library entries) are forwarded to it over this Unix socket instead.
-UART_WRITER_SOCK_PATH = "/tmp/tinycontrolboard_uart_writer.sock"
-# ==========  command IDs ==========
-CMD_SYS_RPI_SHUTDOWN = 0x0002
-CMD_NEXT_TRACK = 0x0100
-CMD_PREVIOUS_TRACK = 0x0101
-CMD_PLAY_PAUSE = 0x0102
-CMD_STOP_TRACK = 0x0103
-CMD_SKIP_FORWARD = 0x0104
-CMD_SKIP_BACK = 0x0105
-CMD_PREV_MENU_ITEM = 0x0106
-CMD_NEXT_MENU_ITEM = 0x0107
-CMD_ROTARY_ACTION = 0x0112
-CMD_TOGGLE_METER = 0x0115
-CMD_TOGGLE_COVER_VIEW = 0x0119
-CMD_TOGGLE_REPEAT = 0x011C
-CMD_TOGGLE_RANDOM = 0x011F
-CMD_SELECT_PANEL_PLAYBACK = 0x0122
-CMD_SELECT_PANEL_RADIO    = 0x0123
-CMD_SELECT_PANEL_PLAYLIST = 0x0124
-CMD_SELECT_PANEL_FOLDER   = 0x0125
-CMD_SELECT_PANEL_TAG      = 0x0126
-CMD_SELECT_PANEL_ALBUM    = 0x0127
-CMD_BROWSE_REQUEST = 0x0128
-CMD_ADD_TRACK = 0x0129
-
-# === PANEL NAVIGATION ===
-PANELS = [
-    ('#playbar-switch',    'Playback'),
-    ('.radio-view-btn',    'Radio'),
-    ('.playlist-view-btn', 'Playlist'),
-    ('.folder-view-btn',   'Folder'),
-    ('.tag-view-btn',      'Tag'),
-    ('.album-view-btn',    'Album'),
-]
-_panel_idx = 0
-_cdp_ws_url = None
-
-# === PARAMETER VALUES ===
-PARAM_DISABLED = 0
-PARAM_ENABLED = 1
-ROTARY_ACTION_PREVIOUS = 0
-ROTARY_ACTION_NEXT = 1
-# ================================
-# Variable-length packet structure:
-# [0]      start byte (0xAA)
-# [1]      version
-# [2]      src_app
-# [3]      msg_type
-# [4]      sequence
-# [5-6]    command_id (LE uint16)
-# [7]      payload_len (N)
-# [8..8+N-1]  payload
-# [8+N]    checksum = sum(bytes[1..7+N]) % 256
-UART_START_BYTE = 0xAA
-HEADER_SIZE = 8  # bytes 0-7
-HEADER_FORMAT = "<BBBBBHB"  # start, version, src, type, seq, cmd_id, payload_len
-PROTOCOL_VERSION = 0x01
-SRC_APP_PI = 0x02
-MSG_LIBRARY_ENTRY = 0x07
-
-# === LIBRARY BROWSING (MPD lsinfo over its plain-text TCP protocol) ===
-LIB_BROWSE_UP = 0xFFFE
-LIB_BROWSE_ROOT = 0xFFFF
-LIBRARY_ENTRY_FOLDER = 0
-LIBRARY_ENTRY_TRACK = 1
-LIBRARY_ENTRY_EMPTY = 2  # sentinel for a zero-entry folder
-MAX_LIBRARY_ENTRIES = 200  # cap per directory listing, not the whole library
-MAX_LIBRARY_NAME_LEN = 55
-
-_browse_path = ""       # "" == library root
-_browse_entries = []    # [(is_directory, full_path), ...] for the last listing sent
-_library_seq = 0
-
-
-def _mpd_escape(path):
-    return path.replace("\\", "\\\\").replace('"', '\\"')
-
-
-def mpd_command(command_line):
-    """Sends one command to MPD's plain TCP protocol (localhost:6600); returns response lines
-    (banner/trailing OK stripped). Raises on ACK error or connection failure."""
-    sock = socket.create_connection((MPD_HOST, MPD_PORT), timeout=2)
-    try:
-        sock.recv(1024)  # banner: "OK MPD <version>\n"
-        sock.sendall((command_line + "\n").encode("utf-8"))
-        data = b""
-        while not data.endswith(b"OK\n") and b"ACK " not in data:
-            chunk = sock.recv(4096)
-            if not chunk:
-                break
-            data += chunk
-    finally:
-        sock.close()
-
-    text = data.decode("utf-8", errors="replace")
-    if text.startswith("ACK "):
-        raise RuntimeError(f"MPD error: {text.strip()}")
-    lines = text.splitlines()
-    if lines and lines[-1] == "OK":
-        lines = lines[:-1]
-    return lines
-
-
-def mpd_lsinfo(path):
-    """Returns an ordered [(is_directory, full_path), ...] for one MPD directory level."""
-    lines = mpd_command(f'lsinfo "{_mpd_escape(path)}"')
-    entries = []
-    for line in lines:
-        if line.startswith("directory: "):
-            entries.append((True, line[len("directory: "):]))
-        elif line.startswith("file: "):
-            entries.append((False, line[len("file: "):]))
-        # Other keys (Last-Modified/Time/Artist/Title/playlist/...) describe the
-        # most-recently-appended entry above and are not needed for browsing.
-    return entries
-
-
-def compute_checksum_for_send(data):
-    payload_len = data[7]
-    return sum(data[1:8 + payload_len]) % 256
-
-
-def build_packet(msg_type, seq, cmd_id, payload=b''):
-    header = struct.pack(HEADER_FORMAT,
-                         UART_START_BYTE, PROTOCOL_VERSION, SRC_APP_PI,
-                         msg_type, seq, cmd_id, len(payload))
-    body = header + payload
-    return body + bytes([compute_checksum_for_send(body)])
-
-
-def send_packet_locked(pkt):
-    """Forwards an already-framed packet to heartbeat_sender.py's UART-writer service,
-    which exclusively owns GPIO24 + the serial port."""
-    try:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
-            sock.settimeout(2)
-            sock.connect(UART_WRITER_SOCK_PATH)
-            sock.sendall(len(pkt).to_bytes(4, "big") + pkt)
-    except OSError as e:
-        print(f"⚠️ Failed to forward packet to uart-writer service: {e}", flush=True)
-
-
-def send_library_entry(index, total, entry_type, name):
-    global _library_seq
-    payload = bytes([entry_type]) + struct.pack("<HH", index, total) + name.encode("utf-8")[:MAX_LIBRARY_NAME_LEN]
-    send_packet_locked(build_packet(MSG_LIBRARY_ENTRY, _library_seq, 0, payload))
-    _library_seq = (_library_seq + 1) & 0xFF
-
-
-def handle_browse_request(params):
-    global _browse_path, _browse_entries
-    target = params[0]
-
-    if target == LIB_BROWSE_ROOT:
-        _browse_path = ""
-    elif target == LIB_BROWSE_UP:
-        _browse_path = posixpath.dirname(_browse_path)
-    elif 0 <= target < len(_browse_entries) and _browse_entries[target][0]:
-        _browse_path = _browse_entries[target][1]
-    else:
-        print(f"⚠️ Invalid browse target {target} (have {len(_browse_entries)} entries)", flush=True)
-        return
-
-    try:
-        entries = mpd_lsinfo(_browse_path)
-    except Exception as e:
-        print(f"⚠️ MPD lsinfo failed: {e}", flush=True)
-        entries = []
-
-    _browse_entries = entries[:MAX_LIBRARY_ENTRIES]
-    total = len(_browse_entries)
-    print(f"Browse → {_browse_path or '(root)'} ({total} entries)", flush=True)
-
-    if total == 0:
-        send_library_entry(0, 0, LIBRARY_ENTRY_EMPTY, "")
-        return
-
-    for index, (is_dir, full_path) in enumerate(_browse_entries):
-        name = posixpath.basename(full_path) or full_path
-        entry_type = LIBRARY_ENTRY_FOLDER if is_dir else LIBRARY_ENTRY_TRACK
-        send_library_entry(index, total, entry_type, name)
-        time.sleep(0.008)  # pace sends so the ESP32 RX/BLE-notify pipeline can keep up
-
-
-def handle_add_track(params):
-    index = params[0]
-    if not (0 <= index < len(_browse_entries)):
-        print(f"⚠️ Invalid add-track index {index}", flush=True)
-        return
-
-    is_dir, full_path = _browse_entries[index]
-    if is_dir:
-        print(f"⚠️ Add-track index {index} is a folder, ignoring", flush=True)
-        return
-
-    try:
-        mpd_command(f'add "{_mpd_escape(full_path)}"')
-        print(f"Added to queue: {full_path}", flush=True)
-    except Exception as e:
-        print(f"⚠️ MPD add failed: {e}", flush=True)
-
-
-def _click_panel(css_selector):
-    global _cdp_ws_url
-    try:
-        if _cdp_ws_url is None:
-            targets = requests.get('http://localhost:9222/json', timeout=1).json()
-            _cdp_ws_url = targets[0]['webSocketDebuggerUrl']
-
-        # Parse ws://host:port/path
-        url = _cdp_ws_url[5:]  # strip 'ws://'
-        slash_idx = url.index('/')
-        host_port = url[:slash_idx]
-        path = url[slash_idx:]
-        host, port_str = host_port.split(':')
-        port = int(port_str)
-
-        expression = f"document.querySelector('{css_selector}').click()"
-        payload = json.dumps({
-            'id': 1,
-            'method': 'Runtime.evaluate',
-            'params': {'expression': expression}
-        }).encode()
-
-        # Raw WebSocket upgrade — no Origin header sent
-        sock = socket.create_connection((host, port), timeout=2)
-        key = base64.b64encode(os.urandom(16)).decode()
-        handshake = (
-            f"GET {path} HTTP/1.1\r\n"
-            f"Host: {host}:{port}\r\n"
-            f"Upgrade: websocket\r\n"
-            f"Connection: Upgrade\r\n"
-            f"Sec-WebSocket-Key: {key}\r\n"
-            f"Sec-WebSocket-Version: 13\r\n"
-            f"\r\n"
-        )
-        sock.sendall(handshake.encode())
-
-        buf = b''
-        while b'\r\n\r\n' not in buf:
-            buf += sock.recv(1024)
-        if b'101' not in buf:
-            raise Exception(f"WS handshake failed: {buf[:100]}")
-
-        # Build masked WebSocket text frame
-        mask = os.urandom(4)
-        n = len(payload)
-        frame = bytearray([0x81])
-        if n < 126:
-            frame.append(0x80 | n)
-        elif n < 65536:
-            frame += bytearray([0x80 | 126]) + struct.pack('>H', n)
-        else:
-            frame += bytearray([0x80 | 127]) + struct.pack('>Q', n)
-        frame += mask
-        frame += bytearray(b ^ mask[i % 4] for i, b in enumerate(payload))
-
-        sock.sendall(bytes(frame))
-        sock.close()
-    except Exception as e:
-        _cdp_ws_url = None
-        print(f"Panel switch failed: {e}", flush=True)
-
-def _make_select_panel_handler(idx):
-    def _handler(params):
-        global _panel_idx
-        _panel_idx = idx
-        selector, name = PANELS[idx]
-        print(f"Panel → {name}", flush=True)
-        _click_panel(selector)
-    return _handler
-
-def handle_next_panel(params):
-    global _panel_idx
-    _panel_idx = (_panel_idx + 1) % len(PANELS)
-    selector, name = PANELS[_panel_idx]
-    print(f"Panel → {name}", flush=True)
-    _click_panel(selector)
-
-def handle_prev_panel(params):
-    global _panel_idx
-    _panel_idx = (_panel_idx - 1) % len(PANELS)
-    selector, name = PANELS[_panel_idx]
-    print(f"Panel → {name}", flush=True)
-    _click_panel(selector)
-
-def compute_checksum_cpp_style(data):
-    payload_len = data[7]
-    return sum(data[1:8 + payload_len]) % 256
-
-def run_command(args):
-    result = subprocess.run(args, check=False)
-    if result.returncode != 0:
-        print(f"Command failed with exit code {result.returncode}: {args}", flush=True)
-
-def set_meter_display(enabled):
-    if enabled:
-        run_command(["sudo", "moodeutl", "--setdisplay", "peppy"])
-    else:
-        run_command(["sudo", "moodeutl", "--setdisplay", "webui"])
-
-def toggle_meter_display(params):
-    set_meter_display(params[0] == PARAM_ENABLED)
-
-def handle_rotary_action(params):
-    if params[0] == ROTARY_ACTION_NEXT:
-        run_command(["mpc", "next"])
-    else:
-        run_command(["mpc", "prev"])
-
-def toggle_cover_view(params):
-    if params[0] == PARAM_ENABLED:
-        run_command(["/var/www/util/coverview.php", "-on"])
-    else:
-        run_command(["/var/www/util/coverview.php", "-off"])
-
-def toggle_repeat(params):
-    if params[0] == PARAM_ENABLED:
-        run_command(["mpc", "repeat", "on"])
-    else:
-        run_command(["mpc", "repeat", "off"])
-
-def toggle_random(params):
-    if params[0] == PARAM_ENABLED:
-        run_command(["mpc", "random", "on"])
-    else:
-        run_command(["mpc", "random", "off"])
 
 COMMAND_HANDLERS = {
-    CMD_SYS_RPI_SHUTDOWN: lambda params: run_command(["sudo", "moodeutl", "--shutdown"]),
-    CMD_NEXT_TRACK: lambda params: run_command(["mpc", "next"]),
-    CMD_PREVIOUS_TRACK: lambda params: run_command(["mpc", "prev"]),
-    CMD_PLAY_PAUSE: lambda params: run_command(["mpc", "toggle"]),
-    CMD_STOP_TRACK: lambda params: run_command(["mpc", "stop"]),
-    CMD_SKIP_FORWARD: lambda params: run_command(["mpc", "seek", "+10"]),
-    CMD_SKIP_BACK: lambda params: run_command(["mpc", "seek", "-10"]),
-    CMD_PREV_MENU_ITEM: handle_prev_panel,
-    CMD_NEXT_MENU_ITEM: handle_next_panel,
-    CMD_ROTARY_ACTION: handle_rotary_action,
-    CMD_TOGGLE_METER: toggle_meter_display,
-    CMD_TOGGLE_COVER_VIEW: toggle_cover_view,
-    CMD_TOGGLE_REPEAT: toggle_repeat,
-    CMD_TOGGLE_RANDOM: toggle_random,
-    CMD_SELECT_PANEL_PLAYBACK: _make_select_panel_handler(0),
-    CMD_SELECT_PANEL_RADIO:    _make_select_panel_handler(1),
-    CMD_SELECT_PANEL_PLAYLIST: _make_select_panel_handler(2),
-    CMD_SELECT_PANEL_FOLDER:   _make_select_panel_handler(3),
-    CMD_SELECT_PANEL_TAG:      _make_select_panel_handler(4),
-    CMD_SELECT_PANEL_ALBUM:    _make_select_panel_handler(5),
-    CMD_BROWSE_REQUEST:        handle_browse_request,
-    CMD_ADD_TRACK:             handle_add_track,
+    cmd.CMD_SYS_RPI_SHUTDOWN: playback.handle_rpi_shutdown,
+    cmd.CMD_NEXT_TRACK: playback.handle_next_track,
+    cmd.CMD_PREVIOUS_TRACK: playback.handle_previous_track,
+    cmd.CMD_PLAY_PAUSE: playback.handle_play_pause,
+    cmd.CMD_STOP_TRACK: playback.handle_stop_track,
+    cmd.CMD_SKIP_FORWARD: playback.handle_skip_forward,
+    cmd.CMD_SKIP_BACK: playback.handle_skip_back,
+    cmd.CMD_PREV_MENU_ITEM: panel.handle_prev_panel,
+    cmd.CMD_NEXT_MENU_ITEM: panel.handle_next_panel,
+    cmd.CMD_ROTARY_ACTION: playback.handle_rotary_action,
+    cmd.CMD_TOGGLE_METER: playback.toggle_meter_display,
+    cmd.CMD_TOGGLE_COVER_VIEW: playback.toggle_cover_view,
+    cmd.CMD_TOGGLE_REPEAT: playback.toggle_repeat,
+    cmd.CMD_TOGGLE_RANDOM: playback.toggle_random,
+    cmd.CMD_SELECT_PANEL_PLAYBACK: panel.make_select_panel_handler(0),
+    cmd.CMD_SELECT_PANEL_RADIO:    panel.make_select_panel_handler(1),
+    cmd.CMD_SELECT_PANEL_PLAYLIST: panel.make_select_panel_handler(2),
+    cmd.CMD_SELECT_PANEL_FOLDER:   panel.make_select_panel_handler(3),
+    cmd.CMD_SELECT_PANEL_TAG:      panel.make_select_panel_handler(4),
+    cmd.CMD_SELECT_PANEL_ALBUM:    panel.make_select_panel_handler(5),
+    cmd.CMD_BROWSE_REQUEST:        library.handle_browse_request,
+    cmd.CMD_ADD_TRACK:             library.handle_add_track,
 }
 
 def setup_gpio():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(DRDY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-def read_packet_with_resync(ser):
-    # Sync to start byte
-    while True:
-        b = ser.read(1)
-        if not b:
-            time.sleep(0.001)
-            continue
-        if b[0] == UART_START_BYTE:
-            break
-
-    # Read the rest of the header (bytes 1-7)
-    header_rest = b''
-    while len(header_rest) < HEADER_SIZE - 1:
-        chunk = ser.read((HEADER_SIZE - 1) - len(header_rest))
-        if chunk:
-            header_rest += chunk
-        else:
-            time.sleep(0.001)
-
-    header = bytes([UART_START_BYTE]) + header_rest
-    payload_len = header[7]
-
-    # Read payload + checksum
-    remaining = payload_len + 1
-    rest = b''
-    while len(rest) < remaining:
-        chunk = ser.read(remaining - len(rest))
-        if chunk:
-            rest += chunk
-        else:
-            time.sleep(0.001)
-
-    return header + rest
 
 def handle_command(command_id, params):
     print(f"Handling Command ID: {command_id:#06x}, Params: {params}", flush=True)
@@ -432,7 +64,7 @@ def read_and_process_packet(ser):
     payload_len = data[7]
     checksum = data[8 + payload_len]
 
-    if checksum != compute_checksum_cpp_style(data):
+    if checksum != compute_checksum(data):
         print("⚠️ Checksum mismatch", flush=True)
         return
 
@@ -457,7 +89,7 @@ def main():
     try:
         setup_gpio()
         ser = serial.Serial(UART_PORT, BAUD_RATE, timeout=0.01)
-        set_meter_display(DEFAULT_METER_ENABLED)
+        playback.set_meter_display(DEFAULT_METER_ENABLED)
         print("🎧 UART5 listener started", flush=True)
 
         while True:
