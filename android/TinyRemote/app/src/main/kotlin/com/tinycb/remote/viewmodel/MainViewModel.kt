@@ -9,6 +9,7 @@ import com.tinycb.remote.ble.ConnectionState
 import com.tinycb.remote.data.ButtonCatalog
 import com.tinycb.remote.model.BoardStatus
 import com.tinycb.remote.model.GridItem
+import com.tinycb.remote.model.LibraryEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,6 +58,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }.stateIn(viewModelScope, SharingStarted.Lazily, ButtonCatalog.gridItems)
 
     val selectedViewId: StateFlow<Int?> = bleManager.selectedViewId
+
+    val libraryListing: StateFlow<List<LibraryEntry>> = bleManager.libraryListing
+
+    fun browseRoot() = bleManager.browseRoot()
+    fun browseUp() = bleManager.browseUp()
+    fun browseInto(index: Int) = bleManager.browseInto(index)
+    fun addTrack(index: Int) = bleManager.addTrack(index)
 
     fun setSelectedView(commandId: Int) {
         bleManager.setSelectedViewId(commandId)

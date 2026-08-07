@@ -35,4 +35,9 @@
     <string name="view_folder">Folder View</string>
     <string name="view_tag">Tag View</string>
     <string name="view_album">Album View</string>
+
+    <!-- Library Browse Screen -->
+    <string name="library_title">Library</string>
+    <string name="library_up">Up</string>
+    <string name="library_added_to_playlist">Added to playlist</string>
 </resources>

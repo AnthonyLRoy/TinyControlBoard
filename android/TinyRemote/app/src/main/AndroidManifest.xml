@@ -47,6 +47,13 @@
             android:parentActivityName=".ui.MainActivity"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:name=".ui.LibraryActivity"
+            android:exported="false"
+            android:label="@string/library_title"
+            android:parentActivityName=".ui.MainActivity"
+            android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

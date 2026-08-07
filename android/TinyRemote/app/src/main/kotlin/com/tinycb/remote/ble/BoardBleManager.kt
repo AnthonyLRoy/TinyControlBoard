@@ -10,6 +10,7 @@ import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
 import com.tinycb.remote.model.BoardStatus
+import com.tinycb.remote.model.LibraryEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.ArrayDeque
@@ -39,11 +40,15 @@ class BoardBleManager(context: Context) {
     private val _selectedViewId = MutableStateFlow<Int?>(null)
     val selectedViewId: StateFlow<Int?> = _selectedViewId
 
+    private val _libraryListing = MutableStateFlow<List<LibraryEntry>>(emptyList())
+    val libraryListing: StateFlow<List<LibraryEntry>> = _libraryListing
+
     // ── Internal state ──────────────────────────────────────────────────────
     private val discoveredDevices = mutableListOf<BluetoothDevice>()
     private var leScanner: BluetoothLeScanner? = null
     @Volatile private var gatt: BluetoothGatt? = null
     @Volatile private var cmdChar: BluetoothGattCharacteristic? = null
+    @Volatile private var libraryCmdChar: BluetoothGattCharacteristic? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val notificationQueue = ArrayDeque<BluetoothGattCharacteristic>()
     private var notificationWriteInFlight = false
@@ -95,6 +100,7 @@ class BoardBleManager(context: Context) {
                     gatt?.close()
                     gatt = null
                     cmdChar = null
+                    libraryCmdChar = null
                     clearNotificationQueue()
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         _connectionState.value = ConnectionState.Error("Connection failed (GATT status $status)")
@@ -102,6 +108,7 @@ class BoardBleManager(context: Context) {
                         _connectionState.value = ConnectionState.Disconnected
                     }
                     _status.value = null
+                    _libraryListing.value = emptyList()
                 }
             }
         }
@@ -147,6 +154,11 @@ class BoardBleManager(context: Context) {
 
             val nowPlayingChar = svc.getCharacteristic(BleUuids.NOW_PLAYING_CHAR)
             val trackProgressChar = svc.getCharacteristic(BleUuids.TRACK_PROGRESS_CHAR)
+            val libraryChar = svc.getCharacteristic(BleUuids.LIBRARY_CHAR)
+            libraryCmdChar = svc.getCharacteristic(BleUuids.LIBRARY_CMD_CHAR)
+            if (libraryCmdChar == null) {
+                Log.w(TAG, "Library-cmd characteristic not found — library browse unavailable")
+            }
 
             // Both required characteristics ready \u2014 now it is safe to open the control panel
             Log.i(TAG, "All characteristics found \u2014 emitting Connected")
@@ -163,6 +175,11 @@ class BoardBleManager(context: Context) {
                 enqueueNotification(trackProgressChar)
             } else {
                 Log.w(TAG, "Track-progress characteristic not found — progress bar unavailable")
+            }
+            if (libraryChar != null) {
+                enqueueNotification(libraryChar)
+            } else {
+                Log.w(TAG, "Library characteristic not found — library browse unavailable")
             }
             writeNextNotification(g)
         }
@@ -188,6 +205,7 @@ class BoardBleManager(context: Context) {
                 BleUuids.STATUS_CHAR         -> parseStatus(value)
                 BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
                 BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
+                BleUuids.LIBRARY_CHAR        -> parseLibraryEntry(value)
             }
         }
 
@@ -204,6 +222,7 @@ class BoardBleManager(context: Context) {
                     BleUuids.STATUS_CHAR         -> parseStatus(value)
                     BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
                     BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
+                    BleUuids.LIBRARY_CHAR        -> parseLibraryEntry(value)
                 }
             }
         }
@@ -271,6 +290,25 @@ class BoardBleManager(context: Context) {
                 trackProgressUpdatedAtMs = System.currentTimeMillis()
             )
         }
+    }
+
+    // Payload: [entryType(1), index_lo, index_hi, total_lo, total_hi, name...].
+    // index==0 starts a new listing (replaces the previous one); entryType==2 is
+    // the empty-folder sentinel and clears the listing without adding a row.
+    private fun parseLibraryEntry(value: ByteArray) {
+        if (value.size < 5) return
+        val entryType = value[0].toInt() and 0xFF
+        val index = (value[1].toInt() and 0xFF) or ((value[2].toInt() and 0xFF) shl 8)
+        val total = (value[3].toInt() and 0xFF) or ((value[4].toInt() and 0xFF) shl 8)
+
+        if (entryType == LIBRARY_ENTRY_EMPTY) {
+            _libraryListing.value = emptyList()
+            return
+        }
+
+        val name = value.copyOfRange(5, value.size).toString(Charsets.UTF_8)
+        val entry = LibraryEntry(index, total, isDirectory = entryType == LIBRARY_ENTRY_FOLDER, name = name)
+        _libraryListing.value = if (index == 0) listOf(entry) else _libraryListing.value + entry
     }
 
     private fun enqueueNotification(characteristic: BluetoothGattCharacteristic) {
@@ -376,18 +414,52 @@ class BoardBleManager(context: Context) {
         gatt?.close()
         gatt = null
         cmdChar = null
+        libraryCmdChar = null
         clearNotificationQueue()
         _connectionState.value = ConnectionState.Idle
         _status.value = null
         _selectedViewId.value = null
+        _libraryListing.value = emptyList()
     }
 
     fun setSelectedViewId(id: Int?) {
         _selectedViewId.value = id
     }
 
+    private fun writeLibraryCommand(commandId: Int, param: Int) {
+        val char = libraryCmdChar ?: run { Log.w(TAG, "library cmd 0x%04X: libraryCmdChar is null".format(commandId)); return }
+        val g    = gatt           ?: run { Log.w(TAG, "library cmd 0x%04X: gatt is null".format(commandId)); return }
+        val bytes = byteArrayOf(
+            (commandId and 0xFF).toByte(),
+            ((commandId shr 8) and 0xFF).toByte(),
+            (param and 0xFF).toByte(),
+            ((param shr 8) and 0xFF).toByte()
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            g.writeCharacteristic(char, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
+        } else {
+            @Suppress("DEPRECATION")
+            char.value = bytes
+            @Suppress("DEPRECATION")
+            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+            @Suppress("DEPRECATION")
+            g.writeCharacteristic(char)
+        }
+    }
+
+    fun browseRoot() = writeLibraryCommand(CMD_BROWSE_REQUEST, LIB_BROWSE_ROOT)
+    fun browseUp() = writeLibraryCommand(CMD_BROWSE_REQUEST, LIB_BROWSE_UP)
+    fun browseInto(index: Int) = writeLibraryCommand(CMD_BROWSE_REQUEST, index)
+    fun addTrack(index: Int) = writeLibraryCommand(CMD_ADD_TRACK, index)
+
     companion object {
         private const val TAG = "BoardBleManager"
         private const val REQUESTED_MTU = 247
+        private const val CMD_BROWSE_REQUEST = 0x0128
+        private const val CMD_ADD_TRACK = 0x0129
+        private const val LIB_BROWSE_UP = 0xFFFE
+        private const val LIB_BROWSE_ROOT = 0xFFFF
+        private const val LIBRARY_ENTRY_FOLDER = 0
+        private const val LIBRARY_ENTRY_EMPTY = 2
     }
 }

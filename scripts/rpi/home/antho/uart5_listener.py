@@ -5,6 +5,7 @@ import struct
 import subprocess
 import json
 import os
+import posixpath
 import socket
 import base64
 import requests
@@ -14,6 +15,12 @@ UART_PORT = "/dev/ttyAMA5"   # UART5
 BAUD_RATE = 115200
 DRDY_PIN = 23
 DEFAULT_METER_ENABLED = False
+MPD_HOST = "localhost"
+MPD_PORT = 6600
+# GPIO24 (the ESP32 "data ready" line) + the serial write path are exclusively owned by
+# heartbeat_sender.py (lgpio only allows one process to claim a GPIO line at a time).
+# Outbound packets (library entries) are forwarded to it over this Unix socket instead.
+UART_WRITER_SOCK_PATH = "/tmp/tinycontrolboard_uart_writer.sock"
 # ==========  command IDs ==========
 CMD_SYS_RPI_SHUTDOWN = 0x0002
 CMD_NEXT_TRACK = 0x0100
@@ -35,6 +42,8 @@ CMD_SELECT_PANEL_PLAYLIST = 0x0124
 CMD_SELECT_PANEL_FOLDER   = 0x0125
 CMD_SELECT_PANEL_TAG      = 0x0126
 CMD_SELECT_PANEL_ALBUM    = 0x0127
+CMD_BROWSE_REQUEST = 0x0128
+CMD_ADD_TRACK = 0x0129
 
 # === PANEL NAVIGATION ===
 PANELS = [
@@ -67,6 +76,150 @@ ROTARY_ACTION_NEXT = 1
 UART_START_BYTE = 0xAA
 HEADER_SIZE = 8  # bytes 0-7
 HEADER_FORMAT = "<BBBBBHB"  # start, version, src, type, seq, cmd_id, payload_len
+PROTOCOL_VERSION = 0x01
+SRC_APP_PI = 0x02
+MSG_LIBRARY_ENTRY = 0x07
+
+# === LIBRARY BROWSING (MPD lsinfo over its plain-text TCP protocol) ===
+LIB_BROWSE_UP = 0xFFFE
+LIB_BROWSE_ROOT = 0xFFFF
+LIBRARY_ENTRY_FOLDER = 0
+LIBRARY_ENTRY_TRACK = 1
+LIBRARY_ENTRY_EMPTY = 2  # sentinel for a zero-entry folder
+MAX_LIBRARY_ENTRIES = 200  # cap per directory listing, not the whole library
+MAX_LIBRARY_NAME_LEN = 55
+
+_browse_path = ""       # "" == library root
+_browse_entries = []    # [(is_directory, full_path), ...] for the last listing sent
+_library_seq = 0
+
+
+def _mpd_escape(path):
+    return path.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def mpd_command(command_line):
+    """Sends one command to MPD's plain TCP protocol (localhost:6600); returns response lines
+    (banner/trailing OK stripped). Raises on ACK error or connection failure."""
+    sock = socket.create_connection((MPD_HOST, MPD_PORT), timeout=2)
+    try:
+        sock.recv(1024)  # banner: "OK MPD <version>\n"
+        sock.sendall((command_line + "\n").encode("utf-8"))
+        data = b""
+        while not data.endswith(b"OK\n") and b"ACK " not in data:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+    finally:
+        sock.close()
+
+    text = data.decode("utf-8", errors="replace")
+    if text.startswith("ACK "):
+        raise RuntimeError(f"MPD error: {text.strip()}")
+    lines = text.splitlines()
+    if lines and lines[-1] == "OK":
+        lines = lines[:-1]
+    return lines
+
+
+def mpd_lsinfo(path):
+    """Returns an ordered [(is_directory, full_path), ...] for one MPD directory level."""
+    lines = mpd_command(f'lsinfo "{_mpd_escape(path)}"')
+    entries = []
+    for line in lines:
+        if line.startswith("directory: "):
+            entries.append((True, line[len("directory: "):]))
+        elif line.startswith("file: "):
+            entries.append((False, line[len("file: "):]))
+        # Other keys (Last-Modified/Time/Artist/Title/playlist/...) describe the
+        # most-recently-appended entry above and are not needed for browsing.
+    return entries
+
+
+def compute_checksum_for_send(data):
+    payload_len = data[7]
+    return sum(data[1:8 + payload_len]) % 256
+
+
+def build_packet(msg_type, seq, cmd_id, payload=b''):
+    header = struct.pack(HEADER_FORMAT,
+                         UART_START_BYTE, PROTOCOL_VERSION, SRC_APP_PI,
+                         msg_type, seq, cmd_id, len(payload))
+    body = header + payload
+    return body + bytes([compute_checksum_for_send(body)])
+
+
+def send_packet_locked(pkt):
+    """Forwards an already-framed packet to heartbeat_sender.py's UART-writer service,
+    which exclusively owns GPIO24 + the serial port."""
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(2)
+            sock.connect(UART_WRITER_SOCK_PATH)
+            sock.sendall(len(pkt).to_bytes(4, "big") + pkt)
+    except OSError as e:
+        print(f"⚠️ Failed to forward packet to uart-writer service: {e}", flush=True)
+
+
+def send_library_entry(index, total, entry_type, name):
+    global _library_seq
+    payload = bytes([entry_type]) + struct.pack("<HH", index, total) + name.encode("utf-8")[:MAX_LIBRARY_NAME_LEN]
+    send_packet_locked(build_packet(MSG_LIBRARY_ENTRY, _library_seq, 0, payload))
+    _library_seq = (_library_seq + 1) & 0xFF
+
+
+def handle_browse_request(params):
+    global _browse_path, _browse_entries
+    target = params[0]
+
+    if target == LIB_BROWSE_ROOT:
+        _browse_path = ""
+    elif target == LIB_BROWSE_UP:
+        _browse_path = posixpath.dirname(_browse_path)
+    elif 0 <= target < len(_browse_entries) and _browse_entries[target][0]:
+        _browse_path = _browse_entries[target][1]
+    else:
+        print(f"⚠️ Invalid browse target {target} (have {len(_browse_entries)} entries)", flush=True)
+        return
+
+    try:
+        entries = mpd_lsinfo(_browse_path)
+    except Exception as e:
+        print(f"⚠️ MPD lsinfo failed: {e}", flush=True)
+        entries = []
+
+    _browse_entries = entries[:MAX_LIBRARY_ENTRIES]
+    total = len(_browse_entries)
+    print(f"Browse → {_browse_path or '(root)'} ({total} entries)", flush=True)
+
+    if total == 0:
+        send_library_entry(0, 0, LIBRARY_ENTRY_EMPTY, "")
+        return
+
+    for index, (is_dir, full_path) in enumerate(_browse_entries):
+        name = posixpath.basename(full_path) or full_path
+        entry_type = LIBRARY_ENTRY_FOLDER if is_dir else LIBRARY_ENTRY_TRACK
+        send_library_entry(index, total, entry_type, name)
+
+
+def handle_add_track(params):
+    index = params[0]
+    if not (0 <= index < len(_browse_entries)):
+        print(f"⚠️ Invalid add-track index {index}", flush=True)
+        return
+
+    is_dir, full_path = _browse_entries[index]
+    if is_dir:
+        print(f"⚠️ Add-track index {index} is a folder, ignoring", flush=True)
+        return
+
+    try:
+        mpd_command(f'add "{_mpd_escape(full_path)}"')
+        print(f"Added to queue: {full_path}", flush=True)
+    except Exception as e:
+        print(f"⚠️ MPD add failed: {e}", flush=True)
+
 
 def _click_panel(css_selector):
     global _cdp_ws_url
@@ -215,6 +368,8 @@ COMMAND_HANDLERS = {
     CMD_SELECT_PANEL_FOLDER:   _make_select_panel_handler(3),
     CMD_SELECT_PANEL_TAG:      _make_select_panel_handler(4),
     CMD_SELECT_PANEL_ALBUM:    _make_select_panel_handler(5),
+    CMD_BROWSE_REQUEST:        handle_browse_request,
+    CMD_ADD_TRACK:             handle_add_track,
 }
 
 def setup_gpio():

@@ -16,6 +16,9 @@ inline constexpr uint8_t k_indexPayloadLen = 7;  // byte that carries N
 inline constexpr uint8_t k_headerSize = 8;         // bytes 0-7
 inline constexpr uint8_t k_legacyPayloadSize = 10; // 5×uint16 params
 inline constexpr uint8_t k_maxNowPlayingLen = 60;
+inline constexpr uint8_t k_maxLibraryNameLen = 55;
+inline constexpr uint16_t k_browseUp = 0xFFFE;
+inline constexpr uint16_t k_browseRoot = 0xFFFF;
 inline constexpr uint8_t k_maxPayloadSize = 60;
 // header(8) + max-payload(60) + checksum(1)
 inline constexpr uint8_t k_maxPacketSize = k_headerSize + k_maxPayloadSize + 1;
@@ -43,6 +46,8 @@ enum MessageType : uint8_t
     MSG_NOW_PLAYING    = 0x05,
     // payload: elapsed_s(u16 LE) + duration_s(u16 LE) + is_playing(u8)
     MSG_TRACK_PROGRESS = 0x06,
+    // payload: entryType(u8) + index(u16 LE) + total(u16 LE) + name
+    MSG_LIBRARY_ENTRY  = 0x07,
 };
 
 #define UART_PACKET_SIZE protocol::k_maxPacketSize
@@ -93,7 +98,11 @@ enum CommandId : uint16_t
     CMD_SELECT_PANEL_PLAYLIST = 0x0124,
     CMD_SELECT_PANEL_FOLDER   = 0x0125,
     CMD_SELECT_PANEL_TAG      = 0x0126,
-    CMD_SELECT_PANEL_ALBUM    = 0x0127
+    CMD_SELECT_PANEL_ALBUM    = 0x0127,
+    // param0 = child index, or protocol::k_browseUp / protocol::k_browseRoot
+    CMD_BROWSE_REQUEST        = 0x0128,
+    // param0 = index of file in current listing; appends to the MPD queue
+    CMD_ADD_TRACK             = 0x0129
 };
 
 enum PowerCommand : uint8_t
@@ -126,15 +135,24 @@ struct UartMessage
     uint16_t trackElapsedSec;
     uint16_t trackDurationSec;
     bool     trackIsPlaying;
+    // Incoming MSG_LIBRARY_ENTRY: 0=folder, 1=track, 2=empty-listing sentinel.
+    uint8_t  libraryEntryType;
+    uint16_t libraryEntryIndex;
+    uint16_t libraryEntryTotal;
+    uint8_t  libraryEntryName[protocol::k_maxLibraryNameLen + 1];
+    uint8_t  libraryEntryNameLen;
     uint8_t  checksum;
 
     UartMessage()
         : startByte(UART_START_BYTE), version(UART_PROTOCOL_VERSION), srcApp(APP_ESP32),
           msgType(MSG_COMMAND), sequence(0), commandId(0), nowPlayingLen(0),
-          trackElapsedSec(0), trackDurationSec(0), trackIsPlaying(false), checksum(0)
+          trackElapsedSec(0), trackDurationSec(0), trackIsPlaying(false),
+          libraryEntryType(0), libraryEntryIndex(0), libraryEntryTotal(0),
+          libraryEntryNameLen(0), checksum(0)
     {
         memset(params, 0, sizeof(params));
         memset(nowPlayingText, 0, sizeof(nowPlayingText));
+        memset(libraryEntryName, 0, sizeof(libraryEntryName));
     }
 };
 

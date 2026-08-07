@@ -70,6 +70,23 @@ bool deserializeMessage(const uint8_t *p_buffer, UartMessage &rMsg)
         rMsg.trackDurationSec = static_cast<uint16_t>(p[2]) | (static_cast<uint16_t>(p[3]) << 8);
         rMsg.trackIsPlaying   = p[4] != 0;
     }
+    else if (rMsg.msgType == MSG_LIBRARY_ENTRY)
+    {
+        if (payloadLen < 5)
+            return false;
+
+        const uint8_t *p = p_buffer + protocol::k_headerSize;
+        rMsg.libraryEntryType  = p[0];
+        rMsg.libraryEntryIndex = static_cast<uint16_t>(p[1]) | (static_cast<uint16_t>(p[2]) << 8);
+        rMsg.libraryEntryTotal = static_cast<uint16_t>(p[3]) | (static_cast<uint16_t>(p[4]) << 8);
+
+        const uint8_t nameLen = payloadLen - 5;
+        const uint8_t len = (nameLen > protocol::k_maxLibraryNameLen)
+                            ? protocol::k_maxLibraryNameLen : nameLen;
+        memcpy(rMsg.libraryEntryName, p + 5, len);
+        rMsg.libraryEntryName[len] = '\0';
+        rMsg.libraryEntryNameLen = len;
+    }
     else
     {
         const int pairs = (payloadLen / 2 < 5) ? payloadLen / 2 : 5;

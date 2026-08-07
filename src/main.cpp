@@ -1,6 +1,8 @@
 #include "main.h"
 #include "input/input.hpp"
 #include "ble/BleServer.hpp"
+#include "hal/uart/serial.hpp"
+#include "protocol/uartProtocol.hpp"
 #include "esp_pm.h"
 
 #define DELAY_STARTUP_TIME_MS 5000
@@ -29,7 +31,16 @@ extern "C" void app_main(void)
     }
 
     static ble::BleServer bleServer;
-    bleServer.start(board.getActionProcessor(), board.getSystemState());
+    bleServer.start(board.getActionProcessor(), board.getSystemState(),
+                    [](uint16_t cmdId, uint16_t param)
+                    {
+                        UartMessage msg;
+                        msg.msgType   = MSG_COMMAND;
+                        msg.commandId = cmdId;
+                        msg.params[0] = param;
+                        transport::uart::UartTransport::getInstance().sendUartMessage("BLE_Library", msg);
+                    });
+    board.setLibraryEntryCallback([](const UartMessage &m) { ble::notifyLibraryEntry(m); });
 
     // Keep the app_main task alive; all work is done in FreeRTOS tasks.
     while (true)

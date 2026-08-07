@@ -15,6 +15,7 @@
 #include "board/boardConfig.hpp"
 #include "freertos/FreeRTOS.h"
 #include <array>
+#include <functional>
 #include <memory>
 
 namespace controlSystem
@@ -26,6 +27,10 @@ namespace controlSystem
         void deinit();
         ActionProcessor &getActionProcessor() { return *mp_responseProcessor; }
         SystemState &getSystemState() { return m_systemState; }
+        void setLibraryEntryCallback(std::function<void(const UartMessage &)> callback)
+        {
+            m_libraryEntryCallback = std::move(callback);
+        }
 
     private:
         void initNvs();
@@ -49,5 +54,6 @@ namespace controlSystem
         ButtonEventQueue m_buttonQueue;
 
         SystemState m_systemState;
+        std::function<void(const UartMessage &)> m_libraryEntryCallback;
     };
 }

@@ -99,7 +99,7 @@
 
         </LinearLayout>
 
-        <!-- Now-playing strip: hidden when nothing is playing -->
+        <!-- Now-playing strip: hidden when nothing is playing; tap to browse the library -->
         <TextView
             android:id="@+id/tvNowPlaying"
             android:layout_width="match_parent"
@@ -109,6 +109,9 @@
             android:textColor="@color/text_secondary"
             android:textSize="13sp"
             android:background="@color/bg_primary"
+            android:foreground="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
             android:drawablePadding="8dp"
             android:singleLine="true"
             android:ellipsize="end"

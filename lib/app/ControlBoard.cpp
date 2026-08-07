@@ -181,6 +181,13 @@ namespace controlSystem
             return;
         }
 
+        if (rMsg.msgType == MSG_LIBRARY_ENTRY)
+        {
+            if (m_libraryEntryCallback)
+                m_libraryEntryCallback(rMsg);
+            return;
+        }
+
         if (isHeartbeatCommand(rMsg.commandId))
         {
             handleHeartbeatReceived();

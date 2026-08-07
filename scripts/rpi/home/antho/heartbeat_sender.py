@@ -3,6 +3,9 @@ import time
 import struct
 import subprocess
 import re
+import os
+import socket
+import threading
 import RPi.GPIO as GPIO
 
 # === CONFIG ===
@@ -15,6 +18,11 @@ TICK_S = 1.0  # main-loop granularity; must be <= the smallest interval above
 
 DRDY_PIN = 24  # ESP32 data ready/busy line
 BLIP_TIME = 0.002  # 2 ms "data ready" pulse
+# lgpio (the RPi.GPIO backend on current Raspberry Pi OS) only allows ONE process to
+# claim a given GPIO line at a time — so this process is now the sole owner of DRDY_PIN
+# and the serial port. uart5_listener.py forwards its outbound packets (library entries)
+# to UART_WRITER_SOCK_PATH instead of touching GPIO/serial itself.
+UART_WRITER_SOCK_PATH = "/tmp/tinycontrolboard_uart_writer.sock"
 
 # === PROTOCOL ===
 # Variable-length packet: [start, version, src, type, seq, cmd_lo, cmd_hi, payload_len, ...payload, checksum]
@@ -58,11 +66,50 @@ def blip():
     GPIO.output(DRDY_PIN, GPIO.LOW)
     GPIO.setup(DRDY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
+_send_lock = threading.Lock()  # guards GPIO24 + ser between the main loop and the writer socket thread
+
 def send_packet(pkt):
-    wait_until_low()
-    ser.write(pkt)
-    ser.flush()
-    blip()
+    with _send_lock:
+        wait_until_low()
+        ser.write(pkt)
+        ser.flush()
+        blip()
+
+def _recv_exact(conn, n):
+    buf = b""
+    while len(buf) < n:
+        chunk = conn.recv(n - len(buf))
+        if not chunk:
+            return None
+        buf += chunk
+    return buf
+
+def _run_uart_writer_server():
+    """Accepts already-framed packets from uart5_listener.py over a local Unix socket
+    and sends them via this process's exclusively-owned GPIO24 + serial port."""
+    try:
+        os.remove(UART_WRITER_SOCK_PATH)
+    except FileNotFoundError:
+        pass
+    srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    srv.bind(UART_WRITER_SOCK_PATH)
+    os.chmod(UART_WRITER_SOCK_PATH, 0o666)
+    srv.listen(5)
+    while True:
+        conn, _ = srv.accept()
+        try:
+            length_bytes = _recv_exact(conn, 4)
+            if length_bytes is None:
+                continue
+            pkt = _recv_exact(conn, int.from_bytes(length_bytes, "big"))
+            if pkt is not None:
+                send_packet(pkt)
+        except Exception as e:
+            print(f"⚠️ uart-writer server error: {e}", flush=True)
+        finally:
+            conn.close()
+
+threading.Thread(target=_run_uart_writer_server, daemon=True).start()
 
 _TIME_RANGE_RE = re.compile(r"(\d+(?::\d+){1,2})/(\d+(?::\d+){1,2})")
 

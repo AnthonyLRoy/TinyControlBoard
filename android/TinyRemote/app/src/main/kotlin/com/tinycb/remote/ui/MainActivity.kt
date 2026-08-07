@@ -70,6 +70,10 @@ class MainActivity : AppCompatActivity() {
             vm.sendCommand(POWER_COMMAND_ID)
         }
 
+        b.tvNowPlaying.setOnClickListener {
+            startActivity(Intent(this@MainActivity, LibraryActivity::class.java))
+        }
+
         b.rvButtons.apply {
             layoutManager = GridLayoutManager(this@MainActivity, 4).apply {
                 spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {

@@ -19,6 +19,7 @@
 
 #include <cstring>
 #include <cstdint>
+#include <functional>
 
 // ---------------------------------------------------------------------------
 // UUIDs  (128-bit, little-endian byte order for BLE_UUID128_INIT)
@@ -27,6 +28,8 @@
 //   Status char:       4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d02
 //   Now-playing char:  4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d03
 //   Track-progress char:4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d04
+//   Library char:      4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d05
+//   Library-cmd char:  4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d06
 // ---------------------------------------------------------------------------
 static const ble_uuid128_t k_svcUuid =
     BLE_UUID128_INIT(0x0e, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
@@ -48,6 +51,14 @@ static const ble_uuid128_t k_trackProgressChrUuid =
     BLE_UUID128_INIT(0x04, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
                      0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
 
+static const ble_uuid128_t k_libraryChrUuid =
+    BLE_UUID128_INIT(0x05, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
+                     0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
+
+static const ble_uuid128_t k_libraryCmdChrUuid =
+    BLE_UUID128_INIT(0x06, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
+                     0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
+
 static constexpr const char *k_logTag = "BLE_Server";
 
 // ---------------------------------------------------------------------------
@@ -59,9 +70,12 @@ static uint16_t                        s_connHandle       = BLE_HS_CONN_HANDLE_N
 static uint16_t                        s_statusValHandle  = 0;
 static uint16_t                        s_nowPlayingValHandle = 0;
 static uint16_t                        s_trackProgressValHandle = 0;
+static uint16_t                        s_libraryValHandle = 0;
 static volatile bool                   s_statusSubscribed = false;
 static volatile bool                   s_nowPlayingSubscribed = false;
 static volatile bool                   s_trackProgressSubscribed = false;
+static volatile bool                   s_librarySubscribed = false;
+static std::function<void(uint16_t, uint16_t)> s_onLibraryCommand;
 
 // ---------------------------------------------------------------------------
 // Forward declarations for the GATT table
@@ -74,6 +88,10 @@ static int nowPlayingChrAccess(uint16_t conn, uint16_t attr,
                                struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int trackProgressChrAccess(uint16_t conn, uint16_t attr,
                                   struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int libraryChrAccess(uint16_t conn, uint16_t attr,
+                            struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int libraryCmdChrAccess(uint16_t conn, uint16_t attr,
+                               struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 // ---------------------------------------------------------------------------
 // GATT service table
@@ -106,11 +124,23 @@ static const struct ble_gatt_svc_def k_gattSvcs[] = {
                 .flags      = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
                 .val_handle = &s_trackProgressValHandle,
             },
+            {
+                .uuid       = &k_libraryChrUuid.u,
+                .access_cb  = libraryChrAccess,
+                .flags      = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .val_handle = &s_libraryValHandle,
+            },
+            {
+                .uuid      = &k_libraryCmdChrUuid.u,
+                .access_cb = libraryCmdChrAccess,
+                .flags     = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
+            },
             { 0 },
         },
     },
     { 0 },
 };
+
 
 // ---------------------------------------------------------------------------
 // Characteristic access callbacks
@@ -182,6 +212,35 @@ static int trackProgressChrAccess(uint16_t conn, uint16_t attr,
     os_mbuf_append(ctxt->om, buf, sizeof(buf));
     return 0;
 }
+
+// Read access is not meaningful for library entries (they're push-only); just report empty.
+static int libraryChrAccess(uint16_t conn, uint16_t attr,
+                            struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR)
+        return BLE_ATT_ERR_UNLIKELY;
+    return 0;
+}
+
+static int libraryCmdChrAccess(uint16_t conn, uint16_t attr,
+                               struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    if (ctxt->op != BLE_GATT_ACCESS_OP_WRITE_CHR)
+        return 0;
+    if (OS_MBUF_PKTLEN(ctxt->om) < 4)
+        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+
+    uint8_t payload[4] = {};
+    os_mbuf_copydata(ctxt->om, 0, sizeof(payload), payload);
+    const uint16_t cmdId = static_cast<uint16_t>(payload[0]) | (static_cast<uint16_t>(payload[1]) << 8);
+    const uint16_t param = static_cast<uint16_t>(payload[2]) | (static_cast<uint16_t>(payload[3]) << 8);
+    ESP_LOGI(k_logTag, "BLE library command received: cmd=0x%04X param=%u", cmdId, param);
+
+    if (s_onLibraryCommand)
+        s_onLibraryCommand(cmdId, param);
+    return 0;
+}
+
 
 // Helper: build and send a single status notification to the current connection
 static bool pushStatusNotification()
@@ -260,6 +319,29 @@ static bool pushTrackProgressNotification()
     return rc == 0;
 }
 
+// Builds the MSG_LIBRARY_ENTRY wire payload [entryType, index_lo/hi, total_lo/hi, name]
+// and pushes it immediately — called directly from the UART receive path, not the poll task.
+void ble::notifyLibraryEntry(const UartMessage &rMsg)
+{
+    if (s_connHandle == BLE_HS_CONN_HANDLE_NONE || s_libraryValHandle == 0)
+        return;
+
+    uint8_t buf[5 + protocol::k_maxLibraryNameLen];
+    buf[0] = rMsg.libraryEntryType;
+    buf[1] = static_cast<uint8_t>(rMsg.libraryEntryIndex & 0xFF);
+    buf[2] = static_cast<uint8_t>(rMsg.libraryEntryIndex >> 8);
+    buf[3] = static_cast<uint8_t>(rMsg.libraryEntryTotal & 0xFF);
+    buf[4] = static_cast<uint8_t>(rMsg.libraryEntryTotal >> 8);
+    memcpy(buf + 5, rMsg.libraryEntryName, rMsg.libraryEntryNameLen);
+
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(buf, 5 + rMsg.libraryEntryNameLen);
+    if (!om)
+        return;
+    int rc = ble_gatts_notify_custom(s_connHandle, s_libraryValHandle, om);
+    if (rc != 0)
+        ESP_LOGW(k_logTag, "library-entry notify failed: %d", rc);
+}
+
 // ---------------------------------------------------------------------------
 // GAP event handler
 // ---------------------------------------------------------------------------
@@ -332,6 +414,8 @@ static int gapEventHandler(struct ble_gap_event *event, void *arg)
             s_nowPlayingSubscribed = event->subscribe.cur_notify;
         else if (event->subscribe.attr_handle == s_trackProgressValHandle)
             s_trackProgressSubscribed = event->subscribe.cur_notify;
+        else if (event->subscribe.attr_handle == s_libraryValHandle)
+            s_librarySubscribed = event->subscribe.cur_notify;
         break;
 
     case BLE_GAP_EVENT_DISCONNECT:
@@ -340,6 +424,7 @@ static int gapEventHandler(struct ble_gap_event *event, void *arg)
         s_statusSubscribed = false;
         s_nowPlayingSubscribed = false;
         s_trackProgressSubscribed = false;
+        s_librarySubscribed = false;
         startAdvertising();
         break;
 
@@ -443,10 +528,12 @@ static void statusNotifyTask(void *arg)
 // BleServer::start
 // ---------------------------------------------------------------------------
 void ble::BleServer::start(controlSystem::ActionProcessor &processor,
-                           controlSystem::SystemState     &state)
+                           controlSystem::SystemState     &state,
+                           std::function<void(uint16_t cmdId, uint16_t param)> onLibraryCommand)
 {
     s_processor = &processor;
     s_state     = &state;
+    s_onLibraryCommand = std::move(onLibraryCommand);
 
     int rc = nimble_port_init();
     if (rc != ESP_OK)
