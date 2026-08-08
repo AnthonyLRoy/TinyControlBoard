@@ -85,7 +85,7 @@ This is the same logical mapping documented in [docs/button-command-map.md](./bu
 | 7 | Cover | MCP input index 7 | bit 7 | `0x0080` | `0x80 0x00` | `0x0117` or `0x0118` | `CMD_COVER_VIEW_ON` or `CMD_COVER_VIEW_OFF` | normalized to `CMD_TOGGLE_COVER_VIEW` on UART |
 | 8 | Repeat | MCP input index 8 | bit 8 | `0x0100` | `0x00 0x01` | `0x011A` or `0x011B` | `CMD_REPEAT_ON` or `CMD_REPEAT_OFF` | normalized to `CMD_TOGGLE_REPEAT` with param `1` or `0` |
 | 9 | Toggle Random | MCP input index 9 | bit 9 | `0x0200` | `0x00 0x02` | `0x011D` or `0x011E` | `CMD_RANDOM_ON` or `CMD_RANDOM_OFF` | normalized to `CMD_TOGGLE_RANDOM` with param `1` or `0` |
-| 10 | Toggle DAC | MCP input index 10 | bit 10 | `0x0400` | `0x00 0x04` | `0x010A` or `0x010F` | `CMD_TOGGLE_DAC_ON` or `CMD_TOGGLE_DAC_OFF` | local relay control |
+| 10 | Toggle DAC | MCP input index 10 | bit 10 | `0x0400` | `0x00 0x04` | `0x010A` or `0x010F` | `CMD_TOGGLE_DAC_ON` or `CMD_TOGGLE_DAC_OFF` | local relay control (GPIO10 signal-output select, separate from GPIO12 DAC power) |
 | 11 | Next Panel | MCP input index 11 | bit 11 | `0x0800` | `0x00 0x08` | `0x0107` | `CMD_NEXT_MENU_ITEM` | UART command; Pi cycles to next moOde panel |
 | 12 | Toggle Meter | MCP input index 12 | bit 12 | `0x1000` | `0x00 0x10` | `0x010C` or `0x010D` | `CMD_TOGGLE_METER_ON` or `CMD_TOGGLE_METER_OFF` | normalized to `CMD_TOGGLE_METER` with param `1` or `0` |
 | 13 | Rotary Left | MCP input index 13 | none in current rotary path | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | sent with param `0`, no SPI LED write |

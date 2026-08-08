@@ -162,7 +162,7 @@ Current dedicated relay helper methods:
 
 - `shutdownRpi()` turns off the Raspberry Pi relay,
 - `shutdownScreen()` turns off the screen relay,
-- `handleToggleDac()` toggles the DAC relay.
+- `handleToggleDac()` toggles the DAC signal-output select relay (GPIO10, `PIN_RELAY_PROTO_DAC_ENABLED`) — distinct from the DAC power relay (GPIO12, `PIN_RELAY_DAC_POWER`) driven during power sequencing.
 
 ## 9. Current Behavior Caveats
 

@@ -22,9 +22,10 @@ namespace controlSystem
 
     bool RelayController::handleToggleDac(bool state)
     {
-        mr_relays.setRelayState(PIN_RELAY_DAC_POWER, state);
+        // Toggle DAC selects between DAC signal outputs (GPIO10); it does not gate DAC power (GPIO12).
+        mr_relays.setRelayState(PIN_RELAY_PROTO_DAC_ENABLED, state);
         m_dacEnabled = state;
-        ESP_LOGI(k_logTag, "DAC relay set to %s", state ? "ON" : "OFF");
+        ESP_LOGI(k_logTag, "DAC output select set to %s", state ? "ON" : "OFF");
         return true;
     }
 
