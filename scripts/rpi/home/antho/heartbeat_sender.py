@@ -40,7 +40,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(DRDY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 ser = serial.Serial(UART_PORT, BAUD_RATE, timeout=0.01)
-
+# ok this is not the official way of writing and reading checksums but it work 
 def compute_checksum(data):
     """Sum bytes [1..7+payload_len] (everything between start byte and checksum)."""
     payload_len = data[7]
