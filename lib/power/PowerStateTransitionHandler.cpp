@@ -62,7 +62,7 @@ namespace controlSystem
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, true, board::timing::k_powerSettleDelayMs);
             indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::OutputStage);
 
-            mr_relayController.setRelayWithDelay(PIN_RELAY_RPI_POWER, true, board::timing::k_screenOnDelayMs);
+            mr_relayController.setRelayWithDelay(PIN_RELAY_RPI_POWER, true, board::timing::k_rpiOnDelayMs);
 
             // Stage 4: wait for Raspberry Pi communication.
             const bool booted = mr_rpiBootManager.waitForRpiToBoot(board::timing::k_rpiBootTimeoutMs);

@@ -17,6 +17,7 @@ namespace board
         inline constexpr uint32_t k_initDelayMs = 5000;
         inline constexpr uint32_t k_powerSettleDelayMs = 1500;
         inline constexpr uint32_t k_screenOnDelayMs = 1000;
+        inline constexpr uint32_t k_rpiOnDelayMs = 1000;
         inline constexpr uint32_t k_rpiBootTimeoutMs = 60000;
         inline constexpr uint32_t k_rpiShutdownTimeoutMs = 60000;
         inline constexpr uint32_t k_rpiShutdownSettleDelayMs = 500;
