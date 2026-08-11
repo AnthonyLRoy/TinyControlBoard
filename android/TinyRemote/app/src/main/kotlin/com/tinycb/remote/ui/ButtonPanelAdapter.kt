@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.tinycb.remote.R
+import com.tinycb.remote.data.ButtonCatalog
 import com.tinycb.remote.databinding.ItemButtonPanelBinding
 import com.tinycb.remote.databinding.ItemButtonPanelWideBinding
 import com.tinycb.remote.databinding.ItemBrightnessStepperBinding
@@ -96,12 +97,17 @@ class ButtonPanelAdapter(
         }
 
         fun updateLed(btn: ButtonDef, status: BoardStatus?) {
-            val isActive = btn.bitmaskBit >= 0 &&
-                    status != null &&
-                    (status.buttonLedBitmask and (1 shl btn.bitmaskBit)) != 0
+            val isActive = if (btn.commandId == ButtonCatalog.CMD_PLAY) {
+                status?.isTrackPlaying == true
+            } else {
+                btn.bitmaskBit >= 0 &&
+                        status != null &&
+                        (status.buttonLedBitmask and (1 shl btn.bitmaskBit)) != 0
+            }
             ledDot.setBackgroundResource(if (isActive) R.drawable.led_dot_active else R.drawable.led_dot)
 
             if (btn.isToggle && isActive) {
+
                 // Active toggle (e.g. Play -> currently playing): green fill, dark icon + label
                 root.setBackgroundResource(R.drawable.bg_button_active)
                 ivIcon.imageTintList = ColorStateList.valueOf(Color.parseColor("#1A1A1A"))

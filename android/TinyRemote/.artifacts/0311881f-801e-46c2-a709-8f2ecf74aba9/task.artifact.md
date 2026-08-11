@@ -1,5 +1,5 @@
-- [x] Update `strings.xml` with "Display On/Off" strings
-- [x] Update `ButtonCatalog.kt` default name
-- [x] Update `MainViewModel.kt` to drive buttons from `boardStatus`
-- [x] Update `MainActivity.kt` to observe button changes
-- [x] Verify with simulated status (Logic verified)
+- `[x]` Add constants to `ButtonCatalog.kt`
+- `[x]` Update `MainViewModel.kt` to use `isTrackPlaying` for Play button state
+- `[x]` Update `ButtonPanelAdapter.kt` to sync LED/Background styling with playback state
+- `[x]` Update `MainActivity.kt` to use constants
+- `[x]` Verify changes by building and checking logic

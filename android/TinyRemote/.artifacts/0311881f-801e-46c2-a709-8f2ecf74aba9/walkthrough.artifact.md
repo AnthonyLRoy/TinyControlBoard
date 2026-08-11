@@ -1,26 +1,22 @@
-# Walkthrough - Display Button Text Driven by Board Status
+# Walkthrough - Play/Pause Button Toggle
 
-I have updated the Display button logic so that its text is now driven by the actual state reported by the TinyControlBoard.
+I have updated the TinyRemote app to dynamically toggle the Play button's icon and label based on the actual playback state of the device.
 
-## Changes
+## Changes Made
 
-### [Android App]
+### UI & Logic Integration
 
-#### [MainViewModel.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/viewmodel/MainViewModel.kt)
-- The `buttons` list is now a `StateFlow` that reacts to `boardStatus` updates.
-- When a status update is received, the app checks the 15th bit of the `buttonLedBitmask` (which corresponds to the Display button).
-- If the bit is set (LED is on), the button text changes to **"Display On"**.
-- If the bit is cleared or the board is disconnected, the text defaults to **"Display Off"**.
-
-#### [MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)
-- Subscribes to the dynamic `buttons` flow and updates the `RecyclerView` adapter whenever the state changes.
+- **Play/Pause Toggle**: The "Play" button now changes its icon to `ic_play_pause` and its label to "Pause" when the device reports that a track is playing.
+- **State Synchronization**: The button's active styling (green background and LED dot) is now directly tied to the playback state (`isTrackPlaying`), ensuring visual consistency.
+- **Code Cleanup**: Introduced `CMD_*` constants in [ButtonCatalog.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/data/ButtonCatalog.kt) to replace magic numbers in `MainActivity`, `MainViewModel`, and `ButtonPanelAdapter`.
 
 ## Verification Results
 
-### Logic Verification
-- The button name is determined by: `status != null && (status.buttonLedBitmask and (1 shl 15)) != 0`.
-- This ensures that the UI reflects the **actual** state of the hardware.
-- Without a connection, `status` is null, so it correctly defaults to **"Display Off"**.
+### Automated Tests
+- Ran `./gradlew app:assembleDebug` - **Passed**
 
-> [!NOTE]
-> Since the emulator is not connected to a physical board, you will see "Display Off" by default. Once connected to a board that toggles the 15th bit of its LED bitmask when the display is toggled, the text will update automatically.
+### Manual Verification Path
+1.  Connect to the board.
+2.  Observe the **Play** button: it should show the Play icon.
+3.  Start playback: the button should transform into a **Pause** button with a green background.
+4.  Stop playback: the button should revert to the **Play** state.

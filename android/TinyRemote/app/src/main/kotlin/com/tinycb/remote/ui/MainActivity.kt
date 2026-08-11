@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.tinycb.remote.R
 import com.tinycb.remote.ble.ConnectionState
+import com.tinycb.remote.data.ButtonCatalog
 import com.tinycb.remote.databinding.ActivityMainBinding
 import com.tinycb.remote.model.GridItem
 import com.tinycb.remote.viewmodel.MainViewModel
@@ -52,9 +53,9 @@ class MainActivity : AppCompatActivity() {
 
         buttonAdapter = ButtonPanelAdapter { commandId ->
             when (commandId) {
-                0x0107 -> startActivity(Intent(this@MainActivity, ViewSelectionActivity::class.java))
-                0x0114 -> vm.toggleDisplay()
-                else   -> vm.sendCommand(commandId)
+                ButtonCatalog.CMD_VIEW_MENU   -> startActivity(Intent(this@MainActivity, ViewSelectionActivity::class.java))
+                ButtonCatalog.CMD_DISPLAY_OFF -> vm.toggleDisplay()
+                else                          -> vm.sendCommand(commandId)
             }
         }
         

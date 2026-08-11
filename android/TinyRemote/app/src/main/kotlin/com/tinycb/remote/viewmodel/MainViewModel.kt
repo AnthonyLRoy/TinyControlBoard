@@ -35,16 +35,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (item !is GridItem.Button) return@map item
             val def = item.def
             when (def.commandId) {
-                0x0114 -> {
+                ButtonCatalog.CMD_DISPLAY_OFF -> {
                     // Display Off → Display On when LED active
                     val isOn = status != null && def.bitmaskBit >= 0 &&
                         (status.buttonLedBitmask and (1 shl def.bitmaskBit)) != 0
                     GridItem.Button(def.copy(name = if (isOn) "Display On" else "Display Off"))
                 }
-                0x0102 -> {
-                    // Play → Pause (icon + label) when the play LED is active
-                    val isPlaying = status != null && def.bitmaskBit >= 0 &&
-                        (status.buttonLedBitmask and (1 shl def.bitmaskBit)) != 0
+                ButtonCatalog.CMD_PLAY -> {
+                    // Play → Pause (icon + label) when track is playing
+                    val isPlaying = status?.isTrackPlaying == true
                     GridItem.Button(
                         def.copy(
                             name    = if (isPlaying) "Pause" else "Play",
@@ -54,6 +53,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 else -> item
             }
+
         }
     }.stateIn(viewModelScope, SharingStarted.Lazily, ButtonCatalog.gridItems)
 
