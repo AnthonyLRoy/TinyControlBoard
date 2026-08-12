@@ -30,11 +30,17 @@
     <!-- View Selection Screen -->
     <string name="view_selection_title">Select display menu</string>
     <string name="view_default">Default View</string>
+    <string name="view_default_desc">Standard layout, all tracks</string>
     <string name="view_radio">Radio Stations</string>
+    <string name="view_radio_desc">Browse by broadcast station</string>
     <string name="view_playlist">Playlist</string>
+    <string name="view_playlist_desc">Your saved song collections</string>
     <string name="view_folder">Folder View</string>
+    <string name="view_folder_desc">Browse by file directory</string>
     <string name="view_tag">Tag View</string>
+    <string name="view_tag_desc">Group tracks by custom tags</string>
     <string name="view_album">Album View</string>
+    <string name="view_album_desc">Grouped by album artwork</string>
 
     <!-- Library Browse Screen -->
     <string name="library_title">Library</string>

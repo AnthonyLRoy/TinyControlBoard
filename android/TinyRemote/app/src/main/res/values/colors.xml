@@ -38,4 +38,15 @@
     <!-- Theme aliases -->
     <color name="amber">@color/mcintosh_green</color>
     <color name="amber_dim">#1B5E20</color>
+
+    <!-- Display Menu Redesign -->
+    <color name="menu_bg">#000000</color>
+    <color name="menu_card">#1C1C1E</color>
+    <color name="menu_card_border">#2C2C2E</color>
+    <color name="menu_text_primary">#FFFFFF</color>
+    <color name="menu_text_secondary">#8E8E93</color>
+    <color name="menu_icon_default">#AEAEB2</color>
+    <color name="menu_accent">#3DDC84</color>
+    <color name="menu_accent_dim">#243DDC84</color>
+    <color name="menu_accent_border">#743DDC84</color>
 </resources>

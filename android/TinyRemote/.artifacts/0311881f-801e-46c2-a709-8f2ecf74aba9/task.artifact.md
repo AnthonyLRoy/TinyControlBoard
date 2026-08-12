@@ -1,5 +1,8 @@
-- `[x]` Add constants to `ButtonCatalog.kt`
-- `[x]` Update `MainViewModel.kt` to use `isTrackPlaying` for Play button state
-- `[x]` Update `ButtonPanelAdapter.kt` to sync LED/Background styling with playback state
-- `[x]` Update `MainActivity.kt` to use constants
-- `[x]` Verify changes by building and checking logic
+- `[x]` Update `colors.xml` with new menu colors
+- `[x]` Add subtitles to `strings.xml`
+- `[x]` Create new vector drawables for menu icons
+- `[x]` Create drawable backgrounds for menu items and icon chips
+- `[x]` Redesign `item_view_selection_button.xml` layout
+- `[x]` Update `ViewSelectionAdapter.kt` to handle new layout and data
+- `[x]` Update `ViewSelectionActivity.kt` with new options list
+- `[x]` Update `activity_view_selection.xml` background and spacing
