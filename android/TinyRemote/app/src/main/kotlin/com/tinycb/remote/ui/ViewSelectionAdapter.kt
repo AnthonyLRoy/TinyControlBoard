@@ -1,7 +1,6 @@
 package com.tinycb.remote.ui
 
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -49,18 +48,16 @@ class ViewSelectionAdapter(
                 if (isSelected) R.drawable.bg_menu_item_selected else R.drawable.bg_menu_item_normal
             )
 
+            b.iconChip.setBackgroundResource(
+                if (isSelected) R.drawable.bg_icon_chip_selected else R.drawable.bg_icon_chip
+            )
+
             val iconTint = if (isSelected)
                 ContextCompat.getColor(itemView.context, R.color.menu_accent)
             else
                 ContextCompat.getColor(itemView.context, R.color.menu_icon_default)
 
-            val iconBg = if (isSelected)
-                ContextCompat.getColor(itemView.context, R.color.menu_accent_dim)
-            else
-                Color.parseColor("#10FFFFFF")
-
             b.ivIcon.imageTintList = ColorStateList.valueOf(iconTint)
-            b.iconChip.backgroundTintList = ColorStateList.valueOf(iconBg)
             b.radioButton.isChecked = isSelected
 
             b.root.setOnClickListener { onSelected(item) }

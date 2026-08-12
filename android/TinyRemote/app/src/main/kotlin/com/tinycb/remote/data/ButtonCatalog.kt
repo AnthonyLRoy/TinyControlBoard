@@ -36,7 +36,7 @@ object ButtonCatalog {
         add(GridItem.Button(ButtonDef(10, "DAC",         0x0113, 10, R.drawable.ic_tune,          spanSize = 2)))
         add(GridItem.Button(ButtonDef(11, "Menu ▶",     CMD_VIEW_MENU, 11, R.drawable.ic_navigate_next, spanSize = 2)))
         add(GridItem.Button(ButtonDef(7,  "Cover",       0x0119,  7, R.drawable.ic_album,         spanSize = 2)))
-        add(GridItem.Button(ButtonDef(12, "Meter",       0x0115, 12, R.drawable.ic_equalizer,     spanSize = 2)))
+        add(GridItem.Button(ButtonDef(12, "Meter",       0x0115, 12, R.drawable.ic_meter,         spanSize = 2)))
 
         add(GridItem.Header("DISPLAY"))
         add(GridItem.Stepper("Brightness", R.drawable.ic_brightness, 0x0121, 0x0120))

@@ -1,0 +1,3 @@
+- [x] Create `ic_meter.xml` vector drawable
+- [x] Update `ButtonCatalog.kt` to use `R.drawable.ic_meter`
+- [x] Verify the change in the UI

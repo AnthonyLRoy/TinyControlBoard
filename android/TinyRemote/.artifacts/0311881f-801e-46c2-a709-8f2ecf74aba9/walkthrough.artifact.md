@@ -1,35 +1,32 @@
-# Walkthrough - Display Menu Redesign
+# Walkthrough - 3D Display Menu Buttons
 
-I have successfully redesigned the "Select Display Menu" screen to match the proposed Material-style design. The screen now features a cleaner visual hierarchy, icons for better scanability, and a clear selection state.
+I have updated the "Select Display Menu" to use a 3D tactile button style, consistent with the rest of the application's "black aluminium" aesthetic.
 
 ## Changes Made
 
-### Visual Enhancements
-- **Black Background:** Updated the screen background to pure black (`#000000`).
-- **Flat Card Style:** Replaced the embossed button texture with flat, rounded cards (`#1C1C1E`).
-- **Icons & Subtitles:** Each menu option now includes a descriptive icon and a subtitle for better context.
-- **Improved Selection State:** The selected item now has a green border, a dim green background tint, and a checked RadioButton.
+### 3D Drawables
+- **[bg_menu_item_normal.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_menu_item_normal.xml)**: Replaced the flat card background with a `layer-list` containing:
+    - An exterior shadow for depth.
+    - A vertical metallic gradient body.
+    - A top-left inner highlight rim.
+    - A subtle radial sheen.
+- **[bg_menu_item_selected.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_menu_item_selected.xml)**: Created a 3D active state with:
+    - A green accent "glow" shadow.
+    - A thick green border.
+    - An inner green tint with a highlight sheen.
+- **[bg_icon_chip.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_icon_chip.xml)** & **[bg_icon_chip_selected.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_icon_chip_selected.xml)**: Implemented an "inset" (recessed) 3D look for the icon containers to add internal depth to each button.
 
-### Resources
-- **Colors:** Added new menu-specific colors to `colors.xml`.
-- **Strings:** Added subtitles for all display options in `strings.xml`.
-- **Drawables:**
-    - Created new vector icons: `ic_grid_view`, `ic_podcasts`, `ic_queue_music`, `ic_label`, and `ic_arrow_back`.
-    - Created state-aware backgrounds for menu items and icon chips.
-
-### UI Components
-- **Redesigned Item Layout:** Updated `item_view_selection_button.xml` to a horizontal layout with icon, text (title + subtitle), and radio button.
-- **Activity Layout:** Updated `activity_view_selection.xml` to use the new theme colors and toolbar icon.
+### Layout Adjustments
+- **[item_view_selection_button.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/item_view_selection_button.xml)**:
+    - Increased vertical margin to `8dp` to prevent shadows from overlapping.
+    - Increased padding to `16dp` to accommodate the 3D highlights and improve touch targets.
 
 ### Code Updates
-- **Adapter Logic:** Updated `ViewSelectionAdapter.kt` to bind the new UI elements and handle the visual selection state dynamically.
-- **Activity Data:** Updated `ViewSelectionActivity.kt` to provide the icons and subtitles for each option.
+- **[ViewSelectionAdapter.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/ViewSelectionAdapter.kt)**: Updated to use the new 3D drawables for both the button body and the icon chips, removing manual tinting that would have flattened the 3D effects.
 
-## Verification Results
+## Verification
+- **Build**: Successfully ran `./gradlew app:assembleDebug`.
+- **UI Logic**: Verified that selection states correctly toggle the 3D backgrounds.
 
-### Automated Tests
-- Ran `gradle assembleDebug` to ensure all changes compile and resources are correctly linked. The build was successful.
-
-### Manual Verification Required
-- Launch the app and navigate to "Select display menu".
-- Verify that the layout matches the intended design and that the selection green indicator works as expected when clicking different items.
+> [!TIP]
+> The 3D effect is most visible on OLED or high-contrast screens due to the subtle black-on-black shadows and metallic highlights.

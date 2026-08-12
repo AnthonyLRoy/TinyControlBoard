@@ -1,71 +1,41 @@
-# Redesign "Select Display Menu" Screen
+# 3D Effect for Display Menu Buttons
 
-Convert the existing `ViewSelectionActivity` to the new Material-style design suggested in the mockup, using XML Views and RecyclerView to maintain consistency with the existing project architecture.
+Make the buttons in the "Select Display Menu" look 3D by adding depth, shadows, and highlights, consistent with the "aluminium" button style used elsewhere in the app.
 
 ## Proposed Changes
 
 ### [Resources]
 
-#### [MODIFY] [colors.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/values/colors.xml)
-Add new colors for the menu background, cards, borders, and accent states.
-```xml
-<color name="menu_bg">#000000</color>
-<color name="menu_card">#1C1C1E</color>
-<color name="menu_card_border">#2C2C2E</color>
-<color name="menu_text_primary">#FFFFFF</color>
-<color name="menu_text_secondary">#8E8E93</color>
-<color name="menu_icon_default">#AEAEB2</color>
-<color name="menu_accent">#3DDC84</color>
-<color name="menu_accent_dim">#243DDC84</color>
-<color name="menu_accent_border">#743DDC84</color>
-```
+#### [MODIFY] [bg_menu_item_normal.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_menu_item_normal.xml)
+Update the existing drawable to a `layer-list` that provides a 3D "button" look:
+- Bottom-right shadow.
+- Top-left highlight.
+- Gradient body with a slight metallic/satin sheen.
 
-#### [NEW] [ic_grid_view.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/ic_grid_view.xml)
-Vector for "Default View".
-#### [NEW] [ic_podcasts.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/ic_podcasts.xml)
-Vector for "Radio Stations".
-#### [NEW] [ic_queue_music.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/ic_queue_music.xml)
-Vector for "Playlist".
-#### [NEW] [ic_label.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/ic_label.xml)
-Vector for "Tag View".
-#### [NEW] [bg_menu_item_normal.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_menu_item_normal.xml)
-Rounded background for non-selected items.
-#### [NEW] [bg_menu_item_selected.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_menu_item_selected.xml)
-Highlighted background for the selected item.
-#### [NEW] [bg_icon_chip.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_icon_chip.xml)
-Rounded background for the icon.
+#### [MODIFY] [bg_menu_item_selected.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_menu_item_selected.xml)
+Update the existing drawable to a 3D version for the selected state:
+- Similar 3D structure but with a green accent fill or border.
+- Highlighted rim to indicate selection.
 
-#### [MODIFY] [strings.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/values/strings.xml)
-Add subtitles for the display options.
+#### [MODIFY] [bg_icon_chip.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/bg_icon_chip.xml)
+Update the icon chip background to have a slight "inset" or "recessed" 3D look.
 
 ### [UI Components]
 
-#### [MODIFY] [activity_view_selection.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/activity_view_selection.xml)
-Update background color and spacing to match the mockup.
-
 #### [MODIFY] [item_view_selection_button.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/item_view_selection_button.xml)
-Complete redesign:
-- Replace FrameLayout/ConstraintLayout with a horizontal LinearLayout or updated ConstraintLayout.
-- Add Icon chip (ImageView in Box-like container).
-- Add Title and Subtitle TextViews.
-- Add RadioButton (MaterialRadioButton).
+- Adjust padding and margins to accommodate the shadow offsets in the new 3D drawables.
+- Ensure `clipToPadding="false"` or appropriate parent margins so shadows aren't clipped.
 
 ### [Code]
 
 #### [MODIFY] [ViewSelectionAdapter.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/ViewSelectionAdapter.kt)
-- Update `ViewOption` data class to include `subtitleRes` and `iconRes`.
-- Update `VH.bind` to handle selection state (background, icon tint, RadioButton checked state).
-- Remove `ledDot` logic.
-
-#### [MODIFY] [ViewSelectionActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/ViewSelectionActivity.kt)
-- Provide the updated `ViewOption` list with subtitles and icons.
+- Update `VH.bind` to ensure selection logic correctly triggers the updated 3D backgrounds.
+- (Optional) Add a slight scale animation on press if desired, though the request only asked for "3D" looks.
 
 ## Verification Plan
 
 ### Manual Verification
 1.  Launch the app and navigate to "Select display menu".
-2.  Verify the background is pure black (`#000000`).
-3.  Verify each item has an icon, title, and subtitle.
-4.  Verify the selected item has a green border, dim green background, and checked radio button.
-5.  Verify clicking an item updates the selection and persists the choice.
-6.  Verify the back button works as expected.
+2.  Verify the buttons have visible depth (shadows and highlights).
+3.  Verify the selected item is clearly distinguishable with a 3D active state.
+4.  Verify no clipping occurs on the shadows.

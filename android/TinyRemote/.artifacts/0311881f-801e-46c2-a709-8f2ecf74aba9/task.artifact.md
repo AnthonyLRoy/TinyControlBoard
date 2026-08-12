@@ -1,8 +1,11 @@
-- `[x]` Update `colors.xml` with new menu colors
-- `[x]` Add subtitles to `strings.xml`
-- `[x]` Create new vector drawables for menu icons
-- `[x]` Create drawable backgrounds for menu items and icon chips
-- `[x]` Redesign `item_view_selection_button.xml` layout
-- `[x]` Update `ViewSelectionAdapter.kt` to handle new layout and data
-- `[x]` Update `ViewSelectionActivity.kt` with new options list
-- `[x]` Update `activity_view_selection.xml` background and spacing
+- [x] Update background drawables for 3D effect
+    - [x] Update `bg_menu_item_normal.xml`
+    - [x] Update `bg_menu_item_selected.xml`
+    - [x] Update `bg_icon_chip.xml`
+- [x] Adjust item layout for depth
+    - [x] Modify `item_view_selection_button.xml`
+- [x] Update adapter for 3D icon chips
+    - [x] Created `bg_icon_chip_selected.xml`
+    - [x] Updated `ViewSelectionAdapter.kt`
+- [x] Verify 3D UI in `ViewSelectionActivity`
+- [x] Verify 3D UI in `ViewSelectionActivity`
