@@ -1,5 +1,6 @@
 package com.tinycb.remote.ui
 
+import android.animation.ValueAnimator
 import android.content.res.ColorStateList
 import android.content.Intent
 import android.os.Bundle
@@ -30,6 +31,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var b: ActivityMainBinding
     private val vm: MainViewModel by viewModels()
     private lateinit var buttonAdapter: ButtonPanelAdapter
+
+    private var powerButtonAnimator: ValueAnimator? = null
 
     private val progressHandler = Handler(Looper.getMainLooper())
     private var trackDurationSec = 0
@@ -95,8 +98,19 @@ class MainActivity : AppCompatActivity() {
                     ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, style.colorRes))
                 
                 // Update power button tint based on state
-                val iconColorRes = if (status?.powerStateName == "ON") R.color.state_on else R.color.btn_bg_power
+                val isTransitioning = isPowerStateTransitioning(status?.powerStateName)
+                val iconColorRes = when {
+                    status?.powerStateName == "ON" -> R.color.state_on
+                    isTransitioning -> R.color.state_busy
+                    else -> R.color.btn_bg_power
+                }
                 b.btnPower.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, iconColorRes))
+
+                if (isTransitioning) {
+                    startPowerFlashing()
+                } else {
+                    stopPowerFlashing()
+                }
 
                 buttonAdapter.updateStatus(status)
             }
@@ -170,9 +184,34 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopPowerFlashing()
         if (isFinishing) {
             vm.bleManager.disconnect()
         }
+    }
+
+    private fun isPowerStateTransitioning(state: String?): Boolean {
+        return state == "TURNING ON" || state == "SHUTTING DOWN" ||
+                state == "GOING TO SLEEP" || state == "GOING INTO DEEP SLEEP"
+    }
+
+    private fun startPowerFlashing() {
+        if (powerButtonAnimator?.isRunning == true) return
+        powerButtonAnimator = ValueAnimator.ofFloat(1.0f, 0.3f).apply {
+            duration = 600
+            repeatMode = ValueAnimator.REVERSE
+            repeatCount = ValueAnimator.INFINITE
+            addUpdateListener { animator ->
+                b.btnPower.alpha = animator.animatedValue as Float
+            }
+            start()
+        }
+    }
+
+    private fun stopPowerFlashing() {
+        powerButtonAnimator?.cancel()
+        powerButtonAnimator = null
+        b.btnPower.alpha = 1.0f
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
