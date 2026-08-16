@@ -232,6 +232,43 @@ class BoardBleManager(context: Context) {
                 else -> Log.w(TAG, "onCharacteristicChanged (legacy): unknown uuid ${characteristic.uuid}")
             }
         }
+
+        // Android 13+ (API 33) overload — preferred
+        override fun onCharacteristicRead(
+            g: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
+            status: Int
+        ) {
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.w(TAG, "onCharacteristicRead (API33+): failed uuid=${characteristic.uuid} status=$status")
+                return
+            }
+            Log.d(TAG, "onCharacteristicRead (API33+): uuid=${characteristic.uuid} bytes=${value.size}")
+            if (characteristic.uuid == BleUuids.STATUS_CHAR) {
+                parseStatus(value)
+            }
+        }
+
+        @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+        override fun onCharacteristicRead(
+            g: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            status: Int
+        ) {
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.w(TAG, "onCharacteristicRead (legacy): failed uuid=${characteristic.uuid} status=$status")
+                return
+            }
+            val value = characteristic.value ?: run {
+                Log.w(TAG, "onCharacteristicRead (legacy): value is null for ${characteristic.uuid}")
+                return
+            }
+            Log.d(TAG, "onCharacteristicRead (legacy): uuid=${characteristic.uuid} bytes=${value.size}")
+            if (characteristic.uuid == BleUuids.STATUS_CHAR) {
+                parseStatus(value)
+            }
+        }
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
@@ -458,11 +495,18 @@ class BoardBleManager(context: Context) {
     fun browseUp() = writeLibraryCommand(CMD_BROWSE_REQUEST, LIB_BROWSE_UP)
     fun browseInto(index: Int) = writeLibraryCommand(CMD_BROWSE_REQUEST, index)
     fun addTrack(index: Int) = writeLibraryCommand(CMD_ADD_TRACK, index)
+    fun playTrack(index: Int) = writeLibraryCommand(CMD_PLAY_TRACK, index)
+    fun requestPlaylist() {
+        _libraryListing.value = emptyList()
+        writeLibraryCommand(CMD_PLAYLIST_REQUEST, 0)
+    }
 
     companion object {
         private const val TAG = "BoardBleManager"
         private const val CMD_BROWSE_REQUEST = 0x0128
         private const val CMD_ADD_TRACK = 0x0129
+        private const val CMD_PLAYLIST_REQUEST = 0x012A
+        private const val CMD_PLAY_TRACK = 0x012B
         private const val LIB_BROWSE_UP = 0xFFFE
         private const val LIB_BROWSE_ROOT = 0xFFFF
         private const val LIBRARY_ENTRY_FOLDER = 0

@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         buttonAdapter = ButtonPanelAdapter { commandId ->
             when (commandId) {
                 ButtonCatalog.CMD_VIEW_MENU   -> startActivity(Intent(this@MainActivity, ViewSelectionActivity::class.java))
+                ButtonCatalog.CMD_LIBRARY     -> startActivity(Intent(this@MainActivity, LibraryActivity::class.java))
                 ButtonCatalog.CMD_DISPLAY_OFF -> vm.toggleDisplay()
                 else                          -> vm.sendCommand(commandId)
             }
@@ -94,7 +95,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         b.tvNowPlaying.setOnClickListener {
-            startActivity(Intent(this@MainActivity, LibraryActivity::class.java))
+            startActivity(Intent(this@MainActivity, PlaylistActivity::class.java))
         }
 
         b.rvButtons.apply {

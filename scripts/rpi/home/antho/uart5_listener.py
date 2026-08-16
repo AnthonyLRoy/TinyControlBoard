@@ -37,6 +37,8 @@ COMMAND_HANDLERS = {
     cmd.CMD_SELECT_PANEL_ALBUM:    panel.make_select_panel_handler(5),
     cmd.CMD_BROWSE_REQUEST:        library.handle_browse_request,
     cmd.CMD_ADD_TRACK:             library.handle_add_track,
+    cmd.CMD_PLAYLIST_REQUEST:      library.handle_playlist_request,
+    cmd.CMD_PLAY_TRACK:            library.handle_play_track,
 }
 
 def setup_gpio():
@@ -102,5 +104,5 @@ def main():
             ser.close()
         GPIO.cleanup()
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     main()

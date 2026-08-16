@@ -37,11 +37,14 @@ object ButtonCatalog {
         add(GridItem.Button(ButtonDef(11, "Menu ▶",     CMD_VIEW_MENU, 11, R.drawable.ic_navigate_next, spanSize = 2)))
         add(GridItem.Button(ButtonDef(7,  "Cover",       0x0119,  7, R.drawable.ic_album,         spanSize = 2)))
         add(GridItem.Button(ButtonDef(12, "Meter",       0x0115, 12, R.drawable.ic_meter,         spanSize = 2)))
+        add(GridItem.Button(ButtonDef(16, "Library",     CMD_LIBRARY, -1, R.drawable.ic_folder,    spanSize = 4)))
 
         add(GridItem.Header("DISPLAY"))
         add(GridItem.Stepper("Brightness", R.drawable.ic_brightness, 0x0121, 0x0120))
         // Power is in the status strip — see activity_main.xml / MainActivity
         add(GridItem.Button(ButtonDef(15, "Display Off", CMD_DISPLAY_OFF, 6, R.drawable.ic_brightness, spanSize = 2, showLabel = true, isToggle = true)))
     }
+
+    const val CMD_LIBRARY = -1
 }
 

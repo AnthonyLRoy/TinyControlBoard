@@ -102,7 +102,11 @@ enum CommandId : uint16_t
     // param0 = child index, or protocol::k_browseUp / protocol::k_browseRoot
     CMD_BROWSE_REQUEST        = 0x0128,
     // param0 = index of file in current listing; appends to the MPD queue
-    CMD_ADD_TRACK             = 0x0129
+    CMD_ADD_TRACK             = 0x0129,
+    // returns the current MPD queue through MSG_LIBRARY_ENTRY packets
+    CMD_PLAYLIST_REQUEST      = 0x012A,
+    // param0 = zero-based position in the current MPD queue; starts playback
+    CMD_PLAY_TRACK            = 0x012B
 };
 
 enum PowerCommand : uint8_t

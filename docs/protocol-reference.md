@@ -126,6 +126,10 @@ Current command catalog from [lib/protocol/uartProtocol.hpp](../lib/protocol/uar
 | `CMD_RANDOM_ON` | `0x011D` |
 | `CMD_RANDOM_OFF` | `0x011E` |
 | `CMD_TOGGLE_RANDOM` | `0x011F` |
+| `CMD_BROWSE_REQUEST` | `0x0128` |
+| `CMD_ADD_TRACK` | `0x0129` |
+| `CMD_PLAYLIST_REQUEST` | `0x012A` |
+| `CMD_PLAY_TRACK` | `0x012B` |
 
 ## 6. Checksum
 

@@ -54,6 +54,13 @@
             android:parentActivityName=".ui.MainActivity"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:name=".ui.PlaylistActivity"
+            android:exported="false"
+            android:label="@string/playlist_title"
+            android:parentActivityName=".ui.MainActivity"
+            android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

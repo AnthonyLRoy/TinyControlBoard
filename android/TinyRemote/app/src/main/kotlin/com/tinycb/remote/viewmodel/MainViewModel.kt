@@ -65,6 +65,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun browseUp() = bleManager.browseUp()
     fun browseInto(index: Int) = bleManager.browseInto(index)
     fun addTrack(index: Int) = bleManager.addTrack(index)
+    fun playTrack(index: Int) = bleManager.playTrack(index)
+    fun requestPlaylist() = bleManager.requestPlaylist()
 
     fun setSelectedView(commandId: Int) {
         bleManager.setSelectedViewId(commandId)

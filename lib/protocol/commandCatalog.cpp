@@ -59,7 +59,8 @@ namespace
         {CMD_SELECT_PANEL_PLAYLIST, "Select_Panel_Playlist", "Select_Panel_Playlist"},
         {CMD_SELECT_PANEL_FOLDER,   "Select_Panel_Folder",   "Select_Panel_Folder"},
         {CMD_SELECT_PANEL_TAG,      "Select_Panel_Tag",      "Select_Panel_Tag"},
-        {CMD_SELECT_PANEL_ALBUM,    "Select_Panel_Album",    "Select_Panel_Album"}
+        {CMD_SELECT_PANEL_ALBUM,    "Select_Panel_Album",    "Select_Panel_Album"},
+        {CMD_PLAY_TRACK,            "Play_Track",            nullptr}
     };
 
     const size_t k_commandCatalogCount = sizeof(s_commandCatalog) / sizeof(s_commandCatalog[0]);

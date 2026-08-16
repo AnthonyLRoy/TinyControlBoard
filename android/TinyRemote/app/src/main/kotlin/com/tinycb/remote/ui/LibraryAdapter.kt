@@ -16,9 +16,9 @@ sealed class LibraryRow {
 }
 
 class LibraryAdapter(
-    private val onUpClicked: () -> Unit,
-    private val onFolderClicked: (Int) -> Unit,
-    private val onTrackClicked: (Int) -> Unit
+    private val onUpClicked: (() -> Unit)? = null,
+    private val onFolderClicked: ((Int) -> Unit)? = null,
+    private val onTrackClicked: ((Int) -> Unit)? = null
 ) : ListAdapter<LibraryRow, LibraryAdapter.VH>(DIFF) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
@@ -33,7 +33,7 @@ class LibraryAdapter(
                     b.tvEntryName.text = b.root.context.getString(R.string.library_up)
                     b.ivEntryIcon.setImageResource(R.drawable.ic_arrow_up)
                     b.ivEntryChevron.visibility = View.GONE
-                    b.root.setOnClickListener { onUpClicked() }
+                    b.root.setOnClickListener { onUpClicked?.invoke() }
                 }
                 is LibraryRow.Entry -> {
                     val entry = row.entry
@@ -41,11 +41,11 @@ class LibraryAdapter(
                     if (entry.isDirectory) {
                         b.ivEntryIcon.setImageResource(R.drawable.ic_folder)
                         b.ivEntryChevron.visibility = View.VISIBLE
-                        b.root.setOnClickListener { onFolderClicked(entry.index) }
+                        b.root.setOnClickListener { onFolderClicked?.invoke(entry.index) }
                     } else {
                         b.ivEntryIcon.setImageResource(R.drawable.ic_music_note)
                         b.ivEntryChevron.visibility = View.GONE
-                        b.root.setOnClickListener { onTrackClicked(entry.index) }
+                        b.root.setOnClickListener { onTrackClicked?.invoke(entry.index) }
                     }
                 }
             }

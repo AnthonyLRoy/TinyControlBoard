@@ -19,6 +19,7 @@ class _BrowseState:
     def __init__(self):
         self.browse_path = ""       # "" == library root
         self.browse_entries = []    # [(is_directory, full_path), ...] for the last listing sent
+        self.playlist_entries = []  # full paths for the last playlist listing sent
         self.library_seq = 0
 
 _state = _BrowseState()
@@ -80,3 +81,40 @@ def handle_add_track(params):
         print(f"Added to queue: {full_path}", flush=True)
     except Exception as e:
         print(f"⚠️ MPD add failed: {e}", flush=True)
+
+
+def handle_playlist_request(_params):
+    try:
+        tracks = [
+            line[len("file: "):]
+            for line in mpd_command("playlistinfo")
+            if line.startswith("file: ")
+        ][:MAX_LIBRARY_ENTRIES]
+    except Exception as e:
+        print(f"⚠️ MPD playlistinfo failed: {e}", flush=True)
+        tracks = []
+
+    _state.playlist_entries = tracks
+    total = len(tracks)
+    print(f"Playlist → {total} tracks", flush=True)
+    if total == 0:
+        send_library_entry(0, 0, LIBRARY_ENTRY_EMPTY, "")
+        return
+
+    for index, full_path in enumerate(tracks):
+        name = posixpath.basename(full_path) or full_path
+        send_library_entry(index, total, LIBRARY_ENTRY_TRACK, name)
+        time.sleep(0.008)
+
+
+def handle_play_track(params):
+    index = params[0]
+    if not (0 <= index < len(_state.playlist_entries)):
+        print(f"⚠️ Invalid play-track index {index}", flush=True)
+        return
+
+    try:
+        mpd_command(f"play {index}")
+        print(f"Playing queue position {index}: {_state.playlist_entries[index]}", flush=True)
+    except Exception as e:
+        print(f"⚠️ MPD play failed: {e}", flush=True)
