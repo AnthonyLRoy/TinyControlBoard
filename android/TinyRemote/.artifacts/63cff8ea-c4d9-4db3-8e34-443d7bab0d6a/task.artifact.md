@@ -1,0 +1,5 @@
+- [x] Add `showLabel` to `ButtonDef`
+- [x] Configure Display button in `ButtonCatalog`
+- [x] Update `ButtonPanelAdapter` to hide elements based on `showLabel`
+- [x] Update `item_button_panel_wide.xml` for centering
+- [x] Verify styling for Display button (green icon when ON, white icon when OFF, no label, no LED dot, no bg highlight)

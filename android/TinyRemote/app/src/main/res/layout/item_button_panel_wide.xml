@@ -15,9 +15,9 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="96dp"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="16dp">
+        android:minHeight="64dp"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="8dp">
 
         <!-- LED indicator dot (top-right) -->
         <View
@@ -33,24 +33,24 @@
         <!-- Icon + label as a centered horizontal group, so wide buttons fill their width -->
         <ImageView
             android:id="@+id/ivIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             app:tint="#FFFFFF"
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/tvLabel"
-            app:layout_constraintTop_toTopOf="@id/tvLabel"
-            app:layout_constraintBottom_toBottomOf="@id/tvLabel" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <TextView
             android:id="@+id/tvLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="6dp"
             android:gravity="center"
             android:maxLines="1"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:shadowColor="#B0000000"
             android:shadowDx="1"

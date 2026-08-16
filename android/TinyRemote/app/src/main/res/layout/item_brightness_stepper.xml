@@ -12,17 +12,17 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="72dp"
+        android:minHeight="64dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp">
+        android:paddingStart="2dp"
+        android:paddingEnd="2dp">
 
         <!-- Decrement touch target on the far left -->
         <LinearLayout
             android:id="@+id/btnDec"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:gravity="center"
             android:clickable="true"
             android:focusable="true"
@@ -33,7 +33,7 @@
                 android:layout_height="wrap_content"
                 android:text="−"
                 android:textColor="@color/mcintosh_green"
-                android:textSize="28sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
                 android:includeFontPadding="false" />
         </LinearLayout>
@@ -48,9 +48,9 @@
 
             <ImageView
                 android:id="@+id/ivIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="10dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="4dp"
                 app:tint="#FFFFFF" />
 
             <TextView
@@ -58,7 +58,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:shadowColor="#B0000000"
                 android:shadowDx="1"
@@ -69,8 +69,8 @@
         <!-- Increment touch target on the far right -->
         <LinearLayout
             android:id="@+id/btnInc"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:gravity="center"
             android:clickable="true"
             android:focusable="true"
@@ -81,7 +81,7 @@
                 android:layout_height="wrap_content"
                 android:text="+"
                 android:textColor="@color/mcintosh_green"
-                android:textSize="28sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
                 android:includeFontPadding="false" />
         </LinearLayout>

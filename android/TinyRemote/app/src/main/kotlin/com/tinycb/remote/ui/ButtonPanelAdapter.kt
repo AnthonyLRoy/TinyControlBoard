@@ -92,6 +92,8 @@ class ButtonPanelAdapter(
             ivIcon.setImageResource(btn.iconRes)
             ivIcon.contentDescription = btn.name
             tvLabel.text = btn.name
+            tvLabel.visibility = if (btn.showLabel) View.VISIBLE else View.GONE
+            ledDot.visibility = if (btn.showLabel) View.VISIBLE else View.GONE
             root.setOnClickListener { onButtonClick(btn.commandId) }
             updateLed(btn, status)
         }
@@ -106,7 +108,7 @@ class ButtonPanelAdapter(
             }
             ledDot.setBackgroundResource(if (isActive) R.drawable.led_dot_active else R.drawable.led_dot)
 
-            if (btn.isToggle && isActive) {
+            if (btn.isToggle && isActive && btn.showLabel) {
 
                 // Active toggle (e.g. Play -> currently playing): green fill, dark icon + label
                 root.setBackgroundResource(R.drawable.bg_button_active)

@@ -33,6 +33,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonAdapter: ButtonPanelAdapter
 
     private var powerButtonAnimator: ValueAnimator? = null
+    private var isManuallyFlashing = false
+    private var lastKnownPowerState: String? = null
+    private var powerStateAtClick: String? = null
+    private val manualFlashTimeout = Runnable {
+        if (isManuallyFlashing) {
+            android.util.Log.e("MainActivity", "Manual flash timed out, resetting")
+            isManuallyFlashing = false
+            updatePowerUi(lastKnownPowerState)
+        }
+    }
 
     private val progressHandler = Handler(Looper.getMainLooper())
     private var trackDurationSec = 0
@@ -48,6 +58,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        android.util.Log.e("MainActivity", "onCreate started")
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
 
@@ -71,7 +82,15 @@ class MainActivity : AppCompatActivity() {
         // Power is deliberately NOT in the button grid — it's a small icon in the top status
         // strip so it can't be pressed by accident alongside the frequently-used buttons.
         b.btnPower.setOnClickListener {
+            android.util.Log.e("MainActivity", "Power button clicked. Current known state: $lastKnownPowerState")
+            isManuallyFlashing = true
+            powerStateAtClick = lastKnownPowerState
+            updatePowerUi(lastKnownPowerState) // Update UI first for instant response
             vm.sendCommand(POWER_COMMAND_ID)
+            
+            // Auto-reset manual flash after 4 seconds if no update received
+            progressHandler.removeCallbacks(manualFlashTimeout)
+            progressHandler.postDelayed(manualFlashTimeout, 4000L)
         }
 
         b.tvNowPlaying.setOnClickListener {
@@ -91,27 +110,22 @@ class MainActivity : AppCompatActivity() {
 
         // Observe board status → update power state chip + LED dots
         lifecycleScope.launch {
-            vm.boardStatus.collectLatest { status ->
-                val style = PowerStateUi.styleFor(status?.powerStateName)
-                b.tvStateChip.text = style.label
-                b.tvStateChip.backgroundTintList =
-                    ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, style.colorRes))
+            vm.boardStatus.collect { status ->
+                val stateName = status?.powerStateName
+                android.util.Log.e("MainActivity", "Observed powerStateName: '$stateName'")
                 
-                // Update power button tint based on state
-                val isTransitioning = isPowerStateTransitioning(status?.powerStateName)
-                val iconColorRes = when {
-                    status?.powerStateName == "ON" -> R.color.state_on
-                    isTransitioning -> R.color.state_busy
-                    else -> R.color.btn_bg_power
+                // If we were manually flashing and we get a confirmed stable state change, stop manual mode
+                if (isManuallyFlashing && stateName != null && !isPowerStateTransitioning(stateName)) {
+                    if (stateName != powerStateAtClick) {
+                        android.util.Log.e("MainActivity", "State change confirmed ($powerStateAtClick -> $stateName), stopping manual flash")
+                        isManuallyFlashing = false
+                        progressHandler.removeCallbacks(manualFlashTimeout)
+                        powerStateAtClick = null
+                    }
                 }
-                b.btnPower.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, iconColorRes))
-
-                if (isTransitioning) {
-                    startPowerFlashing()
-                } else {
-                    stopPowerFlashing()
-                }
-
+                
+                lastKnownPowerState = stateName
+                updatePowerUi(stateName)
                 buttonAdapter.updateStatus(status)
             }
         }
@@ -122,7 +136,12 @@ class MainActivity : AppCompatActivity() {
             vm.connectionState.collectLatest { state ->
                 if (state is ConnectionState.Connected) {
                     supportActionBar?.subtitle = state.deviceName?.let { "Connected • $it" } ?: "Connected"
+                } else if (state is ConnectionState.Connecting) {
+                    supportActionBar?.subtitle = "Connecting\u2026"
+                } else {
+                    supportActionBar?.subtitle = "Disconnected"
                 }
+
                 if (state is ConnectionState.Disconnected || state is ConnectionState.Error) {
                     finish()
                 }
@@ -191,14 +210,42 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isPowerStateTransitioning(state: String?): Boolean {
-        return state == "TURNING ON" || state == "SHUTTING DOWN" ||
-                state == "GOING TO SLEEP" || state == "GOING INTO DEEP SLEEP"
+        if (state == null || state == "UNKNOWN") return false
+        val stableStates = listOf("ON", "OFF", "SLEEP", "DEEP SLEEP")
+        return state !in stableStates
+    }
+
+    private fun updatePowerUi(stateName: String?) {
+        val style = PowerStateUi.styleFor(stateName)
+        b.tvStateChip.text = style.label
+        b.tvStateChip.backgroundTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, style.colorRes))
+
+        val isTransitioning = isPowerStateTransitioning(stateName) || isManuallyFlashing
+        
+        val iconColorRes = when {
+            isTransitioning -> R.color.state_busy
+            stateName == "ON" -> R.color.state_on
+            else -> R.color.btn_bg_power
+        }
+        
+        val colorInt = ContextCompat.getColor(this@MainActivity, iconColorRes)
+        android.util.Log.e("MainActivity", "Updating Power Button: state=$stateName, transitioning=$isTransitioning, colorRes=$iconColorRes, manual=$isManuallyFlashing")
+        
+        b.btnPower.setColorFilter(colorInt)
+
+        if (isTransitioning) {
+            startPowerFlashing()
+        } else {
+            stopPowerFlashing()
+        }
     }
 
     private fun startPowerFlashing() {
         if (powerButtonAnimator?.isRunning == true) return
-        powerButtonAnimator = ValueAnimator.ofFloat(1.0f, 0.3f).apply {
-            duration = 600
+        android.util.Log.e("MainActivity", "Starting power flashing animation")
+        powerButtonAnimator = ValueAnimator.ofFloat(1.0f, 0.05f).apply {
+            duration = 300
             repeatMode = ValueAnimator.REVERSE
             repeatCount = ValueAnimator.INFINITE
             addUpdateListener { animator ->
@@ -209,6 +256,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopPowerFlashing() {
+        if (powerButtonAnimator == null) return
+        android.util.Log.i("MainActivity", "Stopping power flashing animation")
         powerButtonAnimator?.cancel()
         powerButtonAnimator = null
         b.btnPower.alpha = 1.0f

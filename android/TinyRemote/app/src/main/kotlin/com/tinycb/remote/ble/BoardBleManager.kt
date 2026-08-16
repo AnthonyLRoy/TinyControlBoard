@@ -87,13 +87,9 @@ class BoardBleManager(context: Context) {
             mainHandler.removeCallbacks(connectTimeoutRunnable)
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    Log.i(TAG, "GATT connected (status=$status); requesting $REQUESTED_MTU-byte MTU…")
-                    // Stay in Connecting — emit Connected only after onServicesDiscovered
-                    // confirms both characteristics are ready (prevents null cmdChar race).
-                    if (!g.requestMtu(REQUESTED_MTU)) {
-                        Log.w(TAG, "MTU request could not be started; discovering services with the default MTU")
-                        g.discoverServices()
-                    }
+                    Log.i(TAG, "GATT connected (status=$status). Discovering services…")
+                    // Discover services immediately. MTU request can be problematic on some devices early on.
+                    g.discoverServices()
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.w(TAG, "GATT disconnected (status=$status)")
@@ -141,7 +137,7 @@ class BoardBleManager(context: Context) {
 
             cmdChar = svc.getCharacteristic(BleUuids.CMD_CHAR)
             if (cmdChar == null) {
-                Log.e(TAG, "CMD characteristic NOT found \u2014 refreshing GATT cache and re-discovering")
+                Log.e(TAG, "CMD characteristic NOT found — refreshing GATT cache and re-discovering")
                 refreshGattCache(g)
                 g.discoverServices()
                 return
@@ -160,8 +156,8 @@ class BoardBleManager(context: Context) {
                 Log.w(TAG, "Library-cmd characteristic not found — library browse unavailable")
             }
 
-            // Both required characteristics ready \u2014 now it is safe to open the control panel
-            Log.i(TAG, "All characteristics found \u2014 emitting Connected")
+            // Both required characteristics ready — now it is safe to open the control panel
+            Log.i(TAG, "All characteristics found — emitting Connected")
             _connectionState.value = ConnectionState.Connected(g.device.name)
 
             clearNotificationQueue()
@@ -182,6 +178,14 @@ class BoardBleManager(context: Context) {
                 Log.w(TAG, "Library characteristic not found — library browse unavailable")
             }
             writeNextNotification(g)
+
+            // Read initial status after a short delay
+            mainHandler.postDelayed({
+                val sChar = g.getService(BleUuids.SERVICE)?.getCharacteristic(BleUuids.STATUS_CHAR)
+                if (sChar != null) {
+                    g.readCharacteristic(sChar)
+                }
+            }, 1000L)
         }
 
         override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
@@ -206,24 +210,26 @@ class BoardBleManager(context: Context) {
                 BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
                 BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
                 BleUuids.LIBRARY_CHAR        -> parseLibraryEntry(value)
+                else -> Log.w(TAG, "onCharacteristicChanged (API33+): unknown uuid ${characteristic.uuid}")
             }
         }
 
-        // Android < 13 fallback
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
         override fun onCharacteristicChanged(
             g: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
-            Log.d(TAG, "onCharacteristicChanged (legacy): uuid=${characteristic.uuid}")
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                val value = characteristic.value ?: return
-                when (characteristic.uuid) {
-                    BleUuids.STATUS_CHAR         -> parseStatus(value)
-                    BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
-                    BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
-                    BleUuids.LIBRARY_CHAR        -> parseLibraryEntry(value)
-                }
+            val value = characteristic.value ?: run {
+                Log.w(TAG, "onCharacteristicChanged (legacy): value is null for ${characteristic.uuid}")
+                return
+            }
+            Log.d(TAG, "onCharacteristicChanged (legacy): uuid=${characteristic.uuid} bytes=${value.size}")
+            when (characteristic.uuid) {
+                BleUuids.STATUS_CHAR         -> parseStatus(value)
+                BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
+                BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
+                BleUuids.LIBRARY_CHAR        -> parseLibraryEntry(value)
+                else -> Log.w(TAG, "onCharacteristicChanged (legacy): unknown uuid ${characteristic.uuid}")
             }
         }
     }
@@ -256,6 +262,7 @@ class BoardBleManager(context: Context) {
             7 -> "GOING INTO DEEP SLEEP"
             else -> "UNKNOWN"
         }
+        Log.e(TAG, "parseStatus: powerStateOrdinal=$powerStateOrdinal -> $powerName")
         val previous = _status.value
         _status.value = BoardStatus(
             powerStateName = powerName,
@@ -454,7 +461,6 @@ class BoardBleManager(context: Context) {
 
     companion object {
         private const val TAG = "BoardBleManager"
-        private const val REQUESTED_MTU = 247
         private const val CMD_BROWSE_REQUEST = 0x0128
         private const val CMD_ADD_TRACK = 0x0129
         private const val LIB_BROWSE_UP = 0xFFFE
