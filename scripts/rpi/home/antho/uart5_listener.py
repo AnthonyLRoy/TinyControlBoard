@@ -14,6 +14,16 @@ BAUD_RATE = 115200
 DRDY_PIN = 23
 DEFAULT_METER_ENABLED = False
 
+
+def make_select_panel_handler(panel_index):
+    panel_handler = panel.make_select_panel_handler(panel_index)
+
+    def handler(params):
+        library.set_radio_browse(panel_index == 1)
+        panel_handler(params)
+
+    return handler
+
 COMMAND_HANDLERS = {
     cmd.CMD_SYS_RPI_SHUTDOWN: playback.handle_rpi_shutdown,
     cmd.CMD_NEXT_TRACK: playback.handle_next_track,
@@ -29,12 +39,12 @@ COMMAND_HANDLERS = {
     cmd.CMD_TOGGLE_COVER_VIEW: playback.toggle_cover_view,
     cmd.CMD_TOGGLE_REPEAT: playback.toggle_repeat,
     cmd.CMD_TOGGLE_RANDOM: playback.toggle_random,
-    cmd.CMD_SELECT_PANEL_PLAYBACK: panel.make_select_panel_handler(0),
-    cmd.CMD_SELECT_PANEL_RADIO:    panel.make_select_panel_handler(1),
-    cmd.CMD_SELECT_PANEL_PLAYLIST: panel.make_select_panel_handler(2),
-    cmd.CMD_SELECT_PANEL_FOLDER:   panel.make_select_panel_handler(3),
-    cmd.CMD_SELECT_PANEL_TAG:      panel.make_select_panel_handler(4),
-    cmd.CMD_SELECT_PANEL_ALBUM:    panel.make_select_panel_handler(5),
+    cmd.CMD_SELECT_PANEL_PLAYBACK: make_select_panel_handler(0),
+    cmd.CMD_SELECT_PANEL_RADIO:    make_select_panel_handler(1),
+    cmd.CMD_SELECT_PANEL_PLAYLIST: make_select_panel_handler(2),
+    cmd.CMD_SELECT_PANEL_FOLDER:   make_select_panel_handler(3),
+    cmd.CMD_SELECT_PANEL_TAG:      make_select_panel_handler(4),
+    cmd.CMD_SELECT_PANEL_ALBUM:    make_select_panel_handler(5),
     cmd.CMD_BROWSE_REQUEST:        library.handle_browse_request,
     cmd.CMD_ADD_TRACK:             library.handle_add_track,
     cmd.CMD_PLAYLIST_REQUEST:      library.handle_playlist_request,

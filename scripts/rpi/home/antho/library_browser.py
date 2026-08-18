@@ -13,16 +13,25 @@ LIBRARY_ENTRY_TRACK = 1
 LIBRARY_ENTRY_EMPTY = 2  # sentinel for a zero-entry folder
 MAX_LIBRARY_ENTRIES = 200  # cap per directory listing, not the whole library
 MAX_LIBRARY_NAME_LEN = 55
+RADIO_DIRECTORY = "RADIO"
 
 
 class _BrowseState:
     def __init__(self):
         self.browse_path = ""       # "" == library root
         self.browse_entries = []    # [(is_directory, full_path), ...] for the last listing sent
+        self.radio_browse = False
         self.playlist_entries = []  # full paths for the last playlist listing sent
         self.library_seq = 0
 
 _state = _BrowseState()
+
+
+def set_radio_browse(enabled):
+    """Select the saved Moode stations folder or the regular MPD music library."""
+    _state.radio_browse = enabled
+    _state.browse_path = ""
+    _state.browse_entries = []
 
 
 def send_library_entry(index, total, entry_type, name):
@@ -36,6 +45,9 @@ def handle_browse_request(params):
 
     if target == LIB_BROWSE_ROOT:
         _state.browse_path = ""
+    elif _state.radio_browse:
+        print(f"Invalid radio browse target {target}", flush=True)
+        return
     elif target == LIB_BROWSE_UP:
         _state.browse_path = posixpath.dirname(_state.browse_path)
     elif 0 <= target < len(_state.browse_entries) and _state.browse_entries[target][0]:
@@ -45,14 +57,16 @@ def handle_browse_request(params):
         return
 
     try:
-        entries = mpd_lsinfo(_state.browse_path)
+        browse_path = RADIO_DIRECTORY if _state.radio_browse else _state.browse_path
+        entries = mpd_lsinfo(browse_path)
     except Exception as e:
         print(f"⚠️ MPD lsinfo failed: {e}", flush=True)
         entries = []
 
     _state.browse_entries = entries[:MAX_LIBRARY_ENTRIES]
     total = len(_state.browse_entries)
-    print(f"Browse → {_state.browse_path or '(root)'} ({total} entries)", flush=True)
+    location = RADIO_DIRECTORY if _state.radio_browse else (_state.browse_path or "(root)")
+    print(f"Browse → {location} ({total} entries)", flush=True)
 
     if total == 0:
         send_library_entry(0, 0, LIBRARY_ENTRY_EMPTY, "")
@@ -60,6 +74,8 @@ def handle_browse_request(params):
 
     for index, (is_dir, full_path) in enumerate(_state.browse_entries):
         name = posixpath.basename(full_path) or full_path
+        if _state.radio_browse and name.endswith(".pls"):
+            name = name[:-4]
         entry_type = LIBRARY_ENTRY_FOLDER if is_dir else LIBRARY_ENTRY_TRACK
         send_library_entry(index, total, entry_type, name)
         time.sleep(0.008)  # pace sends so the ESP32 RX/BLE-notify pipeline can keep up
