@@ -121,15 +121,23 @@ def _parse_time_token(token):
     return seconds
 
 def get_mpc_status():
-    """Runs `mpc status` once; returns (track_name, elapsed_s, duration_s, is_active)."""
+    """Returns the current MPD label, position, duration, and playing state."""
     try:
         result = subprocess.run(["mpc", "status"], capture_output=True, text=True, timeout=2)
         lines = result.stdout.splitlines()
-        if len(lines) < 2:
+        state_line = next((line for line in lines if "[playing]" in line or "[paused]" in line), None)
+        if state_line is None:
             return "", 0, 0, False
-        state_line = lines[1]
         is_playing = "[playing]" in state_line
-        track = lines[0].strip() if is_playing else ""
+        track = ""
+        if is_playing:
+            stream_name = subprocess.run(
+                ["mpc", "current", "--format", "%name%"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            ).stdout.strip()
+            track = stream_name or next((line.strip() for line in lines if line != state_line), "")
 
         elapsed, duration = 0, 0
         match = _TIME_RANGE_RE.search(state_line)
