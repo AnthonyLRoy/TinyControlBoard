@@ -30,7 +30,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Icon + label as a centered horizontal group, so wide buttons fill their width -->
+        <!-- Icon + label as a centered horizontal chain -->
         <ImageView
             android:id="@+id/ivIcon"
             android:layout_width="24dp"
@@ -38,7 +38,7 @@
             app:tint="#FFFFFF"
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/tvLabel"
+            app:layout_constraintEnd_toStartOf="@+id/tvLabel"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
@@ -56,7 +56,7 @@
             android:shadowDx="1"
             android:shadowDy="1"
             android:shadowRadius="1.5"
-            app:layout_constraintStart_toEndOf="@id/ivIcon"
+            app:layout_constraintStart_toEndOf="@+id/ivIcon"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />

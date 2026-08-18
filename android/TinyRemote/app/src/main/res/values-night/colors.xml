@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Background shades: Matte Black -->
-    <color name="bg_primary">#0A0A0A</color>
-    <color name="bg_surface">#121212</color>
-    <color name="bg_card">#1E1E1E</color>
-    <color name="bg_card_pressed">#282828</color>
+    <!-- Background shades: Deep Sea Grey Gradient Midpoint -->
+    <color name="bg_primary">#11171C</color>
+    <color name="bg_gradient_top">#0D1318</color>
+    <color name="bg_gradient_bottom">#151B20</color>
+    <color name="bg_surface">#1A222B</color>
+    <color name="bg_card">#242F3B</color>
+    <color name="bg_card_pressed">#2F3D4D</color>
 
     <!-- Accent / LED -->
     <color name="mcintosh_green">#22FF00</color>

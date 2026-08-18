@@ -42,7 +42,7 @@ object ButtonCatalog {
         add(GridItem.Header("DISPLAY"))
         add(GridItem.Stepper("Brightness", R.drawable.ic_brightness, 0x0121, 0x0120))
         // Power is in the status strip — see activity_main.xml / MainActivity
-        add(GridItem.Button(ButtonDef(15, "Display Off", CMD_DISPLAY_OFF, 6, R.drawable.ic_brightness, spanSize = 2, showLabel = true, isToggle = true)))
+        add(GridItem.Button(ButtonDef(15, "Display",     CMD_DISPLAY_OFF, 6, R.drawable.ic_brightness, spanSize = 2, showLabel = false, isToggle = true)))
     }
 
     const val CMD_LIBRARY = -1

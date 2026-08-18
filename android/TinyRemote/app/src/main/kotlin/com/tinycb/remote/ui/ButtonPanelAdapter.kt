@@ -44,8 +44,14 @@ class ButtonPanelAdapter(
         return when (viewType) {
             VIEW_TYPE_HEADER  -> HeaderViewHolder(ItemGroupHeaderBinding.inflate(inflater, parent, false))
             VIEW_TYPE_STEPPER -> StepperViewHolder(ItemBrightnessStepperBinding.inflate(inflater, parent, false))
-            VIEW_TYPE_WIDE    -> { val b = ItemButtonPanelWideBinding.inflate(inflater, parent, false); ButtonViewHolder(b.root, b.ivIcon, b.tvLabel, b.ledDot) }
-            else              -> { val b = ItemButtonPanelBinding.inflate(inflater, parent, false);     ButtonViewHolder(b.root, b.ivIcon, b.tvLabel, b.ledDot) }
+            VIEW_TYPE_WIDE    -> {
+                val b = ItemButtonPanelWideBinding.inflate(inflater, parent, false)
+                ButtonViewHolder(b.root, b.ivIcon, b.tvLabel, b.ledDot)
+            }
+            else -> {
+                val b = ItemButtonPanelBinding.inflate(inflater, parent, false)
+                ButtonViewHolder(b.root, b.ivIcon, b.tvLabel, b.ledDot)
+            }
         }
     }
 
@@ -75,7 +81,6 @@ class ButtonPanelAdapter(
     inner class StepperViewHolder(private val b: ItemBrightnessStepperBinding) : RecyclerView.ViewHolder(b.root) {
         fun bind(stepper: GridItem.Stepper) {
             b.ivIcon.setImageResource(stepper.iconRes)
-            b.tvLabel.text = stepper.title
             b.btnDec.setOnClickListener { onButtonClick(stepper.decCommandId) }
             b.btnInc.setOnClickListener { onButtonClick(stepper.incCommandId) }
         }
@@ -91,6 +96,24 @@ class ButtonPanelAdapter(
         fun bind(btn: ButtonDef, status: BoardStatus?) {
             ivIcon.setImageResource(btn.iconRes)
             ivIcon.contentDescription = btn.name
+            
+            // Adjust icon size for wide buttons when label is hidden
+            if (btn.spanSize > 1) {
+                val sizeDp = if (btn.showLabel) 24 else 28
+                val px = android.util.TypedValue.applyDimension(
+                    android.util.TypedValue.COMPLEX_UNIT_DIP,
+                    sizeDp.toFloat(),
+                    root.resources.displayMetrics
+                ).toInt()
+                
+                val lp = ivIcon.layoutParams
+                if (lp.width != px || lp.height != px) {
+                    lp.width = px
+                    lp.height = px
+                    ivIcon.layoutParams = lp
+                }
+            }
+
             tvLabel.text = btn.name
             tvLabel.visibility = if (btn.showLabel) View.VISIBLE else View.GONE
             ledDot.visibility = if (btn.showLabel) View.VISIBLE else View.GONE

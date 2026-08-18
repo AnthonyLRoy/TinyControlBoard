@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Background shades: Matte Black -->
-    <color name="bg_primary">#000000</color>
-    <color name="bg_surface">#1A1A1A</color>
-    <color name="bg_card">#2A2A2A</color>
-    <color name="bg_card_pressed">#3A3A3A</color>
+    <!-- Background shades: Deep Sea Grey Gradient Midpoint -->
+    <color name="bg_primary">#11171C</color>
+    <color name="bg_gradient_top">#0D1318</color>
+    <color name="bg_gradient_bottom">#151B20</color>
+    <color name="bg_surface">#1A222B</color>
+    <color name="bg_card">#242F3B</color>
+    <color name="bg_card_pressed">#2F3D4D</color>
 
     <!-- McIntosh Green Accent -->
     <color name="mcintosh_green">#3DDC84</color>
@@ -40,9 +42,9 @@
     <color name="amber_dim">#1B5E20</color>
 
     <!-- Display Menu Redesign -->
-    <color name="menu_bg">#000000</color>
-    <color name="menu_card">#1C1C1E</color>
-    <color name="menu_card_border">#2C2C2E</color>
+    <color name="menu_bg">#0D1318</color>
+    <color name="menu_card">#242F3B</color>
+    <color name="menu_card_border">#2F3D4D</color>
     <color name="menu_text_primary">#FFFFFF</color>
     <color name="menu_text_secondary">#8E8E93</color>
     <color name="menu_icon_default">#AEAEB2</color>

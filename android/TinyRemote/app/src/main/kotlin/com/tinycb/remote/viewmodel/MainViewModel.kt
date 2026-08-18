@@ -36,10 +36,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val def = item.def
             when (def.commandId) {
                 ButtonCatalog.CMD_DISPLAY_OFF -> {
-                    // Display Off → Display On when LED active
+                    // Display Off → Display On when LED active (internally, but we don't show the label)
                     val isOn = status != null && def.bitmaskBit >= 0 &&
                         (status.buttonLedBitmask and (1 shl def.bitmaskBit)) != 0
-                    GridItem.Button(def.copy(name = if (isOn) "Display On" else "Display Off"))
+                    GridItem.Button(def.copy(
+                        name = if (isOn) "Display On" else "Display Off",
+                        showLabel = false
+                    ))
                 }
                 ButtonCatalog.CMD_PLAY -> {
                     // Play → Pause (icon + label) when track is playing
