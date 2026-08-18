@@ -109,18 +109,17 @@ class ButtonPanelAdapter(
             ledDot.setBackgroundResource(if (isActive) R.drawable.led_dot_active else R.drawable.led_dot)
 
             if (btn.isToggle && isActive && btn.showLabel) {
-
-                // Active toggle (e.g. Play -> currently playing): green fill, dark icon + label
+                // Active toggle: dark card with accent border, accent icon + white label
                 root.setBackgroundResource(R.drawable.bg_button_active)
-                ivIcon.imageTintList = ColorStateList.valueOf(Color.parseColor("#1A1A1A"))
-                tvLabel.setTextColor(Color.parseColor("#1A1A1A"))
+                ivIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(root.context, R.color.menu_accent))
+                tvLabel.setTextColor(Color.WHITE)
             } else {
                 root.setBackgroundResource(R.drawable.bg_button_aluminium)
                 tvLabel.setTextColor(Color.WHITE)
                 val tint = when {
-                    btn.isPrimary -> ContextCompat.getColor(root.context, R.color.mcintosh_green)
-                    isActive      -> ContextCompat.getColor(root.context, R.color.mcintosh_green)
-                    else          -> Color.WHITE
+                    btn.isPrimary -> ContextCompat.getColor(root.context, R.color.menu_accent)
+                    isActive      -> ContextCompat.getColor(root.context, R.color.menu_accent)
+                    else          -> ContextCompat.getColor(root.context, R.color.menu_icon_default)
                 }
                 ivIcon.imageTintList = ColorStateList.valueOf(tint)
             }
