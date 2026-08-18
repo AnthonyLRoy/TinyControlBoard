@@ -29,7 +29,10 @@ namespace controlSystem
                         SystemState &rSystemState,
                         IActivityStatusSink *p_activitySink = nullptr,
                         std::function<void(uint8_t)> onRemoteToggle = {});
-        void process(std::unique_ptr<actions::IAction> iaction);
+        /// isRemoteOrigin: true when the action came from outside the physical button
+        /// path (e.g. injectCommand). Physical button presses already toggle their LED
+        /// in ControlBoardInputDispatcher, so passing true there would double-toggle it.
+        void process(std::unique_ptr<actions::IAction> iaction, bool isRemoteOrigin = false);
         bool handleInboundUartMessage(const UartMessage &message);
 
         /// Thread-safe entry point for injecting commands from external tasks (e.g. BLE).

@@ -52,7 +52,7 @@ namespace controlSystem
             p_activitySink);
     }
 
-    void ActionProcessor::process(std::unique_ptr<actions::IAction> iaction)
+    void ActionProcessor::process(std::unique_ptr<actions::IAction> iaction, bool isRemoteOrigin)
     {
         if (!iaction)
             return;
@@ -79,7 +79,7 @@ namespace controlSystem
         iaction->execute(ctx);
 
         uint8_t buttonId = 0;
-        if (m_onRemoteToggle && getToggleButtonId(iaction->command, buttonId))
+        if (isRemoteOrigin && m_onRemoteToggle && getToggleButtonId(iaction->command, buttonId))
         {
             m_onRemoteToggle(buttonId);
         }
@@ -98,7 +98,7 @@ namespace controlSystem
         auto action = createAction(cmd, releaseMs);
         if (action)
         {
-            process(std::move(action));
+            process(std::move(action), /*isRemoteOrigin=*/true);
         }
         s_busy.store(false, std::memory_order_release);
     }
