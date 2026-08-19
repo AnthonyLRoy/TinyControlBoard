@@ -42,6 +42,8 @@ def mpd_lsinfo(path):
             entries.append((True, line[len("directory: "):]))
         elif line.startswith("file: "):
             entries.append((False, line[len("file: "):]))
-        # Other keys (Last-Modified/Time/Artist/Title/playlist/...) describe the
+        elif line.startswith("playlist: "):
+            entries.append((False, line[len("playlist: "):]))
+        # Other keys (Last-Modified/Time/Artist/Title/...) describe the
         # most-recently-appended entry above and are not needed for browsing.
     return entries

@@ -69,6 +69,28 @@ def _build_ws_text_frame(payload):
     return bytes(frame)
 
 
+def _read_ws_text_frame(sock, timeout=2):
+    """Reads a single (unmasked) server->client WebSocket frame and returns its payload bytes."""
+    sock.settimeout(timeout)
+    header = b''
+    while len(header) < 2:
+        header += sock.recv(2 - len(header))
+    length = header[1] & 0x7F
+    if length == 126:
+        ext = sock.recv(2)
+        length = struct.unpack('>H', ext)[0]
+    elif length == 127:
+        ext = sock.recv(8)
+        length = struct.unpack('>Q', ext)[0]
+    payload = b''
+    while len(payload) < length:
+        chunk = sock.recv(length - len(payload))
+        if not chunk:
+            break
+        payload += chunk
+    return payload
+
+
 def _click_panel(css_selector):
     try:
         ws_url = _get_cdp_ws_url()
@@ -81,18 +103,38 @@ def _click_panel(css_selector):
         host, port_str = host_port.split(':')
         port = int(port_str)
 
-        expression = f"document.querySelector('{css_selector}').click()"
+        # Report whether the element existed instead of letting a null-click JS error go unseen
+        expression = (
+            "(function(){"
+            f"var el=document.querySelector('{css_selector}');"
+            "if(!el){return 'NOT_FOUND';}"
+            "el.click();"
+            "return 'OK';"
+            "})()"
+        )
         payload = json.dumps({
             'id': 1,
             'method': 'Runtime.evaluate',
-            'params': {'expression': expression}
+            'params': {'expression': expression, 'returnByValue': True}
         }).encode()
 
         # Raw WebSocket upgrade — no Origin header sent
         sock = socket.create_connection((host, port), timeout=2)
         _cdp_ws_handshake(sock, host, port, path)
         sock.sendall(_build_ws_text_frame(payload))
+
+        response = _read_ws_text_frame(sock)
         sock.close()
+
+        result = json.loads(response) if response else {}
+        value = result.get('result', {}).get('result', {}).get('value')
+        exception = result.get('result', {}).get('exceptionDetails')
+        if exception:
+            print(f"Panel switch failed: JS exception evaluating selector '{css_selector}': {exception}", flush=True)
+        elif value == 'NOT_FOUND':
+            print(f"Panel switch failed: selector '{css_selector}' not found in current page (moOde UI may have changed)", flush=True)
+        elif value != 'OK':
+            print(f"Panel switch: unexpected CDP response for selector '{css_selector}': {result}", flush=True)
     except Exception as e:
         _state.cdp_ws_url = None
         print(f"Panel switch failed: {e}", flush=True)
