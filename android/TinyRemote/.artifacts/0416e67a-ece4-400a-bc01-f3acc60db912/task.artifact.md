@@ -1,0 +1,5 @@
+- [x] Update `ic_launcher_foreground.xml` with music note icon
+- [x] Verify XML changes
+- [x] Create walkthrough
+- [x] Update `ic_power.xml` to music note icon
+- [x] Verify in-app UI
