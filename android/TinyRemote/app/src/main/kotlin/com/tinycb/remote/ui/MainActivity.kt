@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
             setHasFixedSize(true)
         }
 
-        // Observe board status → update power state chip + LED dots
+        // Observe board status → update LED dots
         lifecycleScope.launch {
             vm.boardStatus.collect { status ->
                 val stateName = status?.powerStateName
@@ -128,22 +128,16 @@ class MainActivity : AppCompatActivity() {
                 
                 lastKnownPowerState = stateName
                 updatePowerUi(stateName)
+                refreshStatusBadge()
                 buttonAdapter.updateStatus(status)
             }
         }
 
-        // Reflect connection state: show connected device name in toolbar;
+        // Reflect connection state: show connected status in toolbar;
         // if BLE disconnects, go back to scan screen
         lifecycleScope.launch {
             vm.connectionState.collectLatest { state ->
-                b.tvConnectionStatus.text = when (state) {
-                    is ConnectionState.Connected -> {
-                        state.deviceName?.let { getString(R.string.connected_with_device, it) }
-                            ?: getString(R.string.connected)
-                    }
-                    is ConnectionState.Connecting -> getString(R.string.connecting)
-                    else -> getString(R.string.disconnected)
-                }
+                refreshStatusBadge()
 
                 if (state is ConnectionState.Disconnected || state is ConnectionState.Error) {
                     finish()
@@ -223,11 +217,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatePowerUi(stateName: String?) {
-        val style = PowerStateUi.styleFor(stateName)
-        b.tvStateChip.text = style.label
-        b.tvStateChip.backgroundTintList =
-            ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, style.colorRes))
-
         val isTransitioning = isPowerStateTransitioning(stateName) || isManuallyFlashing
         
         val iconColorRes = when {
@@ -246,6 +235,37 @@ class MainActivity : AppCompatActivity() {
         } else {
             stopPowerFlashing()
         }
+    }
+
+    private fun refreshStatusBadge() {
+        val connState = vm.connectionState.value
+        val powerState = lastKnownPowerState
+
+        val (text, colorRes) = when (connState) {
+            is ConnectionState.Connected -> {
+                val deviceName = connState.deviceName ?: getString(R.string.connected)
+                val baseText = getString(R.string.connected_with_device, deviceName)
+                val powerSuffix = if (powerState != null) " (${powerState.replace('_', ' ')})" else ""
+                
+                val bgColor = when (powerState) {
+                    "SLEEP", "DEEP_SLEEP" -> R.color.status_connected_sleep
+                    "ON" -> R.color.status_connected_on
+                    else -> R.color.status_connected_on
+                }
+                (baseText + powerSuffix) to bgColor
+            }
+            is ConnectionState.Connecting -> {
+                getString(R.string.connecting) to R.color.status_disconnected
+            }
+            else -> {
+                getString(R.string.disconnected) to R.color.status_disconnected
+            }
+        }
+
+        b.tvConnectionStatus.text = text
+        b.tvConnectionStatus.backgroundTintList = ColorStateList.valueOf(
+            ContextCompat.getColor(this, colorRes)
+        )
     }
 
     private fun startPowerFlashing() {

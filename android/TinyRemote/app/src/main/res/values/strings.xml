@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">TinyRemote</string>
-    <string name="scan_title">TinyRemote</string>
-    <string name="scan_subtitle">Searching for TinyControlBoard…</string>
+    <string name="app_name">DanStreamer</string>
+    <string name="scan_title">DanStreamer</string>
+    <string name="scan_subtitle">Searching for DanStreamer…</string>
     <string name="scan_button">Scan</string>
     <string name="scan_empty">No devices found yet</string>
     <string name="connect">Connect</string>

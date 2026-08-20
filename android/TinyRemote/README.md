@@ -1,4 +1,4 @@
-# TinyRemote — Android App Setup & Deployment
+# DanStreamer — Android App Setup & Deployment
 
 ## Prerequisites
 
@@ -45,14 +45,14 @@ toolbar dropdown, add one manually:
 
    | Field | Value |
    |---|---|
-   | **Name** | `TinyRemote` |
-   | **Module** | `TinyRemote.app` |
+   | **Name** | `DanStreamer` |
+   | **Module** | `DanStreamer.app` |
    | **Launch** | `Default Activity` |
    | **Deployment target** | `Connected Device` (or choose USB device) |
 
 4. Click **OK**.
 
-The toolbar should now show **TinyRemote ▶** ready to run.
+The toolbar should now show **DanStreamer ▶** ready to run.
 
 ---
 
@@ -76,7 +76,7 @@ adb devices
 
 1. Ensure your phone is connected and listed in the device dropdown in the
    Android Studio toolbar.
-2. Select the **TinyRemote** configuration.
+2. Select the **DanStreamer** configuration.
 3. Click the green **▶ Run** button (or press `Shift+F10`).
 4. Studio builds, installs, and launches the app automatically.
 
@@ -169,7 +169,7 @@ app never uses your actual location.
 | Symptom | Fix |
 |---|---|
 | Scan finds nothing | Verify board is powered and firmware is `feature/bt-remote`. Check BLE is on. |
-| "Bluetooth permissions required" toast | Open phone Settings → Apps → TinyRemote → Permissions and grant Bluetooth (and Location on Android <12). |
+| "Bluetooth permissions required" toast | Open phone Settings → Apps → DanStreamer → Permissions and grant Bluetooth (and Location on Android <12). |
 | Gradle sync fails — "Could not resolve…" | Check internet connection; run `gradle --refresh-dependencies`. |
 | `adb devices` shows no device | Reconnect USB, accept debug prompt on phone, check USB mode is "File transfer" not "Charging only". |
 | Commands sent but board doesn't respond | Confirm the power state is **ON** (board ignores most commands when in SLEEP or OFF). |

@@ -30,6 +30,11 @@
     <color name="state_sleep">#FF9500</color>
     <color name="state_busy">#007AFF</color>
 
+    <!-- Consolidated Status Colors -->
+    <color name="status_disconnected">#8B0000</color>
+    <color name="status_connected_on">#006400</color>
+    <color name="status_connected_sleep">#00008B</color>
+
     <!-- Legacy button colors (kept for compilation) -->
     <color name="btn_bg_default">@color/bg_card</color>
     <color name="btn_bg_transport">@color/bg_card</color>

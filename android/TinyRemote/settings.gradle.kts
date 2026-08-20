@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "TinyRemote"
+rootProject.name = "DanStreamer"
 include(":app")

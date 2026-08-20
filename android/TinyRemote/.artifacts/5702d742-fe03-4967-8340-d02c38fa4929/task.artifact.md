@@ -1,0 +1,9 @@
+- [x] Consolidate Status Field
+    - [x] Add new colors to `colors.xml`
+    - [x] Update `activity_main.xml` layout
+    - [x] Update `MainActivity.kt` logic
+- [x] Rebrand to DanStreamer
+    - [x] Update `strings.xml`
+    - [x] Update `ScanActivity.kt` strings
+    - [x] Update `settings.gradle.kts`
+- [x] Verify changes
