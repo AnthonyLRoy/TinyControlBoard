@@ -243,8 +243,7 @@ class MainActivity : AppCompatActivity() {
 
         val (text, colorRes) = when (connState) {
             is ConnectionState.Connected -> {
-                val deviceName = connState.deviceName ?: getString(R.string.connected)
-                val baseText = getString(R.string.connected_with_device, deviceName)
+                val baseText = getString(R.string.connected)
                 val powerSuffix = if (powerState != null) " (${powerState.replace('_', ' ')})" else ""
                 
                 val bgColor = when (powerState) {

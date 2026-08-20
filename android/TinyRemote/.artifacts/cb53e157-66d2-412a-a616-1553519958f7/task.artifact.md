@@ -1,0 +1,3 @@
+- [x] Update `refreshStatusBadge` in `MainActivity.kt`
+- [x] Verify badge text construction
+- [x] Create walkthrough

@@ -103,7 +103,9 @@ namespace controlSystem
         const ButtonConfig &config = mr_actionMap[controlBoardButtons::k_rotaryEventLeft];
         if (config.action)
         {
-            auto iaction = config.action->produce(direction > 0);
+            // Physical wiring/quadrature decode yields the opposite sign of what "left" means
+            // here (confirmed: rotating left was selecting next track and vice versa).
+            auto iaction = config.action->produce(direction < 0);
             if (iaction)
             {
                 m_onResponse(std::move(iaction));
