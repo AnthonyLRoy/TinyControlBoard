@@ -12,10 +12,12 @@ namespace controlSystem
     PowerStateTransitionHandler::PowerStateTransitionHandler(transport::uart::UartTransport &rSerial,
                                                              RelayController &rRelayController,
                                                              RpiBootManager &rRpiBootManager,
+                                                             SystemState &rSystemState,
                                                              IActivityStatusSink *p_activitySink)
         : mr_serial(rSerial),
           mr_relayController(rRelayController),
           mr_rpiBootManager(rRpiBootManager),
+          mr_systemState(rSystemState),
           mp_activitySink(p_activitySink)
     {
     }
@@ -28,10 +30,18 @@ namespace controlSystem
             indicators::getActivityStatusLed().sendStatus(status);
     }
 
+    void PowerStateTransitionHandler::publishPowerState(ControlBoardPowerState state)
+    {
+        indicators::getPowerLed().setState(state);
+        indicators::getMonitorBrightnessController().setState(state);
+        // Store immediately (not just at the end of handle()) so BLE clients see
+        // intermediate states like GOING_TO_SLEEP instead of jumping from ON to SLEEP.
+        mr_systemState.powerState.store(state);
+    }
+
     void PowerStateTransitionHandler::runRpiShutdownSequence()
     {
-        indicators::getPowerLed().setState(ControlBoardPowerState::GOING_TO_SLEEP);
-        indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::GOING_TO_SLEEP);
+        publishPowerState(ControlBoardPowerState::GOING_TO_SLEEP);
         mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
         mr_rpiBootManager.waitForRpiShutdown(board::timing::k_rpiShutdownTimeoutMs);
         mr_relayController.shutdownRpi();
@@ -46,8 +56,7 @@ namespace controlSystem
 
         if (transition == PowerTransitionAction::PowerOn)
         {
-            indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
-            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::TURNING_ON);
+            publishPowerState(ControlBoardPowerState::TURNING_ON);
             ESP_LOGI(k_logTag, "Initiating Power ON sequence");
 
             // Illuminate all eight boot diagnostic LEDs.
@@ -69,16 +78,14 @@ namespace controlSystem
             if (booted)
             {
                 indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::RpiComms);
-                indicators::getPowerLed().setState(ControlBoardPowerState::ON);
-                indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::ON);
+                publishPowerState(ControlBoardPowerState::ON);
                 indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::SolidIdle);
                 reportStatus(ControlBoardWorkingStatus::Active);
                 return ControlBoardPowerState::ON;
             }
 
             indicators::getBootDiagnosticLeds().stageFailure(indicators::BootStage::RpiComms);
-            indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
-            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
+            publishPowerState(ControlBoardPowerState::SLEEP);
             reportStatus(ControlBoardWorkingStatus::sleeping);
             ESP_LOGW(k_logTag, "Power ON sequence aborted because no RPi heartbeat was received");
             return ControlBoardPowerState::SLEEP;
@@ -93,8 +100,7 @@ namespace controlSystem
             vTaskDelay(pdMS_TO_TICKS(board::timing::k_screenPowerOffDelayMs));
             indicators::getSpiLedDriver().setAllLeds(false);
             indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
-            indicators::getPowerLed().setState(ControlBoardPowerState::SLEEP);
-            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::SLEEP);
+            publishPowerState(ControlBoardPowerState::SLEEP);
             reportStatus(ControlBoardWorkingStatus::sleeping);
             return ControlBoardPowerState::SLEEP;
         }
@@ -107,8 +113,7 @@ namespace controlSystem
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getSpiLedDriver().setAllLeds(false);
             indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
-            indicators::getPowerLed().setState(ControlBoardPowerState::DEEPSLEEP);
-            indicators::getMonitorBrightnessController().setState(ControlBoardPowerState::DEEPSLEEP);
+            publishPowerState(ControlBoardPowerState::DEEPSLEEP);
             reportStatus(ControlBoardWorkingStatus::sleeping);
             return ControlBoardPowerState::DEEPSLEEP;
         }

@@ -49,6 +49,7 @@ namespace controlSystem
             mr_serial,
             *mp_relayController,
             *mp_rpiBootManager,
+            mr_systemState,
             p_activitySink);
     }
 
