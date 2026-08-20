@@ -43,8 +43,6 @@ namespace indicators
 
         auto &driver = getSpiLedDriver();
 
-        // Extinguish all remaining diagnostic LEDs.  Later-stage LEDs may still
-        // be on if stageSuccess() was never called for them.
         for (uint8_t i = 0u; i < 16u; ++i)
         {
             if (k_allDiagnosticBits & static_cast<uint16_t>(1u << i))
@@ -53,7 +51,7 @@ namespace indicators
             }
         }
 
-        // Flash only the failing pair at 3 Hz indefinitely.
+        // Flash only the failing pair at 3 Hz forever or until the person notices.
         bool ledsOn = false;
         while (true)
         {
@@ -69,9 +67,6 @@ namespace indicators
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
 
     void BootDiagnosticLeds::begin()
     {

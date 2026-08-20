@@ -52,7 +52,7 @@ namespace board
         inline constexpr gpio_num_t k_dacPower = GPIO_NUM_12;
         inline constexpr gpio_num_t k_rpiPower = GPIO_NUM_11;
         inline constexpr gpio_num_t k_outputStagePower = GPIO_NUM_9;
-        inline constexpr gpio_num_t k_protoDacEnabled = GPIO_NUM_10;
+        inline constexpr gpio_num_t k_essDacEnabled = GPIO_NUM_10;
         inline constexpr gpio_num_t k_general1 = GPIO_NUM_47;
         inline constexpr gpio_num_t k_general2 = GPIO_NUM_39;
     } // namespace relays

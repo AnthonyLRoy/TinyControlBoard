@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "hal/uart/heartbeatWatchdog.hpp"
 #include "indicators/activityStatus.hpp"
 #include "input/actions/actionTemplates.hpp"
 #include "app/ActionCommandRoutingPolicy.hpp"
@@ -746,6 +747,52 @@ void test_control_board_sleep_allows_power_button_action()
                 "Power button press while sleeping should set doingWork status");
 }
 
+void test_heartbeat_watchdog_does_not_time_out_before_last_rx_is_recorded()
+{
+    transport::uart::HeartbeatWatchdog watchdog(1000);
+
+    expect_true(!watchdog.checkAndConsumeTimeout(5'000'000), "Watchdog should never time out before any RX is recorded");
+}
+
+void test_heartbeat_watchdog_does_not_time_out_within_the_window()
+{
+    transport::uart::HeartbeatWatchdog watchdog(1000);
+
+    watchdog.notifyRx(1);
+
+    expect_true(!watchdog.checkAndConsumeTimeout(1 + 999'000), "Watchdog should not time out at exactly the threshold");
+}
+
+void test_heartbeat_watchdog_times_out_after_the_window_elapses()
+{
+    transport::uart::HeartbeatWatchdog watchdog(1000);
+
+    watchdog.notifyRx(1);
+
+    expect_true(watchdog.checkAndConsumeTimeout(1 + 1'001'000), "Watchdog should time out once elapsed time exceeds the threshold");
+}
+
+void test_heartbeat_watchdog_does_not_refire_until_next_window_elapses()
+{
+    transport::uart::HeartbeatWatchdog watchdog(1000);
+
+    watchdog.notifyRx(1);
+    expect_true(watchdog.checkAndConsumeTimeout(1 + 1'001'000), "First timeout past the threshold should fire");
+    expect_true(!watchdog.checkAndConsumeTimeout(1 + 1'500'000), "Timeout should not refire again before another full window elapses");
+    expect_true(watchdog.checkAndConsumeTimeout(1 + 2'002'000), "Timeout should fire again once another full window elapses");
+}
+
+void test_heartbeat_watchdog_notify_rx_updates_last_rx_time()
+{
+    transport::uart::HeartbeatWatchdog watchdog(1000);
+
+    watchdog.notifyRx(42);
+    expect_equal(static_cast<uint64_t>(42), watchdog.getLastRxTimeUs(), "notifyRx should record the given timestamp");
+
+    watchdog.notifyRx(100);
+    expect_equal(static_cast<uint64_t>(100), watchdog.getLastRxTimeUs(), "notifyRx should overwrite the previous timestamp");
+}
+
 void test_control_board_sleep_blocks_rotary_input()
 {
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
@@ -808,6 +855,11 @@ int main()
         {"test_control_board_sleep_blocks_non_power_button_release", test_control_board_sleep_blocks_non_power_button_release},
         {"test_control_board_sleep_allows_power_button_action", test_control_board_sleep_allows_power_button_action},
         {"test_control_board_sleep_blocks_rotary_input", test_control_board_sleep_blocks_rotary_input},
+        {"test_heartbeat_watchdog_does_not_time_out_before_last_rx_is_recorded", test_heartbeat_watchdog_does_not_time_out_before_last_rx_is_recorded},
+        {"test_heartbeat_watchdog_does_not_time_out_within_the_window", test_heartbeat_watchdog_does_not_time_out_within_the_window},
+        {"test_heartbeat_watchdog_times_out_after_the_window_elapses", test_heartbeat_watchdog_times_out_after_the_window_elapses},
+        {"test_heartbeat_watchdog_does_not_refire_until_next_window_elapses", test_heartbeat_watchdog_does_not_refire_until_next_window_elapses},
+        {"test_heartbeat_watchdog_notify_rx_updates_last_rx_time", test_heartbeat_watchdog_notify_rx_updates_last_rx_time},
     };
 
     int failures = 0;
