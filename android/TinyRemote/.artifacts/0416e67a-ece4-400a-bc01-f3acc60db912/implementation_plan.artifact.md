@@ -1,19 +1,31 @@
-# Update In-App Icons to Music Streamer Theme
+# Implementation Plan - Move Time and Date to Toolbar
 
-The user reports that "the button looks the same" after changing the app icon. This likely refers to the prominent power button inside the app (which uses the same glyph as the old app icon) or the launcher icon not refreshing correctly. I will update the in-app power icon and ensure the launcher icon is correctly configured.
+The user wants the time and date to be displayed in the toolbar area. Currently, these are located in a separate "Status strip" below the toolbar in `activity_main.xml`. I will move them into the `MaterialToolbar` to create a more integrated and cleaner header.
 
 ## Proposed Changes
 
-### [app module](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app)
+### UI Layout
 
-#### [MODIFY] [ic_power.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/ic_power.xml)
-Replace the power glyph with the music note glyph to align the in-app branding with the new app icon.
+#### [MODIFY] [activity_main.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/activity_main.xml)
+- Move the `TextClock` views (`tvClock` for time, `tvDate` for date) into the `MaterialToolbar`.
+- I will also move the `tvStateChip` and `btnPower` into the toolbar area to maintain a unified status bar look, or at least ensure the layout remains balanced.
+- Use a custom view container (e.g., `ConstraintLayout` or a horizontal `LinearLayout`) inside the `MaterialToolbar` to host the title/subtitle on the left and the status/clock elements on the right.
+- Since we are using custom views in the toolbar, we will manually manage the connection status text instead of relying on `supportActionBar.subtitle` to ensure it fits well with the new layout.
 
-#### [MODIFY] [ic_launcher_foreground.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/ic_launcher_foreground.xml)
-I will change the color of the music note to ensure it's distinct and verify it's centered correctly. I'll also check if changing the background color helps it stand out as a "music" app.
+### Activity Logic
+
+#### [MODIFY] [MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)
+- Update the connection state observation logic to update the custom status `TextView` in the toolbar instead of `supportActionBar?.subtitle`.
+- Verify all View Binding references to the moved views are still valid.
 
 ## Verification Plan
 
+### Automated Tests
+- Build the project to ensure no layout or binding errors.
+- Run the app (manually) to verify the UI layout.
+
 ### Manual Verification
-- Deploy the app and check the power button in the `MainActivity` status strip.
-- Verify the launcher icon again.
+- Deploy to a device/emulator.
+- Check that the toolbar shows "TinyRemote", connection status, time, date, and the power button in a unified header.
+- Verify that the clock still updates every second.
+- Verify that the power button and state chip still work and reflect the board status.

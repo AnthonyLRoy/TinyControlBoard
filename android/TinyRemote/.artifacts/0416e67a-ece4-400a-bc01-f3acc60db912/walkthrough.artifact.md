@@ -1,22 +1,30 @@
-# Walkthrough - App Icon and In-App Branding Update
+# Walkthrough - Moved Status to Toolbar
 
-I have updated both the app launcher icon and the in-app power button to use a music note icon, making the branding more consistent for a music streamer application.
+I have successfully moved the status elements (Power, State, Time, and Date) into the Toolbar area in the `MainActivity`.
 
-## Changes
+## Changes Made
 
-### [app module](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app)
+### UI Layout Integration
+- **[activity_main.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/activity_main.xml)**:
+    - Moved `tvStateChip`, `tvClock`, `tvDate`, and `btnPower` inside a custom `ConstraintLayout` within the `MaterialToolbar`.
+    - Removed the separate "Status strip" `LinearLayout` to reclaim screen space.
+    - Added a `tvConnectionStatus` text view in the toolbar for integrated connectivity feedback.
+    - Optimized layout padding and text sizes for the more compact header.
 
-#### [ic_launcher_foreground.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/ic_launcher_foreground.xml)
-- Replaced the power glyph with a music note glyph.
-- Maintained the branding color (`#FFA726`) and centered adaptive icon layout.
-
-#### [ic_power.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/drawable/ic_power.xml)
-- Replaced the in-app power button icon with the music note glyph.
-- This ensures that the prominent button in the status strip aligns with the new music-themed branding.
+### Code Logic Updates
+- **[MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)**:
+    - Updated to use the new custom toolbar layout.
+    - Disabled the default ActionBar title/subtitle to allow the custom layout to shine.
+    - Updated connection status observation to populate the new `tvConnectionStatus` field.
+- **[strings.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/values/strings.xml)**:
+    - Added and updated string resources for "Connected", "Disconnected", and "Connecting" to ensure clean, localizable status messages.
 
 ## Verification Results
 
-### Manual Verification
-- **Launcher Icon**: Verified on the home screen; it now displays the music note in the orange circle.
-- **In-App UI**: Verified in `MainActivity`; the button in the top right corner now uses the music note shape and correctly reflects power states via color filters (e.g., blue when transitioning, red/green when stable).
+### Automated Tests
+- Ran `:app:assembleDebug` and it finished successfully, confirming all View Binding references and layout files are valid.
 
+### Manual Verification Recommended
+- Open the app and verify that the header looks unified.
+- Connect to a device and check if "Connected • [Device Name]" appears below the "TinyRemote" title.
+- Verify the clock and date are visible on the right side of the toolbar, next to the power button.

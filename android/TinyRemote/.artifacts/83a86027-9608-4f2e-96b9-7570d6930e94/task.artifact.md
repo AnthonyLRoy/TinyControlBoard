@@ -1,0 +1,4 @@
+- [x] Add `nothing_playing` string resource to `strings.xml`
+- [x] Update `activity_main.xml` visibility for now playing section
+- [x] Update `MainActivity.kt` logic to always show now playing info and handle idle state
+- [x] Verify changes

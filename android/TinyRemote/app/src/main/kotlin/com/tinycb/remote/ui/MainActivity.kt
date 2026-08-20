@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(b.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
 
         buttonAdapter = ButtonPanelAdapter { commandId ->
             when (commandId) {
@@ -131,16 +132,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Reflect connection state: show connected device name in toolbar subtitle;
+        // Reflect connection state: show connected device name in toolbar;
         // if BLE disconnects, go back to scan screen
         lifecycleScope.launch {
             vm.connectionState.collectLatest { state ->
-                if (state is ConnectionState.Connected) {
-                    supportActionBar?.subtitle = state.deviceName?.let { "Connected • $it" } ?: "Connected"
-                } else if (state is ConnectionState.Connecting) {
-                    supportActionBar?.subtitle = "Connecting\u2026"
-                } else {
-                    supportActionBar?.subtitle = "Disconnected"
+                b.tvConnectionStatus.text = when (state) {
+                    is ConnectionState.Connected -> {
+                        state.deviceName?.let { getString(R.string.connected_with_device, it) }
+                            ?: getString(R.string.connected)
+                    }
+                    is ConnectionState.Connecting -> getString(R.string.connecting)
+                    else -> getString(R.string.disconnected)
                 }
 
                 if (state is ConnectionState.Disconnected || state is ConnectionState.Error) {
@@ -151,13 +153,13 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             vm.nowPlaying.collectLatest { track ->
-                if (track.isNullOrEmpty()) {
-                    b.tvNowPlaying.visibility = android.view.View.GONE
+                b.tvNowPlaying.text = if (track.isNullOrEmpty()) {
+                    getString(R.string.nothing_playing)
                 } else {
-                    b.tvNowPlaying.text = track
-                    b.tvNowPlaying.visibility = android.view.View.VISIBLE
-                    b.tvNowPlaying.isSelected = true  // required for marquee scroll
+                    track
                 }
+                b.tvNowPlaying.visibility = android.view.View.VISIBLE
+                b.tvNowPlaying.isSelected = true  // required for marquee scroll
             }
         }
 
@@ -167,8 +169,7 @@ class MainActivity : AppCompatActivity() {
                 trackElapsedSec = status?.trackElapsedSec ?: 0
                 isTrackPlaying = status?.isTrackPlaying ?: false
                 trackProgressUpdatedAtMs = status?.trackProgressUpdatedAtMs ?: 0L
-                b.layoutTrackProgress.visibility =
-                    if (trackDurationSec > 0) android.view.View.VISIBLE else android.view.View.GONE
+                b.layoutTrackProgress.visibility = android.view.View.VISIBLE
                 updateProgressBar()
             }
         }
@@ -176,7 +177,12 @@ class MainActivity : AppCompatActivity() {
 
     /** Interpolates elapsed time between BLE updates (which arrive every ~2s) for a smooth bar. */
     private fun updateProgressBar() {
-        if (trackDurationSec <= 0) return
+        if (trackDurationSec <= 0) {
+            b.progressTrack.progress = 0
+            b.tvElapsed.text = formatSeconds(0)
+            b.tvRemaining.text = "-0:00"
+            return
+        }
         val driftSec = if (isTrackPlaying && trackProgressUpdatedAtMs > 0)
             (System.currentTimeMillis() - trackProgressUpdatedAtMs) / 1000 else 0L
         val interpolatedElapsed = (trackElapsedSec + driftSec).coerceIn(0L, trackDurationSec.toLong())
