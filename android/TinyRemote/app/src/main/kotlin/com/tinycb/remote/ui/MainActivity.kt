@@ -16,6 +16,7 @@ import com.tinycb.remote.data.ButtonCatalog
 import com.tinycb.remote.databinding.ActivityMainBinding
 import com.tinycb.remote.model.GridItem
 import com.tinycb.remote.viewmodel.MainViewModel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -94,8 +95,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            vm.isPowerFlashing.collectLatest { flashing ->
-                updatePowerUi(vm.powerState.value, flashing)
+            vm.powerState.combine(vm.isPowerFlashing) { stateName, flashing ->
+                stateName to flashing
+            }.collectLatest { (stateName, flashing) ->
+                updatePowerUi(stateName, flashing)
             }
         }
 

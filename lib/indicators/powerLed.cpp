@@ -156,8 +156,8 @@ void PowerLed::setState(ControlBoardPowerState state)
             break;
 
         case ControlBoardPowerState::TURNING_ON:
-            m_standbyFlash = true;
-            m_activeLed.setDuty(m_offDuty);
+            m_activeFlash = true;
+            m_standbyLed.setDuty(m_offDuty);
             break;
 
         case ControlBoardPowerState::SLEEP:
