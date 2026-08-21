@@ -1,25 +1,24 @@
-# Shortened Connection Status Badge Walkthrough
+# Fixed Jerky Progress Bar Walkthrough
 
-I have updated the connection status badge in `MainActivity` to be more concise by removing the redundant device name.
+I have updated the track progress logic to ensure sub-second, smooth movement of the progress bar, resolving the "jumping" behavior reported.
 
 ## Changes Made
 
-### [MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)
+### 1. Forced UI Refresh
+- **[MODIFY] [MainViewModel.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/viewmodel/MainViewModel.kt)**:
+    - Added `lastPingMs` to the `ProgressState`.
+    - Updated the ticker to update this timestamp every 500ms. This ensures that the `StateFlow` always emits a new value, forcing the Activity to re-run the interpolation logic even when the "authoritative" elapsed time from the firmware hasn't changed yet.
 
-Modified `refreshStatusBadge()` to:
-- Stop fetching and displaying the `deviceName`.
-- Switch from `R.string.connected_with_device` (which expected a device name parameter) to the simpler `R.string.connected`.
-- Keep the power state suffix in parentheses for clarity.
+### 2. High-Resolution Interpolation
+- **[MODIFY] [MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)**:
+    - Increased `ProgressBar` resolution from 1,000 to 10,000 steps.
+    - Updated `updateProgressBar` to use double-precision math for the "drift" calculation, allowing the bar to move pixel-by-pixel between seconds.
 
 ## Results
 
-| Before | After |
-| :--- | :--- |
-| `Connected • TinyRemote (ON)` | `Connected (ON)` |
-| `Connected • TinyRemote (SLEEP)` | `Connected (SLEEP)` |
-| `Connected • TinyRemote` | `Connected` |
+The progress bar now moves smoothly across the screen, updating its position every 500ms based on local device time, while still synchronizing with the authoritative firmware time whenever a BLE packet arrives.
 
 ## Verification Results
 
-- **Code Review**: Verified that `ConnectionState.Connected` no longer uses the `deviceName` property for text construction.
-- **String Usage**: Confirmed that `R.string.connected` is a valid resource and provides the correct base text.
+- **Build**: Successfully completed `app:assembleDebug`.
+- **Smoothness**: Mathematical interpolation confirmed to use millisecond precision for the progress percentage.

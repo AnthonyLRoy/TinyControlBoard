@@ -87,9 +87,8 @@ class BoardBleManager(context: Context) {
             mainHandler.removeCallbacks(connectTimeoutRunnable)
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    Log.i(TAG, "GATT connected (status=$status). Discovering services…")
-                    // Discover services immediately. MTU request can be problematic on some devices early on.
-                    g.discoverServices()
+                    Log.i(TAG, "GATT connected (status=$status). Requesting MTU…")
+                    g.requestMtu(512)
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.w(TAG, "GATT disconnected (status=$status)")
@@ -285,74 +284,22 @@ class BoardBleManager(context: Context) {
     }
 
     private fun parseStatus(value: ByteArray) {
-        if (value.size < 3) return
-        val powerStateOrdinal = value[0].toInt() and 0xFF
-        val bitmask = ((value[2].toInt() and 0xFF) shl 8) or (value[1].toInt() and 0xFF)
-        val powerName = when (powerStateOrdinal) {
-            0 -> "OFF"
-            1 -> "SHUTTING DOWN"
-            2 -> "ON"
-            3 -> "TURNING ON"
-            4 -> "SLEEP"
-            5 -> "GOING TO SLEEP"
-            6 -> "DEEP SLEEP"
-            7 -> "GOING INTO DEEP SLEEP"
-            else -> "UNKNOWN"
-        }
-        Log.e(TAG, "parseStatus: powerStateOrdinal=$powerStateOrdinal -> $powerName")
-        val previous = _status.value
-        _status.value = BoardStatus(
-            powerStateName = powerName,
-            buttonLedBitmask = bitmask,
-            nowPlaying = previous?.nowPlaying,
-            trackElapsedSec = previous?.trackElapsedSec ?: 0,
-            trackDurationSec = previous?.trackDurationSec ?: 0,
-            isTrackPlaying = previous?.isTrackPlaying ?: false,
-            trackProgressUpdatedAtMs = previous?.trackProgressUpdatedAtMs ?: 0L
-        )
+        _status.value = BleProtocol.parseStatus(value, _status.value)
+        Log.e(TAG, "parseStatus: updated powerStateName to ${_status.value?.powerStateName}")
     }
 
     private fun parseNowPlaying(value: ByteArray) {
-        val text = value.toString(Charsets.UTF_8).trim()
-        val current = _status.value
-        if (current != null) {
-            _status.value = current.copy(nowPlaying = text.ifEmpty { null })
-        }
+        _status.value = BleProtocol.parseNowPlaying(value, _status.value)
     }
 
     private fun parseTrackProgress(value: ByteArray) {
-        if (value.size != 5) return
-        val elapsed = (value[0].toInt() and 0xFF) or ((value[1].toInt() and 0xFF) shl 8)
-        val duration = (value[2].toInt() and 0xFF) or ((value[3].toInt() and 0xFF) shl 8)
-        val isPlaying = value[4].toInt() != 0
-        val current = _status.value
-        if (current != null) {
-            _status.value = current.copy(
-                trackElapsedSec = elapsed,
-                trackDurationSec = duration,
-                isTrackPlaying = isPlaying,
-                trackProgressUpdatedAtMs = System.currentTimeMillis()
-            )
-        }
+        _status.value = BleProtocol.parseTrackProgress(value, _status.value)
     }
 
-    // Payload: [entryType(1), index_lo, index_hi, total_lo, total_hi, name...].
-    // index==0 starts a new listing (replaces the previous one); entryType==2 is
-    // the empty-folder sentinel and clears the listing without adding a row.
     private fun parseLibraryEntry(value: ByteArray) {
-        if (value.size < 5) return
-        val entryType = value[0].toInt() and 0xFF
-        val index = (value[1].toInt() and 0xFF) or ((value[2].toInt() and 0xFF) shl 8)
-        val total = (value[3].toInt() and 0xFF) or ((value[4].toInt() and 0xFF) shl 8)
-
-        if (entryType == LIBRARY_ENTRY_EMPTY) {
-            _libraryListing.value = emptyList()
-            return
+        BleProtocol.parseLibraryEntry(value, _libraryListing.value)?.let {
+            _libraryListing.value = it
         }
-
-        val name = value.copyOfRange(5, value.size).toString(Charsets.UTF_8)
-        val entry = LibraryEntry(index, total, isDirectory = entryType == LIBRARY_ENTRY_FOLDER, name = name)
-        _libraryListing.value = if (index == 0) listOf(entry) else _libraryListing.value + entry
     }
 
     private fun enqueueNotification(characteristic: BluetoothGattCharacteristic) {
@@ -491,25 +438,17 @@ class BoardBleManager(context: Context) {
         }
     }
 
-    fun browseRoot() = writeLibraryCommand(CMD_BROWSE_REQUEST, LIB_BROWSE_ROOT)
-    fun browseUp() = writeLibraryCommand(CMD_BROWSE_REQUEST, LIB_BROWSE_UP)
-    fun browseInto(index: Int) = writeLibraryCommand(CMD_BROWSE_REQUEST, index)
-    fun addTrack(index: Int) = writeLibraryCommand(CMD_ADD_TRACK, index)
-    fun playTrack(index: Int) = writeLibraryCommand(CMD_PLAY_TRACK, index)
+    fun browseRoot() = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, BleProtocol.LIB_BROWSE_ROOT)
+    fun browseUp() = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, BleProtocol.LIB_BROWSE_UP)
+    fun browseInto(index: Int) = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, index)
+    fun addTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_ADD_TRACK, index)
+    fun playTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_PLAY_TRACK, index)
     fun requestPlaylist() {
         _libraryListing.value = emptyList()
-        writeLibraryCommand(CMD_PLAYLIST_REQUEST, 0)
+        writeLibraryCommand(BleProtocol.CMD_PLAYLIST_REQUEST, 0)
     }
 
     companion object {
         private const val TAG = "BoardBleManager"
-        private const val CMD_BROWSE_REQUEST = 0x0128
-        private const val CMD_ADD_TRACK = 0x0129
-        private const val CMD_PLAYLIST_REQUEST = 0x012A
-        private const val CMD_PLAY_TRACK = 0x012B
-        private const val LIB_BROWSE_UP = 0xFFFE
-        private const val LIB_BROWSE_ROOT = 0xFFFF
-        private const val LIBRARY_ENTRY_FOLDER = 0
-        private const val LIBRARY_ENTRY_EMPTY = 2
     }
 }

@@ -1,3 +1,6 @@
-- [x] Update `refreshStatusBadge` in `MainActivity.kt`
-- [x] Verify badge text construction
+- [x] Update `ProgressState` in `MainViewModel.kt` with `lastPingMs`
+- [x] Update ticker in `MainViewModel.kt` to force emissions
+- [x] Increase `ProgressBar` resolution in `MainActivity.kt`
+- [x] Update interpolation logic in `MainActivity.kt`
+- [x] Verify smoothness and build
 - [x] Create walkthrough

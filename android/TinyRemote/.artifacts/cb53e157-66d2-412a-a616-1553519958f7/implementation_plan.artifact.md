@@ -1,30 +1,24 @@
-# Shorten Connection Status Badge
+# Fix Jerky Progress Bar (Real-time Interpolation)
 
-The goal is to remove the device name from the connection status badge in the UI, as it is redundant and makes the status text too long.
+The user reports that the progress bar is jumping in 2-second steps. This is caused by two issues:
+1.  **Ticker Emission**: The `StateFlow` ticker in the ViewModel was using `it.copy()`, which creates an identical object. `StateFlow` suppresses emissions if the value hasn't changed, preventing the UI from re-calculating interpolation.
+2.  **Resolution**: The `ProgressBar` resolution (max=1000) may cause visible steps in long tracks.
 
 ## Proposed Changes
 
+### [MainViewModel.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/viewmodel/MainViewModel.kt)
+
+- **Update `ProgressState`**: Add a `lastPingMs` field.
+- **Update Ticker**: Update `lastPingMs` in the ticker loop to ensure the `StateFlow` emits every 500ms, triggering the UI to re-run the interpolation logic.
+
 ### [MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)
 
-Modify the `refreshStatusBadge()` method to:
-- Remove the logic that fetches the Bluetooth device name.
-- Stop using `R.string.connected_with_device` (which includes the separator and placeholder).
-- Use `R.string.connected` as the base text.
-- Append the power state in parentheses if available.
-
-#### Example Outputs:
-- **Connected & ON**: `Connected (ON)`
-- **Connected & SLEEP**: `Connected (SLEEP)`
-- **Connected (No state)**: `Connected`
-
-## User Review Required
-
-> [!TIP]
-> Do you prefer the parentheses format `Connected (ON)` or a dot separator like `Connected • ON`? The latter is often used in modern Android apps.
+- **Sub-second Interpolation**: Update `updateProgressBar` to use millisecond precision for the `ProgressBar` position.
+- **Increase Resolution**: Set the `ProgressBar` max to 10,000 in code to ensure smooth movement even for very long tracks.
 
 ## Verification Plan
 
 ### Manual Verification
-- Deploy the app and connect to a device.
-- Observe the badge text to ensure the device name is gone and the power state is correctly displayed.
-- Toggle power states on the firmware (or simulate them) to verify the suffix updates correctly.
+- Observe the progress bar; it should move smoothly (sub-second) regardless of the firmware update frequency.
+- Verify that the elapsed/remaining timers update every second as expected without skipping.
+- Ensure that pausing the track stops the interpolation.
