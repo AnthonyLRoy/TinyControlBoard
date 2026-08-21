@@ -23,6 +23,10 @@ class ViewSelectionActivity : AppCompatActivity() {
         b = ActivityViewSelectionBinding.inflate(layoutInflater)
         setContentView(b.root)
 
+        b.composeBackground.setContent {
+            BrushedAluminumSurface(shade = MetallicShade.Titanium)
+        }
+
         setSupportActionBar(b.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 

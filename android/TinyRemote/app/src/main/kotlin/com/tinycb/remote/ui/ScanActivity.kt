@@ -48,6 +48,10 @@ class ScanActivity : AppCompatActivity() {
         b = ActivityScanBinding.inflate(layoutInflater)
         setContentView(b.root)
 
+        b.composeBackground.setContent {
+            BrushedAluminumSurface(shade = MetallicShade.Titanium)
+        }
+
         b.rvDevices.layoutManager = LinearLayoutManager(this)
         b.rvDevices.adapter = deviceAdapter
 

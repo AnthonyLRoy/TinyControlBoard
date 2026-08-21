@@ -1,24 +1,50 @@
-# Fix Jerky Progress Bar (Real-time Interpolation)
+# Apply Brushed Aluminum Background to All Screens
 
-The user reports that the progress bar is jumping in 2-second steps. This is caused by two issues:
-1.  **Ticker Emission**: The `StateFlow` ticker in the ViewModel was using `it.copy()`, which creates an identical object. `StateFlow` suppresses emissions if the value hasn't changed, preventing the UI from re-calculating interpolation.
-2.  **Resolution**: The `ProgressBar` resolution (max=1000) may cause visible steps in long tracks.
+Expand the high-fidelity brushed aluminum background to all activities in the TinyRemote app for a consistent, premium industrial aesthetic.
 
 ## Proposed Changes
 
-### [MainViewModel.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/viewmodel/MainViewModel.kt)
+### [UI Layouts]
 
-- **Update `ProgressState`**: Add a `lastPingMs` field.
-- **Update Ticker**: Update `lastPingMs` in the ticker loop to ensure the `StateFlow` emits every 500ms, triggering the UI to re-run the interpolation logic.
+#### [MODIFY] [activity_scan.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/activity_scan.xml)
+- Wrap the existing `LinearLayout` in a `FrameLayout`.
+- Add `androidx.compose.ui.platform.ComposeView` (ID: `composeBackground`) as the first child of the `FrameLayout`.
 
-### [MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)
+#### [MODIFY] [activity_library.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/activity_library.xml)
+- Add `androidx.compose.ui.platform.ComposeView` (ID: `composeBackground`) as the first child of the `CoordinatorLayout`.
 
-- **Sub-second Interpolation**: Update `updateProgressBar` to use millisecond precision for the `ProgressBar` position.
-- **Increase Resolution**: Set the `ProgressBar` max to 10,000 in code to ensure smooth movement even for very long tracks.
+#### [MODIFY] [activity_playlist.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/activity_playlist.xml)
+- Add `androidx.compose.ui.platform.ComposeView` (ID: `composeBackground`) as the first child of the `CoordinatorLayout`.
+
+#### [MODIFY] [activity_view_selection.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/layout/activity_view_selection.xml)
+- Add `androidx.compose.ui.platform.ComposeView` (ID: `composeBackground`) as the first child of the `CoordinatorLayout`.
+
+### [Activities]
+
+#### [MODIFY] [ScanActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/ScanActivity.kt)
+- Import `androidx.compose.ui.platform.ComposeView`.
+- Initialize `composeBackground` in `onCreate`.
+
+#### [MODIFY] [LibraryActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/LibraryActivity.kt)
+- Import `androidx.compose.ui.platform.ComposeView`.
+- Initialize `composeBackground` in `onCreate`.
+
+#### [MODIFY] [PlaylistActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/PlaylistActivity.kt)
+- Import `androidx.compose.ui.platform.ComposeView`.
+- Initialize `composeBackground` in `onCreate`.
+
+#### [MODIFY] [ViewSelectionActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/ViewSelectionActivity.kt)
+- Import `androidx.compose.ui.platform.ComposeView`.
+- Initialize `composeBackground` in `onCreate`.
 
 ## Verification Plan
 
 ### Manual Verification
-- Observe the progress bar; it should move smoothly (sub-second) regardless of the firmware update frequency.
-- Verify that the elapsed/remaining timers update every second as expected without skipping.
-- Ensure that pausing the track stops the interpolation.
+- Deploy the app.
+- Navigate through all screens:
+    - Scan Screen (initial)
+    - Main Screen
+    - Library Screen
+    - Playlist Screen
+    - View Selection Screen
+- Verify the background is consistent and correctly rendered on each screen.

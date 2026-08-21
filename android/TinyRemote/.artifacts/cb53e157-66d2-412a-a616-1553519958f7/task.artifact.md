@@ -1,6 +1,13 @@
-- [x] Update `ProgressState` in `MainViewModel.kt` with `lastPingMs`
-- [x] Update ticker in `MainViewModel.kt` to force emissions
-- [x] Increase `ProgressBar` resolution in `MainActivity.kt`
-- [x] Update interpolation logic in `MainActivity.kt`
-- [x] Verify smoothness and build
-- [x] Create walkthrough
+- `[x]` Enable Compose in `app/build.gradle.kts`
+- `[x]` Create `BrushedAluminumBackground.kt` with metallic shaders
+- `[x]` Integrate `ComposeView` into `activity_main.xml`
+- `[x]` Initialize background in `MainActivity.kt`
+- `[x]` Verify build and UI appearance
+- `[x]` Integrate `ComposeView` into `activity_scan.xml`
+- `[x]` Integrate `ComposeView` into `activity_library.xml`
+- `[x]` Integrate `ComposeView` into `activity_playlist.xml`
+- `[x]` Integrate `ComposeView` into `activity_view_selection.xml`
+- `[x]` Initialize background in `ScanActivity.kt`
+- `[x]` Initialize background in `LibraryActivity.kt`
+- `[x]` Initialize background in `PlaylistActivity.kt`
+- `[x]` Initialize background in `ViewSelectionActivity.kt`
