@@ -1,2 +1,3 @@
-- [x] Update `ButtonCatalog.kt` to rename MENU header to OPTIONS
-- [x] Verify change
+- [x] Update bitmask bit for Display button in `ButtonCatalog.kt`
+- [x] Verify fix by reviewing state logic in `MainViewModel`
+- [x] Create walkthrough
