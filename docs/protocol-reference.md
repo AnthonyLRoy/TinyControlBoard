@@ -130,6 +130,7 @@ Current command catalog from [lib/protocol/uartProtocol.hpp](../lib/protocol/uar
 | `CMD_ADD_TRACK` | `0x0129` |
 | `CMD_PLAYLIST_REQUEST` | `0x012A` |
 | `CMD_PLAY_TRACK` | `0x012B` |
+| `CMD_REMOVE_TRACK` | `0x012C` |
 
 ## 6. Checksum
 

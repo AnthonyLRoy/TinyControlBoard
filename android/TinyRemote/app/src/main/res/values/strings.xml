@@ -50,4 +50,6 @@
     <string name="library_up">Up</string>
     <string name="library_added_to_playlist">Added to playlist</string>
     <string name="playlist_title">Current Playlist</string>
+    <string name="playlist_play_now">Play Now</string>
+    <string name="playlist_remove">Remove</string>
 </resources>

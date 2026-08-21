@@ -106,7 +106,9 @@ enum CommandId : uint16_t
     // returns the current MPD queue through MSG_LIBRARY_ENTRY packets
     CMD_PLAYLIST_REQUEST      = 0x012A,
     // param0 = zero-based position in the current MPD queue; starts playback
-    CMD_PLAY_TRACK            = 0x012B
+    CMD_PLAY_TRACK            = 0x012B,
+    // param0 = zero-based position in the current MPD queue; removes it from the queue
+    CMD_REMOVE_TRACK          = 0x012C
 };
 
 enum PowerCommand : uint8_t

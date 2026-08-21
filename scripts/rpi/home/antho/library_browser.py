@@ -134,3 +134,16 @@ def handle_play_track(params):
         print(f"Playing queue position {index}: {_state.playlist_entries[index]}", flush=True)
     except Exception as e:
         print(f"⚠️ MPD play failed: {e}", flush=True)
+
+
+def handle_remove_track(params):
+    index = params[0]
+    if not (0 <= index < len(_state.playlist_entries)):
+        print(f"⚠️ Invalid remove-track index {index}", flush=True)
+        return
+
+    try:
+        mpd_command(f"delete {index}")
+        print(f"Removed queue position {index}: {_state.playlist_entries[index]}", flush=True)
+    except Exception as e:
+        print(f"⚠️ MPD delete failed: {e}", flush=True)

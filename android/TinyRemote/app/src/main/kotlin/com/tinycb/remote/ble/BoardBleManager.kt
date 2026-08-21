@@ -443,6 +443,7 @@ class BoardBleManager(context: Context) {
     fun browseInto(index: Int) = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, index)
     fun addTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_ADD_TRACK, index)
     fun playTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_PLAY_TRACK, index)
+    fun removeTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_REMOVE_TRACK, index)
     fun requestPlaylist() {
         _libraryListing.value = emptyList()
         writeLibraryCommand(BleProtocol.CMD_PLAYLIST_REQUEST, 0)
