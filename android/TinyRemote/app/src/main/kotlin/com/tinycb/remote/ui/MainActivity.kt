@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
             when (commandId) {
                 ButtonCatalog.CMD_VIEW_MENU   -> startActivity(Intent(this, ViewSelectionActivity::class.java))
                 ButtonCatalog.CMD_LIBRARY     -> startActivity(Intent(this, LibraryActivity::class.java))
+                ButtonCatalog.CMD_PLAYLIST    -> startActivity(Intent(this, PlaylistActivity::class.java))
                 ButtonCatalog.CMD_DISPLAY_OFF -> vm.toggleDisplay()
                 else                          -> vm.sendCommand(commandId)
             }

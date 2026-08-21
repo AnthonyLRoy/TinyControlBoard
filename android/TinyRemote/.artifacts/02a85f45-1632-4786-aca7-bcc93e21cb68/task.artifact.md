@@ -1,0 +1,2 @@
+- [x] Update `ButtonCatalog.kt` to rename MENU header to OPTIONS
+- [x] Verify change

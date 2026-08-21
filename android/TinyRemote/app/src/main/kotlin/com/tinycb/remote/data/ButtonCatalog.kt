@@ -18,6 +18,7 @@ object ButtonCatalog {
     const val CMD_SKIP_FWD    = 0x0104
     const val CMD_DISPLAY_OFF = 0x0114
     const val CMD_VIEW_MENU   = 0x0107
+    const val CMD_PLAYLIST    = -2
 
     val gridItems: List<GridItem> = buildList {
         add(GridItem.Header("TRANSPORT"))
@@ -32,17 +33,17 @@ object ButtonCatalog {
         add(GridItem.Button(ButtonDef(8,  "Repeat",      0x011C,  8, R.drawable.ic_repeat)))
         add(GridItem.Button(ButtonDef(9,  "Shuffle",     0x011F,  9, R.drawable.ic_shuffle)))
 
-        add(GridItem.Header("NAVIGATION"))
-        add(GridItem.Button(ButtonDef(10, "DAC",         0x0113, 10, R.drawable.ic_tune,          spanSize = 2)))
+        add(GridItem.Header("DISPLAY"))
         add(GridItem.Button(ButtonDef(11, "Menu ▶",     CMD_VIEW_MENU, 11, R.drawable.ic_navigate_next, spanSize = 2)))
+        add(GridItem.Button(ButtonDef(17, "Playlist",   CMD_PLAYLIST, -1, R.drawable.ic_queue_music,    spanSize = 2)))
+        add(GridItem.Stepper("Brightness", R.drawable.ic_brightness, 0x0121, 0x0120))
+        add(GridItem.Button(ButtonDef(15, "Display",     CMD_DISPLAY_OFF, 6, R.drawable.ic_brightness, spanSize = 2, showLabel = false, isToggle = true)))
         add(GridItem.Button(ButtonDef(7,  "Cover",       0x0119,  7, R.drawable.ic_album,         spanSize = 2)))
         add(GridItem.Button(ButtonDef(12, "Meter",       0x0115, 12, R.drawable.ic_meter,         spanSize = 2)))
-        add(GridItem.Button(ButtonDef(16, "Library",     CMD_LIBRARY, -1, R.drawable.ic_folder,    spanSize = 4)))
 
-        add(GridItem.Header("DISPLAY"))
-        add(GridItem.Stepper("Brightness", R.drawable.ic_brightness, 0x0121, 0x0120))
-        // Power is in the status strip — see activity_main.xml / MainActivity
-        add(GridItem.Button(ButtonDef(15, "Display",     CMD_DISPLAY_OFF, 6, R.drawable.ic_brightness, spanSize = 2, showLabel = false, isToggle = true)))
+        add(GridItem.Header("OPTIONS"))
+        add(GridItem.Button(ButtonDef(10, "DAC",         0x0113, 10, R.drawable.ic_tune,          spanSize = 4)))
+        add(GridItem.Button(ButtonDef(16, "Library",     CMD_LIBRARY, -1, R.drawable.ic_folder,    spanSize = 4)))
     }
 
     const val CMD_LIBRARY = -1
