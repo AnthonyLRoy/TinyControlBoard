@@ -143,6 +143,14 @@ namespace controlSystem
         }
     }
 
+    void ActionProcessor::resetToggleStates()
+    {
+        if (mp_actionUartDispatcher)
+        {
+            mp_actionUartDispatcher->resetToggleStates();
+        }
+    }
+
     bool ActionProcessor::waitForRpiToBoot(uint32_t timeoutMs)
     {
         if (mp_rpiBootManager)

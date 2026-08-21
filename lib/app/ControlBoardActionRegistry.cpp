@@ -87,4 +87,15 @@ namespace controlSystem
             m_ownedActions.push_back(std::move(action));
         }
     }
+
+    void ControlBoardActionRegistry::resetActionStates()
+    {
+        for (const auto &actionSource : m_ownedActions)
+        {
+            if (actionSource)
+            {
+                actionSource->resetState();
+            }
+        }
+    }
 }

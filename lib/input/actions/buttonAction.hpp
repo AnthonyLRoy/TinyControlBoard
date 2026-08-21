@@ -13,5 +13,6 @@ namespace actions
     public:
         virtual ~IActionSource() = default;
         virtual std::unique_ptr<IAction> produce(bool isPressed) = 0;
+        virtual void resetState() {}
     };
 }

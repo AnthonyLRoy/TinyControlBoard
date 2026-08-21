@@ -38,6 +38,11 @@ namespace actions
         DynamicToggleAction(CommandId cmdOn, CommandId cmdOff)
             : m_cmdOn(cmdOn), m_cmdOff(cmdOff), m_state(false) {}
 
+        void resetState() override
+        {
+            m_state = false;
+        }
+
         std::unique_ptr<IAction> produce(bool isPressed) override
         {
             if (!isPressed)

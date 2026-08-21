@@ -17,6 +17,7 @@ namespace controlSystem
         explicit ActionUartDispatcher(IUartCommandSink &rUartCommandSink);
 
         bool handle(const actions::IAction &action);
+        void resetToggleStates();
 
     private:
         IUartCommandSink &mr_uartCommandSink;

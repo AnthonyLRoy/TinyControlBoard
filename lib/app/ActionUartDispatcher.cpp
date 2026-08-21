@@ -14,6 +14,14 @@ namespace controlSystem
     {
     }
 
+    void ActionUartDispatcher::resetToggleStates()
+    {
+        for (bool &state : m_toggleStates)
+        {
+            state = false;
+        }
+    }
+
     namespace
     {
         // Toggle commands: a logical ON/OFF pair maps to one normalized wire command

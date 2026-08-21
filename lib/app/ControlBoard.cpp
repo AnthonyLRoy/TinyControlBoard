@@ -137,6 +137,14 @@ namespace controlSystem
         {
             assert(mp_inputDispatcher != nullptr);
             mp_inputDispatcher->setBackgroundStatus(status);
+            if (status == ControlBoardWorkingStatus::sleeping)
+            {
+                m_actionRegistry.resetActionStates();
+                if (mp_responseProcessor)
+                {
+                    mp_responseProcessor->resetToggleStates();
+                }
+            }
         }
         indicators::getActivityStatusLed().sendStatus(status);
     }

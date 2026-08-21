@@ -356,6 +356,52 @@ void test_control_board_remote_toggle_updates_led_state()
     expect_true(!indicators.lastLedState, "Second remote toggle should turn the LED off");
 }
 
+void test_dynamic_toggle_action_reset_state_restores_first_press_to_on()
+{
+    actions::DynamicToggleAction action(CMD_RANDOM_ON, CMD_RANDOM_OFF);
+
+    auto first = action.produce(true);
+    expect_true(first != nullptr, "First press should produce an action");
+    expect_equal(static_cast<uint32_t>(CMD_RANDOM_ON), static_cast<uint32_t>(first->command),
+                 "First press should produce the ON command");
+
+    auto second = action.produce(true);
+    expect_true(second != nullptr, "Second press should produce an action");
+    expect_equal(static_cast<uint32_t>(CMD_RANDOM_OFF), static_cast<uint32_t>(second->command),
+                 "Second press should produce the OFF command");
+
+    action.resetState();
+
+    auto afterReset = action.produce(true);
+    expect_true(afterReset != nullptr, "Press after reset should produce an action");
+    expect_equal(static_cast<uint32_t>(CMD_RANDOM_ON), static_cast<uint32_t>(afterReset->command),
+                 "Press after reset should return to ON command");
+}
+
+void test_control_board_sleep_status_resets_toggle_led_tracking()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction coverAction(CMD_COVER_VIEW_ON);
+    actionMap[controlSystem::controlBoardButtons::k_cover] = {&coverAction, controlSystem::LedPolicy::Toggle};
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
+
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
+    expect_true(indicators.lastLedState, "Initial toggle press should turn LED on");
+
+    dispatcher.setBackgroundStatus(ControlBoardWorkingStatus::sleeping);
+    dispatcher.setBackgroundStatus(ControlBoardWorkingStatus::Idle);
+
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
+    expect_true(indicators.lastLedState,
+                "First toggle press after sleep reset should set LED to on state");
+}
+
 void test_control_board_out_of_range_press_keeps_existing_status_ordering()
 {
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
@@ -830,6 +876,8 @@ int main()
         {"test_control_board_momentary_button_release_turns_led_off", test_control_board_momentary_button_release_turns_led_off},
         {"test_control_board_toggle_button_press_flips_led_state", test_control_board_toggle_button_press_flips_led_state},
         {"test_control_board_remote_toggle_updates_led_state", test_control_board_remote_toggle_updates_led_state},
+        {"test_dynamic_toggle_action_reset_state_restores_first_press_to_on", test_dynamic_toggle_action_reset_state_restores_first_press_to_on},
+        {"test_control_board_sleep_status_resets_toggle_led_tracking", test_control_board_sleep_status_resets_toggle_led_tracking},
         {"test_control_board_out_of_range_press_keeps_existing_status_ordering", test_control_board_out_of_range_press_keeps_existing_status_ordering},
         {"test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle", test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle},
         {"test_heartbeat_helper_handles_current_heartbeat", test_heartbeat_helper_handles_current_heartbeat},

@@ -41,6 +41,7 @@ namespace controlSystem
 
         void handleHeartbeatReceived();
         void handleHeartbeatTimeout();
+        void resetToggleStates();
         bool triggerInitialPowerOn();
         bool waitForRpiToBoot(uint32_t timeoutMs = 60000);
         bool waitForRpiShutdown(uint32_t timeoutMs = 60000);

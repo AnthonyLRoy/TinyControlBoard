@@ -2,6 +2,27 @@
 
 namespace controlSystem
 {
+    void ControlBoardInputDispatcher::setBackgroundStatus(ControlBoardWorkingStatus status)
+    {
+        m_backgroundStatus = status;
+        if (status == ControlBoardWorkingStatus::sleeping)
+        {
+            resetToggleLeds();
+        }
+    }
+
+    void ControlBoardInputDispatcher::resetToggleLeds()
+    {
+        m_buttonLedBitmask = 0;
+        for (uint8_t buttonId = 0; buttonId < controlBoardButtons::k_count; ++buttonId)
+        {
+            if (mr_actionMap[buttonId].ledPolicy == LedPolicy::Toggle)
+            {
+                mr_indicators.setButtonLed(buttonId, false);
+            }
+        }
+    }
+
     bool ControlBoardInputDispatcher::isInputSuppressedInSleep(uint8_t buttonId) const
     {
         return m_backgroundStatus == ControlBoardWorkingStatus::sleeping &&

@@ -13,6 +13,7 @@ namespace controlSystem
         /// Constructs one action source per button and writes them into rActionMap.
         /// Owned action sources live for the lifetime of this registry object.
         void populate(ControlBoardInputDispatcher::ActionMap &rActionMap);
+        void resetActionStates();
 
     private:
         std::vector<std::unique_ptr<actions::IActionSource>> m_ownedActions;
