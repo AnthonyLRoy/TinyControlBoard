@@ -49,6 +49,12 @@
     <string name="library_title">Library</string>
     <string name="library_up">Up</string>
     <string name="library_added_to_playlist">Added to playlist</string>
+    <string name="library_folder_actions_title">Folder actions</string>
+    <string name="library_add_folder">Add folder to playlist</string>
+    <string name="library_replace_with_folder">Replace playlist</string>
+    <string name="library_open_folder">Open</string>
+    <string name="library_folder_added">Folder added to playlist</string>
+    <string name="library_playlist_replaced">Playlist replaced</string>
     <string name="playlist_title">Current Playlist</string>
     <string name="playlist_play_now">Play Now</string>
     <string name="playlist_remove">Remove</string>

@@ -108,7 +108,11 @@ enum CommandId : uint16_t
     // param0 = zero-based position in the current MPD queue; starts playback
     CMD_PLAY_TRACK            = 0x012B,
     // param0 = zero-based position in the current MPD queue; removes it from the queue
-    CMD_REMOVE_TRACK          = 0x012C
+    CMD_REMOVE_TRACK          = 0x012C,
+    // param0 = folder index in the current library listing; appends up to 50 contained tracks
+    CMD_ADD_FOLDER             = 0x012D,
+    // param0 = folder index in the current library listing; replaces the queue with up to 50 tracks
+    CMD_REPLACE_WITH_FOLDER    = 0x012E
 };
 
 enum PowerCommand : uint8_t

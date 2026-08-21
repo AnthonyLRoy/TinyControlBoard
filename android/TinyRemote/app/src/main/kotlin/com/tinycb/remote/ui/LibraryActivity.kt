@@ -3,6 +3,7 @@ package com.tinycb.remote.ui
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -37,8 +38,7 @@ class LibraryActivity : AppCompatActivity() {
                 vm.browseUp()
             },
             onFolderClicked = { index ->
-                depth += 1
-                vm.browseInto(index)
+                showFolderActions(index)
             },
             onTrackClicked = { index ->
                 vm.addTrack(index)
@@ -60,6 +60,33 @@ class LibraryActivity : AppCompatActivity() {
         }
 
         vm.browseRoot()
+    }
+
+    private fun showFolderActions(index: Int) {
+        val options = arrayOf(
+            getString(R.string.library_add_folder),
+            getString(R.string.library_replace_with_folder),
+            getString(R.string.library_open_folder)
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.library_folder_actions_title)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        vm.addFolder(index)
+                        Toast.makeText(this, R.string.library_folder_added, Toast.LENGTH_SHORT).show()
+                    }
+                    1 -> {
+                        vm.replaceWithFolder(index)
+                        Toast.makeText(this, R.string.library_playlist_replaced, Toast.LENGTH_SHORT).show()
+                    }
+                    2 -> {
+                        depth += 1
+                        vm.browseInto(index)
+                    }
+                }
+            }
+            .show()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

@@ -442,6 +442,8 @@ class BoardBleManager(context: Context) {
     fun browseUp() = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, BleProtocol.LIB_BROWSE_UP)
     fun browseInto(index: Int) = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, index)
     fun addTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_ADD_TRACK, index)
+    fun addFolder(index: Int) = writeLibraryCommand(BleProtocol.CMD_ADD_FOLDER, index)
+    fun replaceWithFolder(index: Int) = writeLibraryCommand(BleProtocol.CMD_REPLACE_WITH_FOLDER, index)
     fun playTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_PLAY_TRACK, index)
     fun removeTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_REMOVE_TRACK, index)
     fun requestPlaylist() {

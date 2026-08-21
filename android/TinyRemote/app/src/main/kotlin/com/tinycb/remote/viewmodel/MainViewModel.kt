@@ -173,6 +173,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun browseUp() = bleManager.browseUp()
     fun browseInto(index: Int) = bleManager.browseInto(index)
     fun addTrack(index: Int) = bleManager.addTrack(index)
+    fun addFolder(index: Int) = bleManager.addFolder(index)
+    fun replaceWithFolder(index: Int) = bleManager.replaceWithFolder(index)
     fun playTrack(index: Int) = bleManager.playTrack(index)
     fun removeTrack(index: Int) = bleManager.removeTrack(index)
     fun requestPlaylist() = bleManager.requestPlaylist()

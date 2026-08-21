@@ -12,6 +12,7 @@ LIBRARY_ENTRY_FOLDER = 0
 LIBRARY_ENTRY_TRACK = 1
 LIBRARY_ENTRY_EMPTY = 2  # sentinel for a zero-entry folder
 MAX_LIBRARY_ENTRIES = 200  # cap per directory listing, not the whole library
+MAX_FOLDER_TRACKS = 50
 MAX_LIBRARY_NAME_LEN = 55
 RADIO_DIRECTORY = "RADIO"
 
@@ -97,6 +98,66 @@ def handle_add_track(params):
         print(f"Added to queue: {full_path}", flush=True)
     except Exception as e:
         print(f"⚠️ MPD add failed: {e}", flush=True)
+
+
+def _folder_tracks(folder_path, limit=MAX_FOLDER_TRACKS):
+    """Return tracks below a folder, in MPD listing order, up to limit."""
+    tracks = []
+    pending = [folder_path]
+    while pending and len(tracks) < limit:
+        current_path = pending.pop(0)
+        try:
+            entries = mpd_lsinfo(current_path)
+        except Exception as e:
+            print(f"⚠️ MPD lsinfo failed for {current_path}: {e}", flush=True)
+            continue
+        for is_dir, full_path in entries:
+            if is_dir:
+                pending.append(full_path)
+            else:
+                tracks.append(full_path)
+                if len(tracks) >= limit:
+                    break
+    return tracks
+
+
+def _folder_from_current_listing(params):
+    index = params[0]
+    if not (0 <= index < len(_state.browse_entries)):
+        print(f"⚠️ Invalid folder index {index}", flush=True)
+        return None
+    is_dir, full_path = _state.browse_entries[index]
+    if not is_dir:
+        print(f"⚠️ Folder index {index} is a track, ignoring", flush=True)
+        return None
+    return full_path
+
+
+def handle_add_folder(params):
+    folder_path = _folder_from_current_listing(params)
+    if folder_path is None:
+        return
+    tracks = _folder_tracks(folder_path)
+    try:
+        for track in tracks:
+            mpd_command(f'add "{_mpd_escape(track)}"')
+        print(f"Added {len(tracks)} tracks from folder: {folder_path}", flush=True)
+    except Exception as e:
+        print(f"⚠️ Add-folder failed: {e}", flush=True)
+
+
+def handle_replace_with_folder(params):
+    folder_path = _folder_from_current_listing(params)
+    if folder_path is None:
+        return
+    tracks = _folder_tracks(folder_path)
+    try:
+        mpd_command("clear")
+        for track in tracks:
+            mpd_command(f'add "{_mpd_escape(track)}"')
+        print(f"Replaced playlist with {len(tracks)} tracks from folder: {folder_path}", flush=True)
+    except Exception as e:
+        print(f"⚠️ Replace-folder failed: {e}", flush=True)
 
 
 def handle_playlist_request(_params):

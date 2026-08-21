@@ -50,6 +50,8 @@ COMMAND_HANDLERS = {
     cmd.CMD_PLAYLIST_REQUEST:      library.handle_playlist_request,
     cmd.CMD_PLAY_TRACK:            library.handle_play_track,
     cmd.CMD_REMOVE_TRACK:          library.handle_remove_track,
+    cmd.CMD_ADD_FOLDER:            library.handle_add_folder,
+    cmd.CMD_REPLACE_WITH_FOLDER:   library.handle_replace_with_folder,
 }
 
 def setup_gpio():
