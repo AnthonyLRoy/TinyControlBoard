@@ -42,9 +42,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val def = item.def
             when (def.commandId) {
                 ButtonCatalog.CMD_DISPLAY_OFF -> {
-                    // Display Off → Display On when LED active (internally, but we don't show the label)
-                    val isOn = status != null && def.bitmaskBit >= 0 &&
+                    // Display LED bit is inverted relative to desired UI semantics.
+                    // We treat LED active as display OFF, and inactive as display ON.
+                    val rawLedOn = status != null && def.bitmaskBit >= 0 &&
                         (status.buttonLedBitmask and (1 shl def.bitmaskBit)) != 0
+                    val isOn = !rawLedOn
                     GridItem.Button(def.copy(
                         name = if (isOn) "Display On" else "Display Off",
                         showLabel = false

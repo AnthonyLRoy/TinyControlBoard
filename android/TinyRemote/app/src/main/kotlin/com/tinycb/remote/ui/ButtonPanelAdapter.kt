@@ -122,13 +122,17 @@ class ButtonPanelAdapter(
         }
 
         fun updateLed(btn: ButtonDef, status: BoardStatus?) {
-            val isActive = if (btn.commandId == ButtonCatalog.CMD_PLAY) {
+            val rawLedOn = if (btn.commandId == ButtonCatalog.CMD_PLAY) {
                 status?.isTrackPlaying == true
             } else {
                 btn.bitmaskBit >= 0 &&
                         status != null &&
                         (status.buttonLedBitmask and (1 shl btn.bitmaskBit)) != 0
             }
+
+            // Display toggle LED reports the opposite of desired UI highlight.
+            // We want green when the monitor is ON.
+            val isActive = if (btn.commandId == ButtonCatalog.CMD_DISPLAY_OFF) !rawLedOn else rawLedOn
             ledDot.setBackgroundResource(if (isActive) R.drawable.led_dot_active else R.drawable.led_dot)
 
             if (btn.isToggle && isActive && btn.showLabel) {
