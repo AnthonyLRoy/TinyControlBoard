@@ -162,6 +162,7 @@ class MainActivity : AppCompatActivity() {
                 val powerSuffix = if (powerState != null) " (${powerState.replace('_', ' ')})" else ""
                 val bgColor = when (powerState) {
                     "SLEEP", "DEEP SLEEP" -> R.color.status_connected_sleep
+                    "GOING TO SLEEP", "GOING INTO DEEP SLEEP" -> R.color.status_connected_going_to_sleep
                     "ON" -> R.color.status_connected_on
                     else -> R.color.status_connected_on
                 }

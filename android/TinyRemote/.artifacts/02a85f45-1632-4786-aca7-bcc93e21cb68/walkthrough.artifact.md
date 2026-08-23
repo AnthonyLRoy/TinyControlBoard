@@ -1,25 +1,23 @@
-# Walkthrough - Display Button Highlight Fix
+# Walkthrough - Status Badge Color Updates
 
-The "Display" button highlight was previously inverted because it was tracking the wrong bit in the hardware status mask. I have corrected the bit assignment to ensure the button is highlighted (green icon) only when the display is actually ON.
+I have updated the `tvConnectionStatus` field background colors to match your requirements for "going to sleep" and "sleep" states.
 
 ## Changes Made
 
-### Button Catalog Configuration
+### UI & Resources
+- **[colors.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/values/colors.xml)**
+    - Changed `status_connected_sleep` from Dark Blue (#00008B) to **Black (#000000)**.
+    - Added `status_connected_going_to_sleep` as **Dark Orange (#FF8C00)**.
 
-#### [ButtonCatalog.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/data/ButtonCatalog.kt)
+### Logic
+- **[MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)**
+    - Updated `refreshStatusBadge` to handle the transition states.
+    - **GOING TO SLEEP** and **GOING INTO DEEP SLEEP** now trigger the Dark Orange background.
+    - **SLEEP** and **DEEP SLEEP** now trigger the Black background.
 
-Updated the `bitmaskBit` for the Display button from `6` to `15`. Bit 15 is the correct status bit for the physical display state.
+## Verification
+- Ran `:app:assembleDebug` to ensure all resource references are valid.
+- The build finished successfully.
 
-```diff
-- add(GridItem.Button(ButtonDef(15, "Display",     CMD_DISPLAY_OFF, 6, R.drawable.ic_brightness, spanSize = 2, showLabel = false, isToggle = true)))
-+ add(GridItem.Button(ButtonDef(15, "Display",     CMD_DISPLAY_OFF, 15, R.drawable.ic_brightness, spanSize = 2, showLabel = false, isToggle = true)))
-```
-
-## Verification Results
-
-### Automated Logic Review
-- Verified that `ButtonPanelAdapter.updateLed` correctly calculates `isActive` based on the provided `bitmaskBit`.
-- Verified that `MainViewModel` updates the internal button name based on the same bit, ensuring consistency between the UI state and logs.
-
-### Manual Verification Required
-- Confirm that the brightness icon turns **Green** when the display is visible on the hardware, and **White** when it is turned off.
+> [!NOTE]
+> The text color remains white to ensure readability against the new black and dark orange backgrounds.
