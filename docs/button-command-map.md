@@ -6,11 +6,9 @@ The source of truth for the current mapping is:
 
 - [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
 - [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
-- [lib/input/actions/buttonActions.hpp](../lib/input/actions/buttonActions.hpp)
-- [lib/input/actions/buttonActions.cpp](../lib/input/actions/buttonActions.cpp)
 - [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
 - [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
-- [lib/indicators/spiLedDriver.cpp](../lib/indicators/spiLedDriver.cpp)
+- [lib/hal/leds/spiLedDriver.cpp](../lib/hal/leds/spiLedDriver.cpp)
 
 ## 1. How To Read This Map
 

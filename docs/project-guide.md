@@ -44,6 +44,7 @@ The main runtime flow is:
 5. `ActionProcessor::process()` executes the action via `IAction::execute(ActionContext&)`.
 6. Some actions change local hardware state, and others send UART commands to the Raspberry Pi.
 7. The Raspberry Pi sends heartbeat packets back so the ESP32 knows the Pi is still online.
+8. After successful initialization, `app_main()` starts the BLE GATT server for remote commands and status updates.
 
 Primary entry point:
 
@@ -112,8 +113,8 @@ Main responsibilities:
 
 References:
 
-- [lib/transport/uart/serial.hpp](../lib/transport/uart/serial.hpp)
-- [lib/transport/uart/serial.cpp](../lib/transport/uart/serial.cpp)
+- [lib/hal/uart/serial.hpp](../lib/hal/uart/serial.hpp)
+- [lib/hal/uart/serial.cpp](../lib/hal/uart/serial.cpp)
 
 ### 3.5 Protocol Layer
 
@@ -177,7 +178,8 @@ The board drives several visual feedback outputs:
 - **Power LED** — reflects the current power state (off, sleep, on, transitioning).
 - **SPI button LEDs** — 16 LEDs driven via SPI shift registers, used for per-button lighting. Overall brightness is PWM-controlled via GPIO 21 and automatically tracks the screen brightness level.
 - **Monitor brightness controller** — PWM-controlled brightness for the attached display. Level 0–9 is persisted to NVS and restored on boot. Changing the level also updates the button LED brightness so both outputs stay in sync.
-- **SpiBootIndicator** — flashes all SPI LEDs during the Raspberry Pi boot wait. Slow flash (~1 Hz) while waiting; fast flash (~3.3 Hz) on timeout or firmware init failure. Stops and clears on successful boot.
+- **BootDiagnosticLeds** — lights eight diagnostic SPI LEDs during power-on, extinguishes each pair after a successful stage, and flashes the failing pair or all eight LEDs at about 3 Hz on failure.
+- **BLE server** — exposes remote command, status, track-progress, and library characteristics through `lib/ble/`.
 
 Relevant code lives mainly under:
 
@@ -222,13 +224,13 @@ Important wiring summary:
 
 Raspberry Pi companion references:
 
-- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [scripts/rpi/home/antho/uart5_listener.py](../scripts/rpi/home/antho/uart5_listener.py)
 - [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
-- [scripts/rpi/README.md](../scripts/rpi/README.md)
+- [scripts/rpi/RPI4_SETUP.md](../scripts/rpi/RPI4_SETUP.md)
 
 ## 6. UART Protocol Summary
 
-The firmware and Raspberry Pi use an 18-byte packet format.
+The firmware and Raspberry Pi use a variable-length packet format: command packets are 19 bytes with a 10-byte payload, and packets can grow to 69 bytes for larger payloads.
 
 At a high level, a message contains:
 
@@ -244,7 +246,7 @@ At a high level, a message contains:
 Important protocol facts:
 
 - start byte is `0xAA`,
-- packet size is `18` bytes,
+- command packet size is `19` bytes; maximum packet size is `69` bytes,
 - the protocol supports command, status, ACK, and NACK message types,
 - heartbeat is command ID `0x0003`.
 
@@ -281,7 +283,7 @@ Current behavior in the code:
 Relevant references:
 
 - [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
-- [lib/transport/uart/serial.hpp](../lib/transport/uart/serial.hpp)
+- [lib/hal/uart/serial.hpp](../lib/hal/uart/serial.hpp)
 - [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
 
 ## 8. Build And Test Reference
@@ -323,7 +325,7 @@ Current test suites:
 | [test/test_power_led](../test/test_power_led) | `PowerLed` constructor defaults and brightness scaling |
 | [test/test_simple_command_action](../test/test_simple_command_action) | `SimpleCommandAction` press/release response |
 | [test/test_uart_protocol](../test/test_uart_protocol) | UART message serialization, deserialization, checksum |
-| [test/test_spi_boot_indicator](../test/test_spi_boot_indicator) | `SpiBootIndicator` state machine: start/success/failure/idempotency |
+| [test/test_spi_boot_indicator](../test/test_spi_boot_indicator) | legacy SPI boot-indicator device tests; current firmware diagnostics use `BootDiagnosticLeds` |
 | [test/test_spi_led_driver](../test/test_spi_led_driver) | `SpiLedDriver` constructor state and early-return guard paths |
 
 All five suites build and link cleanly against the ESP32-S3 toolchain.
@@ -337,14 +339,15 @@ This is a simple description of the current project layout.
 | `src/` | firmware entry point |
 | `lib/board/` | board-specific constants, identity, and debug flags |
 | `lib/app/` | orchestration and top-level runtime composition |
-| `lib/input/buttons/` | button and input-expander handling |
+| `lib/hal/buttons/` | button and input-expander handling |
 | `lib/input/actions/` | action definitions and action results |
-| `lib/transport/uart/` | UART transport and handshake handling |
+| `lib/hal/uart/` | UART transport, handshake, RX pump, and heartbeat monitoring |
 | `lib/protocol/` | packet definitions and command IDs |
 | `lib/indicators/` | LED, status, brightness behavior, and boot indication |
 | `lib/power/` | power lifecycle and shutdown coordination |
-| `lib/relays/` | relay abstraction |
-| `lib/support/` | NVS storage and shared utilities |
+| `lib/hal/relay/` | relay abstraction |
+| `lib/hal/storage/` | NVS storage helper |
+| `lib/ble/` | BLE GATT remote-control interface |
 | `scripts/rpi/` | Raspberry Pi listener, sender, and setup docs |
 | `docs/` | project documentation |
 | `host_tests/` | host-based test project (pure C++, no ESP-IDF) |

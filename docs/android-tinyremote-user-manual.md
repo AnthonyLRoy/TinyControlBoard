@@ -1,6 +1,6 @@
-# TinyRemote: Simple User Guide
+# DanStreamer: Simple User Guide
 
-TinyRemote turns your Android phone into a remote control for your TinyControlBoard music player. Use it to start and stop music, change tracks, and control the player display.
+DanStreamer turns your Android phone into a remote control for your TinyControlBoard music player. Use it to start and stop music, change tracks, browse the library, and control the player display.
 
 You do not need to connect the app to Wi-Fi or pair it in your phone's Bluetooth settings. Just open TinyRemote and use **Scan**.
 

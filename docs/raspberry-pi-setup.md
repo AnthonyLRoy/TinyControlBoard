@@ -4,11 +4,11 @@ This document condenses the current Raspberry Pi side setup and companion script
 
 Primary source:
 
-- [scripts/rpi/README.md](../scripts/rpi/README.md)
+- [scripts/rpi/RPI4_SETUP.md](../scripts/rpi/RPI4_SETUP.md)
 
 Companion scripts:
 
-- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [scripts/rpi/home/antho/uart5_listener.py](../scripts/rpi/home/antho/uart5_listener.py)
 - [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
 
 ## 1. What Runs On The Pi
@@ -24,7 +24,7 @@ The listener script:
 
 - opens `/dev/ttyAMA5`,
 - waits on BCM GPIO23 for a rising edge,
-- reads one 18-byte packet,
+- reads variable-length framed packets,
 - verifies the checksum,
 - dispatches the command to local handlers.
 
@@ -44,7 +44,7 @@ Current handled actions include:
 
 Reference:
 
-- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [scripts/rpi/home/antho/uart5_listener.py](../scripts/rpi/home/antho/uart5_listener.py)
 
 ## 3. Heartbeat Sender Role
 

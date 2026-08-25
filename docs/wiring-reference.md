@@ -14,7 +14,7 @@ Primary source:
 
 Related Raspberry Pi references:
 
-- [scripts/rpi/home/antho/UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py)
+- [scripts/rpi/home/antho/uart5_listener.py](../scripts/rpi/home/antho/uart5_listener.py)
 - [scripts/rpi/home/antho/heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py)
 
 ## 1. ESP32-S3 Pin Assignments
@@ -107,7 +107,7 @@ Important hardware interpretation:
 
 Looking at the schematic and the firmware together, the relationship is logical rather than a direct hardwired button-to-LED coupling inside the board logic:
 
-- each button input arrives on a numbered `btn_in_x` net through the debouncer and MCP23016/23018 input expander,
+- each button input arrives on a numbered `btn_in_x` net through the debouncer and MCP23017 input expander,
 - the ESP32 converts that numbered input into a firmware button index,
 - `ControlBoard` maps the button index directly to an LED index for non-power buttons (`ledIndex = buttonId`),
 - button 0 (power) is skipped — it has no corresponding LED,

@@ -8,7 +8,7 @@
 | Android SDK | API 34 (compileSdk / targetSdk) |
 | JDK | 17 (bundled with Android Studio — use Studio's JBR) |
 | Android phone | Android 6.0+ (API 23), Bluetooth LE capable |
-| TinyControlBoard firmware | `feature/bt-remote` branch flashed |
+| TinyControlBoard firmware | Current firmware with `lib/ble/BleServer` flashed |
 
 ---
 
@@ -96,7 +96,7 @@ The `-r` flag reinstalls over any existing version without losing data.
 
 ## 5 · Firmware Prerequisite
 
-The ESP32-S3 must be running the `feature/bt-remote` firmware. To flash it:
+The ESP32-S3 must be running a firmware build that includes the BLE server. To flash it:
 
 1. Open the workspace in VS Code.
 2. Run the **PlatformIO: Upload** task (Terminal → Run Task → *PlatformIO Upload*),
@@ -149,6 +149,8 @@ app never uses your actual location.
 | Command char (WRITE_NO_RESPONSE) | `4a5c6e7d-…-9d01` — 2-byte LE uint16 CommandId |
 | Status char (READ \| NOTIFY) | `4a5c6e7d-…-9d02` — 3 bytes: `[powerState, bitmask_lo, bitmask_hi]` |
 | Status push interval | 500 ms (only on change) |
+| Library entry characteristic | `...-9d05` — notifications containing one directory or track entry |
+| Library command characteristic | `...-9d06` — 4-byte LE `[CommandId, parameter]` write |
 
 ### Power state byte values
 | Value | State |
@@ -168,7 +170,7 @@ app never uses your actual location.
 
 | Symptom | Fix |
 |---|---|
-| Scan finds nothing | Verify board is powered and firmware is `feature/bt-remote`. Check BLE is on. |
+| Scan finds nothing | Verify the board is powered, the current BLE-enabled firmware is flashed, and Bluetooth is on. |
 | "Bluetooth permissions required" toast | Open phone Settings → Apps → DanStreamer → Permissions and grant Bluetooth (and Location on Android <12). |
 | Gradle sync fails — "Could not resolve…" | Check internet connection; run `gradle --refresh-dependencies`. |
 | `adb devices` shows no device | Reconnect USB, accept debug prompt on phone, check USB mode is "File transfer" not "Charging only". |

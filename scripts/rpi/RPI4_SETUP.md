@@ -13,7 +13,8 @@ This repo keeps Raspberry Pi companion assets under `scripts/rpi/`.
 
 Important tracked files:
 
-- `scripts/rpi/home/antho/UAart5Listener.py`: Pi-side UART listener
+- `scripts/rpi/home/antho/uart5_listener.py`: Pi-side UART listener entry point
+- `scripts/rpi/home/antho/protocol.py`, `uart_writer_client.py`, `mpd_client.py`, `library_browser.py`, `panel_control.py`, `playback_commands.py`, and `command_ids.py`: listener modules deployed alongside the entry point
 - `scripts/rpi/home/antho/heartbeat_sender.py`: Pi-side heartbeat sender
 - `scripts/rpi/boot/firmware/config.txt`: example firmware config with `dtoverlay=uart5`
 - `scripts/rpi/boot/firmware/config-user.txt`: example user overlay additions

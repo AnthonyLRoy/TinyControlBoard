@@ -1,5 +1,8 @@
 # Plan: Add WiFi as a second transport alongside BLE
 
+> Status: planning document. The current firmware is BLE-only; no WiFi transport
+> implementation is present in `lib/` or registered in `src/CMakeLists.txt`.
+
 ## Decisions (confirmed with user)
 - Dual transport: BLE stays, WiFi added as a second, manually-selected transport (not a replacement).
 - Status updates: WebSocket push from board (replaces the old 500ms-HTTP-polling design from the archived plan).
@@ -12,7 +15,7 @@
 ## Key existing facts (verified in current code, 2026-07-26)
 - Current codebase is 100% BLE (`lib/ble/BleServer.{hpp,cpp}`, Android `com.tinycb.remote.ble.*`). No WiFi code remains — it was fully removed when the project pivoted from the original WiFi plan to BLE (see repo memory `wifi-remote-android-plan.md`, archived section).
 - Firmware hooks WiFi needs already exist and are mostly reused as-is:
-  - `ActionProcessor::injectCommand(CommandId, uint16_t releaseMs=0)` — [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp) — already thread-safe for concurrent external callers via an atomic best-effort busy flag, so BLE and WiFi tasks can both call it concurrently. It currently returns `void` when it drops a busy command; change it to return acceptance so HTTP clients never receive a false success.
+  - `ActionProcessor::injectCommand(CommandId, uint16_t releaseMs=0)` — [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp) — is the existing thread-safe external-command entry point. It currently returns `void`; change it to report acceptance if HTTP clients need to distinguish a busy processor from a successful command.
   - `ControlBoard::getActionProcessor()` / `getSystemState()` — [lib/app/ControlBoard.hpp](../lib/app/ControlBoard.hpp) lines 27-28.
   - `SystemState::powerState` (atomic enum) + `buttonLedBitmask` (atomic uint16_t) — same 3-byte status shape BLE already uses: `[powerState_u8, bitmask_lo, bitmask_hi]` ([lib/ble/BleServer.cpp](../lib/ble/BleServer.cpp) `pushStatusNotification()`/`statusChrAccess()`).
 - `commandCatalog` enumeration helpers (getCommandCatalogCount/getCommandAtIndex/getCommandIdByName) from the OLD wifi plan were removed — current [lib/protocol/commandCatalog.hpp](../lib/protocol/commandCatalog.hpp) only has `getCommandNameById`/`getSimpleCommandLogTag`. Both BLE and the new WiFi transport should just use numeric CommandId like BLE does (Android already hardcodes `ButtonCatalog.kt` with commandIds) — do NOT resurrect the catalog-enumeration REST endpoint, it's unnecessary scope.
@@ -84,7 +87,7 @@ Define this contract before firmware and Android work proceed in parallel:
 4. Use an authenticated WS test client (e.g. `websocat` with `X-TCB-Token`) → confirm the initial versioned status frame and push-on-change frames arrive within ~200ms of a button press.
 6. Provision to home WiFi via the app or curl `/provision`; confirm board reboots, rejoins home network, and either mDNS resolves `tinycontrolboard.local` or the UDP beacon is received (whichever path wins).
 7. Android: `assembleDebug` build; install; run through `TransportPickerActivity` → WiFi path end-to-end (SoftAP network binding, provisioning/token storage, discovery, button press, status LED update), verify Android 10+ traffic stays on the board WiFi despite cellular availability, and confirm the BLE path (`ScanActivity`) still works unchanged.
-8. host_tests (34/34) — re-run to confirm no regressions in the pure-logic layer (WiFi/BLE additions are both firmware-transport-layer only, shouldn't touch host-testable code, but verify).
+8. host_tests (41/41 at the last verified run) — re-run to confirm no regressions in the pure-logic layer.
 
 ## Relevant files
 - `lib/app/actionProcessor.{hpp,cpp}` — small API change so injection acceptance reaches the HTTP response; `lib/app/ControlBoard.hpp` and `lib/app/SystemState.hpp` otherwise reused as-is.

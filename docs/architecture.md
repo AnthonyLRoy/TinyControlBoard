@@ -115,8 +115,9 @@ Current startup sequence:
 11. UART hardware is initialized.
 12. The button-to-action map is populated via `ControlBoardActionRegistry`.
 13. After a `board::timing::k_initDelayMs` delay, `triggerInitialPowerOn()` is called which starts the full power-on sequence.
+14. Once initialization succeeds, `app_main()` starts `ble::BleServer` and connects its command and status callbacks to the board.
 
-Note: if any critical init step fails (MCP handler or serial setup), `SpiBootIndicator::notifyFailure()` is called immediately, which flashes all SPI LEDs rapidly to signal the fault before the firmware aborts init.
+Note: if any critical init step fails (MCP handler, queue, serial setup, or initial power-on), `BootDiagnosticLeds::firmwareInitFailed()` is called immediately. It flashes the eight diagnostic LEDs at about 3 Hz while `app_main()` retries initialization every second.
 
 References:
 
@@ -189,8 +190,8 @@ It does three distinct jobs:
 
 References:
 
-- [lib/transport/uart/serial.hpp](../lib/transport/uart/serial.hpp)
-- [lib/transport/uart/serial.cpp](../lib/transport/uart/serial.cpp)
+- [lib/hal/uart/serial.hpp](../lib/hal/uart/serial.hpp)
+- [lib/hal/uart/serial.cpp](../lib/hal/uart/serial.cpp)
 
 ### 3.4 `RpiBootManager`
 
@@ -211,29 +212,17 @@ References:
 - [lib/power/RPIBootManager.cpp](../lib/power/RPIBootManager.cpp)
 - [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
 
-### 3.5 `SpiBootIndicator`
+### 3.5 `BootDiagnosticLeds`
 
-`SpiBootIndicator` is a FreeRTOS-based visual boot indicator that flashes all 16 SPI-driven button LEDs to signal boot progress or failure.
+`BootDiagnosticLeds` uses eight of the sixteen SPI button LEDs to show power-on progress and failure. `begin()` turns on all diagnostic LEDs at the start of a power-on attempt. Each successful relay stage calls `stageSuccess()` to extinguish its pair. A relay or Raspberry Pi communication failure calls `stageFailure()` and flashes only that stage's pair at about 3 Hz until reset. Firmware initialization failures call `firmwareInitFailed()` and flash all eight diagnostic LEDs.
 
-Behavior:
-
-- `startWaiting()` — starts a background FreeRTOS task that flashes all LEDs at 500 ms half-period (1 Hz) while the firmware waits for the Raspberry Pi heartbeat.
-- `notifySuccess()` — signals the task to stop and clears all LEDs. Called when the heartbeat is received within the timeout.
-- `notifyFailure()` — switches to a fast 150 ms half-period flash (~3.3 Hz). If the task is not yet running (firmware init failure), it starts the task directly in the failed state.
-
-Call sites:
-
-- `PowerStateTransitionHandler` calls `startWaiting()` just before `waitForRpiToBoot()`, then calls `notifySuccess()` or `notifyFailure()` based on the result.
-- `ControlBoard::init()` calls `notifyFailure()` before each early-return failure path.
-
-The singleton accessor is `indicators::getSpiBootIndicator()`, registered in `led_manager.cpp`.
+The service is accessed through `indicators::getBootDiagnosticLeds()` in `ledManager.hpp`. It is separate from the normal per-button LED state and from the power/activity PWM indicators.
 
 References:
 
-- [lib/indicators/SpiBootIndicator.hpp](../lib/indicators/SpiBootIndicator.hpp)
-- [lib/indicators/SpiBootIndicator.cpp](../lib/indicators/SpiBootIndicator.cpp)
+- [lib/indicators/BootDiagnosticLeds.hpp](../lib/indicators/BootDiagnosticLeds.hpp)
+- [lib/indicators/BootDiagnosticLeds.cpp](../lib/indicators/BootDiagnosticLeds.cpp)
 - [lib/indicators/ledManager.hpp](../lib/indicators/ledManager.hpp)
-- [lib/indicators/ledManager.cpp](../lib/indicators/ledManager.cpp)
 
 ### 3.6 `SpiLedDriver`
 
@@ -243,7 +232,7 @@ Key methods:
 
 - `init()` — sets up the SPI bus and device.
 - `setLed(index, on)` — sets a single LED by bit index (0–15).
-- `setAllLeds(on)` — atomically sets all 16 LEDs on or off. Used by `SpiBootIndicator` for whole-panel flashing.
+- `setAllLeds(on)` — sets all 16 LEDs on or off. Used for the short startup flash; boot-stage diagnostics use individual LED pairs.
 - `update()` — pushes the current 16-bit state to the shift register via SPI.
 
 The overall brightness of all button LEDs is controlled by a PWM duty on GPIO 21 (`k_buttonLedPwmPin`) through the `StatusLed` instance registered as `s_buttonStatusLed`. The duty is updated by `MonitorBrightnessController` whenever screen brightness changes so the two track together (see §3.7).
@@ -296,6 +285,26 @@ References:
 - [lib/hal/relay/relay.hpp](../lib/hal/relay/relay.hpp)
 - [lib/hal/relay/relay.cpp](../lib/hal/relay/relay.cpp)
 
+### 3.9 `BleServer`
+
+`BleServer` is the external local-remote control interface. It starts only after `ControlBoard::init()` succeeds and keeps NimBLE implementation details inside `lib/ble/BleServer.cpp`.
+
+The GATT service provides:
+
+- a command characteristic accepting a 16-bit little-endian `CommandId`,
+- a status characteristic reporting power state and the button LED bitmask,
+- a track-progress characteristic,
+- a library-entry notification characteristic,
+- a library-command characteristic carrying a command ID and one parameter.
+
+Command writes call `ActionProcessor::injectCommand()`, so BLE commands use the same factory and action execution path as physical input. Library commands instead use the callback installed by `app_main()` to send a protocol message to the Raspberry Pi. The server also receives library-entry notifications from the inbound UART path.
+
+Reference:
+
+- [lib/ble/BleServer.hpp](../lib/ble/BleServer.hpp)
+- [lib/ble/BleServer.cpp](../lib/ble/BleServer.cpp)
+- [src/main.cpp](../src/main.cpp)
+
 ## 4. Input Flow
 
 The current input path is:
@@ -344,7 +353,7 @@ Important current limitation:
 
 References:
 
-- [lib/transport/uart/serial.cpp](../lib/transport/uart/serial.cpp)
+- [lib/hal/uart/serial.cpp](../lib/hal/uart/serial.cpp)
 - [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
 - [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp)
 
@@ -396,6 +405,7 @@ This is the practical ownership model for the current codebase.
 | `lib/hal/uart/` | UART transport and handshake logic |
 | `lib/hal/storage/` | NVS storage helper |
 | `lib/protocol/` | wire format and command IDs |
+| `lib/ble/` | BLE GATT command, status, track-progress, and library interfaces |
 | `lib/indicators/` | LED services, brightness control, and boot indication |
 | `lib/power/` | power state, relay sequencing, and Pi boot/shutdown coordination |
 | `scripts/rpi/` | Raspberry Pi listener, sender, and setup docs |
@@ -408,8 +418,8 @@ This is the practical ownership model for the current codebase.
 - Input actions are represented as objects, which makes it straightforward to remap buttons without rewriting processor logic.
 - Toggle actions maintain internal software state, so their first emitted command depends on the starting state in firmware.
 - Heartbeat is treated as the Raspberry Pi liveness signal for both boot completion and shutdown detection.
-- Non-heartbeat Pi-originated commands are not yet fully consumed on the ESP32 side.
-- Boot and init failures are signalled visually via `SpiBootIndicator`: slow flashing (~1 Hz) during normal boot wait, fast flashing (~3.3 Hz) on timeout or firmware init failure.
+- Non-heartbeat Pi-originated commands are routed through the inbound `ActionProcessor` scaffold; protocol-specific handling remains pending.
+- Boot progress and failures are signalled via `BootDiagnosticLeds`: eight LEDs start on, successful stages turn their pairs off, and failed stages flash their pair at about 3 Hz.
 - The `board::debug::kSimulateRpiBoot` compile-time flag allows full firmware testing without a connected Raspberry Pi. When `true`, the 60-second heartbeat wait is skipped instantly.
 - Button LED brightness tracks monitor brightness automatically. `MonitorBrightnessController` calls `getButtonStatusLed().setIdleDuty()` at every brightness-change site using an inverted active-low mapping.
 - `StandardRelay::setRelayState()` returns a bool indicating GPIO driver success. Physical relay contact state cannot be detected without additional feedback hardware (current sense or optocoupler on the switched output).
@@ -491,7 +501,7 @@ sequenceDiagram
 
 | Region | Usage | Notes |
 |---|---|---|
-| **IRAM** | ISR functions (`IRAM_ATTR`) | `UartTransport::gpioIsrHandler`, `McpInputHandler::gpioIsr` placed in IRAM to avoid flash cache stalls during interrupt. |
+| **IRAM** | ISR functions (`IRAM_ATTR`) | `DataReadyHandshake` and `McpInputHandler` ISR handlers are placed in IRAM and only wake worker tasks. |
 | **DRAM (stack)** | FreeRTOS task stacks | Each task allocates its stack from the heap at `xTaskCreate` time. See §13 for per-task sizes. |
 | **DRAM (heap)** | `unique_ptr<IAction>` objects, `std::vector` in `ControlBoardActionRegistry`, FreeRTOS queue/timer handles | Action objects are short-lived; allocated during `ActionFactory::createAction()` and freed immediately after `execute()`. |
 | **NVS (flash)** | Monitor brightness level | Stored under namespace `"brightness"`, key `"level"` (int8_t). Written on every user brightness change; read at boot. |
@@ -509,8 +519,8 @@ Stack usage notes:
 
 | Task Name | Created In | Stack | Priority | Purpose |
 |---|---|---|---:|---|
-| `uart_rx_task` | `lib/hal/uart/serial.cpp` | 4096 B | 10 | Blocks on GPIO notify from data-ready ISR; drains UART FIFO via `uart_read_bytes`; pushes bytes into `UartReceiver` ring buffer; fires RX callback per complete frame. |
-| `heartbeat_monitor` | `lib/hal/uart/serial.cpp` | 4096 B | 5 | Polls `esp_timer_get_time()` every 100 ms; fires timeout callback when elapsed since last RX exceeds `k_heartbeatTimeoutMs`. |
+| `uart_rx_task` | `lib/hal/uart/uartRxPump.cpp` | 4096 B | 10 | Blocks on GPIO notification; drains the UART FIFO, feeds `UartReceiver`, and fires the RX callback for each complete frame. |
+| `heartbeat_monitor` | `lib/hal/uart/heartbeatMonitor.cpp` | 4096 B | 5 | Polls `HeartbeatWatchdog` every 100 ms and fires the timeout callback when the RX inactivity window expires. |
 | `action_task` | `lib/app/ButtonEventQueue.cpp` | 4096 B | 5 | Blocks on `xQueueReceive`; dequeues `ButtonEvent` structs and calls `ControlBoardInputDispatcher::dispatch()`. |
 | `mcp_int_task` | `lib/hal/buttons/mcpInputHandler.cpp` | 4096 B | 10 | Woken by `vTaskNotifyGiveFromISR` from GPIO18 ISR; reads MCP23017 registers over I2C; fires button/rotary callbacks. |
 | `LED_Task` (×N) | `lib/indicators/statusLed.cpp` | 4096 B | 5 | Drives one PWM indicator LED; reads from a 1-slot FreeRTOS queue; implements blink / breathe / solid patterns. One instance per `StatusLed` object. |
@@ -527,13 +537,13 @@ Stack usage notes:
 | `std::atomic<ControlBoardPowerState>` | `SystemState` | Thread-safe power state shared between `ActionProcessor` and heartbeat callback. |
 | `std::atomic<uint16_t>` | `ControlBoardInputDispatcher::m_buttonLedBitmask` | Per-button LED toggle state; updated with `fetch_xor`. |
 | `std::atomic<uint32_t>` | `StatusLed::m_idleDuty` | Allows `MonitorBrightnessController` to update button LED brightness from any task context. |
-| `std::atomic<bool>` | `UartTransport::m_initialized`, `m_stopRxTask`, `m_stopHeartbeatTask` | Guards task lifecycle without a mutex. |
+| `std::atomic<bool>` | UART task lifecycle flags and `HeartbeatWatchdog` state | Guards task lifecycle and heartbeat state without a mutex. |
 
 ## 14. Interrupt Handling Strategy
 
 | ISR | Trigger | Action | Safe Primitives Used |
 |---|---|---|---|
-| `UartTransport::gpioIsrHandler` (`IRAM_ATTR`) | GPIO42 POSEDGE (Pi data-ready) | `vTaskNotifyGiveFromISR` → wakes `uart_rx_task` | `vTaskNotifyGiveFromISR`, `portYIELD_FROM_ISR` |
+| `DataReadyHandshake` ISR (`IRAM_ATTR`) | GPIO42 POSEDGE (Pi data-ready) | `vTaskNotifyGiveFromISR` → wakes `uart_rx_task` | `vTaskNotifyGiveFromISR`, `portYIELD_FROM_ISR` |
 | `McpInputHandler::gpioIsr` | GPIO18 (MCP23017 /INT) | `vTaskNotifyGiveFromISR` → wakes `mcp_int_task` | `vTaskNotifyGiveFromISR`, `portYIELD_FROM_ISR` |
 
 Design rules:
@@ -546,7 +556,7 @@ Design rules:
 
 | Protocol | Interface | Speed / Settings | Role |
 |---|---|---|---|
-| **UART** (custom framed) | UART2 / GPIO1 (RX) / GPIO2 (TX) | 115 200 baud, 8N1 | Bi-directional link to Raspberry Pi. 18-byte frames: start byte `0xAA`, version, src app, type, sequence, 2-byte `CommandId`, 5× 2-byte params, 1-byte XOR checksum. |
+| **UART** (custom framed) | UART2 / GPIO1 (RX) / GPIO2 (TX) | 115 200 baud, 8N1 | Bi-directional link to Raspberry Pi. Variable-length frames: 19-byte command packets with a 10-byte payload, up to 69 bytes total. |
 | **I2C** | I2C_NUM_0 / GPIO15 (SCL) / GPIO16 (SDA) | 50 000 Hz | Reads button states and interrupt capture registers from MCP23017 I/O expander at address `0x20`. |
 | **SPI** | SPI2_HOST / GPIO6 (CLK) / GPIO7 (MOSI) / GPIO5 (latch) | 1 MHz | Drives 16-bit parallel-load shift register for button panel LEDs. One full 16-bit frame per `SpiLedDriver::update()`. |
 | **LEDC (PWM)** | Multiple GPIO channels | 4 kHz / 13-bit resolution | Monitor brightness control (GPIO43), button LED PWM (GPIO21), power LED (GPIO3/4), working status LED (GPIO48). |
@@ -676,7 +686,7 @@ Host tests live in `host_tests/` and test application-layer logic using stub imp
 host_tests\build\Debug\tiny_control_board_host_tests.exe
 ```
 
-Currently **30 tests pass**. Test source: [host_tests/test_logic.cpp](../host_tests/test_logic.cpp).
+Currently **41 tests pass**. Test source: [host_tests/test_logic.cpp](../host_tests/test_logic.cpp).
 
 ### 19.2 PlatformIO Device Tests
 
@@ -718,8 +728,9 @@ pio device monitor                   # serial monitor at 115200 baud
 | Symptom | Likely Cause | Fix |
 |---|---|---|
 | PlatformIO build fails with cryptic CMake errors after file-layout changes | Stale generated state in `.pio/build/` | Delete `.pio/build/esp32-s3-devkitc-1-16mb` and rebuild |
-| All 16 SPI LEDs flash slowly (~1 Hz) on boot | Normal: waiting for Pi heartbeat | Verify Pi is running and `heartbeat_sender.py` is active |
-| All 16 SPI LEDs flash rapidly (~3 Hz) after boot attempt | Init failure (MCP or UART init error) | Check I2C wiring (GPIO15/16/18/17) and serial monitor for `ESP_LOGE` output |
+| Eight diagnostic SPI LEDs are lit at boot | Normal: power-on stages are pending | The successful relay stage extinguishes its LED pair; see `BootStage` mapping |
+| Eight diagnostic LEDs flash rapidly (~3 Hz) | Firmware initialization failure | Check I2C wiring (GPIO15/16/18/17) and serial monitor for `ESP_LOGE` output |
+| One diagnostic LED pair flashes rapidly (~3 Hz) | Relay or Pi communication stage failed | Check the relay and wiring associated with the named `BootStage` |
 | Specific LED pair flashes at 3 Hz | Boot stage failure (relay or Pi comms) | Check relay wiring for the failed stage; see §17.3 for GPIO mapping |
 | No button response | `action_task` not started or MCP init failed | Check `ESP_LOGE` log for task creation errors; verify I2C bus |
 | UART TX silently dropped | Pi data-ready pin (GPIO41) still high | Ensure Pi companion scripts are running and not holding GPIO41 asserted |
@@ -750,7 +761,7 @@ pio device monitor                   # serial monitor at 115200 baud
 | **ActionContext** | Services struct (`uartDispatcher`, `powerHandler`, `relayController`, `serial`, `systemState`, `powerLed`, `brightnessController`) passed to every `IAction::execute()`. |
 | **ActionFactory** | `lib/app/ActionFactory.cpp`; maps a `CommandId` to a concrete `IAction` subclass. |
 | **app_main** | ESP-IDF entry point (replaces `main()`). Defined in `src/main.cpp`. |
-| **BootDiagnosticLeds** | Visual boot-stage indicator using 8 of the 16 SPI LEDs; replaced legacy `SpiBootIndicator`. |
+| **BootDiagnosticLeds** | Visual boot-stage indicator using 8 of the 16 SPI LEDs. |
 | **BootStage** | Enum (`ScreenRelay`, `DacRelay`, `OutputStage`, `RpiComms`) identifying one phase of the relay power-on sequence. |
 | **ButtonEventQueue** | RAII wrapper around the FreeRTOS queue and `action_task` that serializes ISR-originated button events for the application thread. |
 | **CommandId** | 16-bit identifier for a firmware command (e.g. `CMD_PLAY_PAUSE = 0x0102`). Defined in `lib/protocol/uartProtocol.hpp`. |
@@ -774,5 +785,5 @@ pio device monitor                   # serial monitor at 115200 baud
 | **SpiLedDriver** | HAL driver for the 16-channel SPI shift-register button LED array. |
 | **StandardRelay** | HAL class wrapping `gpio_set_level()` for a single relay output. Returns a `bool` success indicator. |
 | **SystemState** | Lightweight struct holding `std::atomic<ControlBoardPowerState>` — the only shared mutable runtime state. |
-| **UartReceiver** | Stateful framing helper; accumulates raw bytes and emits complete 18-byte `UartMessage` frames. |
+| **UartReceiver** | Stateful framing helper; accumulates raw bytes and emits complete variable-length `UartMessage` frames. |
 | **UartTransport** | Singleton serial layer (`transport::uart::UartTransport`) managing UART2, data-ready handshake GPIOs, RX task, and heartbeat monitor task. |

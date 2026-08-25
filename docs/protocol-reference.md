@@ -179,7 +179,7 @@ Reference:
 
 ## 9. Current Practical Limitations
 
-- The protocol reference is centralized, but some older macro aliases still exist in the header.
+- The protocol reference is centralized in `uartProtocol.hpp`; command catalog lookup helpers also expose names and IDs to the BLE layer.
 - The firmware actively reacts to heartbeat messages, but other incoming Pi-originated messages are not yet deeply handled in `ControlBoard`.
 - The Pi scripts and firmware should be kept aligned on command IDs and parameter semantics.
 

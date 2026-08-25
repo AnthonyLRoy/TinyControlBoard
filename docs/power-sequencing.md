@@ -10,7 +10,7 @@ Source files:
 - [lib/power/RelayController.cpp](../lib/power/RelayController.cpp)
 - [lib/power/powerState.hpp](../lib/power/powerState.hpp)
 - [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
-- [lib/indicators/SpiBootIndicator.cpp](../lib/indicators/SpiBootIndicator.cpp)
+- [lib/indicators/BootDiagnosticLeds.cpp](../lib/indicators/BootDiagnosticLeds.cpp)
 
 ## 1. Current Power States
 
@@ -75,10 +75,10 @@ Current sequence:
 3. DAC relay is enabled with a 1500 ms delay,
 4. output stage relay is enabled with a 1500 ms delay,
 5. Raspberry Pi relay is enabled with a 1000 ms delay,
-6. `SpiBootIndicator::startWaiting()` is called — all SPI LEDs begin flashing slowly (~1 Hz) to indicate the firmware is waiting for the Pi,
+6. `BootDiagnosticLeds::begin()` lights the eight diagnostic LEDs to show that the staged power-on sequence is in progress,
 7. firmware waits up to 60 seconds for Pi heartbeat,
-8. if heartbeat received: `SpiBootIndicator::notifySuccess()` is called, flashing stops and all LEDs clear,
-9. if timeout: `SpiBootIndicator::notifyFailure()` is called, LEDs switch to fast flashing (~3.3 Hz),
+8. if heartbeat received: `BootDiagnosticLeds::stageSuccess(BootStage::RpiComms)` extinguishes the final diagnostic pair,
+9. if timeout: `BootDiagnosticLeds::stageFailure(BootStage::RpiComms)` flashes the final diagnostic pair at about 3 Hz,
 10. on success: power LED moves to `ON`, activity status becomes `Active`,
 11. on timeout: power LED moves to `SLEEP`, activity status becomes `sleeping`, and the fast-flashing SPI LEDs remain as the only ongoing failure indicator.
 
@@ -170,7 +170,7 @@ Current dedicated relay helper methods:
 - The code path sets `GOING_TO_SLEEP` for both sleep and deep-sleep paths.
 - The enum includes states like `SHUTTING_DOWN` and `GOING_INTO_DEEP_SLEEP`, but the current processor code does not clearly transition through them.
 - `waitForRpiShutdown()` is satisfied by heartbeat timeout, which is a practical signal but not a strong explicit shutdown acknowledgment packet.
-- On boot timeout, the power LED still transitions to `ON`. The fast-flashing SPI LEDs from `SpiBootIndicator::notifyFailure()` are the only persistent failure indicator.
+- On boot timeout, the power state becomes `SLEEP`; the failed `BootDiagnosticLeds` pair remains the persistent failure indicator.
 
 ## 10. Debug Flag: Simulating Pi Boot
 
@@ -185,7 +185,7 @@ namespace board::debug {
 When `true`:
 
 - `RpiBootManager::waitForRpiToBoot()` returns `true` immediately without waiting for a heartbeat,
-- `SpiBootIndicator::notifySuccess()` is called and the boot flash stops normally,
+- `BootDiagnosticLeds::stageSuccess(BootStage::RpiComms)` is called and the diagnostic pair is extinguished,
 - a warning is logged: `DEBUG: kSimulateRpiBoot is set — skipping RPi heartbeat wait`.
 
 When `false` (default/production): this code path is optimized away entirely by the compiler (`if constexpr`).

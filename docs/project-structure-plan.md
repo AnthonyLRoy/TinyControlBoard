@@ -1,5 +1,7 @@
 # TinyControlBoard Structure Plan
 
+> This is a migration record. The current layout is documented in [docs/architecture.md](./architecture.md); the target tree below preserves the historical plan and is not a complete current file listing.
+
 ## Objective
 
 The project is already moving toward a domain-based layout. The remaining problem is mixed ownership: canonical files now exist in some domain folders, while older compatibility and generic buckets still carry real behavior.
@@ -47,8 +49,6 @@ lib/
       actionsResponse.hpp
       actionTemplates.hpp
       buttonAction.hpp
-      buttonActions.cpp
-      buttonActions.hpp
       SimpleCommandAction.hpp
     buttons/
       mcpInputHandler.cpp
@@ -66,8 +66,8 @@ lib/
     monitorBrightnessController.hpp
     powerLed.cpp
     powerLed.hpp
-    SpiBootIndicator.cpp
-    SpiBootIndicator.hpp
+    BootDiagnosticLeds.cpp
+    BootDiagnosticLeds.hpp
     spiLedDriver.cpp
     spiLedDriver.hpp
     statusLed.cpp
@@ -203,7 +203,7 @@ These ownership moves are now complete and new code should include the canonical
 
 Current note:
 
-- The firmware build now compiles the canonical `lib/app`, `lib/input`, `lib/power`, `lib/protocol`, `lib/support`, and `lib/transport/uart` sources directly.
+- The firmware build now compiles canonical sources directly from `lib/app`, `lib/hal`, `lib/indicators`, `lib/input/actions`, `lib/power`, `lib/protocol`, and `lib/ble` through `src/CMakeLists.txt`.
 - The remaining migration work is any deliberate cleanup of still-unused legacy helpers and any naming cleanup you still want to do.
 
 ### Next File Moves
@@ -211,7 +211,7 @@ Current note:
 | Current file or folder | Target | Reason |
 |---|---|---|
 | `legacy helper headers if reintroduced` | subsystem-owned canonical headers | avoid recreating compatibility layers |
-| `new transport aliases` | `lib/transport/uart/` only | keep one transport surface |
+| `new transport aliases` | `lib/hal/uart/` only | keep one transport surface |
 | `new Pi deployment notes` | `scripts/rpi/README.md` | keep deployment guidance close to the tracked assets |
 
 ## Migration Sequence
@@ -242,7 +242,7 @@ Current device test suites under `test/`:
 | `test_power_led/` | `PowerLed` state defaults and brightness scaling |
 | `test_simple_command_action/` | `SimpleCommandAction` press/release behavior |
 | `test_uart_protocol/` | UART serialization, deserialization, checksum |
-| `test_spi_boot_indicator/` | `SpiBootIndicator` state machine (9 tests) |
+| `test_spi_boot_indicator/` | legacy SPI boot-indicator device tests; current boot diagnostics use `BootDiagnosticLeds` |
 | `test_spi_led_driver/` | `SpiLedDriver` constructor state and guard paths (7 tests) |
 
 All five suites build cleanly against the ESP32-S3 toolchain.
