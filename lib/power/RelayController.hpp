@@ -16,7 +16,6 @@ namespace controlSystem
         bool handleToggleDac(bool state);
         bool toggleDac();
         bool shutdownRpi();
-        bool shutdownScreen();
 
     private:
         transport::uart::UartTransport &mr_serial;

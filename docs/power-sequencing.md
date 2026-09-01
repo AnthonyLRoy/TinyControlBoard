@@ -41,11 +41,11 @@ The long-press threshold lives in [lib/power/PowerStateTransitionPolicy.hpp](../
 | Constant | Value (ms) | Meaning |
 |---|---:|---|
 | `board::timing::k_powerSettleDelayMs` | 1500 | delay used after enabling DAC and output-stage relays |
-| `board::timing::k_screenOnDelayMs` | 1000 | delay used for screen and Pi relay steps during power-on |
+| `board::timing::k_vcc3v3OnDelayMs` | 1000 | delay used for 3V3 and Pi relay steps during power-on |
 | `board::timing::k_rpiBootTimeoutMs` | 60000 | max time to wait for heartbeat after power-on |
 | `board::timing::k_rpiShutdownTimeoutMs` | 60000 | max time to wait for heartbeat timeout during shutdown |
-| `board::timing::k_rpiShutdownSettleDelayMs` | 500 | delay between Pi relay off and screen relay off |
-| `board::timing::k_screenPowerOffDelayMs` | 5000 | delay after screen relay off before LED state changes |
+| `board::timing::k_rpiShutdownSettleDelayMs` | 500 | delay between Pi relay off and 3V3 relay off |
+| `board::timing::k_vcc3v3PowerOffDelayMs` | 5000 | delay after 3V3 relay off before LED state changes |
 | `board::timing::k_heartbeatTimeoutMs` | 30000 | inactivity window after which heartbeat is considered lost |
 | `kLongPressThresholdMs` | 3000 | separates sleep from deep sleep on power-button release |
 
@@ -71,7 +71,7 @@ If the current state is `OFF`, `SLEEP`, or `DEEPSLEEP`, a power-button release e
 Current sequence:
 
 1. power LED state is set to `TURNING_ON`,
-2. screen relay is enabled with a 1000 ms delay,
+2. 3V3 relay is enabled with a 1000 ms delay,
 3. DAC relay is enabled with a 1500 ms delay,
 4. output stage relay is enabled with a 1500 ms delay,
 5. Raspberry Pi relay is enabled with a 1000 ms delay,
@@ -93,14 +93,14 @@ Current sequence:
 3. firmware waits up to 60 seconds for shutdown confirmation via heartbeat timeout,
 4. Raspberry Pi power relay is turned off,
 5. firmware delays 500 ms,
-6. screen power relay is turned off,
+6. 3V3 power relay is turned off,
 7. firmware delays 5000 ms,
 8. power LED state becomes `SLEEP`,
 9. activity status becomes `sleeping`.
 
 Practical result:
 
-- the Raspberry Pi and screen are shut down,
+- the Raspberry Pi and 3V3 supply are shut down,
 - DAC and output stage power remain on,
 - the board stays in a lower-power standby style state rather than a full deep power-down.
 
@@ -115,7 +115,7 @@ Current sequence:
 3. firmware waits up to 60 seconds for shutdown confirmation via heartbeat timeout,
 4. Raspberry Pi power relay is turned off,
 5. firmware delays 500 ms,
-6. screen power relay is turned off,
+6. 3V3 power relay is turned off,
 7. DAC relay is turned off,
 8. output stage relay is turned off,
 9. power LED state becomes `DEEPSLEEP`,
@@ -161,7 +161,7 @@ Current relay assignments from [lib/board/boardConfig.hpp](../lib/board/boardCon
 Current dedicated relay helper methods:
 
 - `shutdownRpi()` turns off the Raspberry Pi relay,
-- `shutdownScreen()` turns off the screen relay,
+- `shutdownVcc3v3()` turns off the 3V3 relay,
 - `handleToggleDac()` toggles the DAC signal-output select relay (GPIO10, `PIN_RELAY_PROTO_DAC_ENABLED`) — distinct from the DAC power relay (GPIO12, `PIN_RELAY_DAC_POWER`) driven during power sequencing.
 
 ## 9. Current Behavior Caveats

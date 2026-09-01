@@ -26,7 +26,7 @@ namespace controlSystem
     private:
         void reportStatus(ControlBoardWorkingStatus status);
         /// Shared preamble for both Sleep and DeepSleep: notifies the RPi,
-        /// waits for its shutdown, then cuts the RPi and screen relays.
+        /// waits for its shutdown, then cuts the RPi and 3V3 relays.
         void runRpiShutdownSequence();
         /// Publishes the new state to both the LED indicator and the BLE-visible
         /// SystemState so remote clients see intermediate transitions in real time.

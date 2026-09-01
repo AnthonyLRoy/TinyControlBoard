@@ -42,7 +42,7 @@ namespace controlSystem
         bool setupRelays()
         {
             ESP_LOGI(k_logTag, "Setting up relays...");
-            relays::StandardRelay::init(PIN_RELAY_SCREEN_POWER);
+            relays::StandardRelay::init(PIN_RELAY_VCC_3V3_POWER);
             relays::StandardRelay::init(PIN_RELAY_RPI_POWER);
             relays::StandardRelay::init(PIN_RELAY_DAC_POWER);
             relays::StandardRelay::init(PIN_RELAY_OUTPUT_STAGE_POWER);
@@ -51,7 +51,7 @@ namespace controlSystem
             relays::StandardRelay::init(PIN_RELAY_GENERAL_2);
 
             relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_2, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_SCREEN_POWER, false);
+            relays::StandardRelay::setRelayState(PIN_RELAY_VCC_3V3_POWER, false);
             relays::StandardRelay::setRelayState(PIN_RELAY_RPI_POWER, false);
             relays::StandardRelay::setRelayState(PIN_RELAY_DAC_POWER, false);
             relays::StandardRelay::setRelayState(PIN_RELAY_OUTPUT_STAGE_POWER, false);

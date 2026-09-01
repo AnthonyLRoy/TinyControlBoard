@@ -4,7 +4,7 @@
 #include "esp_log.h"
 
 // relay pinout mapping
-inline constexpr gpio_num_t PIN_RELAY_SCREEN_POWER = board::relays::k_screenPower;
+inline constexpr gpio_num_t PIN_RELAY_VCC_3V3_POWER = board::relays::k_vcc3v3Power;
 inline constexpr gpio_num_t PIN_RELAY_DAC_POWER = board::relays::k_dacPower;
 inline constexpr gpio_num_t PIN_RELAY_RPI_POWER = board::relays::k_rpiPower;
 inline constexpr gpio_num_t PIN_RELAY_OUTPUT_STAGE_POWER = board::relays::k_outputStagePower;

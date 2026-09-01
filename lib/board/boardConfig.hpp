@@ -16,12 +16,12 @@ namespace board
         inline constexpr uint32_t k_heartbeatTimeoutMs = 30000;
         inline constexpr uint32_t k_initDelayMs = 5000;
         inline constexpr uint32_t k_powerSettleDelayMs = 1500;
-        inline constexpr uint32_t k_screenOnDelayMs = 1000;
+        inline constexpr uint32_t k_vcc3v3OnDelayMs = 1000;
         inline constexpr uint32_t k_rpiOnDelayMs = 1000;
         inline constexpr uint32_t k_rpiBootTimeoutMs = 60000;
         inline constexpr uint32_t k_rpiShutdownTimeoutMs = 60000;
         inline constexpr uint32_t k_rpiShutdownSettleDelayMs = 500;
-        inline constexpr uint32_t k_screenPowerOffDelayMs = 5000;
+        inline constexpr uint32_t k_vcc3v3PowerOffDelayMs = 5000;
     } // namespace timing
 
     namespace serial
@@ -48,7 +48,7 @@ namespace board
 
     namespace relays
     {
-        inline constexpr gpio_num_t k_screenPower = GPIO_NUM_13;
+        inline constexpr gpio_num_t k_vcc3v3Power = GPIO_NUM_13;
         inline constexpr gpio_num_t k_dacPower = GPIO_NUM_12;
         inline constexpr gpio_num_t k_rpiPower = GPIO_NUM_11;
         inline constexpr gpio_num_t k_outputStagePower = GPIO_NUM_9;

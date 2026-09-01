@@ -43,7 +43,7 @@ Related Raspberry Pi references:
 
 | Function | ESP32-S3 Pin |
 |---|---:|
-| Screen power relay | `GPIO13` |
+| 3V3 power relay | `GPIO13` |
 | DAC power relay | `GPIO12` |
 | Raspberry Pi power relay | `GPIO11` |
 | Output stage power relay | `GPIO9` |

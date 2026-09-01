@@ -40,11 +40,4 @@ namespace controlSystem
         ESP_LOGI(k_logTag, "RPI relay disabled");
         return true;
     }
-
-    bool RelayController::shutdownScreen()
-    {
-        mr_relays.setRelayState(PIN_RELAY_SCREEN_POWER, false);
-        ESP_LOGI(k_logTag, "Screen relay disabled");
-        return true;
-    }
 }

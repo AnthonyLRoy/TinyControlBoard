@@ -15,7 +15,7 @@ namespace indicators
     /// docs/wiring-reference.md.
     enum class BootStage : uint8_t
     {
-        ScreenRelay  = 0,  ///< Panel LEDs  7 & 10  →  SPI bits  1, 4
+        Vcc3v3Relay  = 0,  ///< Panel LEDs  7 & 10  →  SPI bits  1, 4
         DacRelay     = 1,  ///< Panel LEDs  3 &  6  →  SPI bits 12, 11
         OutputStage  = 2,  ///< Panel LEDs  2 &  5  →  SPI bits 15, 6
         RpiComms     = 3,  ///< Panel LEDs  1 &  4  →  SPI bits  7, 10
@@ -76,7 +76,7 @@ namespace indicators
         //   Panel  1 (Cover View)      → firmware  7  → SPI bit  7
         //   Panel  4 (Toggle DAC)      → firmware 10  → SPI bit 10
         static constexpr uint8_t k_stageBits[4][2] = {
-            {  1,  4 },   // ScreenRelay : panel  7 → bit 1,  panel 10 → bit 4
+            {  1,  4 },   // Vcc3v3Relay : panel  7 → bit 1,  panel 10 → bit 4
             { 12, 11 },   // DacRelay    : panel  3 → bit 12, panel  6 → bit 11
             { 15,  6 },   // OutputStage : panel  2 → bit 15, panel  5 → bit 6
             {  7, 10 },   // RpiComms    : panel  1 → bit 7,  panel  4 → bit 10

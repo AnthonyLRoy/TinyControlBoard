@@ -46,7 +46,6 @@ namespace controlSystem
         mr_rpiBootManager.waitForRpiShutdown(board::timing::k_rpiShutdownTimeoutMs);
         mr_relayController.shutdownRpi();
         vTaskDelay(pdMS_TO_TICKS(board::timing::k_rpiShutdownSettleDelayMs));
-        mr_relayController.shutdownScreen();
     }
 
     ControlBoardPowerState PowerStateTransitionHandler::handle(const actions::IAction &action)
@@ -62,8 +61,8 @@ namespace controlSystem
             // Illuminate all eight boot diagnostic LEDs.
             indicators::getBootDiagnosticLeds().begin();
 
-            mr_relayController.setRelayWithDelay(PIN_RELAY_SCREEN_POWER, true, board::timing::k_screenOnDelayMs);
-            indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::ScreenRelay);
+            mr_relayController.setRelayWithDelay(PIN_RELAY_VCC_3V3_POWER, true, board::timing::k_vcc3v3OnDelayMs);
+            indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::Vcc3v3Relay);
 
             mr_relayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, true, board::timing::k_powerSettleDelayMs);
             indicators::getBootDiagnosticLeds().stageSuccess(indicators::BootStage::DacRelay);
@@ -97,7 +96,6 @@ namespace controlSystem
         {
             ESP_LOGI(k_logTag, "Initiating sleep sequence");
             runRpiShutdownSequence();
-            vTaskDelay(pdMS_TO_TICKS(board::timing::k_screenPowerOffDelayMs));
             indicators::getSpiLedDriver().setAllLeds(false);
             indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
             publishPowerState(ControlBoardPowerState::SLEEP);

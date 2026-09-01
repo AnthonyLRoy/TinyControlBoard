@@ -274,7 +274,7 @@ References:
 - relay state changes with optional delay,
 - DAC relay toggling,
 - Raspberry Pi relay shutdown,
-- screen relay shutdown.
+- 3V3 relay shutdown.
 
 `StandardRelay::setRelayState()` returns a `bool` — `true` if `gpio_set_level()` succeeded, `false` on driver error (e.g. pin not configured or invalid pin number). Physical contact state is not detectable without dedicated feedback hardware.
 
@@ -587,11 +587,11 @@ Design rules:
 | `k_heartbeatTimeoutMs` | 30 000 | ms | Inactivity window before heartbeat is considered lost |
 | `k_initDelayMs` | 5 000 | ms | Post-boot settle delay before `triggerInitialPowerOn()` |
 | `k_powerSettleDelayMs` | 1 500 | ms | Delay after DAC / output-stage relay enable |
-| `k_screenOnDelayMs` | 1 000 | ms | Delay between screen and Pi relay steps during power-on |
+| `k_vcc3v3OnDelayMs` | 1 000 | ms | Delay between 3V3 and Pi relay steps during power-on |
 | `k_rpiBootTimeoutMs` | 60 000 | ms | Max wait for Pi heartbeat after power-on |
 | `k_rpiShutdownTimeoutMs` | 60 000 | ms | Max wait for Pi heartbeat loss during shutdown |
-| `k_rpiShutdownSettleDelayMs` | 500 | ms | Delay between Pi relay off and screen relay off |
-| `k_screenPowerOffDelayMs` | 5 000 | ms | Delay after screen relay off before LED state changes |
+| `k_rpiShutdownSettleDelayMs` | 500 | ms | Delay between Pi relay off and 3V3 relay off |
+| `k_vcc3v3PowerOffDelayMs` | 5 000 | ms | Delay after 3V3 relay off before LED state changes |
 | `kLongPressThresholdMs` (in `PowerStateTransitionPolicy.hpp`) | 3 000 | ms | Power-button hold duration that selects deep sleep vs sleep |
 
 ### 17.2 UART Constants (`lib/board/boardConfig.hpp` — `board::serial`)
@@ -621,7 +621,7 @@ Design rules:
 | 10 | Output | Prototype DAC enable relay | GPIO | Active high |
 | 11 | Output | Raspberry Pi power relay | GPIO | Active high |
 | 12 | Output | DAC power relay | GPIO | Active high |
-| 13 | Output | Screen power relay | GPIO | Active high |
+| 13 | Output | 3V3 power relay | GPIO | Active high |
 | 15 | Output | I2C SCL | I2C_NUM_0 | MCP23017 clock |
 | 16 | I/O | I2C SDA | I2C_NUM_0 | MCP23017 data |
 | 17 | Output | MCP23017 enable | GPIO | Active high |
@@ -762,7 +762,7 @@ pio device monitor                   # serial monitor at 115200 baud
 | **ActionFactory** | `lib/app/ActionFactory.cpp`; maps a `CommandId` to a concrete `IAction` subclass. |
 | **app_main** | ESP-IDF entry point (replaces `main()`). Defined in `src/main.cpp`. |
 | **BootDiagnosticLeds** | Visual boot-stage indicator using 8 of the 16 SPI LEDs. |
-| **BootStage** | Enum (`ScreenRelay`, `DacRelay`, `OutputStage`, `RpiComms`) identifying one phase of the relay power-on sequence. |
+| **BootStage** | Enum (`Vcc3v3Relay`, `DacRelay`, `OutputStage`, `RpiComms`) identifying one phase of the relay power-on sequence. |
 | **ButtonEventQueue** | RAII wrapper around the FreeRTOS queue and `action_task` that serializes ISR-originated button events for the application thread. |
 | **CommandId** | 16-bit identifier for a firmware command (e.g. `CMD_PLAY_PAUSE = 0x0102`). Defined in `lib/protocol/uartProtocol.hpp`. |
 | **ControlBoard** | Top-level integration class; owns all major component instances and wires callbacks. |
