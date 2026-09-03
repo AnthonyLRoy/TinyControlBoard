@@ -83,6 +83,16 @@ static volatile bool                   s_librarySubscribed = false;
 static std::function<void(uint16_t, uint16_t)> s_onLibraryCommand;
 static std::function<void(uint16_t, const uint8_t *, uint8_t)> s_onPlaylistCommand;
 
+// Notify-capable characteristics, used to dispatch SUBSCRIBE/DISCONNECT GAP events
+// without a per-characteristic if/else chain (add a new notify char by adding one entry here).
+struct SubscribableChar { const uint16_t *valHandle; volatile bool *subscribedFlag; };
+static const SubscribableChar k_subscribableChars[] = {
+    { &s_statusValHandle,        &s_statusSubscribed },
+    { &s_nowPlayingValHandle,    &s_nowPlayingSubscribed },
+    { &s_trackProgressValHandle, &s_trackProgressSubscribed },
+    { &s_libraryValHandle,       &s_librarySubscribed },
+};
+
 // ---------------------------------------------------------------------------
 // Forward declarations for the GATT table
 // ---------------------------------------------------------------------------
@@ -282,56 +292,51 @@ static int playlistCmdChrAccess(uint16_t conn, uint16_t attr,
 }
 
 
+// Shared by all push*Notification() functions: wraps bytes in an mbuf and notifies
+// the current connection, logging failures with the caller-supplied tag.
+static bool notifyBytes(uint16_t valHandle, const void *p_data, size_t len, const char *what)
+{
+    if (s_connHandle == BLE_HS_CONN_HANDLE_NONE || valHandle == 0)
+        return false;
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(p_data, len);
+    if (!om)
+    {
+        ESP_LOGW(k_logTag, "%s: ble_hs_mbuf_from_flat returned NULL", what);
+        return false;
+    }
+    int rc = ble_gatts_notify_custom(s_connHandle, valHandle, om);
+    if (rc != 0)
+        ESP_LOGW(k_logTag, "%s notify failed: %d (conn=%u val=%u)", what, rc, s_connHandle, valHandle);
+    return rc == 0;
+}
+
 // Helper: build and send a single status notification to the current connection
 static bool pushStatusNotification()
 {
-    if (!s_state || s_connHandle == BLE_HS_CONN_HANDLE_NONE)
+    if (!s_state)
         return false;
-    if (s_statusValHandle == 0)
-    {
-        ESP_LOGE(k_logTag, "pushStatus: val_handle is 0 — GATT service not registered correctly!");
-        return false;
-    }
     const auto     ps = static_cast<uint8_t>(s_state->powerState.load());
     const uint16_t bm = s_state->buttonLedBitmask.load();
     const uint8_t  buf[3] = { ps,
                                static_cast<uint8_t>(bm & 0xFF),
                                static_cast<uint8_t>((bm >> 8) & 0xFF) };
-    struct os_mbuf *om = ble_hs_mbuf_from_flat(buf, sizeof(buf));
-    if (!om)
-    {
-        ESP_LOGW(k_logTag, "pushStatus: ble_hs_mbuf_from_flat returned NULL");
-        return false;
-    }
-    int rc = ble_gatts_notify_custom(s_connHandle, s_statusValHandle, om);
-    if (rc != 0)
-    {
-        ESP_LOGW(k_logTag, "ble_gatts_notify_custom failed: %d (conn=%u val=%u)",
-                 rc, s_connHandle, s_statusValHandle);
-        return false;
-    }
-    ESP_LOGI(k_logTag, "Status notification sent: powerState=%u bitmask=0x%04X", ps, bm);
-    return true;
+    const bool ok = notifyBytes(s_statusValHandle, buf, sizeof(buf), "status");
+    if (ok)
+        ESP_LOGI(k_logTag, "Status notification sent: powerState=%u bitmask=0x%04X", ps, bm);
+    return ok;
 }
 
 static bool pushNowPlayingNotification()
 {
-    if (!s_state || s_connHandle == BLE_HS_CONN_HANDLE_NONE || s_nowPlayingValHandle == 0)
+    if (!s_state)
         return false;
     const char *text = s_state->nowPlayingText;
-    const size_t len = strlen(text);
-    struct os_mbuf *om = ble_hs_mbuf_from_flat(text, len);
-    if (!om)
-        return false;
-    int rc = ble_gatts_notify_custom(s_connHandle, s_nowPlayingValHandle, om);
-    if (rc != 0)
-        ESP_LOGW(k_logTag, "now-playing notify failed: %d", rc);
-    return rc == 0;
+    return notifyBytes(s_nowPlayingValHandle, text, strlen(text), "now-playing");
 }
 
 static bool pushTrackProgressNotification()
 {
-    if (!s_state || s_connHandle == BLE_HS_CONN_HANDLE_NONE || s_trackProgressValHandle == 0)
+    if (!s_state)
         return false;
     uint16_t elapsed = 0;
     uint16_t duration = 0;
@@ -350,22 +355,13 @@ static bool pushTrackProgressNotification()
                              static_cast<uint8_t>(duration & 0xFF),
                              static_cast<uint8_t>(duration >> 8),
                              static_cast<uint8_t>(isPlaying) };
-    struct os_mbuf *om = ble_hs_mbuf_from_flat(buf, sizeof(buf));
-    if (!om)
-        return false;
-    int rc = ble_gatts_notify_custom(s_connHandle, s_trackProgressValHandle, om);
-    if (rc != 0)
-        ESP_LOGW(k_logTag, "track-progress notify failed: %d", rc);
-    return rc == 0;
+    return notifyBytes(s_trackProgressValHandle, buf, sizeof(buf), "track-progress");
 }
 
 // Builds the MSG_LIBRARY_ENTRY wire payload [entryType, index_lo/hi, total_lo/hi, name]
 // and pushes it immediately — called directly from the UART receive path, not the poll task.
 void ble::notifyLibraryEntry(const UartMessage &rMsg)
 {
-    if (s_connHandle == BLE_HS_CONN_HANDLE_NONE || s_libraryValHandle == 0)
-        return;
-
     uint8_t buf[5 + protocol::k_maxLibraryNameLen];
     buf[0] = rMsg.libraryEntryType;
     buf[1] = static_cast<uint8_t>(rMsg.libraryEntryIndex & 0xFF);
@@ -374,12 +370,7 @@ void ble::notifyLibraryEntry(const UartMessage &rMsg)
     buf[4] = static_cast<uint8_t>(rMsg.libraryEntryTotal >> 8);
     memcpy(buf + 5, rMsg.libraryEntryName, rMsg.libraryEntryNameLen);
 
-    struct os_mbuf *om = ble_hs_mbuf_from_flat(buf, 5 + rMsg.libraryEntryNameLen);
-    if (!om)
-        return;
-    int rc = ble_gatts_notify_custom(s_connHandle, s_libraryValHandle, om);
-    if (rc != 0)
-        ESP_LOGW(k_logTag, "library-entry notify failed: %d", rc);
+    notifyBytes(s_libraryValHandle, buf, 5 + rMsg.libraryEntryNameLen, "library-entry");
 }
 
 // ---------------------------------------------------------------------------
@@ -448,23 +439,18 @@ static int gapEventHandler(struct ble_gap_event *event, void *arg)
         break;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        if (event->subscribe.attr_handle == s_statusValHandle)
-            s_statusSubscribed = event->subscribe.cur_notify;
-        else if (event->subscribe.attr_handle == s_nowPlayingValHandle)
-            s_nowPlayingSubscribed = event->subscribe.cur_notify;
-        else if (event->subscribe.attr_handle == s_trackProgressValHandle)
-            s_trackProgressSubscribed = event->subscribe.cur_notify;
-        else if (event->subscribe.attr_handle == s_libraryValHandle)
-            s_librarySubscribed = event->subscribe.cur_notify;
+        for (const auto &c : k_subscribableChars)
+        {
+            if (event->subscribe.attr_handle == *c.valHandle)
+                *c.subscribedFlag = event->subscribe.cur_notify;
+        }
         break;
 
     case BLE_GAP_EVENT_DISCONNECT:
         ESP_LOGI(k_logTag, "BLE client disconnected (reason=%d)", event->disconnect.reason);
         s_connHandle = BLE_HS_CONN_HANDLE_NONE;
-        s_statusSubscribed = false;
-        s_nowPlayingSubscribed = false;
-        s_trackProgressSubscribed = false;
-        s_librarySubscribed = false;
+        for (const auto &c : k_subscribableChars)
+            *c.subscribedFlag = false;
         startAdvertising();
         break;
 
@@ -603,7 +589,3 @@ void ble::BleServer::start(controlSystem::ActionProcessor &processor,
 
     ESP_LOGI(k_logTag, "BLE server initialised");
 }
-
-
-// ---------------------------------------------------------------------------
-// UUIDs  (128-bit, little-endian byte order for BLE_UUID128_INIT)

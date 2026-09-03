@@ -48,7 +48,7 @@ class PlaylistListActivity : AppCompatActivity() {
         b.btnEmptyStateBack.setOnClickListener { finish() }
 
         lifecycleScope.launch {
-            vm.playlistNameEntries.collectLatest { entries ->
+            vm.playlist.nameEntries.collectLatest { entries ->
                 if (entries == null) {
                     b.tvEmptyState.visibility = android.view.View.GONE
                     b.btnEmptyStateBack.visibility = android.view.View.GONE
@@ -75,10 +75,10 @@ class PlaylistListActivity : AppCompatActivity() {
     }
 
     private fun fetchNames() {
-        vm.requestPlaylistNames()
+        vm.playlist.requestNames()
         lifecycleScope.launch {
             try {
-                withTimeout(5000) { vm.playlistNameEntries.first { it != null } }
+                withTimeout(5000) { vm.playlist.nameEntries.first { it != null } }
             } catch (e: TimeoutCancellationException) {
                 showFetchFailedDialog()
             }
@@ -100,7 +100,7 @@ class PlaylistListActivity : AppCompatActivity() {
     }
 
     private fun loadPlaylist(name: String) {
-        vm.loadPlaylist(name)
+        vm.playlist.load(name)
         awaitPlaylistOpResult(
             onResult = { result ->
                 if (result.ok) {
@@ -129,7 +129,7 @@ class PlaylistListActivity : AppCompatActivity() {
     }
 
     private fun deletePlaylist(name: String) {
-        vm.deletePlaylist(name)
+        vm.playlist.delete(name)
         awaitPlaylistOpResult(
             onResult = { result ->
                 if (result.ok) {
@@ -145,8 +145,8 @@ class PlaylistListActivity : AppCompatActivity() {
     private fun awaitPlaylistOpResult(onResult: (BleProtocol.PlaylistOpResult) -> Unit, onFailure: () -> Unit) {
         lifecycleScope.launch {
             try {
-                val result = withTimeout(8000) { vm.playlistOpResult.filterNotNull().first() }
-                vm.clearPlaylistOpResult()
+                val result = withTimeout(8000) { vm.playlist.opResult.filterNotNull().first() }
+                vm.playlist.clearOpResult()
                 onResult(result)
             } catch (e: TimeoutCancellationException) {
                 onFailure()

@@ -131,7 +131,7 @@ class PlaylistManagementActivity : AppCompatActivity() {
     }
 
     private fun performSave(name: String, overwrite: Boolean, onDone: () -> Unit, onCancelToSaveDialog: () -> Unit) {
-        if (overwrite) vm.overwritePlaylist(name) else vm.savePlaylist(name)
+        if (overwrite) vm.playlist.overwrite(name) else vm.playlist.save(name)
         awaitPlaylistOpResult(
             onResult = { result ->
                 if (result.ok) {
@@ -161,10 +161,10 @@ class PlaylistManagementActivity : AppCompatActivity() {
 
     // ── Shared helpers ───────────────────────────────────────────────────────
     private fun fetchPlaylistNames(onResult: (List<String>) -> Unit, onFailure: () -> Unit) {
-        vm.requestPlaylistNames()
+        vm.playlist.requestNames()
         lifecycleScope.launch {
             try {
-                val entries = withTimeout(5000) { vm.playlistNameEntries.first { it != null } }
+                val entries = withTimeout(5000) { vm.playlist.nameEntries.first { it != null } }
                 onResult(entries!!.map { it.name })
             } catch (e: TimeoutCancellationException) {
                 onFailure()
@@ -175,8 +175,8 @@ class PlaylistManagementActivity : AppCompatActivity() {
     private fun awaitPlaylistOpResult(onResult: (BleProtocol.PlaylistOpResult) -> Unit, onFailure: () -> Unit) {
         lifecycleScope.launch {
             try {
-                val result = withTimeout(8000) { vm.playlistOpResult.filterNotNull().first() }
-                vm.clearPlaylistOpResult()
+                val result = withTimeout(8000) { vm.playlist.opResult.filterNotNull().first() }
+                vm.playlist.clearOpResult()
                 onResult(result)
             } catch (e: TimeoutCancellationException) {
                 onFailure()

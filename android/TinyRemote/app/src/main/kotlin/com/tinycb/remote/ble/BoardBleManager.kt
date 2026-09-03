@@ -290,6 +290,29 @@ class BoardBleManager(context: Context) {
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
+    /** Little-endian 2-byte encoding shared by every command/write path. */
+    private fun commandId16Bytes(commandId: Int) = byteArrayOf(
+        (commandId and 0xFF).toByte(),
+        ((commandId shr 8) and 0xFF).toByte()
+    )
+
+    /** Writes [bytes] to [characteristic] using the current GATT connection, handling the
+     *  API 33+ vs. legacy write API split in one place. No-op (with a log) if not connected. */
+    @SuppressLint("MissingPermission")
+    private fun writeToCharacteristic(characteristic: BluetoothGattCharacteristic, bytes: ByteArray) {
+        val g = gatt ?: run { Log.w(TAG, "write to ${characteristic.uuid}: gatt is null"); return }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            g.writeCharacteristic(characteristic, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
+        } else {
+            @Suppress("DEPRECATION")
+            characteristic.value = bytes
+            @Suppress("DEPRECATION")
+            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+            @Suppress("DEPRECATION")
+            g.writeCharacteristic(characteristic)
+        }
+    }
+
     /** Clears the Android GATT service cache via the hidden refresh() API.
      *  Silently ignored if the API is unavailable. */
     private fun refreshGattCache(g: BluetoothGatt) {
@@ -410,22 +433,8 @@ class BoardBleManager(context: Context) {
     @SuppressLint("MissingPermission")
     fun sendCommand(commandId: Int) {
         val char = cmdChar ?: run { Log.w(TAG, "sendCommand 0x%04X: cmdChar is null".format(commandId)); return }
-        val g    = gatt    ?: run { Log.w(TAG, "sendCommand 0x%04X: gatt is null".format(commandId)); return }
         Log.d(TAG, "sendCommand: writing 0x%04X to CMD characteristic".format(commandId))
-        val bytes = byteArrayOf(
-            (commandId and 0xFF).toByte(),
-            ((commandId shr 8) and 0xFF).toByte()
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            g.writeCharacteristic(char, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
-        } else {
-            @Suppress("DEPRECATION")
-            char.value = bytes
-            @Suppress("DEPRECATION")
-            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(char)
-        }
+        writeToCharacteristic(char, commandId16Bytes(commandId))
     }
 
     fun disconnect() {
@@ -454,23 +463,11 @@ class BoardBleManager(context: Context) {
     private fun writeLibraryCommand(commandId: Int, param: Int) {
         playlistNameMode = false
         val char = libraryCmdChar ?: run { Log.w(TAG, "library cmd 0x%04X: libraryCmdChar is null".format(commandId)); return }
-        val g    = gatt           ?: run { Log.w(TAG, "library cmd 0x%04X: gatt is null".format(commandId)); return }
-        val bytes = byteArrayOf(
-            (commandId and 0xFF).toByte(),
-            ((commandId shr 8) and 0xFF).toByte(),
+        val bytes = commandId16Bytes(commandId) + byteArrayOf(
             (param and 0xFF).toByte(),
             ((param shr 8) and 0xFF).toByte()
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            g.writeCharacteristic(char, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
-        } else {
-            @Suppress("DEPRECATION")
-            char.value = bytes
-            @Suppress("DEPRECATION")
-            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(char)
-        }
+        writeToCharacteristic(char, bytes)
     }
 
     fun browseRoot() = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, BleProtocol.LIB_BROWSE_ROOT)
@@ -498,23 +495,9 @@ class BoardBleManager(context: Context) {
 
     private fun writePlaylistCommand(commandId: Int, name: String) {
         val char = playlistCmdChar ?: run { Log.w(TAG, "playlist cmd 0x%04X: playlistCmdChar is null".format(commandId)); return }
-        val g    = gatt            ?: run { Log.w(TAG, "playlist cmd 0x%04X: gatt is null".format(commandId)); return }
         val fullNameBytes = name.toByteArray(Charsets.UTF_8)
         val nameBytes = fullNameBytes.copyOf(minOf(fullNameBytes.size, 55))
-        val bytes = byteArrayOf(
-            (commandId and 0xFF).toByte(),
-            ((commandId shr 8) and 0xFF).toByte()
-        ) + nameBytes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            g.writeCharacteristic(char, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
-        } else {
-            @Suppress("DEPRECATION")
-            char.value = bytes
-            @Suppress("DEPRECATION")
-            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(char)
-        }
+        writeToCharacteristic(char, commandId16Bytes(commandId) + nameBytes)
     }
 
     fun savePlaylist(name: String) = writePlaylistCommand(BleProtocol.CMD_PLAYLIST_SAVE, name)

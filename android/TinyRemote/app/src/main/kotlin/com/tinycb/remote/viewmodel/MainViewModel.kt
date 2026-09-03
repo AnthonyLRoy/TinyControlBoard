@@ -70,16 +70,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val selectedViewId: StateFlow<Int?> = bleManager.selectedViewId
 
-    val libraryListing: StateFlow<List<LibraryEntry>> = bleManager.libraryListing
-    val playlistNameEntries: StateFlow<List<LibraryEntry>?> = bleManager.playlistNameEntries
-    val playlistOpResult: StateFlow<com.tinycb.remote.ble.BleProtocol.PlaylistOpResult?> = bleManager.playlistOpResult
+    // ── Library (folder browse + current queue) ─────────────────────────────
+    inner class LibraryController {
+        val listing: StateFlow<List<LibraryEntry>> = bleManager.libraryListing
+        fun browseRoot() = bleManager.browseRoot()
+        fun browseUp() = bleManager.browseUp()
+        fun browseInto(index: Int) = bleManager.browseInto(index)
+        fun addTrack(index: Int) = bleManager.addTrack(index)
+        fun addFolder(index: Int) = bleManager.addFolder(index)
+        fun replaceWithFolder(index: Int) = bleManager.replaceWithFolder(index)
+        fun playTrack(index: Int) = bleManager.playTrack(index)
+        fun removeTrack(index: Int) = bleManager.removeTrack(index)
+        fun requestQueue() = bleManager.requestPlaylist()
+    }
+    val library = LibraryController()
 
-    fun requestPlaylistNames() = bleManager.requestPlaylistNames()
-    fun clearPlaylistOpResult() = bleManager.clearPlaylistOpResult()
-    fun savePlaylist(name: String) = bleManager.savePlaylist(name)
-    fun overwritePlaylist(name: String) = bleManager.overwritePlaylist(name)
-    fun loadPlaylist(name: String) = bleManager.loadPlaylist(name)
-    fun deletePlaylist(name: String) = bleManager.deletePlaylist(name)
+    // ── Saved playlists (save/load/delete) ───────────────────────────────────
+    inner class PlaylistController {
+        val nameEntries: StateFlow<List<LibraryEntry>?> = bleManager.playlistNameEntries
+        val opResult: StateFlow<BleProtocol.PlaylistOpResult?> = bleManager.playlistOpResult
+        fun requestNames() = bleManager.requestPlaylistNames()
+        fun clearOpResult() = bleManager.clearPlaylistOpResult()
+        fun save(name: String) = bleManager.savePlaylist(name)
+        fun overwrite(name: String) = bleManager.overwritePlaylist(name)
+        fun load(name: String) = bleManager.loadPlaylist(name)
+        fun delete(name: String) = bleManager.deletePlaylist(name)
+    }
+    val playlist = PlaylistController()
 
     // ── Track Progress State ────────────────────────────────────────────────
     data class ProgressState(
@@ -179,16 +196,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
-    fun browseRoot() = bleManager.browseRoot()
-    fun browseUp() = bleManager.browseUp()
-    fun browseInto(index: Int) = bleManager.browseInto(index)
-    fun addTrack(index: Int) = bleManager.addTrack(index)
-    fun addFolder(index: Int) = bleManager.addFolder(index)
-    fun replaceWithFolder(index: Int) = bleManager.replaceWithFolder(index)
-    fun playTrack(index: Int) = bleManager.playTrack(index)
-    fun removeTrack(index: Int) = bleManager.removeTrack(index)
-    fun requestPlaylist() = bleManager.requestPlaylist()
 
     fun setSelectedView(commandId: Int) {
         bleManager.setSelectedViewId(commandId)

@@ -36,13 +36,13 @@ class LibraryActivity : AppCompatActivity() {
         adapter = LibraryAdapter(
             onUpClicked = {
                 depth = (depth - 1).coerceAtLeast(0)
-                vm.browseUp()
+                vm.library.browseUp()
             },
             onFolderClicked = { index ->
                 showFolderActions(index)
             },
             onTrackClicked = { index ->
-                vm.addTrack(index)
+                vm.library.addTrack(index)
                 Toast.makeText(this, R.string.library_added_to_playlist, Toast.LENGTH_SHORT).show()
             }
         )
@@ -51,7 +51,7 @@ class LibraryActivity : AppCompatActivity() {
         b.rvLibrary.adapter = adapter
 
         lifecycleScope.launch {
-            vm.libraryListing.collectLatest { entries ->
+            vm.library.listing.collectLatest { entries ->
                 val rows = buildList {
                     if (depth > 0) add(LibraryRow.Up)
                     entries.forEach { add(LibraryRow.Entry(it)) }
@@ -60,7 +60,7 @@ class LibraryActivity : AppCompatActivity() {
             }
         }
 
-        vm.browseRoot()
+        vm.library.browseRoot()
     }
 
     private fun showFolderActions(index: Int) {
@@ -74,16 +74,16 @@ class LibraryActivity : AppCompatActivity() {
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> {
-                        vm.addFolder(index)
+                        vm.library.addFolder(index)
                         Toast.makeText(this, R.string.library_folder_added, Toast.LENGTH_SHORT).show()
                     }
                     1 -> {
-                        vm.replaceWithFolder(index)
+                        vm.library.replaceWithFolder(index)
                         Toast.makeText(this, R.string.library_playlist_replaced, Toast.LENGTH_SHORT).show()
                     }
                     2 -> {
                         depth += 1
-                        vm.browseInto(index)
+                        vm.library.browseInto(index)
                     }
                 }
             }

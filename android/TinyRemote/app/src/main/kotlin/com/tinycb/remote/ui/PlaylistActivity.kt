@@ -34,10 +34,10 @@ class PlaylistActivity : AppCompatActivity() {
                 getString(R.string.playlist_remove)
             )) { _, which ->
                 when (which) {
-                    0 -> vm.playTrack(index)
+                    0 -> vm.library.playTrack(index)
                     1 -> {
-                        vm.removeTrack(index)
-                        vm.requestPlaylist()
+                        vm.library.removeTrack(index)
+                        vm.library.requestQueue()
                     }
                 }
             }
@@ -62,12 +62,12 @@ class PlaylistActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            vm.libraryListing.collectLatest { entries ->
+            vm.library.listing.collectLatest { entries ->
                 currentEntries = entries
                 adapter.submitList(entries.map { LibraryRow.Entry(it) })
             }
         }
-        vm.requestPlaylist()
+        vm.library.requestQueue()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
