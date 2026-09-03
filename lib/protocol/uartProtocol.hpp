@@ -51,6 +51,9 @@ enum MessageType : uint8_t
     // ESP32->RPi only; payload = playlist name (UTF-8, no terminator). commandId
     // selects which playlist action (see CMD_PLAYLIST_* below).
     MSG_PLAYLIST_CMD   = 0x08,
+    // RPi->ESP32 only; payload = ok(u8, 0/1) + result message (UTF-8, no terminator).
+    // Reports the outcome of a CMD_PLAYLIST_SAVE/_SAVE_OVERWRITE/_LOAD/_DELETE request.
+    MSG_PLAYLIST_RESULT = 0x09,
 };
 
 #define UART_PACKET_SIZE protocol::k_maxPacketSize
@@ -167,6 +170,10 @@ struct UartMessage
     // Outgoing MSG_PLAYLIST_CMD: playlist name payload (ESP32->RPi).
     uint8_t  playlistNameOut[protocol::k_maxLibraryNameLen + 1];
     uint8_t  playlistNameOutLen;
+    // Incoming MSG_PLAYLIST_RESULT: outcome of a save/load/delete request.
+    bool     playlistResultOk;
+    uint8_t  playlistResultMessage[protocol::k_maxLibraryNameLen + 1];
+    uint8_t  playlistResultMessageLen;
     uint8_t  checksum;
 
     UartMessage()
@@ -174,12 +181,14 @@ struct UartMessage
           msgType(MSG_COMMAND), sequence(0), commandId(0), nowPlayingLen(0),
           trackElapsedSec(0), trackDurationSec(0), trackIsPlaying(false),
           libraryEntryType(0), libraryEntryIndex(0), libraryEntryTotal(0),
-          libraryEntryNameLen(0), playlistNameOutLen(0), checksum(0)
+          libraryEntryNameLen(0), playlistNameOutLen(0), playlistResultOk(false),
+          playlistResultMessageLen(0), checksum(0)
     {
         memset(params, 0, sizeof(params));
         memset(nowPlayingText, 0, sizeof(nowPlayingText));
         memset(libraryEntryName, 0, sizeof(libraryEntryName));
         memset(playlistNameOut, 0, sizeof(playlistNameOut));
+        memset(playlistResultMessage, 0, sizeof(playlistResultMessage));
     }
 };
 

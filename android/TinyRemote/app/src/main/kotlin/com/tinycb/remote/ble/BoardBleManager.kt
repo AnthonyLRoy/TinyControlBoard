@@ -165,6 +165,7 @@ class BoardBleManager(context: Context) {
             val nowPlayingChar = svc.getCharacteristic(BleUuids.NOW_PLAYING_CHAR)
             val trackProgressChar = svc.getCharacteristic(BleUuids.TRACK_PROGRESS_CHAR)
             val libraryChar = svc.getCharacteristic(BleUuids.LIBRARY_CHAR)
+            val playlistResultChar = svc.getCharacteristic(BleUuids.PLAYLIST_RESULT_CHAR)
             libraryCmdChar = svc.getCharacteristic(BleUuids.LIBRARY_CMD_CHAR)
             if (libraryCmdChar == null) {
                 Log.w(TAG, "Library-cmd characteristic not found — library browse unavailable")
@@ -194,6 +195,11 @@ class BoardBleManager(context: Context) {
                 enqueueNotification(libraryChar)
             } else {
                 Log.w(TAG, "Library characteristic not found — library browse unavailable")
+            }
+            if (playlistResultChar != null) {
+                enqueueNotification(playlistResultChar)
+            } else {
+                Log.w(TAG, "Playlist-result characteristic not found — playlist save/load/delete feedback unavailable")
             }
             writeNextNotification(g)
 
@@ -228,6 +234,7 @@ class BoardBleManager(context: Context) {
                 BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
                 BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
                 BleUuids.LIBRARY_CHAR        -> parseLibraryEntry(value)
+                BleUuids.PLAYLIST_RESULT_CHAR -> parsePlaylistResult(value)
                 else -> Log.w(TAG, "onCharacteristicChanged (API33+): unknown uuid ${characteristic.uuid}")
             }
         }
@@ -247,6 +254,7 @@ class BoardBleManager(context: Context) {
                 BleUuids.NOW_PLAYING_CHAR    -> parseNowPlaying(value)
                 BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
                 BleUuids.LIBRARY_CHAR        -> parseLibraryEntry(value)
+                BleUuids.PLAYLIST_RESULT_CHAR -> parsePlaylistResult(value)
                 else -> Log.w(TAG, "onCharacteristicChanged (legacy): unknown uuid ${characteristic.uuid}")
             }
         }
@@ -339,11 +347,6 @@ class BoardBleManager(context: Context) {
     }
 
     private fun parseLibraryEntry(value: ByteArray) {
-        val result = BleProtocol.parsePlaylistResult(value)
-        if (result != null) {
-            _playlistOpResult.value = result
-            return
-        }
         if (playlistNameMode) {
             BleProtocol.parseLibraryEntry(value, _playlistNameEntries.value ?: emptyList())?.let {
                 _playlistNameEntries.value = it
@@ -353,6 +356,10 @@ class BoardBleManager(context: Context) {
         BleProtocol.parseLibraryEntry(value, _libraryListing.value)?.let {
             _libraryListing.value = it
         }
+    }
+
+    private fun parsePlaylistResult(value: ByteArray) {
+        _playlistOpResult.value = BleProtocol.parsePlaylistResult(value)
     }
 
     private fun enqueueNotification(characteristic: BluetoothGattCharacteristic) {

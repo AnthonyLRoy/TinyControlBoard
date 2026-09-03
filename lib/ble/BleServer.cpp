@@ -31,6 +31,7 @@
 //   Library char:      4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d05
 //   Library-cmd char:  4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d06
 //   Playlist-cmd char: 4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d07
+//   Playlist-result char:4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d08
 // ---------------------------------------------------------------------------
 static const ble_uuid128_t k_svcUuid =
     BLE_UUID128_INIT(0x0e, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
@@ -64,6 +65,10 @@ static const ble_uuid128_t k_playlistCmdChrUuid =
     BLE_UUID128_INIT(0x07, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
                      0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
 
+static const ble_uuid128_t k_playlistResultChrUuid =
+    BLE_UUID128_INIT(0x08, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
+                     0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
+
 static constexpr const char *k_logTag = "BLE_Server";
 
 // ---------------------------------------------------------------------------
@@ -76,10 +81,12 @@ static uint16_t                        s_statusValHandle  = 0;
 static uint16_t                        s_nowPlayingValHandle = 0;
 static uint16_t                        s_trackProgressValHandle = 0;
 static uint16_t                        s_libraryValHandle = 0;
+static uint16_t                        s_playlistResultValHandle = 0;
 static volatile bool                   s_statusSubscribed = false;
 static volatile bool                   s_nowPlayingSubscribed = false;
 static volatile bool                   s_trackProgressSubscribed = false;
 static volatile bool                   s_librarySubscribed = false;
+static volatile bool                   s_playlistResultSubscribed = false;
 static std::function<void(uint16_t, uint16_t)> s_onLibraryCommand;
 static std::function<void(uint16_t, const uint8_t *, uint8_t)> s_onPlaylistCommand;
 
@@ -91,6 +98,7 @@ static const SubscribableChar k_subscribableChars[] = {
     { &s_nowPlayingValHandle,    &s_nowPlayingSubscribed },
     { &s_trackProgressValHandle, &s_trackProgressSubscribed },
     { &s_libraryValHandle,       &s_librarySubscribed },
+    { &s_playlistResultValHandle,&s_playlistResultSubscribed },
 };
 
 // ---------------------------------------------------------------------------
@@ -110,6 +118,8 @@ static int libraryCmdChrAccess(uint16_t conn, uint16_t attr,
                                struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int playlistCmdChrAccess(uint16_t conn, uint16_t attr,
                                 struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int playlistResultChrAccess(uint16_t conn, uint16_t attr,
+                                   struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 // ---------------------------------------------------------------------------
 // GATT service table
@@ -157,6 +167,12 @@ static const struct ble_gatt_svc_def k_gattSvcs[] = {
                 .uuid      = &k_playlistCmdChrUuid.u,
                 .access_cb = playlistCmdChrAccess,
                 .flags     = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
+            },
+            {
+                .uuid       = &k_playlistResultChrUuid.u,
+                .access_cb  = playlistResultChrAccess,
+                .flags      = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                .val_handle = &s_playlistResultValHandle,
             },
             { 0 },
         },
@@ -291,6 +307,15 @@ static int playlistCmdChrAccess(uint16_t conn, uint16_t attr,
     return 0;
 }
 
+// Read access is not meaningful for playlist results (push-only); just report empty.
+static int playlistResultChrAccess(uint16_t conn, uint16_t attr,
+                                   struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR)
+        return BLE_ATT_ERR_UNLIKELY;
+    return 0;
+}
+
 
 // Shared by all push*Notification() functions: wraps bytes in an mbuf and notifies
 // the current connection, logging failures with the caller-supplied tag.
@@ -371,6 +396,17 @@ void ble::notifyLibraryEntry(const UartMessage &rMsg)
     memcpy(buf + 5, rMsg.libraryEntryName, rMsg.libraryEntryNameLen);
 
     notifyBytes(s_libraryValHandle, buf, 5 + rMsg.libraryEntryNameLen, "library-entry");
+}
+
+// Builds the MSG_PLAYLIST_RESULT wire payload [ok, message] and pushes it immediately —
+// called directly from the UART receive path, not the poll task.
+void ble::notifyPlaylistResult(const UartMessage &rMsg)
+{
+    uint8_t buf[1 + protocol::k_maxLibraryNameLen];
+    buf[0] = rMsg.playlistResultOk ? 1 : 0;
+    memcpy(buf + 1, rMsg.playlistResultMessage, rMsg.playlistResultMessageLen);
+
+    notifyBytes(s_playlistResultValHandle, buf, 1 + rMsg.playlistResultMessageLen, "playlist-result");
 }
 
 // ---------------------------------------------------------------------------

@@ -173,6 +173,114 @@ void test_deserialize_message_rejects_invalid_checksum()
     expect_true(!deserializeMessage(buffer, parsed), "Invalid checksum should be rejected");
 }
 
+// Hand-builds a header+payload+checksum frame for message types that the firmware only ever
+// receives (never encodes itself), so deserializeMessage can be exercised without a C++ encoder.
+uint8_t build_frame(uint8_t msgType, uint16_t commandId, const uint8_t *p_payload, uint8_t payloadLen, uint8_t *p_buffer)
+{
+    p_buffer[0] = UART_START_BYTE;
+    p_buffer[1] = UART_PROTOCOL_VERSION;
+    p_buffer[2] = APP_PI;
+    p_buffer[3] = msgType;
+    p_buffer[4] = 0;
+    p_buffer[5] = static_cast<uint8_t>(commandId & 0xFF);
+    p_buffer[6] = static_cast<uint8_t>(commandId >> 8);
+    p_buffer[7] = payloadLen;
+    memcpy(p_buffer + protocol::k_headerSize, p_payload, payloadLen);
+    const uint8_t packetSize = static_cast<uint8_t>(protocol::k_headerSize + payloadLen + 1);
+    p_buffer[packetSize - 1] = calculateChecksum(p_buffer);
+    return packetSize;
+}
+
+void test_serialize_message_playlist_cmd_writes_variable_length_payload()
+{
+    UartMessage message;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+
+    message.msgType = MSG_PLAYLIST_CMD;
+    message.commandId = CMD_PLAYLIST_SAVE;
+    const char *name = "MyPlaylist";
+    message.playlistNameOutLen = static_cast<uint8_t>(strlen(name));
+    memcpy(message.playlistNameOut, name, message.playlistNameOutLen);
+
+    const uint8_t packetSize = serializeMessage(message, buffer);
+
+    expect_equal(static_cast<uint8_t>(protocol::k_headerSize + 10 + 1), packetSize, "Playlist-cmd packet size mismatch");
+    expect_equal(static_cast<uint8_t>(10), buffer[7], "Playlist-cmd payload length mismatch");
+    expect_equal(std::string("MyPlaylist"),
+                 std::string(reinterpret_cast<const char *>(buffer + protocol::k_headerSize), 10),
+                 "Playlist-cmd name payload mismatch");
+    expect_equal(calculateChecksum(buffer), buffer[packetSize - 1], "Playlist-cmd checksum mismatch");
+}
+
+void test_deserialize_message_now_playing_payload()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const uint8_t payload[] = {'H', 'e', 'l', 'l', 'o'};
+
+    build_frame(MSG_NOW_PLAYING, 0, payload, sizeof(payload), buffer);
+
+    expect_true(deserializeMessage(buffer, parsed), "Now-playing deserialize should succeed");
+    expect_equal(static_cast<uint8_t>(5), parsed.nowPlayingLen, "Now-playing length mismatch");
+    expect_equal(std::string("Hello"), std::string(reinterpret_cast<const char *>(parsed.nowPlayingText)), "Now-playing text mismatch");
+}
+
+void test_deserialize_message_track_progress_payload()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const uint8_t payload[5] = {0x2C, 0x01, 0x58, 0x02, 0x01}; // elapsed=300 duration=600 playing=true
+
+    build_frame(MSG_TRACK_PROGRESS, 0, payload, sizeof(payload), buffer);
+
+    expect_true(deserializeMessage(buffer, parsed), "Track-progress deserialize should succeed");
+    expect_equal(static_cast<uint16_t>(300), parsed.trackElapsedSec, "Elapsed seconds mismatch");
+    expect_equal(static_cast<uint16_t>(600), parsed.trackDurationSec, "Duration seconds mismatch");
+    expect_true(parsed.trackIsPlaying, "isPlaying should be true");
+}
+
+void test_deserialize_message_library_entry_payload()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const uint8_t payload[] = {1, 0x02, 0x00, 0x05, 0x00, 'T', 'r', 'a', 'c', 'k'}; // track, index=2, total=5, name="Track"
+
+    build_frame(MSG_LIBRARY_ENTRY, 0, payload, sizeof(payload), buffer);
+
+    expect_true(deserializeMessage(buffer, parsed), "Library-entry deserialize should succeed");
+    expect_equal(static_cast<uint8_t>(1), parsed.libraryEntryType, "Entry type mismatch");
+    expect_equal(static_cast<uint16_t>(2), parsed.libraryEntryIndex, "Entry index mismatch");
+    expect_equal(static_cast<uint16_t>(5), parsed.libraryEntryTotal, "Entry total mismatch");
+    expect_equal(std::string("Track"), std::string(reinterpret_cast<const char *>(parsed.libraryEntryName)), "Entry name mismatch");
+}
+
+void test_deserialize_message_playlist_result_payload()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const uint8_t payload[] = {1, 'O', 'K'}; // ok=true, message="OK"
+
+    build_frame(MSG_PLAYLIST_RESULT, 0, payload, sizeof(payload), buffer);
+
+    expect_true(deserializeMessage(buffer, parsed), "Playlist-result deserialize should succeed");
+    expect_true(parsed.playlistResultOk, "playlistResultOk should be true");
+    expect_equal(static_cast<uint8_t>(2), parsed.playlistResultMessageLen, "Playlist-result message length mismatch");
+    expect_equal(std::string("OK"), std::string(reinterpret_cast<const char *>(parsed.playlistResultMessage)), "Playlist-result message mismatch");
+}
+
+void test_deserialize_message_playlist_result_failure_payload()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const uint8_t payload[] = {0, 'E', 'r', 'r'}; // ok=false, message="Err"
+
+    build_frame(MSG_PLAYLIST_RESULT, 0, payload, sizeof(payload), buffer);
+
+    expect_true(deserializeMessage(buffer, parsed), "Playlist-result failure deserialize should succeed");
+    expect_true(!parsed.playlistResultOk, "playlistResultOk should be false");
+    expect_equal(std::string("Err"), std::string(reinterpret_cast<const char *>(parsed.playlistResultMessage)), "Playlist-result failure message mismatch");
+}
+
 class FakeAction : public actions::IActionSource
 {
 public:
@@ -872,6 +980,12 @@ int main()
         {"test_deserialize_message_round_trips_serialized_message", test_deserialize_message_round_trips_serialized_message},
         {"test_deserialize_message_rejects_invalid_start_byte", test_deserialize_message_rejects_invalid_start_byte},
         {"test_deserialize_message_rejects_invalid_checksum", test_deserialize_message_rejects_invalid_checksum},
+        {"test_serialize_message_playlist_cmd_writes_variable_length_payload", test_serialize_message_playlist_cmd_writes_variable_length_payload},
+        {"test_deserialize_message_now_playing_payload", test_deserialize_message_now_playing_payload},
+        {"test_deserialize_message_track_progress_payload", test_deserialize_message_track_progress_payload},
+        {"test_deserialize_message_library_entry_payload", test_deserialize_message_library_entry_payload},
+        {"test_deserialize_message_playlist_result_payload", test_deserialize_message_playlist_result_payload},
+        {"test_deserialize_message_playlist_result_failure_payload", test_deserialize_message_playlist_result_failure_payload},
         {"test_control_board_button_press_dispatches_action_and_led", test_control_board_button_press_dispatches_action_and_led},
         {"test_control_board_momentary_button_release_turns_led_off", test_control_board_momentary_button_release_turns_led_off},
         {"test_control_board_toggle_button_press_flips_led_state", test_control_board_toggle_button_press_flips_led_state},

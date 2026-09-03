@@ -30,6 +30,10 @@ namespace controlSystem
         {
             m_libraryEntryCallback = std::move(callback);
         }
+        void setPlaylistResultCallback(std::function<void(const UartMessage &)> callback)
+        {
+            m_playlistResultCallback = std::move(callback);
+        }
 
     private:
         void initNvs();
@@ -54,5 +58,6 @@ namespace controlSystem
 
         SystemState m_systemState;
         std::function<void(const UartMessage &)> m_libraryEntryCallback;
+        std::function<void(const UartMessage &)> m_playlistResultCallback;
     };
 }

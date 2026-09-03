@@ -2,18 +2,18 @@ import time
 
 from library_browser import send_library_entry, LIBRARY_ENTRY_TRACK, LIBRARY_ENTRY_EMPTY, MAX_LIBRARY_ENTRIES
 from mpd_client import mpd_command, _mpd_escape
+from protocol import build_packet, MSG_PLAYLIST_RESULT
+from uart_writer_client import send_packet_locked
 
-# Sentinel index/total pair that marks a MSG_LIBRARY_ENTRY packet as a save/load/delete
-# *result* notification rather than a normal listing row.
-RESULT_SENTINEL = 0xFFFF
-PLAYLIST_RESULT_OK = 3
-PLAYLIST_RESULT_ERROR = 4
 MAX_PLAYLIST_NAME_LEN = 55
+_result_seq = 0
 
 
 def _send_playlist_result(ok, message=""):
-    entry_type = PLAYLIST_RESULT_OK if ok else PLAYLIST_RESULT_ERROR
-    send_library_entry(RESULT_SENTINEL, RESULT_SENTINEL, entry_type, message[:MAX_PLAYLIST_NAME_LEN])
+    global _result_seq
+    payload = bytes([1 if ok else 0]) + message[:MAX_PLAYLIST_NAME_LEN].encode("utf-8")
+    send_packet_locked(build_packet(MSG_PLAYLIST_RESULT, _result_seq, 0, payload))
+    _result_seq = (_result_seq + 1) & 0xFF
 
 
 def _list_playlist_names():

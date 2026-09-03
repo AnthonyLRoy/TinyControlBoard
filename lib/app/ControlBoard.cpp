@@ -196,6 +196,13 @@ namespace controlSystem
             return;
         }
 
+        if (rMsg.msgType == MSG_PLAYLIST_RESULT)
+        {
+            if (m_playlistResultCallback)
+                m_playlistResultCallback(rMsg);
+            return;
+        }
+
         if (isHeartbeatCommand(rMsg.commandId))
         {
             handleHeartbeatReceived();

@@ -29,12 +29,6 @@ object BleProtocol {
     const val LIBRARY_ENTRY_TRACK = 1
     const val LIBRARY_ENTRY_EMPTY = 2
 
-    // ── Playlist operation result (reuses the MSG_LIBRARY_ENTRY wire format with a
-    //    sentinel index/total pair to mark "this is a save/load/delete result, not a listing row") ──
-    const val LIBRARY_ENTRY_PLAYLIST_OK = 3
-    const val LIBRARY_ENTRY_PLAYLIST_ERROR = 4
-    const val PLAYLIST_RESULT_SENTINEL = 0xFFFF
-
     data class PlaylistOpResult(val ok: Boolean, val message: String)
 
     // ── Power States ────────────────────────────────────────────────────────
@@ -109,18 +103,12 @@ object BleProtocol {
         return if (index == 0) listOf(entry) else currentListing + entry
     }
 
-    /** Returns non-null only when [value] is a playlist save/load/delete result sentinel
-     *  (not a normal listing row). */
+    /** Parses a PLAYLIST_RESULT_CHAR notification: MSG_PLAYLIST_RESULT payload = [ok(u8), message]. */
     fun parsePlaylistResult(value: ByteArray): PlaylistOpResult? {
-        if (value.size < 5) return null
-        val entryType = value[0].toInt() and 0xFF
-        if (entryType != LIBRARY_ENTRY_PLAYLIST_OK && entryType != LIBRARY_ENTRY_PLAYLIST_ERROR) return null
-        val index = (value[1].toInt() and 0xFF) or ((value[2].toInt() and 0xFF) shl 8)
-        val total = (value[3].toInt() and 0xFF) or ((value[4].toInt() and 0xFF) shl 8)
-        if (index != PLAYLIST_RESULT_SENTINEL || total != PLAYLIST_RESULT_SENTINEL) return null
-
-        val message = value.copyOfRange(5, value.size).toTrimmedString()
-        return PlaylistOpResult(ok = entryType == LIBRARY_ENTRY_PLAYLIST_OK, message = message)
+        if (value.isEmpty()) return null
+        val ok = value[0].toInt() != 0
+        val message = value.copyOfRange(1, value.size).toTrimmedString()
+        return PlaylistOpResult(ok, message)
     }
 
     private fun ByteArray.toTrimmedString(): String {

@@ -18,6 +18,7 @@ namespace ble
     ///   LIBRARY        (READ  | NOTIFY)            — MSG_LIBRARY_ENTRY payload, pushed immediately (not the 200ms poll)
     ///   LIBRARY_CMD    (WRITE | WRITE_NO_RESPONSE) — 4 bytes [cmdId_lo, cmdId_hi, param_lo, param_hi]
     ///   PLAYLIST_CMD   (WRITE | WRITE_NO_RESPONSE) — [cmdId_lo, cmdId_hi, name(UTF-8, variable)]
+    ///   PLAYLIST_RESULT(READ  | NOTIFY)            — MSG_PLAYLIST_RESULT payload, pushed immediately
     ///
     /// All NimBLE implementation details are confined to BleServer.cpp.
     /// Call start() once after ControlBoard::init() succeeds.
@@ -32,5 +33,8 @@ namespace ble
 
     // Pushes a MSG_LIBRARY_ENTRY notification immediately (bypasses the 200ms poll task).
     void notifyLibraryEntry(const UartMessage &rMsg);
+
+    // Pushes a MSG_PLAYLIST_RESULT notification immediately (bypasses the 200ms poll task).
+    void notifyPlaylistResult(const UartMessage &rMsg);
 
 } // namespace ble

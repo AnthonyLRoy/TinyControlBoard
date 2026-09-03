@@ -50,6 +50,7 @@ extern "C" void app_main(void)
                         transport::uart::UartTransport::getInstance().sendUartMessage("BLE_Playlist", msg);
                     });
     board.setLibraryEntryCallback([](const UartMessage &m) { ble::notifyLibraryEntry(m); });
+    board.setPlaylistResultCallback([](const UartMessage &m) { ble::notifyPlaylistResult(m); });
 
     // Keep the app_main task alive; all work is done in FreeRTOS tasks.
     while (true)
