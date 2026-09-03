@@ -43,12 +43,23 @@ class BoardBleManager(context: Context) {
     private val _libraryListing = MutableStateFlow<List<LibraryEntry>>(emptyList())
     val libraryListing: StateFlow<List<LibraryEntry>> = _libraryListing
 
+    private val _playlistNameEntries = MutableStateFlow<List<LibraryEntry>?>(null)
+    val playlistNameEntries: StateFlow<List<LibraryEntry>?> = _playlistNameEntries
+
+    private val _playlistOpResult = MutableStateFlow<BleProtocol.PlaylistOpResult?>(null)
+    val playlistOpResult: StateFlow<BleProtocol.PlaylistOpResult?> = _playlistOpResult
+
+    // When true, incoming MSG_LIBRARY_ENTRY notifications populate playlistNameEntries
+    // instead of libraryListing (see requestPlaylistNames()).
+    @Volatile private var playlistNameMode = false
+
     // ── Internal state ──────────────────────────────────────────────────────
     private val discoveredDevices = mutableListOf<BluetoothDevice>()
     private var leScanner: BluetoothLeScanner? = null
     @Volatile private var gatt: BluetoothGatt? = null
     @Volatile private var cmdChar: BluetoothGattCharacteristic? = null
     @Volatile private var libraryCmdChar: BluetoothGattCharacteristic? = null
+    @Volatile private var playlistCmdChar: BluetoothGattCharacteristic? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val notificationQueue = ArrayDeque<BluetoothGattCharacteristic>()
     private var notificationWriteInFlight = false
@@ -96,6 +107,7 @@ class BoardBleManager(context: Context) {
                     gatt = null
                     cmdChar = null
                     libraryCmdChar = null
+                    playlistCmdChar = null
                     clearNotificationQueue()
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         _connectionState.value = ConnectionState.Error("Connection failed (GATT status $status)")
@@ -104,6 +116,9 @@ class BoardBleManager(context: Context) {
                     }
                     _status.value = null
                     _libraryListing.value = emptyList()
+                    _playlistNameEntries.value = null
+                    _playlistOpResult.value = null
+                    playlistNameMode = false
                 }
             }
         }
@@ -153,6 +168,10 @@ class BoardBleManager(context: Context) {
             libraryCmdChar = svc.getCharacteristic(BleUuids.LIBRARY_CMD_CHAR)
             if (libraryCmdChar == null) {
                 Log.w(TAG, "Library-cmd characteristic not found — library browse unavailable")
+            }
+            playlistCmdChar = svc.getCharacteristic(BleUuids.PLAYLIST_CMD_CHAR)
+            if (playlistCmdChar == null) {
+                Log.w(TAG, "Playlist-cmd characteristic not found — playlist management unavailable")
             }
 
             // Both required characteristics ready — now it is safe to open the control panel
@@ -297,6 +316,17 @@ class BoardBleManager(context: Context) {
     }
 
     private fun parseLibraryEntry(value: ByteArray) {
+        val result = BleProtocol.parsePlaylistResult(value)
+        if (result != null) {
+            _playlistOpResult.value = result
+            return
+        }
+        if (playlistNameMode) {
+            BleProtocol.parseLibraryEntry(value, _playlistNameEntries.value ?: emptyList())?.let {
+                _playlistNameEntries.value = it
+            }
+            return
+        }
         BleProtocol.parseLibraryEntry(value, _libraryListing.value)?.let {
             _libraryListing.value = it
         }
@@ -406,11 +436,15 @@ class BoardBleManager(context: Context) {
         gatt = null
         cmdChar = null
         libraryCmdChar = null
+        playlistCmdChar = null
         clearNotificationQueue()
         _connectionState.value = ConnectionState.Idle
         _status.value = null
         _selectedViewId.value = null
         _libraryListing.value = emptyList()
+        _playlistNameEntries.value = null
+        _playlistOpResult.value = null
+        playlistNameMode = false
     }
 
     fun setSelectedViewId(id: Int?) {
@@ -418,6 +452,7 @@ class BoardBleManager(context: Context) {
     }
 
     private fun writeLibraryCommand(commandId: Int, param: Int) {
+        playlistNameMode = false
         val char = libraryCmdChar ?: run { Log.w(TAG, "library cmd 0x%04X: libraryCmdChar is null".format(commandId)); return }
         val g    = gatt           ?: run { Log.w(TAG, "library cmd 0x%04X: gatt is null".format(commandId)); return }
         val bytes = byteArrayOf(
@@ -450,6 +485,42 @@ class BoardBleManager(context: Context) {
         _libraryListing.value = emptyList()
         writeLibraryCommand(BleProtocol.CMD_PLAYLIST_REQUEST, 0)
     }
+
+    fun requestPlaylistNames() {
+        playlistNameMode = true
+        _playlistNameEntries.value = null
+        writeLibraryCommand(BleProtocol.CMD_PLAYLIST_LIST_REQUEST, 0)
+    }
+
+    fun clearPlaylistOpResult() {
+        _playlistOpResult.value = null
+    }
+
+    private fun writePlaylistCommand(commandId: Int, name: String) {
+        val char = playlistCmdChar ?: run { Log.w(TAG, "playlist cmd 0x%04X: playlistCmdChar is null".format(commandId)); return }
+        val g    = gatt            ?: run { Log.w(TAG, "playlist cmd 0x%04X: gatt is null".format(commandId)); return }
+        val fullNameBytes = name.toByteArray(Charsets.UTF_8)
+        val nameBytes = fullNameBytes.copyOf(minOf(fullNameBytes.size, 55))
+        val bytes = byteArrayOf(
+            (commandId and 0xFF).toByte(),
+            ((commandId shr 8) and 0xFF).toByte()
+        ) + nameBytes
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            g.writeCharacteristic(char, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
+        } else {
+            @Suppress("DEPRECATION")
+            char.value = bytes
+            @Suppress("DEPRECATION")
+            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+            @Suppress("DEPRECATION")
+            g.writeCharacteristic(char)
+        }
+    }
+
+    fun savePlaylist(name: String) = writePlaylistCommand(BleProtocol.CMD_PLAYLIST_SAVE, name)
+    fun overwritePlaylist(name: String) = writePlaylistCommand(BleProtocol.CMD_PLAYLIST_SAVE_OVERWRITE, name)
+    fun loadPlaylist(name: String) = writePlaylistCommand(BleProtocol.CMD_PLAYLIST_LOAD, name)
+    fun deletePlaylist(name: String) = writePlaylistCommand(BleProtocol.CMD_PLAYLIST_DELETE, name)
 
     companion object {
         private const val TAG = "BoardBleManager"

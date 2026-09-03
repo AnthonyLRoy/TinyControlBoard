@@ -58,4 +58,30 @@
     <string name="playlist_title">Current Playlist</string>
     <string name="playlist_play_now">Play Now</string>
     <string name="playlist_remove">Remove</string>
+
+    <!-- Playlist Management -->
+    <string name="playlist_management_title">Playlists</string>
+    <string name="playlist_save">Save Playlist</string>
+    <string name="playlist_load">Load Playlist</string>
+    <string name="playlist_delete">Delete Playlist</string>
+    <string name="playlist_name_hint">Playlist name</string>
+    <string name="playlist_save_tracks">Save Tracks as Playlist</string>
+    <string name="playlist_empty_queue_warning">Add tracks to the queue before saving.</string>
+    <string name="playlist_name_error_slash">Name can\'t contain \'/\'</string>
+    <string name="playlist_name_error_too_long">Name is too long</string>
+    <string name="playlist_overwrite_confirm">\'%1$s\' already exists — Overwrite?</string>
+    <string name="playlist_overwrite">Overwrite</string>
+    <string name="playlist_created">Playlist created</string>
+    <string name="playlist_save_failed">Couldn\'t save playlist. %1$s</string>
+    <string name="playlist_loaded">Playlist loaded</string>
+    <string name="playlist_load_failed">Couldn\'t load playlist. %1$s</string>
+    <string name="playlist_delete_confirm">Delete \'%1$s\'?</string>
+    <string name="playlist_delete_confirm_button">Delete</string>
+    <string name="playlist_delete_failed">Couldn\'t delete playlist. %1$s</string>
+    <string name="playlist_none_found">No playlists found</string>
+    <string name="playlist_fetch_failed">Couldn\'t fetch playlists.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="back">Back</string>
 </resources>

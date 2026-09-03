@@ -16,13 +16,32 @@
         android:background="@android:color/transparent"
         app:elevation="0dp">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
-            app:title="@string/playlist_title"
-            app:titleTextColor="@color/text_primary" />
+            android:orientation="horizontal">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                app:title="@string/playlist_title"
+                app:titleTextColor="@color/text_primary"
+                android:background="@android:color/transparent" />
+
+            <ImageButton
+                android:id="@+id/btnPlaylistManagement"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/playlist_management_title"
+                android:src="@drawable/ic_queue_music"
+                app:tint="@color/text_primary" />
+
+        </LinearLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 

@@ -30,6 +30,7 @@
 //   Track-progress char:4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d04
 //   Library char:      4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d05
 //   Library-cmd char:  4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d06
+//   Playlist-cmd char: 4a5c6e7d-8f9a-4b2c-1d3e-5f6a7b8c9d07
 // ---------------------------------------------------------------------------
 static const ble_uuid128_t k_svcUuid =
     BLE_UUID128_INIT(0x0e, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
@@ -59,6 +60,10 @@ static const ble_uuid128_t k_libraryCmdChrUuid =
     BLE_UUID128_INIT(0x06, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
                      0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
 
+static const ble_uuid128_t k_playlistCmdChrUuid =
+    BLE_UUID128_INIT(0x07, 0x9d, 0x8c, 0x7b, 0x6a, 0x5f, 0x3e, 0x1d,
+                     0x2c, 0x4b, 0x9a, 0x8f, 0x7d, 0x6e, 0x5c, 0x4a);
+
 static constexpr const char *k_logTag = "BLE_Server";
 
 // ---------------------------------------------------------------------------
@@ -76,6 +81,7 @@ static volatile bool                   s_nowPlayingSubscribed = false;
 static volatile bool                   s_trackProgressSubscribed = false;
 static volatile bool                   s_librarySubscribed = false;
 static std::function<void(uint16_t, uint16_t)> s_onLibraryCommand;
+static std::function<void(uint16_t, const uint8_t *, uint8_t)> s_onPlaylistCommand;
 
 // ---------------------------------------------------------------------------
 // Forward declarations for the GATT table
@@ -92,6 +98,8 @@ static int libraryChrAccess(uint16_t conn, uint16_t attr,
                             struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int libraryCmdChrAccess(uint16_t conn, uint16_t attr,
                                struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int playlistCmdChrAccess(uint16_t conn, uint16_t attr,
+                                struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 // ---------------------------------------------------------------------------
 // GATT service table
@@ -133,6 +141,11 @@ static const struct ble_gatt_svc_def k_gattSvcs[] = {
             {
                 .uuid      = &k_libraryCmdChrUuid.u,
                 .access_cb = libraryCmdChrAccess,
+                .flags     = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
+            },
+            {
+                .uuid      = &k_playlistCmdChrUuid.u,
+                .access_cb = playlistCmdChrAccess,
                 .flags     = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
             },
             { 0 },
@@ -238,6 +251,33 @@ static int libraryCmdChrAccess(uint16_t conn, uint16_t attr,
 
     if (s_onLibraryCommand)
         s_onLibraryCommand(cmdId, param);
+    return 0;
+}
+
+// Payload: [cmdId_lo, cmdId_hi, name bytes...] — name is the remainder of the write, UTF-8, no terminator.
+static int playlistCmdChrAccess(uint16_t conn, uint16_t attr,
+                                struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    if (ctxt->op != BLE_GATT_ACCESS_OP_WRITE_CHR)
+        return 0;
+    const uint16_t pktLen = OS_MBUF_PKTLEN(ctxt->om);
+    if (pktLen < 2)
+        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+
+    uint8_t cmdBytes[2] = {};
+    os_mbuf_copydata(ctxt->om, 0, sizeof(cmdBytes), cmdBytes);
+    const uint16_t cmdId = static_cast<uint16_t>(cmdBytes[0]) | (static_cast<uint16_t>(cmdBytes[1]) << 8);
+
+    uint8_t nameBuf[protocol::k_maxLibraryNameLen];
+    uint8_t nameLen = static_cast<uint8_t>(pktLen - 2);
+    if (nameLen > protocol::k_maxLibraryNameLen)
+        nameLen = protocol::k_maxLibraryNameLen;
+    if (nameLen > 0)
+        os_mbuf_copydata(ctxt->om, 2, nameLen, nameBuf);
+    ESP_LOGI(k_logTag, "BLE playlist command received: cmd=0x%04X nameLen=%u", cmdId, nameLen);
+
+    if (s_onPlaylistCommand)
+        s_onPlaylistCommand(cmdId, nameBuf, nameLen);
     return 0;
 }
 
@@ -529,11 +569,13 @@ static void statusNotifyTask(void *arg)
 // ---------------------------------------------------------------------------
 void ble::BleServer::start(controlSystem::ActionProcessor &processor,
                            controlSystem::SystemState     &state,
-                           std::function<void(uint16_t cmdId, uint16_t param)> onLibraryCommand)
+                           std::function<void(uint16_t cmdId, uint16_t param)> onLibraryCommand,
+                           std::function<void(uint16_t cmdId, const uint8_t *p_name, uint8_t nameLen)> onPlaylistCommand)
 {
     s_processor = &processor;
     s_state     = &state;
     s_onLibraryCommand = std::move(onLibraryCommand);
+    s_onPlaylistCommand = std::move(onPlaylistCommand);
 
     int rc = nimble_port_init();
     if (rc != ESP_OK)

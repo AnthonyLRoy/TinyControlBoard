@@ -39,6 +39,15 @@ extern "C" void app_main(void)
                         msg.commandId = cmdId;
                         msg.params[0] = param;
                         transport::uart::UartTransport::getInstance().sendUartMessage("BLE_Library", msg);
+                    },
+                    [](uint16_t cmdId, const uint8_t *p_name, uint8_t nameLen)
+                    {
+                        UartMessage msg;
+                        msg.msgType   = MSG_PLAYLIST_CMD;
+                        msg.commandId = cmdId;
+                        msg.playlistNameOutLen = nameLen;
+                        memcpy(msg.playlistNameOut, p_name, nameLen);
+                        transport::uart::UartTransport::getInstance().sendUartMessage("BLE_Playlist", msg);
                     });
     board.setLibraryEntryCallback([](const UartMessage &m) { ble::notifyLibraryEntry(m); });
 

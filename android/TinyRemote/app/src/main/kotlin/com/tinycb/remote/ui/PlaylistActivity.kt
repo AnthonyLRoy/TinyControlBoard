@@ -1,5 +1,6 @@
 package com.tinycb.remote.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.viewModels
@@ -52,6 +53,13 @@ class PlaylistActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         b.rvPlaylist.layoutManager = LinearLayoutManager(this)
         b.rvPlaylist.adapter = adapter
+
+        b.btnPlaylistManagement.setOnClickListener {
+            startActivity(
+                Intent(this, PlaylistManagementActivity::class.java)
+                    .putExtra(PlaylistManagementActivity.EXTRA_QUEUE_EMPTY, currentEntries.isEmpty())
+            )
+        }
 
         lifecycleScope.launch {
             vm.libraryListing.collectLatest { entries ->

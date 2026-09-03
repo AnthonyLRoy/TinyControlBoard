@@ -48,6 +48,9 @@ enum MessageType : uint8_t
     MSG_TRACK_PROGRESS = 0x06,
     // payload: entryType(u8) + index(u16 LE) + total(u16 LE) + name
     MSG_LIBRARY_ENTRY  = 0x07,
+    // ESP32->RPi only; payload = playlist name (UTF-8, no terminator). commandId
+    // selects which playlist action (see CMD_PLAYLIST_* below).
+    MSG_PLAYLIST_CMD   = 0x08,
 };
 
 #define UART_PACKET_SIZE protocol::k_maxPacketSize
@@ -112,7 +115,17 @@ enum CommandId : uint16_t
     // param0 = folder index in the current library listing; appends up to 50 contained tracks
     CMD_ADD_FOLDER             = 0x012D,
     // param0 = folder index in the current library listing; replaces the queue with up to 50 tracks
-    CMD_REPLACE_WITH_FOLDER    = 0x012E
+    CMD_REPLACE_WITH_FOLDER    = 0x012E,
+    // returns saved playlist names through MSG_LIBRARY_ENTRY packets (sent via LIBRARY_CMD_CHAR, param unused)
+    CMD_PLAYLIST_LIST_REQUEST  = 0x012F,
+    // MSG_PLAYLIST_CMD payload = new playlist name
+    CMD_PLAYLIST_SAVE            = 0x0130,
+    // MSG_PLAYLIST_CMD payload = playlist name to overwrite (rm then save)
+    CMD_PLAYLIST_SAVE_OVERWRITE  = 0x0131,
+    // MSG_PLAYLIST_CMD payload = playlist name to load
+    CMD_PLAYLIST_LOAD            = 0x0132,
+    // MSG_PLAYLIST_CMD payload = playlist name to delete
+    CMD_PLAYLIST_DELETE          = 0x0133
 };
 
 enum PowerCommand : uint8_t
@@ -151,6 +164,9 @@ struct UartMessage
     uint16_t libraryEntryTotal;
     uint8_t  libraryEntryName[protocol::k_maxLibraryNameLen + 1];
     uint8_t  libraryEntryNameLen;
+    // Outgoing MSG_PLAYLIST_CMD: playlist name payload (ESP32->RPi).
+    uint8_t  playlistNameOut[protocol::k_maxLibraryNameLen + 1];
+    uint8_t  playlistNameOutLen;
     uint8_t  checksum;
 
     UartMessage()
@@ -158,11 +174,12 @@ struct UartMessage
           msgType(MSG_COMMAND), sequence(0), commandId(0), nowPlayingLen(0),
           trackElapsedSec(0), trackDurationSec(0), trackIsPlaying(false),
           libraryEntryType(0), libraryEntryIndex(0), libraryEntryTotal(0),
-          libraryEntryNameLen(0), checksum(0)
+          libraryEntryNameLen(0), playlistNameOutLen(0), checksum(0)
     {
         memset(params, 0, sizeof(params));
         memset(nowPlayingText, 0, sizeof(nowPlayingText));
         memset(libraryEntryName, 0, sizeof(libraryEntryName));
+        memset(playlistNameOut, 0, sizeof(playlistNameOut));
     }
 };
 

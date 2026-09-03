@@ -6,6 +6,7 @@ import command_ids as cmd
 import panel_control as panel
 import playback_commands as playback
 import library_browser as library
+import playlist_manager as playlist
 from protocol import compute_checksum, read_packet_with_resync
 
 # === CONFIG ===
@@ -23,6 +24,14 @@ def make_select_panel_handler(panel_index):
         panel_handler(params)
 
     return handler
+
+# Commands whose payload is a raw UTF-8 name string (not 5×uint16 params).
+TEXT_PAYLOAD_COMMANDS = {
+    cmd.CMD_PLAYLIST_SAVE,
+    cmd.CMD_PLAYLIST_SAVE_OVERWRITE,
+    cmd.CMD_PLAYLIST_LOAD,
+    cmd.CMD_PLAYLIST_DELETE,
+}
 
 COMMAND_HANDLERS = {
     cmd.CMD_SYS_RPI_SHUTDOWN: playback.handle_rpi_shutdown,
@@ -52,13 +61,18 @@ COMMAND_HANDLERS = {
     cmd.CMD_REMOVE_TRACK:          library.handle_remove_track,
     cmd.CMD_ADD_FOLDER:            library.handle_add_folder,
     cmd.CMD_REPLACE_WITH_FOLDER:   library.handle_replace_with_folder,
+    cmd.CMD_PLAYLIST_LIST_REQUEST: playlist.handle_playlist_list_request,
+    cmd.CMD_PLAYLIST_SAVE:            playlist.handle_playlist_save,
+    cmd.CMD_PLAYLIST_SAVE_OVERWRITE:  playlist.handle_playlist_save_overwrite,
+    cmd.CMD_PLAYLIST_LOAD:            playlist.handle_playlist_load,
+    cmd.CMD_PLAYLIST_DELETE:          playlist.handle_playlist_delete,
 }
 
 def setup_gpio():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(DRDY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-def handle_command(command_id, params):
+def handle_command(command_id, params, payload):
     print(f"Handling Command ID: {command_id:#06x}, Params: {params}", flush=True)
 
     handler = COMMAND_HANDLERS.get(command_id)
@@ -66,7 +80,10 @@ def handle_command(command_id, params):
         print("⚠️ Unknown command", flush=True)
         return
 
-    handler(params)
+    if command_id in TEXT_PAYLOAD_COMMANDS:
+        handler(payload.decode("utf-8", errors="replace"))
+    else:
+        handler(params)
 
 def read_and_process_packet(ser):
     data = read_packet_with_resync(ser)
@@ -91,7 +108,7 @@ def read_and_process_packet(ser):
     for i in range(min(5, payload_len // 2)):
         params[i] = payload[i * 2] | (payload[i * 2 + 1] << 8)
 
-    handle_command(cmd_id, params)
+    handle_command(cmd_id, params, payload)
 
 def wait_for_data_ready():
     result = GPIO.wait_for_edge(DRDY_PIN, GPIO.RISING, timeout=10000)

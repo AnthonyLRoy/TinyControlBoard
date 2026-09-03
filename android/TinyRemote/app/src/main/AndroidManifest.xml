@@ -61,6 +61,19 @@
             android:parentActivityName=".ui.MainActivity"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:name=".ui.PlaylistManagementActivity"
+            android:exported="false"
+            android:label="@string/playlist_management_title"
+            android:parentActivityName=".ui.PlaylistActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.PlaylistListActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.PlaylistManagementActivity"
+            android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

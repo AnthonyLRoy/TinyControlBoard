@@ -17,6 +17,9 @@ HEADER_FORMAT = "<BBBBBHB"  # start, version, src, type, seq, cmd_id, payload_le
 PROTOCOL_VERSION = 0x01
 SRC_APP_PI = 0x02
 MSG_LIBRARY_ENTRY = 0x07
+# ESP32->RPi only; payload = playlist name (UTF-8, no terminator). Only ever
+# received (built by ESP32's BLE playlist-cmd characteristic), never sent by the RPi.
+MSG_PLAYLIST_CMD = 0x08
 
 
 def compute_checksum(data):

@@ -71,6 +71,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val selectedViewId: StateFlow<Int?> = bleManager.selectedViewId
 
     val libraryListing: StateFlow<List<LibraryEntry>> = bleManager.libraryListing
+    val playlistNameEntries: StateFlow<List<LibraryEntry>?> = bleManager.playlistNameEntries
+    val playlistOpResult: StateFlow<com.tinycb.remote.ble.BleProtocol.PlaylistOpResult?> = bleManager.playlistOpResult
+
+    fun requestPlaylistNames() = bleManager.requestPlaylistNames()
+    fun clearPlaylistOpResult() = bleManager.clearPlaylistOpResult()
+    fun savePlaylist(name: String) = bleManager.savePlaylist(name)
+    fun overwritePlaylist(name: String) = bleManager.overwritePlaylist(name)
+    fun loadPlaylist(name: String) = bleManager.loadPlaylist(name)
+    fun deletePlaylist(name: String) = bleManager.deletePlaylist(name)
 
     // ── Track Progress State ────────────────────────────────────────────────
     data class ProgressState(

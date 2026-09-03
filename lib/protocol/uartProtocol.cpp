@@ -10,7 +10,8 @@ uint8_t calculateChecksum(const uint8_t *p_data)
     return static_cast<uint8_t>(sum % 256);
 }
 
-// Serialises outgoing command packets (params → 10-byte payload). Returns packet size.
+// Serialises outgoing packets. Command packets use a fixed 10-byte params payload;
+// MSG_PLAYLIST_CMD uses a variable-length playlist-name payload instead. Returns packet size.
 uint8_t serializeMessage(UartMessage &rMsg, uint8_t *p_buffer)
 {
     p_buffer[0] = rMsg.startByte;
@@ -20,15 +21,27 @@ uint8_t serializeMessage(UartMessage &rMsg, uint8_t *p_buffer)
     p_buffer[4] = rMsg.sequence;
     p_buffer[5] = static_cast<uint8_t>(rMsg.commandId & 0xFF);
     p_buffer[6] = static_cast<uint8_t>(rMsg.commandId >> 8);
-    p_buffer[7] = protocol::k_legacyPayloadSize;
 
-    for (int i = 0; i < 5; ++i)
+    uint8_t packetSize;
+    if (rMsg.msgType == MSG_PLAYLIST_CMD)
     {
-        p_buffer[8 + i * 2] = static_cast<uint8_t>(rMsg.params[i] & 0xFF);
-        p_buffer[9 + i * 2] = static_cast<uint8_t>(rMsg.params[i] >> 8);
+        const uint8_t len = (rMsg.playlistNameOutLen > protocol::k_maxLibraryNameLen)
+                            ? protocol::k_maxLibraryNameLen : rMsg.playlistNameOutLen;
+        p_buffer[7] = len;
+        memcpy(p_buffer + protocol::k_headerSize, rMsg.playlistNameOut, len);
+        packetSize = protocol::k_headerSize + len + 1;
+    }
+    else
+    {
+        p_buffer[7] = protocol::k_legacyPayloadSize;
+        for (int i = 0; i < 5; ++i)
+        {
+            p_buffer[8 + i * 2] = static_cast<uint8_t>(rMsg.params[i] & 0xFF);
+            p_buffer[9 + i * 2] = static_cast<uint8_t>(rMsg.params[i] >> 8);
+        }
+        packetSize = protocol::k_commandPacketSize;
     }
 
-    const uint8_t packetSize = protocol::k_commandPacketSize;
     p_buffer[packetSize - 1] = calculateChecksum(p_buffer);
     rMsg.checksum = p_buffer[packetSize - 1];
     return packetSize;
