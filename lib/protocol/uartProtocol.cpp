@@ -35,7 +35,7 @@ uint8_t encodePlaylistCmd(UartMessage &rMsg, uint8_t *p_payload)
     return len;
 }
 
-bool decodeLegacyParams(UartMessage &rMsg, const uint8_t *p_payload, uint8_t payloadLen)
+bool decodeStandardParams(UartMessage &rMsg, const uint8_t *p_payload, uint8_t payloadLen)
 {
     const int pairs = (payloadLen / 2 < 5) ? payloadLen / 2 : 5;
     for (int i = 0; i < pairs; ++i)
@@ -163,6 +163,6 @@ bool deserializeMessage(const uint8_t *p_buffer, UartMessage &rMsg)
         if (entry.msgType == rMsg.msgType)
             return entry.decode(rMsg, p_payload, payloadLen);
     }
-    return decodeLegacyParams(rMsg, p_payload, payloadLen);
+    return decodeStandardParams(rMsg, p_payload, payloadLen);
 }
 
