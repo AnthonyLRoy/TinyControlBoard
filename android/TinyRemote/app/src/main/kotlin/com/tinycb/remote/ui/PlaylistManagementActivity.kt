@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tinycb.remote.R
 import com.tinycb.remote.ble.BleProtocol
 import com.tinycb.remote.databinding.ActivityPlaylistManagementBinding
@@ -60,7 +61,7 @@ class PlaylistManagementActivity : AppCompatActivity() {
         val dialogBinding = DialogSavePlaylistBinding.inflate(LayoutInflater.from(this))
         dialogBinding.tvEmptyQueueWarning.visibility = if (queueEmpty) android.view.View.VISIBLE else android.view.View.GONE
 
-        val dialog = AlertDialog.Builder(this)
+        val dialog = MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
             .setTitle(R.string.playlist_save)
             .setView(dialogBinding.root)
             .setPositiveButton(R.string.playlist_save_tracks, null)
@@ -121,7 +122,7 @@ class PlaylistManagementActivity : AppCompatActivity() {
     }
 
     private fun showOverwriteConfirm(name: String) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
             .setMessage(getString(R.string.playlist_overwrite_confirm, name))
             .setPositiveButton(R.string.playlist_overwrite) { _, _ ->
                 performSave(name, overwrite = true, onDone = {}, onCancelToSaveDialog = {})
@@ -136,7 +137,7 @@ class PlaylistManagementActivity : AppCompatActivity() {
             onResult = { result ->
                 if (result.ok) {
                     onDone()
-                    AlertDialog.Builder(this)
+                    MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
                         .setMessage(R.string.playlist_created)
                         .setPositiveButton(R.string.ok) { _, _ -> finish() }
                         .setCancelable(false)
@@ -189,7 +190,7 @@ class PlaylistManagementActivity : AppCompatActivity() {
     }
 
     private fun showRetryCancelDialog(message: String, onRetry: () -> Unit) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
             .setMessage(message)
             .setPositiveButton(R.string.retry) { _, _ -> onRetry() }
             .setNegativeButton(R.string.cancel, null)

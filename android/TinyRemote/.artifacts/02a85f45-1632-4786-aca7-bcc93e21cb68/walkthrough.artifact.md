@@ -1,23 +1,29 @@
-# Walkthrough - Status Badge Color Updates
+# Walkthrough - Unified Dialog and Button Styling
 
-I have updated the `tvConnectionStatus` field background colors to match your requirements for "going to sleep" and "sleep" states.
+I have updated the application's dialogs and playlist management buttons to follow a consistent "Aluminium" McIntosh aesthetic.
 
 ## Changes Made
 
-### UI & Resources
-- **[colors.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/values/colors.xml)**
-    - Changed `status_connected_sleep` from Dark Blue (#00008B) to **Black (#000000)**.
-    - Added `status_connected_going_to_sleep` as **Dark Orange (#FF8C00)**.
+### 1. New Custom Styles
+- **`Widget.TinyRemote.Button.Aluminium`**: A custom button style that uses a dark brushed aluminum gradient (`bg_button_aluminium`) with white text and 16dp rounded corners.
+- **`Theme.TinyRemote.AlertDialog`**: A custom Material 3 dialog theme that uses the dark surface color (`bg_card`) and applies the "Aluminium" style to the dialog buttons.
 
-### Logic
-- **[MainActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/MainActivity.kt)**
-    - Updated `refreshStatusBadge` to handle the transition states.
-    - **GOING TO SLEEP** and **GOING INTO DEEP SLEEP** now trigger the Dark Orange background.
-    - **SLEEP** and **DEEP SLEEP** now trigger the Black background.
+### 2. Button Styling
+- Updated `activity_playlist_management.xml` to apply the new aluminum style to the "Save Playlist", "Load Playlist", and "Delete Playlist" buttons.
 
-## Verification
-- Ran `:app:assembleDebug` to ensure all resource references are valid.
-- The build finished successfully.
+### 3. Dialog Styling
+- Migrated all dialogs in the following activities to use `MaterialAlertDialogBuilder` with the custom McIntosh-themed style:
+    - `PlaylistManagementActivity.kt`
+    - `PlaylistListActivity.kt`
+    - `LibraryActivity.kt`
+    - `PlaylistActivity.kt`
+
+## Verification Results
+
+### Manual Verification
+- **Playlist Management**: Buttons are now dark with a metallic gradient instead of green.
+- **Save Playlist Popup**: The dialog has a dark background, rounded corners, and the "Save" / "Cancel" buttons match the aluminum dashboard style.
+- **Library/Playlist Popups**: Track and folder option menus now use the same dark unified theme.
 
 > [!NOTE]
-> The text color remains white to ensure readability against the new black and dark orange backgrounds.
+> The buttons inside the dialogs are now styled with the same 3D "Aluminium" look as the dashboard controls, ensuring a cohesive tactile feel throughout the app.

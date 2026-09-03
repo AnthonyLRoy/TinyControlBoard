@@ -4,11 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tinycb.remote.R
 import com.tinycb.remote.databinding.ActivityPlaylistBinding
 import com.tinycb.remote.model.LibraryEntry
@@ -27,7 +27,7 @@ class PlaylistActivity : AppCompatActivity() {
 
     private fun showTrackOptions(index: Int) {
         val entry = currentEntries.firstOrNull { it.index == index } ?: return
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
             .setTitle(entry.name)
             .setItems(arrayOf(
                 getString(R.string.playlist_play_now),

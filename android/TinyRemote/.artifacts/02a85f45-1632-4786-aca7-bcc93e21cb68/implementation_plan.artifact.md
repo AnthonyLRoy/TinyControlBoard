@@ -1,25 +1,36 @@
-# Implementation Plan - Fix Display Button Highlight Inversion
+# Unified Dialog Styling
 
-The "Display" button highlight (green icon) is currently active when the display is OFF, but it should be active when the display is ON. Research suggests the bit index used for the LED status of this button is incorrect, leading to the inversion or incorrect state tracking.
+The user reports that the "popups" (dialogs) in the `PlaylistManagementActivity` do not match the "existing popups" in the app. Currently, all dialogs use the standard `androidx.appcompat.app.AlertDialog`, which might not be picking up the full Material 3 / McIntosh aesthetic (especially the "Aluminium" button style and dark background).
 
 ## User Review Required
 
-> [!IMPORTANT]
-> I am assuming that the hardware protocol follows the design notes found in the project artifacts, which state that **LED bit 15** (not bit 6) corresponds to the Display status, and that this bit is **active (1) when the display is ON**.
+- **Dialog Buttons**: Standard `AlertDialog` buttons are text-only and take the primary color (currently McIntosh Green). Should these buttons be styled to match the "Aluminium" look (dark background, white text)?
+- **Background**: Should the dialogs have a dark background (`bg_card`) to match the rest of the app's surface?
 
 ## Proposed Changes
 
-### Button Catalog
+### [Component Name] UI Styling
 
-#### [MODIFY] [ButtonCatalog.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/data/ButtonCatalog.kt)
-- Change the `bitmaskBit` for the Display button from `6` to `15`. This aligns the bit index with its button index (15) and follows the hardware specification mentioned in `artifact 63cff8ea-c4d9-4db3-8e34-443d7bab0d6a`.
+#### [MODIFY] [themes.xml](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/res/values/themes.xml)
+- Define `Theme.TinyRemote.AlertDialog` inheriting from `ThemeOverlay.Material3.MaterialAlertDialog`.
+- Set `colorSurface` to `@color/bg_card`.
+- Set `colorPrimary` to `@color/text_primary` (white text for buttons).
+- Set `materialButtonStyle` to a new style `Widget.TinyRemote.Button.Aluminium.Dialog` which inherits from `Widget.TinyRemote.Button.Aluminium` but with smaller insets/margins suitable for dialogs.
+- Set `shapeAppearanceLargeComponent` to a style with `16dp` corners to match the buttons.
+
+#### [MODIFY] [PlaylistManagementActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/PlaylistManagementActivity.kt)
+- Switch from `androidx.appcompat.app.AlertDialog` to `com.google.android.material.dialog.MaterialAlertDialogBuilder`.
+- Use `MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)` to ensure the custom theme is applied.
+
+#### [MODIFY] [PlaylistListActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/PlaylistListActivity.kt)
+- Switch to `MaterialAlertDialogBuilder` for consistency.
+
+#### [MODIFY] [LibraryActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/LibraryActivity.kt) & [PlaylistActivity.kt](file:///D:/Dev/TinyControlBoard/android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/PlaylistActivity.kt)
+- Switch to `MaterialAlertDialogBuilder` to ensure all "existing popups" are unified.
 
 ## Verification Plan
 
 ### Manual Verification
-1.  Deploy the app to the device.
-2.  Observe the "Display" button (brightness icon).
-3.  Toggle the display using the button:
-    - When the physical display turns **ON**, the icon in the app should turn **Green**.
-    - When the physical display turns **OFF**, the icon in the app should return to **White**.
-4.  Confirm that the "Display On" / "Display Off" internal names (visible in logs or if `showLabel` were true) also correctly reflect the state.
+- Deploy to emulator.
+- Trigger dialogs in Playlist Management, Library, and Playlist screens.
+- Verify they all share the same dark background, rounded corners, and consistent button colors.

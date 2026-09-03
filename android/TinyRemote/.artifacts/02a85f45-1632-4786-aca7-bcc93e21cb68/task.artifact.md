@@ -1,3 +1,6 @@
-- [x] Update bitmask bit for Display button in `ButtonCatalog.kt`
-- [x] Verify fix by reviewing state logic in `MainViewModel`
-- [x] Create walkthrough
+- [x] Define Dialog and Button styles in `themes.xml`
+- [x] Update `PlaylistManagementActivity.kt` to use `MaterialAlertDialogBuilder`
+- [x] Update `PlaylistListActivity.kt` to use `MaterialAlertDialogBuilder`
+- [x] Update `LibraryActivity.kt` to use `MaterialAlertDialogBuilder`
+- [x] Update `PlaylistActivity.kt` to use `MaterialAlertDialogBuilder`
+- [x] Verify dialog styling in emulator

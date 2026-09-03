@@ -3,12 +3,12 @@ package com.tinycb.remote.ui
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tinycb.remote.R
 import com.tinycb.remote.databinding.ActivityLibraryBinding
 import com.tinycb.remote.viewmodel.MainViewModel
@@ -69,7 +69,7 @@ class LibraryActivity : AppCompatActivity() {
             getString(R.string.library_replace_with_folder),
             getString(R.string.library_open_folder)
         )
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
             .setTitle(R.string.library_folder_actions_title)
             .setItems(options) { _, which ->
                 when (which) {
