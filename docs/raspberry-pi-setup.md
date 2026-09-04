@@ -65,7 +65,6 @@ The Pi setup docs currently require:
 
 - `dtoverlay=uart5` in `/boot/firmware/config.txt`,
 - Python serial support,
-- `pigpiod`,
 - systemd services for listener and heartbeat sender,
 - `--remote-debugging-port=9222` added to the Chromium launch command in `~/.xinitrc` (required for panel cycling via CDP).
 
@@ -83,7 +82,6 @@ Current intended services:
 |---|---|
 | `uart_listener.service` | receives ESP32 commands |
 | `heartbeat.service` | periodically sends heartbeat to ESP32 |
-| `pigpiod` | GPIO support used by the Pi-side setup |
 
 From the current setup notes, the service start commands are based on:
 
@@ -100,7 +98,6 @@ Current documented paths:
 | listener script | `/home/antho/UAart5Listener.py` |
 | listener service | `/etc/systemd/system/uart_listener.service` |
 | heartbeat service | `/etc/systemd/system/heartbeat.service` |
-| pigpio daemon | `/usr/local/bin/pigpiod` |
 
 ## 7. Wiring Expectations On The Pi
 

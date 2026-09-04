@@ -1,6 +1,6 @@
 # UART5 Listener Setup on Moode (Raspberry Pi)
 
-This guide explains how to enable UART5 on a Raspberry Pi running **Moode**, install required dependencies, build and install **pigpio**, and configure **systemd services** to automatically run:
+This guide explains how to enable UART5 on a Raspberry Pi running **Moode**, install required dependencies, and configure **systemd services** to automatically run:
 
 - A UART5 listener
 - A UART heartbeat sender
@@ -109,95 +109,7 @@ sudo apt install -y python3-serial
 
 ---
 
-## 5. Install pigpio
-
-### 5.1 Install Build Tools
-
-```bash
-sudo apt update
-sudo apt install -y git make gcc
-```
-
----
-
-### 5.2 Download and Build pigpio
-
-```bash
-cd /tmp
-git clone https://github.com/joan2937/pigpio.git
-cd pigpio
-make
-sudo make install
-```
-
-This installs:
-
-- `/usr/local/bin/pigpiod`
-- Python module `pigpio`
-- Command-line tools (`pigs`, etc.)
-
----
-
-### 5.3 Enable and Start pigpiod
-
-```bash
-sudo systemctl enable pigpiod
-sudo systemctl start pigpiod
-```
-
-Verify installation:
-
-```bash
-which pigpiod
-```
-
-Expected output:
-
-```text
-/usr/local/bin/pigpiod
-```
-
----
-
-### 5.4 Create pigpiod systemd Service (Manual)
-
-```bash
-sudo nano /etc/systemd/system/pigpiod.service
-```
-
-```ini
-[Unit]
-Description=Pigpio daemon
-After=network.target
-
-[Service]
-Type=forking
-ExecStart=/usr/local/bin/pigpiod -l
-ExecStop=/bin/kill -s TERM $MAINPID
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Reload and start:
-
-```bash
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
-sudo systemctl enable pigpiod
-sudo systemctl start pigpiod
-```
-
-Verify it is running (number increments each run):
-
-```bash
-pigs t
-```
-
----
-
-## 6. Create the UART Listener systemd Service
+## 5. Create the UART Listener systemd Service
 
 ```bash
 sudo nano /etc/systemd/system/uart_listener.service
@@ -224,7 +136,7 @@ WantedBy=multi-user.target
 
 ---
 
-## 7. Create the UART Listener Script
+## 6. Create the UART Listener Script
 
 ```bash
 nano /home/antho/uart5_listener.py
@@ -241,7 +153,7 @@ sudo chown antho:antho /home/antho/uart5_listener.py
 
 ---
 
-## 8. Enable and Start the UART Listener Service
+## 7. Enable and Start the UART Listener Service
 
 ```bash
 sudo systemctl daemon-reload
@@ -258,7 +170,7 @@ journalctl -u uart_listener.service -f
 
 ---
 
-## 9. Create the Heartbeat Sender Service
+## 8. Create the Heartbeat Sender Service
 
 ### 9.1 Create the Script
 
@@ -310,7 +222,7 @@ journalctl -u heartbeat.service -f
 
 ---
 
-## 10. File Locations Summary
+## 9. File Locations Summary
 
 | Purpose | File Path | Notes |
 |-------|-----------|-------|
@@ -318,7 +230,6 @@ journalctl -u heartbeat.service -f
 | UART listener script | `/home/antho/uart5_listener.py` | Must be executable |
 | UART listener service | `/etc/systemd/system/uart_listener.service` | Auto-start on boot |
 | Heartbeat service | `/etc/systemd/system/heartbeat.service` | Periodic UART TX |
-| pigpiod binary | `/usr/local/bin/pigpiod` | Built from source |
 | Logs | `journalctl` | `journalctl -u <service> -f` |
 
 ---
@@ -377,7 +288,7 @@ copy you meter configuration into opt/1024x600
 
 
 
-## 11. Enable Auto-Login on Local Console
+## 10. Enable Auto-Login on Local Console
 
 ```bash
 sudo raspi-config
@@ -396,7 +307,7 @@ Reboot when prompted.
 
 ---
 
-## 12. Troubleshooting
+## 11. Troubleshooting
 
 ### 12.1 UART5 Not Working
 

@@ -66,6 +66,7 @@ COMMAND_HANDLERS = {
     cmd.CMD_PLAYLIST_SAVE_OVERWRITE:  playlist.handle_playlist_save_overwrite,
     cmd.CMD_PLAYLIST_LOAD:            playlist.handle_playlist_load,
     cmd.CMD_PLAYLIST_DELETE:          playlist.handle_playlist_delete,
+    cmd.CMD_CLEAR_QUEUE:              library.handle_clear_queue,
 }
 
 def setup_gpio():

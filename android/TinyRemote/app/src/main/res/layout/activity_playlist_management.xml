@@ -50,7 +50,15 @@
             style="@style/Widget.TinyRemote.Button.Aluminium"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
             android:text="@string/playlist_delete" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearQueue"
+            style="@style/Widget.TinyRemote.Button.Aluminium"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/playlist_clear_queue" />
 
     </LinearLayout>
 

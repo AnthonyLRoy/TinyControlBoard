@@ -82,6 +82,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         fun playTrack(index: Int) = bleManager.playTrack(index)
         fun removeTrack(index: Int) = bleManager.removeTrack(index)
         fun requestQueue() = bleManager.requestPlaylist()
+        fun clearQueue() = bleManager.clearQueue()
     }
     val library = LibraryController()
 

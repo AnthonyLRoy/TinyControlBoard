@@ -80,6 +80,9 @@
     <string name="playlist_delete_failed">Couldn\'t delete playlist. %1$s</string>
     <string name="playlist_none_found">No playlists found</string>
     <string name="playlist_fetch_failed">Couldn\'t fetch playlists.</string>
+    <string name="playlist_clear_queue">Clear Queue</string>
+    <string name="playlist_clear_confirm">Clear the current queue?</string>
+    <string name="playlist_clear_confirm_button">Clear</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="retry">Retry</string>

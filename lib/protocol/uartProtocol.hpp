@@ -19,6 +19,10 @@ inline constexpr uint8_t k_maxNowPlayingLen = 60;
 inline constexpr uint8_t k_maxLibraryNameLen = 55;
 inline constexpr uint16_t k_browseUp = 0xFFFE;
 inline constexpr uint16_t k_browseRoot = 0xFFFF;
+inline constexpr uint8_t k_libraryEntryFolder = 0;
+inline constexpr uint8_t k_libraryEntryTrack = 1;
+inline constexpr uint8_t k_libraryEntryEmpty = 2;
+inline constexpr uint8_t k_libraryEntryRadio = 3;
 inline constexpr uint8_t k_maxPayloadSize = 60;
 // header(8) + max-payload(60) + checksum(1)
 inline constexpr uint8_t k_maxPacketSize = k_headerSize + k_maxPayloadSize + 1;

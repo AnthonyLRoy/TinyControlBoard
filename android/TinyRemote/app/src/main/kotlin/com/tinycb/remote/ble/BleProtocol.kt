@@ -21,6 +21,7 @@ object BleProtocol {
     const val CMD_PLAYLIST_SAVE_OVERWRITE = 0x0131
     const val CMD_PLAYLIST_LOAD = 0x0132
     const val CMD_PLAYLIST_DELETE = 0x0133
+    const val CMD_CLEAR_QUEUE = 0x0134
     const val LIB_BROWSE_UP = 0xFFFE
     const val LIB_BROWSE_ROOT = 0xFFFF
 
@@ -28,6 +29,7 @@ object BleProtocol {
     const val LIBRARY_ENTRY_FOLDER = 0
     const val LIBRARY_ENTRY_TRACK = 1
     const val LIBRARY_ENTRY_EMPTY = 2
+    const val LIBRARY_ENTRY_RADIO = 3
 
     data class PlaylistOpResult(val ok: Boolean, val message: String)
 
@@ -98,7 +100,13 @@ object BleProtocol {
         }
 
         val name = value.copyOfRange(5, value.size).toTrimmedString()
-        val entry = LibraryEntry(index, total, isDirectory = entryType == LIBRARY_ENTRY_FOLDER, name = name)
+        val entry = LibraryEntry(
+            index = index,
+            total = total,
+            isDirectory = entryType == LIBRARY_ENTRY_FOLDER,
+            name = name,
+            isRadioStation = entryType == LIBRARY_ENTRY_RADIO
+        )
         
         return if (index == 0) listOf(entry) else currentListing + entry
     }

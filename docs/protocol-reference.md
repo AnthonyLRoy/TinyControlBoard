@@ -74,6 +74,10 @@ Current message types are:
 `MSG_TRACK_PROGRESS` carries five bytes: elapsed seconds (`uint16` little-endian),
 duration seconds (`uint16` little-endian), and an `isPlaying` byte (`0` or `1`).
 
+`MSG_LIBRARY_ENTRY` carries `entryType(u8)`, `index(u16 LE)`, `total(u16 LE)`,
+and a UTF-8 name. Entry types are folder (`0`), track (`1`), empty-list sentinel
+(`2`), and radio station (`3`).
+
 ## 4. Application IDs
 
 Current application IDs are:

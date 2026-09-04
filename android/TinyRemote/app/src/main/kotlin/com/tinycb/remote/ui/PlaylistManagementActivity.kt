@@ -54,6 +54,18 @@ class PlaylistManagementActivity : AppCompatActivity() {
                     .putExtra(PlaylistListActivity.EXTRA_MODE, PlaylistListActivity.MODE_DELETE)
             )
         }
+        b.btnClearQueue.setOnClickListener { confirmClearQueue() }
+    }
+
+    private fun confirmClearQueue() {
+        MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
+            .setMessage(R.string.playlist_clear_confirm)
+            .setPositiveButton(R.string.playlist_clear_confirm_button) { _, _ ->
+                vm.library.clearQueue()
+                finish()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     // ── Save Playlist ────────────────────────────────────────────────────────

@@ -72,6 +72,7 @@ def handle_playlist_save_overwrite(name):
 def handle_playlist_load(name):
     name = name.strip()
     try:
+        mpd_command("clear")
         mpd_command(f'load "{_mpd_escape(name)}"')
         print(f"Playlist loaded: {name}", flush=True)
         _send_playlist_result(True, name)

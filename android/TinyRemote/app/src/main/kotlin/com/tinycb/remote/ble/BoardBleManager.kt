@@ -490,10 +490,17 @@ class BoardBleManager(context: Context) {
         writeLibraryCommand(BleProtocol.CMD_PLAYLIST_REQUEST, 0)
     }
 
+    fun clearQueue() {
+        _libraryListing.value = emptyList()
+        writeLibraryCommand(BleProtocol.CMD_CLEAR_QUEUE, 0)
+    }
+
     fun requestPlaylistNames() {
-        playlistNameMode = true
         _playlistNameEntries.value = null
+        // writeLibraryCommand() unconditionally clears playlistNameMode, so it must be
+        // set AFTER the write, not before — otherwise the reply gets routed to libraryListing.
         writeLibraryCommand(BleProtocol.CMD_PLAYLIST_LIST_REQUEST, 0)
+        playlistNameMode = true
     }
 
     fun clearPlaylistOpResult() {

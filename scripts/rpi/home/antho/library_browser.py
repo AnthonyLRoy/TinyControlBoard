@@ -11,6 +11,7 @@ LIB_BROWSE_ROOT = 0xFFFF
 LIBRARY_ENTRY_FOLDER = 0
 LIBRARY_ENTRY_TRACK = 1
 LIBRARY_ENTRY_EMPTY = 2  # sentinel for a zero-entry folder
+LIBRARY_ENTRY_RADIO = 3
 MAX_LIBRARY_ENTRIES = 200  # cap per directory listing, not the whole library
 MAX_FOLDER_TRACKS = 50
 MAX_LIBRARY_NAME_LEN = 55
@@ -180,8 +181,17 @@ def handle_playlist_request(_params):
 
     for index, full_path in enumerate(tracks):
         name = posixpath.basename(full_path) or full_path
-        send_library_entry(index, total, LIBRARY_ENTRY_TRACK, name)
+        entry_type = LIBRARY_ENTRY_RADIO if full_path.startswith(f"{RADIO_DIRECTORY}/") else LIBRARY_ENTRY_TRACK
+        send_library_entry(index, total, entry_type, name)
         time.sleep(0.008)
+
+
+def handle_clear_queue(_params):
+    try:
+        mpd_command("clear")
+        print("Queue cleared", flush=True)
+    except Exception as e:
+        print(f"⚠️ MPD clear failed: {e}", flush=True)
 
 
 def handle_play_track(params):

@@ -67,6 +67,12 @@ class PlaylistActivity : AppCompatActivity() {
                 adapter.submitList(entries.map { LibraryRow.Entry(it) })
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refetch every time this screen becomes visible so Clear/Load done from the
+        // playlist-management screen (which doesn't return a result here) show up.
         vm.library.requestQueue()
     }
 

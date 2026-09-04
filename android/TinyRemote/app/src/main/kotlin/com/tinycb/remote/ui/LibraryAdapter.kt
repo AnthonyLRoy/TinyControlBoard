@@ -43,7 +43,9 @@ class LibraryAdapter(
                         b.ivEntryChevron.visibility = View.VISIBLE
                         b.root.setOnClickListener { onFolderClicked?.invoke(entry.index) }
                     } else {
-                        b.ivEntryIcon.setImageResource(R.drawable.ic_music_note)
+                        b.ivEntryIcon.setImageResource(
+                            if (entry.isRadioStation) R.drawable.ic_radio_wave else R.drawable.ic_music_note
+                        )
                         b.ivEntryChevron.visibility = View.GONE
                         b.root.setOnClickListener { onTrackClicked?.invoke(entry.index) }
                     }
