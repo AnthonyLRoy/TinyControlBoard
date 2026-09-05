@@ -141,6 +141,15 @@ namespace controlSystem
         if (buttonId < controlBoardButtons::k_count)
         {
             applyLedOnPress(buttonId, LedPolicy::Toggle);
+
+            // Keep the button's own toggle action in sync so a later physical
+            // press continues from the state the remote (app) toggle left it in,
+            // instead of emitting a stale ON/OFF command.
+            const bool newState = (m_buttonLedBitmask >> buttonId) & 1u;
+            if (actions::IActionSource *p_action = mr_actionMap[buttonId].action)
+            {
+                p_action->syncExternalState(newState);
+            }
         }
     }
 }

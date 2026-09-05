@@ -14,5 +14,8 @@ namespace actions
         virtual ~IActionSource() = default;
         virtual std::unique_ptr<IAction> produce(bool isPressed) = 0;
         virtual void resetState() {}
+        // Lets an externally-driven toggle (e.g. from the BLE app) update this
+        // source's internal ON/OFF bookkeeping without producing a new IAction.
+        virtual void syncExternalState(bool /*enabled*/) {}
     };
 }

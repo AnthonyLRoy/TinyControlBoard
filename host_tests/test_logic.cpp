@@ -12,8 +12,14 @@
 #include "app/ActionCommandRoutingPolicy.hpp"
 #include "app/ActionFactory.hpp"
 #include "app/ActionUartDispatcher.hpp"
+#include "app/ControlBoardActionRegistry.hpp"
 #include "app/ControlBoardButtonIds.hpp"
 #include "app/ControlBoardInputDispatcher.hpp"
+#include "app/commands/BrightnessAction.hpp"
+#include "app/commands/PowerTransitionAction.hpp"
+#include "app/commands/RelayAction.hpp"
+#include "app/commands/SystemAction.hpp"
+#include "app/commands/UartDispatchAction.hpp"
 #include "power/PowerStateTransitionPolicy.hpp"
 #include "app/SerialHeartbeatRouter.hpp"
 #include "protocol/uartProtocol.hpp"
@@ -281,6 +287,65 @@ void test_deserialize_message_playlist_result_failure_payload()
     expect_equal(std::string("Err"), std::string(reinterpret_cast<const char *>(parsed.playlistResultMessage)), "Playlist-result failure message mismatch");
 }
 
+void test_serialize_message_clamps_playlist_name_to_protocol_limit()
+{
+    UartMessage message;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+
+    message.msgType = MSG_PLAYLIST_CMD;
+    message.playlistNameOutLen = 255;
+    for (uint8_t index = 0; index < protocol::k_maxLibraryNameLen; ++index)
+    {
+        message.playlistNameOut[index] = static_cast<uint8_t>('A' + (index % 26));
+    }
+
+    const uint8_t packetSize = serializeMessage(message, buffer);
+
+    expect_equal(static_cast<uint8_t>(protocol::k_headerSize + protocol::k_maxLibraryNameLen + 1),
+                 packetSize, "Playlist name should be clamped to the maximum payload length");
+    expect_equal(protocol::k_maxLibraryNameLen, buffer[protocol::k_indexPayloadLen],
+                 "Clamped playlist payload length mismatch");
+    expect_equal(calculateChecksum(buffer), buffer[packetSize - 1],
+                 "Clamped playlist checksum mismatch");
+}
+
+void test_deserialize_message_rejects_invalid_fixed_payload_lengths()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const uint8_t shortTrackProgress[] = {0, 0, 0, 0};
+    const uint8_t shortLibraryEntry[] = {0, 0, 0, 0};
+    const uint8_t emptyPlaylistResult[1] = {0};
+
+    const uint8_t trackSize = build_frame(MSG_TRACK_PROGRESS, 0, shortTrackProgress,
+                                           sizeof(shortTrackProgress), buffer);
+    expect_true(!deserializeMessage(buffer, parsed), "Short track-progress payload should be rejected");
+
+    const uint8_t librarySize = build_frame(MSG_LIBRARY_ENTRY, 0, shortLibraryEntry,
+                                             sizeof(shortLibraryEntry), buffer);
+    expect_true(!deserializeMessage(buffer, parsed), "Short library-entry payload should be rejected");
+
+    const uint8_t resultSize = build_frame(MSG_PLAYLIST_RESULT, 0, emptyPlaylistResult, 0, buffer);
+    expect_equal(static_cast<uint8_t>(protocol::k_headerSize + 1), resultSize,
+                 "Empty playlist-result frame size mismatch");
+    expect_true(!deserializeMessage(buffer, parsed), "Empty playlist-result payload should be rejected");
+}
+
+void test_deserialize_message_ignores_incomplete_standard_parameter_pair()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const uint8_t payload[] = {0x34, 0x12, 0x78};
+
+    build_frame(MSG_COMMAND, CMD_PLAY_PAUSE, payload, sizeof(payload), buffer);
+
+    expect_true(deserializeMessage(buffer, parsed), "Odd-length standard payload should be accepted");
+    expect_equal(static_cast<uint16_t>(0x1234), parsed.params[0],
+                 "First complete standard parameter should be decoded");
+    expect_equal(static_cast<uint16_t>(0), parsed.params[1],
+                 "Incomplete standard parameter pair should be ignored");
+}
+
 class FakeAction : public actions::IActionSource
 {
 public:
@@ -295,8 +360,16 @@ public:
         return controlSystem::createAction(m_command);
     }
 
+    void syncExternalState(bool enabled) override
+    {
+        ++syncCallCount;
+        lastSyncState = enabled;
+    }
+
     int callCount = 0;
     bool lastPressedArg = false;
+    int syncCallCount = 0;
+    bool lastSyncState = false;
 
 private:
     CommandId m_command;
@@ -486,6 +559,72 @@ void test_dynamic_toggle_action_reset_state_restores_first_press_to_on()
                  "Press after reset should return to ON command");
 }
 
+void test_dynamic_toggle_action_sync_external_state_changes_next_press_command()
+{
+    actions::DynamicToggleAction action(CMD_RANDOM_ON, CMD_RANDOM_OFF);
+
+    // Simulate a remote (app) toggle that turned the feature ON without a physical press.
+    action.syncExternalState(true);
+
+    auto next = action.produce(true);
+    expect_true(next != nullptr, "Press after sync should produce an action");
+    expect_equal(static_cast<uint32_t>(CMD_RANDOM_OFF), static_cast<uint32_t>(next->command),
+                 "Press after syncing to ON should flip to the OFF command");
+}
+
+void test_control_board_remote_toggle_syncs_registered_action_state()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    FakeAction toggleAction(CMD_TOGGLE_METER_ON);
+    actionMap[controlSystem::controlBoardButtons::k_toggleMeter] = {&toggleAction, controlSystem::LedPolicy::Toggle};
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
+
+    dispatcher.toggleButtonLed(controlSystem::controlBoardButtons::k_toggleMeter);
+
+    expect_equal(1, toggleAction.syncCallCount, "Remote toggle should sync the registered action's state");
+    expect_true(toggleAction.lastSyncState, "First remote toggle should sync the action to the ON state");
+
+    dispatcher.toggleButtonLed(controlSystem::controlBoardButtons::k_toggleMeter);
+
+    expect_equal(2, toggleAction.syncCallCount, "Second remote toggle should sync the action again");
+    expect_true(!toggleAction.lastSyncState, "Second remote toggle should sync the action to the OFF state");
+}
+
+void test_control_board_physical_press_after_remote_toggle_stays_in_sync()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    FakeResponseSink responseSink;
+    FakeIndicators indicators;
+    actions::DynamicToggleAction meterAction(CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF);
+    actionMap[controlSystem::controlBoardButtons::k_toggleMeter] = {&meterAction, controlSystem::LedPolicy::Toggle};
+
+    controlSystem::ControlBoardInputDispatcher dispatcher(
+        actionMap,
+        [&responseSink](std::unique_ptr<actions::IAction> iaction) { responseSink.process(std::move(iaction)); },
+        indicators);
+
+    // Physical press turns the meter ON.
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_toggleMeter);
+    expect_true(indicators.lastLedState, "Physical press should turn the LED on");
+
+    // App remotely toggles the meter OFF (LED bit flips back off, action state synced).
+    dispatcher.toggleButtonLed(controlSystem::controlBoardButtons::k_toggleMeter);
+    expect_true(!indicators.lastLedState, "Remote toggle should turn the LED off");
+
+    // Next physical press should continue from the synced OFF state and turn it back ON,
+    // not emit a stale command based on the pre-sync internal state.
+    dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_toggleMeter);
+    expect_true(indicators.lastLedState, "Physical press after remote toggle should turn the LED back on");
+    expect_equal(static_cast<uint32_t>(CMD_TOGGLE_METER_ON), static_cast<uint32_t>(responseSink.lastAction->command),
+                 "Physical press after remote toggle should emit the ON command, matching the LED state");
+}
+
 void test_control_board_sleep_status_resets_toggle_led_tracking()
 {
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
@@ -544,7 +683,9 @@ void test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle()
     dispatcher.handleRotaryMovement(1);
 
     expect_equal(1, action.callCount, "Rotary movement should execute the shared rotary action once");
-    expect_true(action.lastPressedArg, "Positive rotary movement should pass true to the action");
+    // handleRotaryMovement() deliberately inverts direction (see its implementation comment):
+    // wiring makes positive direction mean "right", so isLeft (produce's argument) is false.
+    expect_true(!action.lastPressedArg, "Positive rotary movement should pass false (right) to the action");
     expect_equal(1, responseSink.callCount, "Rotary movement should forward Action");
     expect_equal(static_cast<size_t>(2), indicators.activityHistory.size(), "Rotary movement should set status twice");
     expect_true(indicators.activityHistory[0] == ControlBoardWorkingStatus::doingWork,
@@ -774,7 +915,7 @@ void test_action_command_routing_policy_classifies_on_state_handlers()
                 "Remaining ON-state commands should fall through to UART dispatch");
 }
 
-void test_control_board_rotary_negative_direction_passes_false_to_action()
+void test_control_board_rotary_negative_direction_passes_true_to_action()
 {
     controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
     FakeResponseSink responseSink;
@@ -789,7 +930,8 @@ void test_control_board_rotary_negative_direction_passes_false_to_action()
     dispatcher.handleRotaryMovement(-1);
 
     expect_equal(1, action.callCount, "Negative rotary movement should execute the shared action once");
-    expect_true(!action.lastPressedArg, "Negative rotary direction should pass false to the action");
+    // Negative direction maps to isLeft=true per the deliberate wiring inversion.
+    expect_true(action.lastPressedArg, "Negative rotary direction should pass true (left) to the action");
     expect_equal(1, responseSink.callCount, "Negative rotary movement should forward Action");
 }
 
@@ -843,11 +985,14 @@ void test_control_board_sleep_blocks_non_power_button_press_and_toggle_led_chang
         indicators);
 
     dispatcher.setBackgroundStatus(ControlBoardWorkingStatus::sleeping);
+    // Entering sleep legitimately clears toggle LEDs via resetToggleLeds(); isolate the
+    // press's own effect by comparing against the count right after that transition.
+    const int ledCallsAfterSleepEntry = indicators.ledCallCount;
     dispatcher.handleButtonPressed(controlSystem::controlBoardButtons::k_cover);
 
     expect_equal(0, coverAction.callCount, "Sleeping mode should not evaluate non-power button actions");
     expect_equal(0, responseSink.callCount, "Sleeping mode should not dispatch non-power button responses");
-    expect_equal(0, indicators.ledCallCount, "Sleeping mode should not change toggle LED state for non-power button");
+    expect_equal(ledCallsAfterSleepEntry, indicators.ledCallCount, "Sleeping mode should not change toggle LED state for non-power button");
     expect_equal(static_cast<size_t>(0), indicators.activityHistory.size(),
                  "Sleeping mode should not change activity status for blocked non-power button press");
 }
@@ -968,6 +1113,139 @@ void test_control_board_sleep_blocks_rotary_input()
     expect_equal(static_cast<size_t>(0), indicators.activityHistory.size(),
                  "Sleeping mode should not change activity status for blocked rotary input");
 }
+
+void test_action_registry_populates_every_button_with_expected_policy()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    controlSystem::ControlBoardActionRegistry registry;
+
+    registry.populate(actionMap);
+
+    for (const auto &config : actionMap)
+    {
+        expect_true(config.action != nullptr, "Every registered button should have an action source");
+    }
+
+    expect_true(actionMap[controlSystem::controlBoardButtons::k_power].ledPolicy == controlSystem::LedPolicy::None,
+                "Power should not have a button LED policy");
+    expect_true(actionMap[controlSystem::controlBoardButtons::k_playPause].ledPolicy == controlSystem::LedPolicy::Momentary,
+                "Play/pause should use a momentary LED policy");
+    expect_true(actionMap[controlSystem::controlBoardButtons::k_cover].ledPolicy == controlSystem::LedPolicy::Toggle,
+                "Cover should use a toggle LED policy");
+    expect_true(actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft].ledPolicy == controlSystem::LedPolicy::None,
+                "Rotary should not use a button LED policy");
+    expect_true(actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft].action ==
+                    actionMap[controlSystem::controlBoardButtons::k_rotaryEventRight].action,
+                "Both rotary directions should share one action source");
+}
+
+void test_action_registry_maps_simple_toggle_and_rotary_commands()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    controlSystem::ControlBoardActionRegistry registry;
+    registry.populate(actionMap);
+
+    struct ExpectedCommand
+    {
+        uint8_t buttonId;
+        CommandId command;
+    };
+
+    const ExpectedCommand firstPressCommands[] = {
+        {controlSystem::controlBoardButtons::k_prevTrack, CMD_PREVIOUS_TRACK},
+        {controlSystem::controlBoardButtons::k_nextTrack, CMD_NEXT_TRACK},
+        {controlSystem::controlBoardButtons::k_skipForward, CMD_SKIP_FORWARD},
+        {controlSystem::controlBoardButtons::k_skipBack, CMD_SKIP_BACK},
+        {controlSystem::controlBoardButtons::k_playPause, CMD_PLAY_PAUSE},
+        {controlSystem::controlBoardButtons::k_toggleDisplay, CMD_TOGGLE_DISPLAY},
+        {controlSystem::controlBoardButtons::k_cover, CMD_COVER_VIEW_ON},
+        {controlSystem::controlBoardButtons::k_repeat, CMD_REPEAT_ON},
+        {controlSystem::controlBoardButtons::k_toggleRandom, CMD_RANDOM_ON},
+        {controlSystem::controlBoardButtons::k_toggleDac, CMD_TOGGLE_DAC_ON},
+        {controlSystem::controlBoardButtons::k_nextPanel, CMD_NEXT_MENU_ITEM},
+        {controlSystem::controlBoardButtons::k_toggleMeter, CMD_TOGGLE_METER_ON},
+        {controlSystem::controlBoardButtons::k_cycleBrightness, CMD_CYCLE_BRIGHTNESS},
+    };
+
+    for (const auto &expected : firstPressCommands)
+    {
+        auto action = actionMap[expected.buttonId].action->produce(true);
+        expect_true(action != nullptr, "Registered button should produce an action on press");
+        expect_equal(static_cast<uint16_t>(expected.command), static_cast<uint16_t>(action->command),
+                     "Registered button produced an unexpected command");
+    }
+
+    auto toggleOff = actionMap[controlSystem::controlBoardButtons::k_cover].action->produce(true);
+    expect_equal(static_cast<uint16_t>(CMD_COVER_VIEW_OFF), static_cast<uint16_t>(toggleOff->command),
+                 "Second cover press should produce the OFF command");
+
+    auto rotaryLeft = actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft].action->produce(true);
+    auto rotaryRight = actionMap[controlSystem::controlBoardButtons::k_rotaryEventLeft].action->produce(false);
+    expect_equal(static_cast<uint16_t>(CMD_ROTARY_ACTION), static_cast<uint16_t>(rotaryLeft->command),
+                 "Rotary registration should produce the rotary command");
+    expect_equal(static_cast<uint16_t>(0), rotaryLeft->parameters[0],
+                 "Rotary left should encode parameter zero");
+    expect_equal(static_cast<uint16_t>(1), rotaryRight->parameters[0],
+                 "Rotary right should encode parameter one");
+}
+
+void test_action_registry_reset_states_restores_toggle_actions()
+{
+    controlSystem::ControlBoardInputDispatcher::ActionMap actionMap{};
+    controlSystem::ControlBoardActionRegistry registry;
+    registry.populate(actionMap);
+
+    auto first = actionMap[controlSystem::controlBoardButtons::k_repeat].action->produce(true);
+    expect_equal(static_cast<uint16_t>(CMD_REPEAT_ON), static_cast<uint16_t>(first->command),
+                 "Repeat should start in the OFF state");
+
+    registry.resetActionStates();
+
+    auto afterReset = actionMap[controlSystem::controlBoardButtons::k_repeat].action->produce(true);
+    expect_equal(static_cast<uint16_t>(CMD_REPEAT_ON), static_cast<uint16_t>(afterReset->command),
+                 "Reset should restore the first toggle command");
+}
+
+void test_action_factory_creates_expected_action_types_and_preserves_release_time()
+{
+    const auto uart = controlSystem::createAction(CMD_PLAY_PAUSE);
+    const auto relay = controlSystem::createAction(CMD_TOGGLE_DAC_ON);
+    const auto power = controlSystem::createAction(CMD_SYS_POWER, 1234);
+    const auto system = controlSystem::createAction(CMD_SYS_RPI_SHUTDOWN);
+    const auto brightness = controlSystem::createAction(CMD_CYCLE_BRIGHTNESS);
+
+    expect_true(dynamic_cast<actions::UartDispatchAction *>(uart.get()) != nullptr,
+                "Simple commands should create UartDispatchAction");
+    expect_true(dynamic_cast<actions::RelayAction *>(relay.get()) != nullptr,
+                "Relay commands should create RelayAction");
+    expect_true(dynamic_cast<actions::PowerTransitionAction *>(power.get()) != nullptr,
+                "Power commands should create PowerTransitionAction");
+    expect_true(dynamic_cast<actions::SystemAction *>(system.get()) != nullptr,
+                "System commands should create SystemAction");
+    expect_true(dynamic_cast<actions::BrightnessAction *>(brightness.get()) != nullptr,
+                "Brightness commands should create BrightnessAction");
+    expect_equal(static_cast<uint16_t>(1234), power->releaseTimeMillis,
+                 "Power action should preserve release duration");
+    expect_true(controlSystem::createAction(CMD_NO_ACTION) == nullptr,
+                "No-action command should not create an action");
+}
+
+void test_command_catalog_returns_names_and_simple_tags()
+{
+    expect_equal(std::string("Play_Pause"),
+                 std::string(controlSystem::getCommandNameById(CMD_PLAY_PAUSE)),
+                 "Known command should return its catalog name");
+    expect_equal(std::string("Play_Pause"),
+                 std::string(controlSystem::getSimpleCommandLogTag(CMD_PLAY_PAUSE)),
+                 "Simple command should return its log tag");
+    expect_true(controlSystem::getSimpleCommandLogTag(CMD_TOGGLE_METER) == nullptr,
+                "Structured command should not have a simple log tag");
+    expect_equal(std::string("UNKNOWN"),
+                 std::string(controlSystem::getCommandNameById(static_cast<CommandId>(0xFFFF))),
+                 "Unknown command should return UNKNOWN");
+    expect_true(controlSystem::getSimpleCommandLogTag(static_cast<CommandId>(0xFFFF)) == nullptr,
+                "Unknown command should not have a log tag");
+}
 } // namespace
 
 int main()
@@ -986,11 +1264,17 @@ int main()
         {"test_deserialize_message_library_entry_payload", test_deserialize_message_library_entry_payload},
         {"test_deserialize_message_playlist_result_payload", test_deserialize_message_playlist_result_payload},
         {"test_deserialize_message_playlist_result_failure_payload", test_deserialize_message_playlist_result_failure_payload},
+        {"test_serialize_message_clamps_playlist_name_to_protocol_limit", test_serialize_message_clamps_playlist_name_to_protocol_limit},
+        {"test_deserialize_message_rejects_invalid_fixed_payload_lengths", test_deserialize_message_rejects_invalid_fixed_payload_lengths},
+        {"test_deserialize_message_ignores_incomplete_standard_parameter_pair", test_deserialize_message_ignores_incomplete_standard_parameter_pair},
         {"test_control_board_button_press_dispatches_action_and_led", test_control_board_button_press_dispatches_action_and_led},
         {"test_control_board_momentary_button_release_turns_led_off", test_control_board_momentary_button_release_turns_led_off},
         {"test_control_board_toggle_button_press_flips_led_state", test_control_board_toggle_button_press_flips_led_state},
         {"test_control_board_remote_toggle_updates_led_state", test_control_board_remote_toggle_updates_led_state},
         {"test_dynamic_toggle_action_reset_state_restores_first_press_to_on", test_dynamic_toggle_action_reset_state_restores_first_press_to_on},
+        {"test_dynamic_toggle_action_sync_external_state_changes_next_press_command", test_dynamic_toggle_action_sync_external_state_changes_next_press_command},
+        {"test_control_board_remote_toggle_syncs_registered_action_state", test_control_board_remote_toggle_syncs_registered_action_state},
+        {"test_control_board_physical_press_after_remote_toggle_stays_in_sync", test_control_board_physical_press_after_remote_toggle_stays_in_sync},
         {"test_control_board_sleep_status_resets_toggle_led_tracking", test_control_board_sleep_status_resets_toggle_led_tracking},
         {"test_control_board_out_of_range_press_keeps_existing_status_ordering", test_control_board_out_of_range_press_keeps_existing_status_ordering},
         {"test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle", test_control_board_rotary_uses_shared_action_slot_and_returns_to_idle},
@@ -1010,7 +1294,7 @@ int main()
         {"test_power_state_transition_policy_returns_none_for_non_on_intermediate_states", test_power_state_transition_policy_returns_none_for_non_on_intermediate_states},
         {"test_action_command_routing_policy_handles_pre_on_routes", test_action_command_routing_policy_handles_pre_on_routes},
         {"test_action_command_routing_policy_classifies_on_state_handlers", test_action_command_routing_policy_classifies_on_state_handlers},
-        {"test_control_board_rotary_negative_direction_passes_false_to_action", test_control_board_rotary_negative_direction_passes_false_to_action},
+        {"test_control_board_rotary_negative_direction_passes_true_to_action", test_control_board_rotary_negative_direction_passes_true_to_action},
         {"test_control_board_in_range_unmapped_button_press_does_not_dispatch_response", test_control_board_in_range_unmapped_button_press_does_not_dispatch_response},
         {"test_control_board_in_range_unmapped_button_release_does_not_dispatch_response", test_control_board_in_range_unmapped_button_release_does_not_dispatch_response},
         {"test_control_board_sleep_blocks_non_power_button_press_and_toggle_led_change", test_control_board_sleep_blocks_non_power_button_press_and_toggle_led_change},
@@ -1022,6 +1306,11 @@ int main()
         {"test_heartbeat_watchdog_times_out_after_the_window_elapses", test_heartbeat_watchdog_times_out_after_the_window_elapses},
         {"test_heartbeat_watchdog_does_not_refire_until_next_window_elapses", test_heartbeat_watchdog_does_not_refire_until_next_window_elapses},
         {"test_heartbeat_watchdog_notify_rx_updates_last_rx_time", test_heartbeat_watchdog_notify_rx_updates_last_rx_time},
+        {"test_action_registry_populates_every_button_with_expected_policy", test_action_registry_populates_every_button_with_expected_policy},
+        {"test_action_registry_maps_simple_toggle_and_rotary_commands", test_action_registry_maps_simple_toggle_and_rotary_commands},
+        {"test_action_registry_reset_states_restores_toggle_actions", test_action_registry_reset_states_restores_toggle_actions},
+        {"test_action_factory_creates_expected_action_types_and_preserves_release_time", test_action_factory_creates_expected_action_types_and_preserves_release_time},
+        {"test_command_catalog_returns_names_and_simple_tags", test_command_catalog_returns_names_and_simple_tags},
     };
 
     int failures = 0;

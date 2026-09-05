@@ -43,6 +43,13 @@ namespace actions
             m_state = false;
         }
 
+        // Keeps this action's next ON/OFF press in sync after a remote (BLE app)
+        // toggle, so a following physical press doesn't emit the stale command.
+        void syncExternalState(bool enabled) override
+        {
+            m_state = enabled;
+        }
+
         std::unique_ptr<IAction> produce(bool isPressed) override
         {
             if (!isPressed)
