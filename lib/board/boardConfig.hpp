@@ -80,7 +80,7 @@ namespace board
 #elif defined(NDEBUG)
         inline constexpr bool k_simulateRpiBoot = false;
 #else
-        inline constexpr bool k_simulateRpiBoot = true;
+        inline constexpr bool k_simulateRpiBoot = false;
 #endif
     } // namespace debug
 
