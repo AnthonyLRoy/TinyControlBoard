@@ -16,41 +16,32 @@
         android:background="@android:color/transparent"
         app:elevation="0dp">
 
-        <LinearLayout
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:orientation="horizontal">
-
-            <com.google.android.material.appbar.MaterialToolbar
-                android:id="@+id/toolbar"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                app:title="@string/library_title"
-                app:titleTextColor="@color/text_primary"
-                android:background="@android:color/transparent" />
-
-            <ImageButton
-                android:id="@+id/btnLibrarySearch"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginEnd="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/library_search"
-                android:src="@drawable/ic_search"
-                app:tint="@color/text_primary" />
-
-        </LinearLayout>
+            app:title="@string/search_results_title"
+            app:titleTextColor="@color/text_primary"
+            android:background="@android:color/transparent" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvLibrary"
+        android:id="@+id/rvSearchResults"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingVertical="8dp"
         android:clipToPadding="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <TextView
+        android:id="@+id/tvSearchResultsEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/search_results_empty"
+        android:textColor="@color/text_secondary"
+        android:textSize="15sp"
+        android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

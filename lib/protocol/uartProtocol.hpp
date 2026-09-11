@@ -132,7 +132,14 @@ enum CommandId : uint16_t
     // MSG_PLAYLIST_CMD payload = playlist name to load
     CMD_PLAYLIST_LOAD            = 0x0132,
     // MSG_PLAYLIST_CMD payload = playlist name to delete
-    CMD_PLAYLIST_DELETE          = 0x0133
+    CMD_PLAYLIST_DELETE          = 0x0133,
+    CMD_CLEAR_QUEUE               = 0x0134,
+    // MSG_PLAYLIST_CMD payload = search text; results stream back via MSG_LIBRARY_ENTRY
+    CMD_LIBRARY_SEARCH_ARTIST     = 0x0135,
+    CMD_LIBRARY_SEARCH_ALBUM      = 0x0136,
+    CMD_LIBRARY_SEARCH_ANY        = 0x0137,
+    // param0 = index into the last search result listing; appends to the MPD queue
+    CMD_ADD_SEARCH_RESULT          = 0x0138
 };
 
 enum PowerCommand : uint8_t

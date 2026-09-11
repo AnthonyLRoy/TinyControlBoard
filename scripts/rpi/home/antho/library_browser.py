@@ -4,7 +4,7 @@ import time
 
 from protocol import build_packet, MSG_LIBRARY_ENTRY
 from uart_writer_client import send_packet_locked
-from mpd_client import mpd_command, mpd_lsinfo, _mpd_escape
+from mpd_client import mpd_command, mpd_lsinfo, mpd_search, _mpd_escape
 
 LIB_BROWSE_UP = 0xFFFE
 LIB_BROWSE_ROOT = 0xFFFF
@@ -28,6 +28,7 @@ class _BrowseState:
         self.browse_entries = []    # [(is_directory, full_path), ...] for the last listing sent
         self.radio_browse = False
         self.playlist_entries = []  # full paths for the last playlist listing sent
+        self.search_entries = []    # full paths for the last search-result listing sent
         self.library_seq = 0
 
 _state = _BrowseState()
@@ -257,3 +258,57 @@ def handle_remove_track(params):
         print(f"Removed queue position {index}: {_state.playlist_entries[index]}", flush=True)
     except Exception as e:
         print(f"⚠️ MPD delete failed: {e}", flush=True)
+
+
+def _run_search(field, text):
+    """Runs an MPD search and streams the results via MSG_LIBRARY_ENTRY, kept in
+    _state.search_entries (separate from browse_entries, so browsing an actual
+    folder can't be corrupted by a search or vice versa)."""
+    text = text.strip()
+    if not text:
+        print("⚠️ Empty search text, ignoring", flush=True)
+        return
+
+    try:
+        tracks = mpd_search(field, text)[:MAX_LIBRARY_ENTRIES]
+    except Exception as e:
+        print(f"⚠️ MPD search failed: {e}", flush=True)
+        tracks = []
+
+    _state.search_entries = tracks
+    total = len(tracks)
+    print(f"Search[{field}]='{text}' → {total} results", flush=True)
+    if total == 0:
+        send_library_entry(0, 0, LIBRARY_ENTRY_EMPTY, "")
+        return
+
+    for index, full_path in enumerate(tracks):
+        name = posixpath.basename(full_path) or full_path
+        send_library_entry(index, total, LIBRARY_ENTRY_TRACK, name)
+        time.sleep(0.008)
+
+
+def handle_library_search_artist(text):
+    _run_search("artist", text)
+
+
+def handle_library_search_album(text):
+    _run_search("album", text)
+
+
+def handle_library_search_any(text):
+    _run_search("any", text)
+
+
+def handle_add_search_result(params):
+    index = params[0]
+    if not (0 <= index < len(_state.search_entries)):
+        print(f"⚠️ Invalid add-search-result index {index}", flush=True)
+        return
+
+    full_path = _state.search_entries[index]
+    try:
+        mpd_command(f'add "{_mpd_escape(full_path)}"')
+        print(f"Added to queue from search: {full_path}", flush=True)
+    except Exception as e:
+        print(f"⚠️ MPD add failed: {e}", flush=True)

@@ -55,6 +55,16 @@
     <string name="library_open_folder">Open</string>
     <string name="library_folder_added">Folder added to playlist</string>
     <string name="library_playlist_replaced">Playlist replaced</string>
+    <string name="library_search">Search</string>
+    <string name="library_search_type_label">Search by</string>
+    <string name="library_search_type_artist">Artist</string>
+    <string name="library_search_type_album">Album</string>
+    <string name="library_search_type_any">Any</string>
+    <string name="library_search_hint">Search text</string>
+    <string name="library_search_text_required">Enter search text</string>
+    <string name="search_results_title">Search Results</string>
+    <string name="search_results_empty">No results found</string>
+    <string name="search_results_added">Added to playlist</string>
     <string name="playlist_title">Current Playlist</string>
     <string name="playlist_play_now">Play Now</string>
     <string name="playlist_remove">Remove</string>

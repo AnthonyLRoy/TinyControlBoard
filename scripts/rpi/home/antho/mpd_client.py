@@ -47,3 +47,10 @@ def mpd_lsinfo(path):
         # Other keys (Last-Modified/Time/Artist/Title/...) describe the
         # most-recently-appended entry above and are not needed for browsing.
     return entries
+
+
+def mpd_search(field, text):
+    """Case-insensitive substring search via MPD's `search` command. `field` is
+    "artist", "album", or "any". Returns an ordered list of matching file paths."""
+    lines = mpd_command(f'search {field} "{_mpd_escape(text)}"')
+    return [line[len("file: "):] for line in lines if line.startswith("file: ")]

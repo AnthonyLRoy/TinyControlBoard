@@ -86,6 +86,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     val library = LibraryController()
 
+    // ── Library search (Artist/Album/Any) ────────────────────────────────────
+    inner class SearchController {
+        val results: StateFlow<List<LibraryEntry>?> = bleManager.searchResults
+        fun searchArtist(text: String) = bleManager.searchArtist(text)
+        fun searchAlbum(text: String) = bleManager.searchAlbum(text)
+        fun searchAny(text: String) = bleManager.searchAny(text)
+        fun addResult(index: Int) = bleManager.addSearchResult(index)
+        fun clear() = bleManager.clearSearchResults()
+    }
+    val search = SearchController()
+
     // ── Saved playlists (save/load/delete) ───────────────────────────────────
     inner class PlaylistController {
         val nameEntries: StateFlow<List<LibraryEntry>?> = bleManager.playlistNameEntries

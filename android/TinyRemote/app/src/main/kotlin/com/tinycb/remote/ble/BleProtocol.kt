@@ -22,6 +22,10 @@ object BleProtocol {
     const val CMD_PLAYLIST_LOAD = 0x0132
     const val CMD_PLAYLIST_DELETE = 0x0133
     const val CMD_CLEAR_QUEUE = 0x0134
+    const val CMD_LIBRARY_SEARCH_ARTIST = 0x0135
+    const val CMD_LIBRARY_SEARCH_ALBUM = 0x0136
+    const val CMD_LIBRARY_SEARCH_ANY = 0x0137
+    const val CMD_ADD_SEARCH_RESULT = 0x0138
     const val LIB_BROWSE_UP = 0xFFFE
     const val LIB_BROWSE_ROOT = 0xFFFF
 

@@ -1,6 +1,7 @@
 package com.tinycb.remote.ui
 
 import android.os.Bundle
+import android.content.Intent
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tinycb.remote.R
 import com.tinycb.remote.databinding.ActivityLibraryBinding
+import com.tinycb.remote.databinding.DialogLibrarySearchBinding
 import com.tinycb.remote.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -50,6 +52,8 @@ class LibraryActivity : AppCompatActivity() {
         b.rvLibrary.layoutManager = LinearLayoutManager(this)
         b.rvLibrary.adapter = adapter
 
+        b.btnLibrarySearch.setOnClickListener { showSearchDialog() }
+
         lifecycleScope.launch {
             vm.library.listing.collectLatest { entries ->
                 val rows = buildList {
@@ -61,6 +65,38 @@ class LibraryActivity : AppCompatActivity() {
         }
 
         vm.library.browseRoot()
+    }
+
+    private fun showSearchDialog() {
+        val dialogBinding = DialogLibrarySearchBinding.inflate(layoutInflater)
+
+        val dialog = MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
+            .setTitle(R.string.library_search)
+            .setView(dialogBinding.root)
+            .setPositiveButton(R.string.ok, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val okButton = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            okButton.setOnClickListener {
+                val text = dialogBinding.etSearchText.text?.toString()?.trim().orEmpty()
+                if (text.isEmpty()) {
+                    dialogBinding.tilSearchText.error = getString(R.string.library_search_text_required)
+                    return@setOnClickListener
+                }
+                dialogBinding.tilSearchText.error = null
+
+                when (dialogBinding.rgSearchType.checkedRadioButtonId) {
+                    dialogBinding.rbSearchAlbum.id -> vm.search.searchAlbum(text)
+                    dialogBinding.rbSearchAny.id -> vm.search.searchAny(text)
+                    else -> vm.search.searchArtist(text)
+                }
+                dialog.dismiss()
+                startActivity(Intent(this, SearchResultsActivity::class.java))
+            }
+        }
+        dialog.show()
     }
 
     private fun showFolderActions(index: Int) {

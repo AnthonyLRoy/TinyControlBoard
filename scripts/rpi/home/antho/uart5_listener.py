@@ -31,6 +31,9 @@ TEXT_PAYLOAD_COMMANDS = {
     cmd.CMD_PLAYLIST_SAVE_OVERWRITE,
     cmd.CMD_PLAYLIST_LOAD,
     cmd.CMD_PLAYLIST_DELETE,
+    cmd.CMD_LIBRARY_SEARCH_ARTIST,
+    cmd.CMD_LIBRARY_SEARCH_ALBUM,
+    cmd.CMD_LIBRARY_SEARCH_ANY,
 }
 
 COMMAND_HANDLERS = {
@@ -67,6 +70,10 @@ COMMAND_HANDLERS = {
     cmd.CMD_PLAYLIST_LOAD:            playlist.handle_playlist_load,
     cmd.CMD_PLAYLIST_DELETE:          playlist.handle_playlist_delete,
     cmd.CMD_CLEAR_QUEUE:              library.handle_clear_queue,
+    cmd.CMD_LIBRARY_SEARCH_ARTIST:    library.handle_library_search_artist,
+    cmd.CMD_LIBRARY_SEARCH_ALBUM:     library.handle_library_search_album,
+    cmd.CMD_LIBRARY_SEARCH_ANY:       library.handle_library_search_any,
+    cmd.CMD_ADD_SEARCH_RESULT:        library.handle_add_search_result,
 }
 
 def setup_gpio():

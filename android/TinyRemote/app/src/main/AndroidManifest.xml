@@ -55,6 +55,13 @@
             android:screenOrientation="portrait" />
 
         <activity
+            android:name=".ui.SearchResultsActivity"
+            android:exported="false"
+            android:label="@string/search_results_title"
+            android:parentActivityName=".ui.LibraryActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
             android:name=".ui.PlaylistActivity"
             android:exported="false"
             android:label="@string/playlist_title"

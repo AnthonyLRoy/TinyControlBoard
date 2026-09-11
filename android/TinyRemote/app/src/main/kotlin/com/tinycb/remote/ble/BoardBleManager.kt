@@ -49,9 +49,16 @@ class BoardBleManager(context: Context) {
     private val _playlistOpResult = MutableStateFlow<BleProtocol.PlaylistOpResult?>(null)
     val playlistOpResult: StateFlow<BleProtocol.PlaylistOpResult?> = _playlistOpResult
 
+    private val _searchResults = MutableStateFlow<List<LibraryEntry>?>(null)
+    val searchResults: StateFlow<List<LibraryEntry>?> = _searchResults
+
     // When true, incoming MSG_LIBRARY_ENTRY notifications populate playlistNameEntries
     // instead of libraryListing (see requestPlaylistNames()).
     @Volatile private var playlistNameMode = false
+
+    // When true, incoming MSG_LIBRARY_ENTRY notifications populate searchResults
+    // instead of libraryListing (see searchArtist()/searchAlbum()/searchAny()).
+    @Volatile private var searchMode = false
 
     // ── Internal state ──────────────────────────────────────────────────────
     private val discoveredDevices = mutableListOf<BluetoothDevice>()
@@ -118,7 +125,9 @@ class BoardBleManager(context: Context) {
                     _libraryListing.value = emptyList()
                     _playlistNameEntries.value = null
                     _playlistOpResult.value = null
+                    _searchResults.value = null
                     playlistNameMode = false
+                    searchMode = false
                 }
             }
         }
@@ -347,6 +356,12 @@ class BoardBleManager(context: Context) {
     }
 
     private fun parseLibraryEntry(value: ByteArray) {
+        if (searchMode) {
+            BleProtocol.parseLibraryEntry(value, _searchResults.value ?: emptyList())?.let {
+                _searchResults.value = it
+            }
+            return
+        }
         if (playlistNameMode) {
             BleProtocol.parseLibraryEntry(value, _playlistNameEntries.value ?: emptyList())?.let {
                 _playlistNameEntries.value = it
@@ -460,7 +475,9 @@ class BoardBleManager(context: Context) {
         _libraryListing.value = emptyList()
         _playlistNameEntries.value = null
         _playlistOpResult.value = null
+        _searchResults.value = null
         playlistNameMode = false
+        searchMode = false
     }
 
     fun setSelectedViewId(id: Int?) {
@@ -469,6 +486,7 @@ class BoardBleManager(context: Context) {
 
     private fun writeLibraryCommand(commandId: Int, param: Int) {
         playlistNameMode = false
+        searchMode = false
         val char = libraryCmdChar ?: run { Log.w(TAG, "library cmd 0x%04X: libraryCmdChar is null".format(commandId)); return }
         val bytes = commandId16Bytes(commandId) + byteArrayOf(
             (param and 0xFF).toByte(),
@@ -518,6 +536,18 @@ class BoardBleManager(context: Context) {
     fun overwritePlaylist(name: String) = writePlaylistCommand(BleProtocol.CMD_PLAYLIST_SAVE_OVERWRITE, name)
     fun loadPlaylist(name: String) = writePlaylistCommand(BleProtocol.CMD_PLAYLIST_LOAD, name)
     fun deletePlaylist(name: String) = writePlaylistCommand(BleProtocol.CMD_PLAYLIST_DELETE, name)
+
+    private fun writeSearchCommand(commandId: Int, text: String) {
+        _searchResults.value = null
+        searchMode = true
+        writePlaylistCommand(commandId, text)
+    }
+
+    fun searchArtist(text: String) = writeSearchCommand(BleProtocol.CMD_LIBRARY_SEARCH_ARTIST, text)
+    fun searchAlbum(text: String) = writeSearchCommand(BleProtocol.CMD_LIBRARY_SEARCH_ALBUM, text)
+    fun searchAny(text: String) = writeSearchCommand(BleProtocol.CMD_LIBRARY_SEARCH_ANY, text)
+    fun addSearchResult(index: Int) = writeLibraryCommand(BleProtocol.CMD_ADD_SEARCH_RESULT, index)
+    fun clearSearchResults() { _searchResults.value = null }
 
     companion object {
         private const val TAG = "BoardBleManager"
