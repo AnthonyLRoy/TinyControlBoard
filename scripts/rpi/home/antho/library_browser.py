@@ -16,6 +16,10 @@ MAX_LIBRARY_ENTRIES = 200  # cap per directory listing, not the whole library
 MAX_FOLDER_TRACKS = 50
 MAX_LIBRARY_NAME_LEN = 55
 RADIO_DIRECTORY = "RADIO"
+OSDISK_DIRECTORY = "OSDISK"  # internal storage mount, hidden from the Library browser
+SAVED_PLAYLISTS_NAME = "Saved Playlists"
+# Synthetic browse_path used to mark the virtual Saved Playlists folder — never a real MPD path.
+SAVED_PLAYLISTS_TOKEN = "\x00saved-playlists\x00"
 
 
 class _BrowseState:
@@ -36,6 +40,32 @@ def set_radio_browse(enabled):
     _state.browse_entries = []
 
 
+def _list_saved_playlist_names():
+    try:
+        return [
+            line[len("playlist: "):]
+            for line in mpd_command("listplaylists")
+            if line.startswith("playlist: ")
+        ]
+    except Exception as e:
+        print(f"⚠️ MPD listplaylists failed: {e}", flush=True)
+        return []
+
+
+def _root_entries():
+    """Root listing with OSDISK hidden and saved playlists collapsed into one virtual folder."""
+    raw_entries = mpd_lsinfo("")
+    playlist_names = set(_list_saved_playlist_names())
+    filtered = [
+        (is_dir, full_path) for is_dir, full_path in raw_entries
+        if not (is_dir and posixpath.basename(full_path) == OSDISK_DIRECTORY)
+        and not (not is_dir and full_path in playlist_names)
+    ]
+    if playlist_names:
+        filtered.append((True, SAVED_PLAYLISTS_TOKEN))
+    return filtered
+
+
 def send_library_entry(index, total, entry_type, name):
     payload = bytes([entry_type]) + struct.pack("<HH", index, total) + name.encode("utf-8")[:MAX_LIBRARY_NAME_LEN]
     send_packet_locked(build_packet(MSG_LIBRARY_ENTRY, _state.library_seq, 0, payload))
@@ -51,7 +81,7 @@ def handle_browse_request(params):
         print(f"Invalid radio browse target {target}", flush=True)
         return
     elif target == LIB_BROWSE_UP:
-        _state.browse_path = posixpath.dirname(_state.browse_path)
+        _state.browse_path = "" if _state.browse_path == SAVED_PLAYLISTS_TOKEN else posixpath.dirname(_state.browse_path)
     elif 0 <= target < len(_state.browse_entries) and _state.browse_entries[target][0]:
         _state.browse_path = _state.browse_entries[target][1]
     else:
@@ -59,8 +89,14 @@ def handle_browse_request(params):
         return
 
     try:
-        browse_path = RADIO_DIRECTORY if _state.radio_browse else _state.browse_path
-        entries = mpd_lsinfo(browse_path)
+        if _state.radio_browse:
+            entries = mpd_lsinfo(RADIO_DIRECTORY)
+        elif _state.browse_path == SAVED_PLAYLISTS_TOKEN:
+            entries = [(False, name) for name in _list_saved_playlist_names()]
+        elif _state.browse_path == "":
+            entries = _root_entries()
+        else:
+            entries = mpd_lsinfo(_state.browse_path)
     except Exception as e:
         print(f"⚠️ MPD lsinfo failed: {e}", flush=True)
         entries = []
@@ -75,9 +111,12 @@ def handle_browse_request(params):
         return
 
     for index, (is_dir, full_path) in enumerate(_state.browse_entries):
-        name = posixpath.basename(full_path) or full_path
-        if _state.radio_browse and name.endswith(".pls"):
-            name = name[:-4]
+        if full_path == SAVED_PLAYLISTS_TOKEN:
+            name = SAVED_PLAYLISTS_NAME
+        else:
+            name = posixpath.basename(full_path) or full_path
+            if _state.radio_browse and name.endswith(".pls"):
+                name = name[:-4]
         entry_type = LIBRARY_ENTRY_FOLDER if is_dir else LIBRARY_ENTRY_TRACK
         send_library_entry(index, total, entry_type, name)
         time.sleep(0.008)  # pace sends so the ESP32 RX/BLE-notify pipeline can keep up
