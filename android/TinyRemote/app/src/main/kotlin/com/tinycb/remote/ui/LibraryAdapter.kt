@@ -20,7 +20,8 @@ sealed class LibraryRow {
 class LibraryAdapter(
     private val onUpClicked: (() -> Unit)? = null,
     private val onFolderClicked: ((Int) -> Unit)? = null,
-    private val onTrackClicked: ((Int) -> Unit)? = null
+    private val onTrackClicked: ((Int) -> Unit)? = null,
+    private val onAlbumClicked: ((String) -> Unit)? = null
 ) : ListAdapter<LibraryRow, RecyclerView.ViewHolder>(DIFF) {
 
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
@@ -45,6 +46,15 @@ class LibraryAdapter(
     inner class AlbumHeaderVH(private val b: ItemAlbumHeaderBinding) : RecyclerView.ViewHolder(b.root) {
         fun bind(row: LibraryRow.AlbumHeader) {
             b.tvAlbumHeaderName.text = row.albumName
+            if (onAlbumClicked != null) {
+                b.root.isClickable = true
+                b.root.isFocusable = true
+                b.root.setOnClickListener { onAlbumClicked.invoke(row.albumName) }
+            } else {
+                b.root.isClickable = false
+                b.root.isFocusable = false
+                b.root.setOnClickListener(null)
+            }
         }
     }
 

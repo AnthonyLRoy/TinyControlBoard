@@ -70,6 +70,7 @@
     <string name="search_results_added">Added to playlist</string>
     <string name="search_results_group_by_album">Group by Album</string>
     <string name="search_results_unknown_album">Unknown Album</string>
+    <string name="search_results_add_album_to_playlist">Add Album to Playlist</string>
     <string name="playlist_title">Current Playlist</string>
     <string name="playlist_play_now">Play Now</string>
     <string name="playlist_remove">Remove</string>

@@ -600,3 +600,36 @@ This section provides diagnostic commands and step-by-step solutions for common 
    sudo systemctl daemon-reload
    sudo systemctl restart getty@tty1.service
    ```
+
+---
+
+### 9.7 Meter Button/UART Command Does Nothing (Peppy Display Won't Switch)
+
+#### Problem: Toggling the Meter button (app or physical) sends the UART command fine (`Handling Command ID: 0x0115` in `uart5_listener` logs), but the display never switches to the peppy meter. `sudo moodeutl --setdisplay peppy` on the RPi prints:
+
+```
+This option requires PeppyALSA driver to be On
+```
+
+**Root cause:** moOde's `enable_peppyalsa` flag is a **PHP session variable only** — it is never written to the persistent `cfg_system` SQLite table. It defaults to `0` and silently resets whenever the moOde web session resets (reboot, `php-fpm`/nginx restart, browser session/cookie expiry, moOde update). So this can "just stop working" with no settings intentionally changed.
+
+Also, in the moOde web UI, the **Peppy Display** and **PeppyALSA driver** toggles under **Configure → Peripherals → Local Display** are greyed out/disabled whenever **Local Display** (WebUI shown on the local screen) is **On** — the two modes are mutually exclusive. Our RPi `toggle_meter_display()` handler runs `moodeutl --setdisplay webui` when the meter is turned OFF, which sets `local_display=1`, `peppy_display=0` — this is expected, but it means Local Display stays "On" until you explicitly re-enable Peppy in the UI.
+
+**Fix:**
+1. Open the moOde web UI → **Configure → Peripherals → Local Display**.
+2. Turn **Local Display** (WebUI) **Off** first — this un-greys the Peppy controls.
+3. Turn **PeppyALSA driver** **On**.
+4. Turn **Peppy Display** **On**.
+5. Save. `sudo moodeutl --setdisplay peppy` (and the UART meter toggle) should now work again.
+
+**Quick diagnostic commands:**
+```bash
+# Confirm the UART command is actually arriving and being handled
+sudo journalctl -u uart5_listener -n 50 --no-pager
+
+# Check current relevant moOde settings
+sqlite3 /var/local/www/db/moode-sqlite3.db 'select param, value from cfg_system;' \
+  | grep -E 'local_display|peppy_display|audioout|alsaequal|eqfa12p'
+```
+
+Note: `enable_peppyalsa` won't show up in that dump — it's session-only, so expect to have to re-enable it after a reboot or moOde update if the meter view stops responding again.

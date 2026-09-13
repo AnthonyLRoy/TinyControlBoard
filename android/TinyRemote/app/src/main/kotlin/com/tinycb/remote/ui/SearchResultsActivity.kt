@@ -8,10 +8,12 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tinycb.remote.R
 import com.tinycb.remote.databinding.ActivitySearchResultsBinding
 import com.tinycb.remote.model.LibraryEntry
 import com.tinycb.remote.viewmodel.MainViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -34,6 +36,9 @@ class SearchResultsActivity : AppCompatActivity() {
             onTrackClicked = { index ->
                 vm.search.addResult(index)
                 Toast.makeText(this, R.string.search_results_added, Toast.LENGTH_SHORT).show()
+            },
+            onAlbumClicked = { albumName ->
+                showAddAlbumDialog(albumName)
             }
         )
 
@@ -49,6 +54,33 @@ class SearchResultsActivity : AppCompatActivity() {
                 renderResults()
                 b.tvSearchResultsEmpty.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
             }
+        }
+    }
+
+    private fun showAddAlbumDialog(albumName: String) {
+        MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
+            .setTitle(albumName)
+            .setPositiveButton(R.string.search_results_add_album_to_playlist) { _, _ ->
+                addAlbumToPlaylist(albumName)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun addAlbumToPlaylist(albumName: String) {
+        val unknownAlbumLabel = getString(R.string.search_results_unknown_album)
+        val albumTracks = lastResults.filter { entry ->
+            val label = entry.albumName.ifEmpty { unknownAlbumLabel }
+            label == albumName
+        }
+        if (albumTracks.isEmpty()) return
+
+        lifecycleScope.launch {
+            for (track in albumTracks) {
+                vm.search.addResult(track.index)
+                delay(20L)
+            }
+            Toast.makeText(this@SearchResultsActivity, R.string.search_results_added, Toast.LENGTH_SHORT).show()
         }
     }
 
