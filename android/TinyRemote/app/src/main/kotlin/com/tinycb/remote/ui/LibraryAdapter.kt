@@ -7,26 +7,48 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.tinycb.remote.R
+import com.tinycb.remote.databinding.ItemAlbumHeaderBinding
 import com.tinycb.remote.databinding.ItemLibraryEntryBinding
 import com.tinycb.remote.model.LibraryEntry
 
 sealed class LibraryRow {
     object Up : LibraryRow()
     data class Entry(val entry: LibraryEntry) : LibraryRow()
+    data class AlbumHeader(val albumName: String) : LibraryRow()
 }
 
 class LibraryAdapter(
     private val onUpClicked: (() -> Unit)? = null,
     private val onFolderClicked: ((Int) -> Unit)? = null,
     private val onTrackClicked: ((Int) -> Unit)? = null
-) : ListAdapter<LibraryRow, LibraryAdapter.VH>(DIFF) {
+) : ListAdapter<LibraryRow, RecyclerView.ViewHolder>(DIFF) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
-        VH(ItemLibraryEntryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+    override fun getItemViewType(position: Int): Int = when (getItem(position)) {
+        is LibraryRow.AlbumHeader -> VIEW_TYPE_ALBUM_HEADER
+        else -> VIEW_TYPE_ENTRY
+    }
 
-    override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(getItem(position))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
+        if (viewType == VIEW_TYPE_ALBUM_HEADER) {
+            AlbumHeaderVH(ItemAlbumHeaderBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        } else {
+            EntryVH(ItemLibraryEntryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        }
 
-    inner class VH(private val b: ItemLibraryEntryBinding) : RecyclerView.ViewHolder(b.root) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is AlbumHeaderVH -> holder.bind(getItem(position) as LibraryRow.AlbumHeader)
+            is EntryVH -> holder.bind(getItem(position))
+        }
+    }
+
+    inner class AlbumHeaderVH(private val b: ItemAlbumHeaderBinding) : RecyclerView.ViewHolder(b.root) {
+        fun bind(row: LibraryRow.AlbumHeader) {
+            b.tvAlbumHeaderName.text = row.albumName
+        }
+    }
+
+    inner class EntryVH(private val b: ItemLibraryEntryBinding) : RecyclerView.ViewHolder(b.root) {
         fun bind(row: LibraryRow) {
             when (row) {
                 is LibraryRow.Up -> {
@@ -50,18 +72,24 @@ class LibraryAdapter(
                         b.root.setOnClickListener { onTrackClicked?.invoke(entry.index) }
                     }
                 }
+                is LibraryRow.AlbumHeader -> Unit // handled by AlbumHeaderVH
             }
         }
     }
 
     companion object {
+        private const val VIEW_TYPE_ENTRY = 0
+        private const val VIEW_TYPE_ALBUM_HEADER = 1
+
         private val DIFF = object : DiffUtil.ItemCallback<LibraryRow>() {
             override fun areItemsTheSame(a: LibraryRow, b: LibraryRow): Boolean {
                 if (a is LibraryRow.Up && b is LibraryRow.Up) return true
                 if (a is LibraryRow.Entry && b is LibraryRow.Entry) return a.entry.index == b.entry.index
+                if (a is LibraryRow.AlbumHeader && b is LibraryRow.AlbumHeader) return a.albumName == b.albumName
                 return false
             }
             override fun areContentsTheSame(a: LibraryRow, b: LibraryRow) = a == b
         }
     }
 }
+

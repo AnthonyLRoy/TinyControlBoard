@@ -453,10 +453,18 @@ class BoardBleManager(context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun sendCommand(commandId: Int) {
+    fun sendCommand(commandId: Int, releaseMs: Int = 0) {
         val char = cmdChar ?: run { Log.w(TAG, "sendCommand 0x%04X: cmdChar is null".format(commandId)); return }
-        Log.d(TAG, "sendCommand: writing 0x%04X to CMD characteristic".format(commandId))
-        writeToCharacteristic(char, commandId16Bytes(commandId))
+        Log.d(TAG, "sendCommand: writing 0x%04X (releaseMs=$releaseMs) to CMD characteristic".format(commandId))
+        val bytes = if (releaseMs > 0) {
+            commandId16Bytes(commandId) + byteArrayOf(
+                (releaseMs and 0xFF).toByte(),
+                ((releaseMs shr 8) and 0xFF).toByte()
+            )
+        } else {
+            commandId16Bytes(commandId)
+        }
+        writeToCharacteristic(char, bytes)
     }
 
     fun disconnect() {

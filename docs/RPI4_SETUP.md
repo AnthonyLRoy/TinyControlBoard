@@ -8,7 +8,7 @@ This guide explains how to clone the repository onto a Raspberry Pi 4 running **
 
 Companion assets for the Raspberry Pi are tracked in the GitHub repository under [scripts/rpi](scripts/rpi).
 
-### Complete List of Python Programs & Modules (`scripts/rpi/home/antho/`)
+### Complete List of Python Programs & Modules (`scripts/rpi/home/`)
 
 | Script File | Purpose / Function |
 | :--- | :--- |
@@ -36,23 +36,25 @@ Companion assets for the Raspberry Pi are tracked in the GitHub repository under
 
 ## 1. Clone Repository & Install System Dependencies
 
+> **Note on Username:** Throughout this guide, replace `<username>` with your actual Raspberry Pi user account name (for example `pi` or your custom login name).
+
 ### 1.1 Clone the GitHub Repository on the Pi
 
-Log into your Raspberry Pi over SSH and clone the repository into your home directory (`/home/antho`):
+Log into your Raspberry Pi over SSH and clone the repository into your home directory (`/home/<username>`):
 
 ```bash
-cd /home/antho
+cd /home/<username>
 git clone https://github.com/<your-username>/TinyControlBoard.git
 ```
 
 > *(Replace `<your-username>` with your actual GitHub username or repository URL).*
 
-Deploy the Python companion scripts from the cloned repository folder into `/home/antho/`:
+Deploy the Python companion scripts from the cloned repository folder into `/home/<username>/`:
 
 ```bash
-cp /home/antho/TinyControlBoard/scripts/rpi/home/antho/*.py /home/antho/
-chmod +x /home/antho/*.py
-sudo chown -R antho:antho /home/antho/
+cp /home/<username>/TinyControlBoard/scripts/rpi/home/*/*.py /home/<username>/
+chmod +x /home/<username>/*.py
+sudo chown -R <username>:<username> /home/<username>/
 ```
 
 ---
@@ -127,7 +129,7 @@ python3 -c "import serial, RPi.GPIO, requests; print('All Python dependencies in
 
 ### 4.1 UART Listener Service
 
-1. Ensure all Python scripts (`uart5_listener.py`, `protocol.py`, `mpd_client.py`, `library_browser.py`, `playlist_manager.py`, `panel_control.py`, `playback_commands.py`, `command_ids.py`, `uart_writer_client.py`) are present in `/home/antho/`.
+1. Ensure all Python scripts (`uart5_listener.py`, `protocol.py`, `mpd_client.py`, `library_browser.py`, `playlist_manager.py`, `panel_control.py`, `playback_commands.py`, `command_ids.py`, `uart_writer_client.py`) are present in `/home/<username>/`.
 
 2. Create the systemd service unit:
 
@@ -142,11 +144,11 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/antho/uart5_listener.py
+ExecStart=/usr/bin/python3 /home/<username>/uart5_listener.py
 Restart=always
-User=antho
-Group=antho
-WorkingDirectory=/home/antho
+User=<username>
+Group=<username>
+WorkingDirectory=/home/<username>
 StandardOutput=journal
 StandardError=journal
 
@@ -172,7 +174,7 @@ journalctl -u uart_listener.service -f
 
 ### 4.2 Heartbeat Sender Service
 
-1. Ensure `heartbeat_sender.py` is present in `/home/antho/`.
+1. Ensure `heartbeat_sender.py` is present in `/home/<username>/`.
 2. Create the heartbeat service unit:
 
 ```bash
@@ -186,11 +188,11 @@ After=network.target multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/antho/heartbeat_sender.py
+ExecStart=/usr/bin/python3 /home/<username>/heartbeat_sender.py
 Restart=always
-User=antho
-Group=antho
-WorkingDirectory=/home/antho
+User=<username>
+Group=<username>
+WorkingDirectory=/home/<username>
 StandardOutput=journal
 StandardError=journal
 
@@ -240,10 +242,10 @@ Add the following override content:
 ```ini
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin antho --noclear %I $TERM
+ExecStart=-/sbin/agetty --autologin <username> --noclear %I $TERM
 ```
 
-*(Adjust `antho` to `pi` if using the default `pi` user).*
+*(Replace `<username>` with your actual username, e.g. `pi`).*
 
 ---
 
@@ -369,7 +371,7 @@ If you prefer a simple static image splash screen without Plymouth:
 1. Copy the target splash screen image (such as [scripts/rpi/FinalSplashScreen.png](scripts/rpi/FinalSplashScreen.png)) to `/opt/splash.png`:
 
 ```bash
-sudo cp /home/antho/FinalSplashScreen.png /opt/splash.png
+sudo cp /home/<username>/FinalSplashScreen.png /opt/splash.png
 sudo chmod 644 /opt/splash.png
 ```
 
@@ -383,7 +385,7 @@ Copy your meter graphics and configuration files into `/opt/1024x600`:
 
 ```bash
 sudo mkdir -p /opt/1024x600
-sudo cp -r /home/antho/Peppymeter/1024x600/* /opt/1024x600/
+sudo cp -r /home/<username>/Peppymeter/1024x600/* /opt/1024x600/
 ```
 
 ---
@@ -392,17 +394,16 @@ sudo cp -r /home/antho/Peppymeter/1024x600/* /opt/1024x600/
 
 | Purpose | File Path | Notes |
 | :--- | :--- | :--- |
-| GitHub Repository | `/home/antho/TinyControlBoard` | Source tree cloned on Pi |
-| Script Suite Location | `/home/antho/TinyControlBoard/scripts/rpi/home/antho/*.py` | 11 Python scripts copied to `/home/antho/` |
+| GitHub Repository | `/home/<username>/TinyControlBoard` | Source tree cloned on Pi |
+| Script Suite Location | `/home/<username>/TinyControlBoard/scripts/rpi/home/*/*.py` | 11 Python scripts copied to `/home/<username>/` |
 | Firmware Config | `/boot/firmware/config.txt` | Enables `dtoverlay=uart5` |
 | Boot Parameters | `/boot/firmware/cmdline.txt` | Single line; includes quiet/splash parameters |
-| UART Listener Script | `/home/antho/uart5_listener.py` | Executable entry point (`chmod +x`) |
+| UART Listener Script | `/home/<username>/uart5_listener.py` | Executable entry point (`chmod +x`) |
 | UART Listener Service | `/etc/systemd/system/uart_listener.service` | Auto-starts UART listener on boot |
-| Heartbeat Sender Script | `/home/antho/heartbeat_sender.py` | Sends periodic UART heartbeats |
+| Heartbeat Sender Script | `/home/<username>/heartbeat_sender.py` | Sends periodic UART heartbeats |
 | Heartbeat Service | `/etc/systemd/system/heartbeat.service` | Auto-starts heartbeat sender |
 | Auto-Login Override | `/etc/systemd/system/getty@tty1.service.d/autologin.conf` | Enables console autologin |
 | Plymouth RiverBank Theme | `/usr/share/plymouth/themes/riverbank/` | Primary animated splash screen theme |
-| X Root Background Match | `~/.xinitrc` (`feh --bg-scale ...`) | Paints the splash background as the X root window to hide the gap before Chromium renders |
 | Static Splash Image | `/opt/splash.png` | Alternative static splash screen asset |
 | PeppyMeter Config | `/opt/1024x600/` | Meter graphics & `meters.txt` config |
 
@@ -447,7 +448,7 @@ This section provides diagnostic commands and step-by-step solutions for common 
 6. **Fix `Permission denied` errors accessing serial port:**
    Ensure your user is in the `dialout` group:
    ```bash
-   sudo usermod -a -G dialout antho
+   sudo usermod -a -G dialout <username>
    sudo reboot
    ```
 
@@ -476,17 +477,17 @@ This section provides diagnostic commands and step-by-step solutions for common 
      sudo apt install -y python3-serial python3-rpi.gpio python3-requests
      ```
    - For internal companion modules (e.g., `ModuleNotFoundError: No module named 'protocol'` or `'command_ids'`):
-     Ensure **all 11 Python files** from the repository's `scripts/rpi/home/antho/` folder have been copied into `/home/antho/`:
+     Ensure **all 11 Python files** from the repository's `scripts/rpi/home/` folder have been copied into `/home/<username>/`:
      ```bash
-     cp /home/antho/TinyControlBoard/scripts/rpi/home/antho/*.py /home/antho/
-     ls -la /home/antho/*.py
+     cp /home/<username>/TinyControlBoard/scripts/rpi/home/*/*.py /home/<username>/
+     ls -la /home/<username>/*.py
      ```
 
 3. **`PermissionDeniedError` or `Exec format error`:**
    Ensure executable permissions and user ownership are set correctly:
    ```bash
-   chmod +x /home/antho/*.py
-   sudo chown -R antho:antho /home/antho/
+   chmod +x /home/<username>/*.py
+   sudo chown -R <username>:<username> /home/<username>/
    ```
 
 4. **Reload systemd after modifying service unit files:**
@@ -576,17 +577,6 @@ This section provides diagnostic commands and step-by-step solutions for common 
 4. **Raspberry Pi OS Trixie / Kernel DRM Graphics Bug:**
    If using newer Debian/Trixie kernel builds where simpledrm/kms driver initialization delays KMS output, Plymouth may default to text or 3-dot mode. A full reboot with physical display attached is required for accurate verification.
 
-5. **Problem: Moode never boots / Chromium never starts / splash never disappears (all screen at once)**
-   - This is the boot deadlock described in section 6, step 7. It happens when `plymouth-quit.service` is masked and something (a custom handoff unit) tries to gate `plymouth quit` on Chromium being ready. Since `getty@tty1.service` (autologin → X → Chromium) is itself ordered after `plymouth-quit-wait.service`, which blocks until Plymouth quits, Chromium can never start.
-   - Fix: make sure `plymouth-quit.service` is **not** masked, and remove any custom quit-gating unit:
-     ```bash
-     systemctl is-enabled plymouth-quit.service plymouth-quit-wait.service
-     sudo systemctl disable --now moode-plymouth-handoff.service 2>/dev/null
-     sudo systemctl unmask plymouth-quit.service
-     sudo systemctl daemon-reload
-     ```
-   - Use the `.xinitrc` background-match technique in section 6, step 7 to hide the gap instead of delaying the quit.
-
 ---
 
 ### 9.6 Console Auto-Login Issues
@@ -601,9 +591,9 @@ This section provides diagnostic commands and step-by-step solutions for common 
    ```ini
    [Service]
    ExecStart=
-   ExecStart=-/sbin/agetty --autologin antho --noclear %I $TERM
+   ExecStart=-/sbin/agetty --autologin <username> --noclear %I $TERM
    ```
-   *(Replace `antho` with `pi` if using default username).*
+   *(Replace `<username>` with `pi` or your actual login username).*
 
 3. **Reload systemd and restart getty:**
    ```bash

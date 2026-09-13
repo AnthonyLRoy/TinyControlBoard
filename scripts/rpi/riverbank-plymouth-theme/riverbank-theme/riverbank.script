@@ -1,0 +1,56 @@
+// RiverBank Audio Systems - Plymouth boot splash
+// Static background image (letterboxed to fit the screen, no cropping/stretching)
+// with a small rotating spinner icon near the bottom so the user knows something
+// is happening. Background does NOT spin - only the spinner icon rotates.
+
+Window.SetBackgroundTopColor(0.02, 0.02, 0.03);
+Window.SetBackgroundBottomColor(0.02, 0.02, 0.03);
+
+screen_w = Window.GetWidth();
+screen_h = Window.GetHeight();
+
+// ---- Background image: scaled to fit the screen, preserving aspect ratio ----
+background_image = Image("background.png");
+img_w = background_image.GetWidth();
+img_h = background_image.GetHeight();
+
+screen_ratio = screen_w / screen_h;
+img_ratio = img_w / img_h;
+
+if (img_ratio > screen_ratio) {
+    fit_w = screen_w;
+    fit_h = img_h * (fit_w / img_w);
+} else {
+    fit_h = screen_h;
+    fit_w = img_w * (fit_h / img_h);
+}
+
+resized_background = background_image.Scale(fit_w, fit_h);
+background_sprite = Sprite(resized_background);
+background_sprite.SetX(screen_w / 2 - fit_w / 2);
+background_sprite.SetY(screen_h / 2 - fit_h / 2);
+background_sprite.SetZ(-100);
+
+// ---- Spinner icon: small rotating ring near the bottom of the screen ----
+spinner_image = Image("spinner.png");
+spinner_sprite = Sprite(spinner_image);
+spinner_sprite.SetZ(100);
+
+spinner_center_x = screen_w / 2;
+spinner_center_y = screen_h - (screen_h * 0.12);
+
+spin_angle = 0;
+
+fun refresh_callback() {
+    spin_angle += 0.15;
+    if (spin_angle > 6.283185) {
+        spin_angle -= 6.283185;
+    }
+
+    rotated_spinner = spinner_image.Rotate(spin_angle);
+    spinner_sprite.SetImage(rotated_spinner);
+    spinner_sprite.SetX(spinner_center_x - rotated_spinner.GetWidth() / 2);
+    spinner_sprite.SetY(spinner_center_y - rotated_spinner.GetHeight() / 2);
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);

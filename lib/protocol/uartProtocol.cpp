@@ -66,17 +66,27 @@ bool decodeTrackProgress(UartMessage &rMsg, const uint8_t *p_payload, uint8_t pa
 
 bool decodeLibraryEntry(UartMessage &rMsg, const uint8_t *p_payload, uint8_t payloadLen)
 {
-    if (payloadLen < 5)
+    if (payloadLen < 6)
         return false;
     rMsg.libraryEntryType  = p_payload[0];
     rMsg.libraryEntryIndex = static_cast<uint16_t>(p_payload[1]) | (static_cast<uint16_t>(p_payload[2]) << 8);
     rMsg.libraryEntryTotal = static_cast<uint16_t>(p_payload[3]) | (static_cast<uint16_t>(p_payload[4]) << 8);
-    const uint8_t nameLen = payloadLen - 5;
-    const uint8_t len = (nameLen > protocol::k_maxLibraryNameLen)
-                        ? protocol::k_maxLibraryNameLen : nameLen;
-    memcpy(rMsg.libraryEntryName, p_payload + 5, len);
-    rMsg.libraryEntryName[len] = '\0';
-    rMsg.libraryEntryNameLen = len;
+
+    const uint8_t declaredNameLen = p_payload[5];
+    const uint8_t availableNameLen = (payloadLen - 6 < declaredNameLen) ? payloadLen - 6 : declaredNameLen;
+    const uint8_t nameLen = (availableNameLen > protocol::k_maxLibraryNameLen)
+                           ? protocol::k_maxLibraryNameLen : availableNameLen;
+    memcpy(rMsg.libraryEntryName, p_payload + 6, nameLen);
+    rMsg.libraryEntryName[nameLen] = '\0';
+    rMsg.libraryEntryNameLen = nameLen;
+
+    const uint8_t albumOffset = 6 + availableNameLen;
+    const uint8_t availableAlbumLen = (payloadLen > albumOffset) ? payloadLen - albumOffset : 0;
+    const uint8_t albumLen = (availableAlbumLen > protocol::k_maxLibraryAlbumLen)
+                            ? protocol::k_maxLibraryAlbumLen : availableAlbumLen;
+    memcpy(rMsg.libraryEntryAlbum, p_payload + albumOffset, albumLen);
+    rMsg.libraryEntryAlbum[albumLen] = '\0';
+    rMsg.libraryEntryAlbumLen = albumLen;
     return true;
 }
 

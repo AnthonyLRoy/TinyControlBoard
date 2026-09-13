@@ -12,6 +12,9 @@
     <string name="power_state">Power: %1$s</string>
     <string name="btn_power">Power</string>
     <string name="power_button_description">Power</string>
+    <string name="power_options_title">Power Options</string>
+    <string name="power_sleep">Sleep</string>
+    <string name="power_deep_sleep">Deep Sleep</string>
     <string name="btn_prev">Prev</string>
     <string name="btn_next">Next</string>
     <string name="btn_skip_fwd">Skip ▶▶</string>
@@ -65,6 +68,8 @@
     <string name="search_results_title">Search Results</string>
     <string name="search_results_empty">No results found</string>
     <string name="search_results_added">Added to playlist</string>
+    <string name="search_results_group_by_album">Group by Album</string>
+    <string name="search_results_unknown_album">Unknown Album</string>
     <string name="playlist_title">Current Playlist</string>
     <string name="playlist_play_now">Play Now</string>
     <string name="playlist_remove">Remove</string>

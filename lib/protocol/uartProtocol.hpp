@@ -17,13 +17,15 @@ inline constexpr uint8_t k_headerSize = 8;         // bytes 0-7
 inline constexpr uint8_t k_legacyPayloadSize = 10; // 5×uint16 params
 inline constexpr uint8_t k_maxNowPlayingLen = 60;
 inline constexpr uint8_t k_maxLibraryNameLen = 55;
+inline constexpr uint8_t k_maxLibraryAlbumLen = 40;
 inline constexpr uint16_t k_browseUp = 0xFFFE;
 inline constexpr uint16_t k_browseRoot = 0xFFFF;
 inline constexpr uint8_t k_libraryEntryFolder = 0;
 inline constexpr uint8_t k_libraryEntryTrack = 1;
 inline constexpr uint8_t k_libraryEntryEmpty = 2;
 inline constexpr uint8_t k_libraryEntryRadio = 3;
-inline constexpr uint8_t k_maxPayloadSize = 60;
+// header(6) + name(<=55) + album(<=40), rounded up for margin
+inline constexpr uint8_t k_maxPayloadSize = 104;
 // header(8) + max-payload(60) + checksum(1)
 inline constexpr uint8_t k_maxPacketSize = k_headerSize + k_maxPayloadSize + 1;
 // header(8) + legacy-params(10) + checksum(1)
@@ -50,7 +52,8 @@ enum MessageType : uint8_t
     MSG_NOW_PLAYING    = 0x05,
     // payload: elapsed_s(u16 LE) + duration_s(u16 LE) + is_playing(u8)
     MSG_TRACK_PROGRESS = 0x06,
-    // payload: entryType(u8) + index(u16 LE) + total(u16 LE) + name
+    // payload: entryType(u8) + index(u16 LE) + total(u16 LE) + nameLen(u8) + name(nameLen bytes)
+    // + album (remaining bytes, UTF-8, empty for browse/playlist listings)
     MSG_LIBRARY_ENTRY  = 0x07,
     // ESP32->RPi only; payload = playlist name (UTF-8, no terminator). commandId
     // selects which playlist action (see CMD_PLAYLIST_* below).
@@ -178,6 +181,9 @@ struct UartMessage
     uint16_t libraryEntryTotal;
     uint8_t  libraryEntryName[protocol::k_maxLibraryNameLen + 1];
     uint8_t  libraryEntryNameLen;
+    // Album name for search-result entries; empty for browse/playlist listings.
+    uint8_t  libraryEntryAlbum[protocol::k_maxLibraryAlbumLen + 1];
+    uint8_t  libraryEntryAlbumLen;
     // Outgoing MSG_PLAYLIST_CMD: playlist name payload (ESP32->RPi).
     uint8_t  playlistNameOut[protocol::k_maxLibraryNameLen + 1];
     uint8_t  playlistNameOutLen;
@@ -192,12 +198,13 @@ struct UartMessage
           msgType(MSG_COMMAND), sequence(0), commandId(0), nowPlayingLen(0),
           trackElapsedSec(0), trackDurationSec(0), trackIsPlaying(false),
           libraryEntryType(0), libraryEntryIndex(0), libraryEntryTotal(0),
-          libraryEntryNameLen(0), playlistNameOutLen(0), playlistResultOk(false),
-          playlistResultMessageLen(0), checksum(0)
+          libraryEntryNameLen(0), libraryEntryAlbumLen(0), playlistNameOutLen(0),
+          playlistResultOk(false), playlistResultMessageLen(0), checksum(0)
     {
         memset(params, 0, sizeof(params));
         memset(nowPlayingText, 0, sizeof(nowPlayingText));
         memset(libraryEntryName, 0, sizeof(libraryEntryName));
+        memset(libraryEntryAlbum, 0, sizeof(libraryEntryAlbum));
         memset(playlistNameOut, 0, sizeof(playlistNameOut));
         memset(playlistResultMessage, 0, sizeof(playlistResultMessage));
     }

@@ -193,11 +193,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isPowerFlashing.value = transitioning
     }
 
-    fun onPowerClicked() {
+    /** True when the board is fully ON, i.e. a power-button press would trigger Sleep/DeepSleep
+     *  on the firmware rather than a power-on request — this is when we must ask the user
+     *  which kind of sleep they want. */
+    fun isPoweredOn(): Boolean = _powerState.value == "ON"
+
+    fun onPowerClicked() = sendPowerCommand(releaseMs = 0) // short press → Sleep (or PowerOn if not ON)
+
+    fun onDeepSleepClicked() = sendPowerCommand(releaseMs = DEEP_SLEEP_RELEASE_MS) // long press → DeepSleep
+
+    private fun sendPowerCommand(releaseMs: Int) {
         isManuallyFlashing = true
         powerStateAtClick = _powerState.value
         _isPowerFlashing.value = true
-        sendCommand(0x0001) // POWER_COMMAND_ID
+        viewModelScope.launch(Dispatchers.IO) {
+            bleManager.sendCommand(0x0001, releaseMs) // POWER_COMMAND_ID
+        }
 
         manualFlashJob?.cancel()
         manualFlashJob = viewModelScope.launch {
@@ -226,5 +237,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
+    }
+
+    companion object {
+        // Must exceed the firmware's kLongPressThresholdMs (3000ms) so CMD_SYS_POWER
+        // is classified as a DeepSleep transition instead of a plain Sleep.
+        private const val DEEP_SLEEP_RELEASE_MS = 3500
     }
 }

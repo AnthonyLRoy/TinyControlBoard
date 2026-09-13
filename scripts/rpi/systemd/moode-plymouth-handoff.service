@@ -1,0 +1,16 @@
+# DEPRECATED: causes a boot deadlock — getty@tty1 (autologin -> X -> Chromium)
+# is ordered After=plymouth-quit-wait.service, which blocks until Plymouth quits,
+# so gating "plymouth quit" on Chromium's CDP port never resolves. See step 7 in
+# scripts/rpi/RPI4_SETUP.md for the safe alternative (background-match in .xinitrc).
+[Unit]
+Description=Quit Plymouth when Moode UI is ready
+After=network.target
+
+[Service]
+Type=oneshot
+# plymouth quit exits non-zero if the splash already ended (e.g. manual restart after boot)
+ExecStart=/bin/sh -c 'until curl -sf http://localhost:9222/json >/dev/null; do sleep 1; done; plymouth quit || true'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

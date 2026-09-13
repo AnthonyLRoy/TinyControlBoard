@@ -4,7 +4,7 @@ import time
 
 from protocol import build_packet, MSG_LIBRARY_ENTRY
 from uart_writer_client import send_packet_locked
-from mpd_client import mpd_command, mpd_lsinfo, mpd_search, _mpd_escape
+from mpd_client import mpd_command, mpd_lsinfo, mpd_search_with_tags, _mpd_escape
 
 LIB_BROWSE_UP = 0xFFFE
 LIB_BROWSE_ROOT = 0xFFFF
@@ -15,6 +15,7 @@ LIBRARY_ENTRY_RADIO = 3
 MAX_LIBRARY_ENTRIES = 200  # cap per directory listing, not the whole library
 MAX_FOLDER_TRACKS = 50
 MAX_LIBRARY_NAME_LEN = 55
+MAX_LIBRARY_ALBUM_LEN = 40
 RADIO_DIRECTORY = "RADIO"
 OSDISK_DIRECTORY = "OSDISK"  # internal storage mount, hidden from the Library browser
 SAVED_PLAYLISTS_NAME = "Saved Playlists"
@@ -67,8 +68,13 @@ def _root_entries():
     return filtered
 
 
-def send_library_entry(index, total, entry_type, name):
-    payload = bytes([entry_type]) + struct.pack("<HH", index, total) + name.encode("utf-8")[:MAX_LIBRARY_NAME_LEN]
+def send_library_entry(index, total, entry_type, name, album=""):
+    name_bytes = name.encode("utf-8")[:MAX_LIBRARY_NAME_LEN]
+    album_bytes = album.encode("utf-8")[:MAX_LIBRARY_ALBUM_LEN]
+    payload = (
+        bytes([entry_type]) + struct.pack("<HH", index, total)
+        + bytes([len(name_bytes)]) + name_bytes + album_bytes
+    )
     send_packet_locked(build_packet(MSG_LIBRARY_ENTRY, _state.library_seq, 0, payload))
     _state.library_seq = (_state.library_seq + 1) & 0xFF
 
@@ -263,28 +269,33 @@ def handle_remove_track(params):
 def _run_search(field, text):
     """Runs an MPD search and streams the results via MSG_LIBRARY_ENTRY, kept in
     _state.search_entries (separate from browse_entries, so browsing an actual
-    folder can't be corrupted by a search or vice versa)."""
+    folder can't be corrupted by a search or vice versa). Results are sorted by
+    (album, track number, path) so the Android app can group consecutive same-
+    album entries into album sections in correct track order without needing a
+    separate track-number field on the wire."""
     text = text.strip()
     if not text:
         print("⚠️ Empty search text, ignoring", flush=True)
         return
 
     try:
-        tracks = mpd_search(field, text)[:MAX_LIBRARY_ENTRIES]
+        results = mpd_search_with_tags(field, text)[:MAX_LIBRARY_ENTRIES]
     except Exception as e:
         print(f"⚠️ MPD search failed: {e}", flush=True)
-        tracks = []
+        results = []
 
-    _state.search_entries = tracks
-    total = len(tracks)
+    results.sort(key=lambda r: (r[1].lower(), r[2], r[0]))
+
+    _state.search_entries = [path for path, _album, _track_num in results]
+    total = len(results)
     print(f"Search[{field}]='{text}' → {total} results", flush=True)
     if total == 0:
         send_library_entry(0, 0, LIBRARY_ENTRY_EMPTY, "")
         return
 
-    for index, full_path in enumerate(tracks):
+    for index, (full_path, album, _track_num) in enumerate(results):
         name = posixpath.basename(full_path) or full_path
-        send_library_entry(index, total, LIBRARY_ENTRY_TRACK, name)
+        send_library_entry(index, total, LIBRARY_ENTRY_TRACK, name, album)
         time.sleep(0.008)
 
 

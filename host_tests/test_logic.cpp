@@ -249,7 +249,8 @@ void test_deserialize_message_library_entry_payload()
 {
     UartMessage parsed;
     uint8_t buffer[UART_PACKET_SIZE] = {};
-    const uint8_t payload[] = {1, 0x02, 0x00, 0x05, 0x00, 'T', 'r', 'a', 'c', 'k'}; // track, index=2, total=5, name="Track"
+    // track, index=2, total=5, nameLen=5, name="Track", album="Album"
+    const uint8_t payload[] = {1, 0x02, 0x00, 0x05, 0x00, 5, 'T', 'r', 'a', 'c', 'k', 'A', 'l', 'b', 'u', 'm'};
 
     build_frame(MSG_LIBRARY_ENTRY, 0, payload, sizeof(payload), buffer);
 
@@ -258,6 +259,7 @@ void test_deserialize_message_library_entry_payload()
     expect_equal(static_cast<uint16_t>(2), parsed.libraryEntryIndex, "Entry index mismatch");
     expect_equal(static_cast<uint16_t>(5), parsed.libraryEntryTotal, "Entry total mismatch");
     expect_equal(std::string("Track"), std::string(reinterpret_cast<const char *>(parsed.libraryEntryName)), "Entry name mismatch");
+    expect_equal(std::string("Album"), std::string(reinterpret_cast<const char *>(parsed.libraryEntryAlbum)), "Entry album mismatch");
 }
 
 void test_deserialize_message_playlist_result_payload()

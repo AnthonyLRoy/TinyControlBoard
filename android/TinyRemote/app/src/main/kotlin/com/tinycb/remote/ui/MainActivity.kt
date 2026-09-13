@@ -64,12 +64,33 @@ class MainActivity : AppCompatActivity() {
         }
 
         b.progressTrack.max = 10000
-        b.btnPower.setOnClickListener { vm.onPowerClicked() }
+        b.btnPower.setOnClickListener { onPowerButtonPressed() }
         b.tvNowPlaying.setOnClickListener {
             startActivity(Intent(this, PlaylistActivity::class.java))
         }
 
         observeViewModel()
+    }
+
+    private fun onPowerButtonPressed() {
+        if (vm.isPoweredOn()) {
+            showPowerOptionsDialog()
+        } else {
+            vm.onPowerClicked()
+        }
+    }
+
+    private fun showPowerOptionsDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.power_options_title)
+            .setItems(arrayOf(getString(R.string.power_sleep), getString(R.string.power_deep_sleep))) { _, which ->
+                when (which) {
+                    0 -> vm.onPowerClicked()
+                    1 -> vm.onDeepSleepClicked()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun observeViewModel() {

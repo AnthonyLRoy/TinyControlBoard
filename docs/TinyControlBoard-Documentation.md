@@ -24,6 +24,61 @@ off each stage pair on success, and flashes a failed pair at about 3 Hz. Firmwar
 initialization failures flash all eight diagnostic LEDs while `app_main()` retries
 initialization every second.
 
+## Setup Checklist
+
+The project has several required setup steps that are easy to miss if you start
+from the architectural docs alone.
+
+### Firmware setup
+
+- PlatformIO is the verified build path for the ESP32-S3 firmware.
+- The project is configured for `espressif32 @ ~6.5.0` and the
+  `esp32-s3-devkitc-1-16mb` board in [platformio.ini](../platformio.ini).
+- Use the VS Code `PlatformIO Build` task for firmware builds and the matching
+  PlatformIO upload flow for flashing a connected board.
+
+### Raspberry Pi setup
+
+- The Pi must run a Moode-based audio stack and have `dtoverlay=uart5` enabled in
+  `/boot/firmware/config.txt`.
+- The companion Python scripts are expected to be deployed together in
+  `/home/antho`, including:
+  - `uart5_listener.py`
+  - `heartbeat_sender.py`
+  - `protocol.py`
+  - `panel_control.py`
+  - `playback_commands.py`
+  - `library_browser.py`
+  - `playlist_manager.py`
+  - `mpd_client.py`
+  - `command_ids.py`
+  - `uart_writer_client.py`
+- The listener uses `/dev/ttyAMA5`, GPIO 23 for the ESP32 data-ready input, and
+  the heartbeat sender uses GPIO 24 for the data-ready pulse.
+- The Pi must not have a conflicting serial console enabled on the UART5 path.
+- Required Python packages include `pyserial`, `RPi.GPIO`, and `requests`.
+- The heartbeat logic also depends on the `mpc` CLI being installed and available
+  for now-playing/progress reporting.
+- The intended systemd services are `uart_listener.service` and
+  `heartbeat.service`, both started together for the full control loop.
+
+### Android app setup
+
+- Android Studio with the bundled JBR / JDK 17 is required.
+- The Android SDK must include API 34 (`compileSdk` / `targetSdk`).
+- The project is opened from `android/TinyRemote` and may require a generated
+  `local.properties` file pointing at the installed Android SDK.
+- USB debugging must be enabled on the Android device for local deployment.
+- On first launch, Bluetooth and location permissions are required depending on
+  the Android version.
+
+### Related setup references
+
+- [docs/project-guide.md](./project-guide.md)
+- [docs/raspberry-pi-setup.md](./raspberry-pi-setup.md)
+- [scripts/rpi/RPI4_SETUP.md](../scripts/rpi/RPI4_SETUP.md)
+- [android/TinyRemote/README.md](../android/TinyRemote/README.md)
+
 ## Reference Documents
 
 - [Project guide](./project-guide.md) — scope, current layout, hardware roles, and build overview

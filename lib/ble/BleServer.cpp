@@ -184,20 +184,29 @@ static const struct ble_gatt_svc_def k_gattSvcs[] = {
 // ---------------------------------------------------------------------------
 // Characteristic access callbacks
 // ---------------------------------------------------------------------------
+// Payload: [cmdId_lo, cmdId_hi] or [cmdId_lo, cmdId_hi, releaseMs_lo, releaseMs_hi].
+// The optional trailing releaseMs lets remote clients emulate a long press
+// (e.g. CMD_SYS_POWER -> DeepSleep) without changing the base 2-byte format.
 static int cmdChrAccess(uint16_t conn, uint16_t attr,
                         struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     if (ctxt->op != BLE_GATT_ACCESS_OP_WRITE_CHR)
         return 0;
-    if (OS_MBUF_PKTLEN(ctxt->om) < 2)
+    const uint16_t pktLen = OS_MBUF_PKTLEN(ctxt->om);
+    if (pktLen < 2)
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
 
     uint16_t cmdId = 0;
     os_mbuf_copydata(ctxt->om, 0, sizeof(cmdId), &cmdId);
-    ESP_LOGI(k_logTag, "BLE command received: 0x%04X", cmdId);
+
+    uint16_t releaseMs = 0;
+    if (pktLen >= 4)
+        os_mbuf_copydata(ctxt->om, 2, sizeof(releaseMs), &releaseMs);
+
+    ESP_LOGI(k_logTag, "BLE command received: 0x%04X releaseMs=%u", cmdId, releaseMs);
 
     if (s_processor)
-        s_processor->injectCommand(static_cast<CommandId>(cmdId));
+        s_processor->injectCommand(static_cast<CommandId>(cmdId), releaseMs);
     return 0;
 }
 
@@ -383,19 +392,21 @@ static bool pushTrackProgressNotification()
     return notifyBytes(s_trackProgressValHandle, buf, sizeof(buf), "track-progress");
 }
 
-// Builds the MSG_LIBRARY_ENTRY wire payload [entryType, index_lo/hi, total_lo/hi, name]
+// Builds the MSG_LIBRARY_ENTRY wire payload [entryType, index_lo/hi, total_lo/hi, nameLen, name, album]
 // and pushes it immediately — called directly from the UART receive path, not the poll task.
 void ble::notifyLibraryEntry(const UartMessage &rMsg)
 {
-    uint8_t buf[5 + protocol::k_maxLibraryNameLen];
+    uint8_t buf[6 + protocol::k_maxLibraryNameLen + protocol::k_maxLibraryAlbumLen];
     buf[0] = rMsg.libraryEntryType;
     buf[1] = static_cast<uint8_t>(rMsg.libraryEntryIndex & 0xFF);
     buf[2] = static_cast<uint8_t>(rMsg.libraryEntryIndex >> 8);
     buf[3] = static_cast<uint8_t>(rMsg.libraryEntryTotal & 0xFF);
     buf[4] = static_cast<uint8_t>(rMsg.libraryEntryTotal >> 8);
-    memcpy(buf + 5, rMsg.libraryEntryName, rMsg.libraryEntryNameLen);
+    buf[5] = rMsg.libraryEntryNameLen;
+    memcpy(buf + 6, rMsg.libraryEntryName, rMsg.libraryEntryNameLen);
+    memcpy(buf + 6 + rMsg.libraryEntryNameLen, rMsg.libraryEntryAlbum, rMsg.libraryEntryAlbumLen);
 
-    notifyBytes(s_libraryValHandle, buf, 5 + rMsg.libraryEntryNameLen, "library-entry");
+    notifyBytes(s_libraryValHandle, buf, 6 + rMsg.libraryEntryNameLen + rMsg.libraryEntryAlbumLen, "library-entry");
 }
 
 // Builds the MSG_PLAYLIST_RESULT wire payload [ok, message] and pushes it immediately —

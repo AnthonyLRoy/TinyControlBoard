@@ -94,7 +94,7 @@ object BleProtocol {
     }
 
     fun parseLibraryEntry(value: ByteArray, currentListing: List<LibraryEntry>): List<LibraryEntry>? {
-        if (value.size < 5) return null
+        if (value.size < 6) return null
         val entryType = value[0].toInt() and 0xFF
         val index = (value[1].toInt() and 0xFF) or ((value[2].toInt() and 0xFF) shl 8)
         val total = (value[3].toInt() and 0xFF) or ((value[4].toInt() and 0xFF) shl 8)
@@ -103,13 +103,16 @@ object BleProtocol {
             return emptyList()
         }
 
-        val name = value.copyOfRange(5, value.size).toTrimmedString()
+        val nameLen = (value[5].toInt() and 0xFF).coerceAtMost(value.size - 6)
+        val name = value.copyOfRange(6, 6 + nameLen).toTrimmedString()
+        val album = value.copyOfRange(6 + nameLen, value.size).toTrimmedString()
         val entry = LibraryEntry(
             index = index,
             total = total,
             isDirectory = entryType == LIBRARY_ENTRY_FOLDER,
             name = name,
-            isRadioStation = entryType == LIBRARY_ENTRY_RADIO
+            isRadioStation = entryType == LIBRARY_ENTRY_RADIO,
+            albumName = album
         )
         
         return if (index == 0) listOf(entry) else currentListing + entry

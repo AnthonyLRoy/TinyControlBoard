@@ -54,3 +54,35 @@ def mpd_search(field, text):
     "artist", "album", or "any". Returns an ordered list of matching file paths."""
     lines = mpd_command(f'search {field} "{_mpd_escape(text)}"')
     return [line[len("file: "):] for line in lines if line.startswith("file: ")]
+
+
+def mpd_search_with_tags(field, text):
+    """Like mpd_search(), but also returns each match's Album/Track tags (needed for
+    album-grouped search results). Returns [(path, album, track_num), ...] in MPD's
+    original response order. `track_num` is 0 if the tag is missing/unparseable
+    (MPD's Track tag is sometimes "N" and sometimes "N/total")."""
+    lines = mpd_command(f'search {field} "{_mpd_escape(text)}"')
+    results = []
+    path = None
+    album = ""
+    track_num = 0
+    for line in lines:
+        if line.startswith("file: "):
+            if path is not None:
+                results.append((path, album, track_num))
+            path = line[len("file: "):]
+            album = ""
+            track_num = 0
+        elif line.startswith("Album: "):
+            album = line[len("Album: "):]
+        elif line.startswith("Track: "):
+            digits = ""
+            for ch in line[len("Track: "):]:
+                if ch.isdigit():
+                    digits += ch
+                else:
+                    break
+            track_num = int(digits) if digits else 0
+    if path is not None:
+        results.append((path, album, track_num))
+    return results
