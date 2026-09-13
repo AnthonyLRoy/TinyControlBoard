@@ -1,6 +1,7 @@
 package com.tinycb.remote.viewmodel
 
 import android.app.Application
+import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tinycb.remote.R
@@ -10,6 +11,7 @@ import com.tinycb.remote.data.ButtonCatalog
 import com.tinycb.remote.model.BoardStatus
 import com.tinycb.remote.model.GridItem
 import com.tinycb.remote.model.LibraryEntry
+import com.tinycb.remote.net.CoverArtFetcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +37,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val boardStatus: StateFlow<BoardStatus?> = bleManager.status
     val nowPlaying: StateFlow<String?> = boardStatus.map { it?.nowPlaying }
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
-    
+
+    // Fetched separately over HTTP from moOde — BLE never carries image data.
+    private val _albumArt = MutableStateFlow<Bitmap?>(null)
+    val albumArt: StateFlow<Bitmap?> = _albumArt.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            nowPlaying.collectLatest { track ->
+                _albumArt.value = if (track.isNullOrEmpty()) null else CoverArtFetcher.fetchCoverArt()
+            }
+        }
+    }
+
     val buttons: StateFlow<List<GridItem>> = boardStatus.combine(MutableStateFlow(ButtonCatalog.gridItems)) { status: BoardStatus?, items: List<GridItem> ->
         items.map { item ->
             if (item !is GridItem.Button) return@map item

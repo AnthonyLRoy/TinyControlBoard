@@ -115,6 +115,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
+            vm.albumArt.collectLatest { art ->
+                if (art != null) {
+                    b.ivAlbumArt.setImageBitmap(art)
+                    b.ivAlbumArt.visibility = android.view.View.VISIBLE
+                } else {
+                    b.ivAlbumArt.visibility = android.view.View.GONE
+                }
+            }
+        }
+
+        lifecycleScope.launch {
             vm.trackProgress.collectLatest { progress ->
                 b.layoutTrackProgress.visibility = if (progress.isVisible) android.view.View.VISIBLE else android.view.View.GONE
                 updateProgressBar(progress)

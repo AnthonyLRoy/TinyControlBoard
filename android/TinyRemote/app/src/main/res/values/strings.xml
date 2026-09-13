@@ -32,6 +32,7 @@
     <string name="btn_display_off">Display Off</string>
     <string name="btn_display_on">Display On</string>
     <string name="nothing_playing">nothing playing</string>
+    <string name="album_art_description">Album art</string>
 
     <!-- View Selection Screen -->
     <string name="view_selection_title">Select display menu</string>
