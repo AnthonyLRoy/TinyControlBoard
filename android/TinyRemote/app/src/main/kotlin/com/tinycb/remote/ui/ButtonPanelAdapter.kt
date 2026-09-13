@@ -1,21 +1,17 @@
 ﻿package com.tinycb.remote.ui
 
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.tinycb.remote.R
 import com.tinycb.remote.data.ButtonCatalog
-import com.tinycb.remote.databinding.ItemButtonPanelBinding
-import com.tinycb.remote.databinding.ItemButtonPanelWideBinding
+import com.tinycb.remote.databinding.ItemButtonIconBinding
 import com.tinycb.remote.databinding.ItemBrightnessStepperBinding
 import com.tinycb.remote.databinding.ItemGroupHeaderBinding
 import com.tinycb.remote.model.BoardStatus
@@ -33,10 +29,10 @@ class ButtonPanelAdapter(
         notifyItemRangeChanged(0, itemCount, PAYLOAD_LED)
     }
 
-    override fun getItemViewType(position: Int): Int = when (val item = getItem(position)) {
+    override fun getItemViewType(position: Int): Int = when (getItem(position)) {
         is GridItem.Header  -> VIEW_TYPE_HEADER
         is GridItem.Stepper -> VIEW_TYPE_STEPPER
-        is GridItem.Button  -> if (item.def.spanSize > 1) VIEW_TYPE_WIDE else VIEW_TYPE_NORMAL
+        is GridItem.Button  -> VIEW_TYPE_BUTTON
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -44,13 +40,9 @@ class ButtonPanelAdapter(
         return when (viewType) {
             VIEW_TYPE_HEADER  -> HeaderViewHolder(ItemGroupHeaderBinding.inflate(inflater, parent, false))
             VIEW_TYPE_STEPPER -> StepperViewHolder(ItemBrightnessStepperBinding.inflate(inflater, parent, false))
-            VIEW_TYPE_WIDE    -> {
-                val b = ItemButtonPanelWideBinding.inflate(inflater, parent, false)
-                ButtonViewHolder(b.root, b.ivIcon, b.tvLabel, b.ledDot)
-            }
-            else -> {
-                val b = ItemButtonPanelBinding.inflate(inflater, parent, false)
-                ButtonViewHolder(b.root, b.ivIcon, b.tvLabel, b.ledDot)
+            else              -> {
+                val b = ItemButtonIconBinding.inflate(inflater, parent, false)
+                ButtonViewHolder(b.root, b.ivIcon, b.activeHighlight)
             }
         }
     }
@@ -65,9 +57,9 @@ class ButtonPanelAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: List<Any>) {
         if (payloads.contains(PAYLOAD_LED)) {
-            // Only ButtonViewHolders track LED state; Headers and Steppers are static
+            // Only ButtonViewHolders track active state; Headers and Steppers are static
             if (holder is ButtonViewHolder) {
-                (getItem(position) as? GridItem.Button)?.let { holder.updateLed(it.def, currentStatus) }
+                (getItem(position) as? GridItem.Button)?.let { holder.updateActiveState(it.def, currentStatus) }
             }
         } else {
             super.onBindViewHolder(holder, position, payloads)
@@ -86,42 +78,22 @@ class ButtonPanelAdapter(
         }
     }
 
+    /** Flat, chrome-less icon button: no card background, no text label. Active/toggle state is
+     *  shown via a soft rounded highlight behind the icon plus an accent icon tint. */
     inner class ButtonViewHolder(
         private val root: View,
         private val ivIcon: ImageView,
-        private val tvLabel: TextView,
-        private val ledDot: View
+        private val activeHighlight: View
     ) : RecyclerView.ViewHolder(root) {
 
         fun bind(btn: ButtonDef, status: BoardStatus?) {
             ivIcon.setImageResource(btn.iconRes)
             ivIcon.contentDescription = btn.name
-            
-            // Adjust icon size for wide buttons when label is hidden
-            if (btn.spanSize > 1) {
-                val sizeDp = if (btn.showLabel) 24 else 28
-                val px = android.util.TypedValue.applyDimension(
-                    android.util.TypedValue.COMPLEX_UNIT_DIP,
-                    sizeDp.toFloat(),
-                    root.resources.displayMetrics
-                ).toInt()
-                
-                val lp = ivIcon.layoutParams
-                if (lp.width != px || lp.height != px) {
-                    lp.width = px
-                    lp.height = px
-                    ivIcon.layoutParams = lp
-                }
-            }
-
-            tvLabel.text = btn.name
-            tvLabel.visibility = if (btn.showLabel) View.VISIBLE else View.GONE
-            ledDot.visibility = if (btn.showLabel) View.VISIBLE else View.GONE
             root.setOnClickListener { onButtonClick(btn.commandId) }
-            updateLed(btn, status)
+            updateActiveState(btn, status)
         }
 
-        fun updateLed(btn: ButtonDef, status: BoardStatus?) {
+        fun updateActiveState(btn: ButtonDef, status: BoardStatus?) {
             val rawLedOn = if (btn.commandId == ButtonCatalog.CMD_PLAY) {
                 status?.isTrackPlaying == true
             } else {
@@ -131,32 +103,23 @@ class ButtonPanelAdapter(
             }
 
             // Display toggle LED reports the opposite of desired UI highlight.
-            // We want green when the monitor is ON.
+            // We want the highlight on when the monitor is ON.
             val isActive = if (btn.commandId == ButtonCatalog.CMD_DISPLAY_OFF) !rawLedOn else rawLedOn
-            ledDot.setBackgroundResource(if (isActive) R.drawable.led_dot_active else R.drawable.led_dot)
 
-            if (btn.isToggle && isActive && btn.showLabel) {
-                // Active toggle: dark card with accent border, accent icon + white label
-                root.setBackgroundResource(R.drawable.bg_button_active)
-                ivIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(root.context, R.color.menu_accent))
-                tvLabel.setTextColor(Color.WHITE)
-            } else {
-                root.setBackgroundResource(R.drawable.bg_button_aluminium)
-                tvLabel.setTextColor(Color.WHITE)
-                val tint = when {
-                    btn.isPrimary -> ContextCompat.getColor(root.context, R.color.menu_accent)
-                    isActive      -> ContextCompat.getColor(root.context, R.color.menu_accent)
-                    else          -> ContextCompat.getColor(root.context, R.color.menu_icon_default)
-                }
-                ivIcon.imageTintList = ColorStateList.valueOf(tint)
+            activeHighlight.visibility = if (btn.isToggle && isActive) View.VISIBLE else View.GONE
+
+            val tint = when {
+                btn.isPrimary            -> ContextCompat.getColor(root.context, R.color.menu_accent)
+                btn.isToggle && isActive -> ContextCompat.getColor(root.context, R.color.menu_accent)
+                else                     -> ContextCompat.getColor(root.context, R.color.menu_icon_default)
             }
+            ivIcon.imageTintList = ColorStateList.valueOf(tint)
         }
     }
 
     companion object {
         private const val VIEW_TYPE_HEADER  = 0
-        private const val VIEW_TYPE_NORMAL  = 1
-        private const val VIEW_TYPE_WIDE    = 2
+        private const val VIEW_TYPE_BUTTON  = 1
         private const val VIEW_TYPE_STEPPER = 3
         private const val PAYLOAD_LED = "LED"
 
@@ -171,3 +134,4 @@ class ButtonPanelAdapter(
         }
     }
 }
+

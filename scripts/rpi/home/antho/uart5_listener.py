@@ -74,6 +74,7 @@ COMMAND_HANDLERS = {
     cmd.CMD_LIBRARY_SEARCH_ALBUM:     library.handle_library_search_album,
     cmd.CMD_LIBRARY_SEARCH_ANY:       library.handle_library_search_any,
     cmd.CMD_ADD_SEARCH_RESULT:        library.handle_add_search_result,
+    cmd.CMD_SEEK_TO_PERCENT:          playback.handle_seek_to_percent,
 }
 
 def setup_gpio():

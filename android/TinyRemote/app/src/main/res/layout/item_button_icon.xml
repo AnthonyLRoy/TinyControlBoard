@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Flat, chrome-less icon button: used for every grid button regardless of column span. -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="@drawable/bg_icon_button_ripple"
+    android:stateListAnimator="@animator/icon_press_scale">
+
+    <View
+        android:id="@+id/activeHighlight"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_icon_active_highlight"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/ivIcon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:layout_marginVertical="20dp"
+        app:tint="@color/menu_icon_default" />
+
+</FrameLayout>

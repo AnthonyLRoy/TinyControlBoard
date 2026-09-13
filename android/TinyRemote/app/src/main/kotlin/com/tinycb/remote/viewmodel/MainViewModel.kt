@@ -62,8 +62,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         (status.buttonLedBitmask and (1 shl def.bitmaskBit)) != 0
                     val isOn = !rawLedOn
                     GridItem.Button(def.copy(
-                        name = if (isOn) "Display On" else "Display Off",
-                        showLabel = false
+                        name = if (isOn) "Display On" else "Display Off"
                     ))
                 }
                 ButtonCatalog.CMD_PLAY -> {
@@ -137,6 +136,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val trackProgress = _trackProgress.asStateFlow()
 
     private var progressTickerJob: Job? = null
+
+    /** Tap-to-seek on the progress bar: [percent] is 0-100 of the current track's duration.
+     *  Updates local state immediately for a responsive UI, then sends the seek command. */
+    fun seekToPercent(percent: Int) {
+        val clamped = percent.coerceIn(0, 100)
+        val current = _trackProgress.value
+        if (current.duration > 0) {
+            _trackProgress.value = current.copy(
+                elapsed = (current.duration * clamped) / 100,
+                lastUpdateMs = System.currentTimeMillis()
+            )
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            bleManager.seekToPercent(clamped)
+        }
+    }
 
     // ── Power State Logic ───────────────────────────────────────────────────
     private val _isPowerFlashing = MutableStateFlow(false)

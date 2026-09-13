@@ -521,6 +521,8 @@ class BoardBleManager(context: Context) {
         writeLibraryCommand(BleProtocol.CMD_CLEAR_QUEUE, 0)
     }
 
+    fun seekToPercent(percent: Int) = writeLibraryCommand(BleProtocol.CMD_SEEK_TO_PERCENT, percent)
+
     fun requestPlaylistNames() {
         _playlistNameEntries.value = null
         // writeLibraryCommand() unconditionally clears playlistNameMode, so it must be

@@ -64,6 +64,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         b.progressTrack.max = 10000
+        b.progressTrack.setOnTouchListener { view, event ->
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN,
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    val percent = ((event.x / view.width) * 100).toInt().coerceIn(0, 100)
+                    vm.seekToPercent(percent)
+                    true
+                }
+                else -> false
+            }
+        }
         b.btnPower.setOnClickListener { onPowerButtonPressed() }
         b.tvNowPlaying.setOnClickListener {
             startActivity(Intent(this, PlaylistActivity::class.java))

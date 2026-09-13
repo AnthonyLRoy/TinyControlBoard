@@ -77,3 +77,8 @@ def handle_skip_forward(params):
 
 def handle_skip_back(params):
     run_command(["mpc", "seek", "-10"])
+
+
+def handle_seek_to_percent(params):
+    percent = max(0, min(100, params[0]))
+    run_command(["mpc", "seek", f"{percent}%"])

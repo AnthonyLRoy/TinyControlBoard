@@ -26,6 +26,7 @@ object BleProtocol {
     const val CMD_LIBRARY_SEARCH_ALBUM = 0x0136
     const val CMD_LIBRARY_SEARCH_ANY = 0x0137
     const val CMD_ADD_SEARCH_RESULT = 0x0138
+    const val CMD_SEEK_TO_PERCENT = 0x0139
     const val LIB_BROWSE_UP = 0xFFFE
     const val LIB_BROWSE_ROOT = 0xFFFF
 
@@ -76,7 +77,10 @@ object BleProtocol {
 
     fun parseNowPlaying(value: ByteArray, currentStatus: BoardStatus?): BoardStatus? {
         val text = value.toTrimmedString()
-        return currentStatus?.copy(nowPlaying = text.ifEmpty { null })
+        // Can arrive before the first STATUS_CHAR notification populates currentStatus (e.g. right
+        // after reconnect) — build a placeholder rather than silently dropping the update.
+        val base = currentStatus ?: BoardStatus(powerStateName = "UNKNOWN", buttonLedBitmask = 0)
+        return base.copy(nowPlaying = text.ifEmpty { null })
     }
 
     fun parseTrackProgress(value: ByteArray, currentStatus: BoardStatus?): BoardStatus? {
@@ -84,8 +88,11 @@ object BleProtocol {
         val elapsed = (value[0].toInt() and 0xFF) or ((value[1].toInt() and 0xFF) shl 8)
         val duration = (value[2].toInt() and 0xFF) or ((value[3].toInt() and 0xFF) shl 8)
         val isPlaying = value[4].toInt() != 0
-        
-        return currentStatus?.copy(
+
+        // Same reconnect race as parseNowPlaying — don't drop the update if STATUS_CHAR hasn't
+        // populated currentStatus yet.
+        val base = currentStatus ?: BoardStatus(powerStateName = "UNKNOWN", buttonLedBitmask = 0)
+        return base.copy(
             trackElapsedSec = elapsed,
             trackDurationSec = duration,
             isTrackPlaying = isPlaying,

@@ -16,7 +16,5 @@ data class ButtonDef(
     /** Primary buttons (Play/Pause, Prev, Next) get a permanent green icon tint. */
     val isPrimary: Boolean = false,
     /** Toggle buttons swap to a green filled background when their LED is active. */
-    val isToggle: Boolean = false,
-    /** Whether to show the button label text and LED dot. */
-    val showLabel: Boolean = true
+    val isToggle: Boolean = false
 )
