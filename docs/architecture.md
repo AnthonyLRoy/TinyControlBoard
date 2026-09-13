@@ -95,7 +95,7 @@ graph TD
     PL -->|LEDC duty| PWM_LED
     SL -->|LEDC duty| PWM_LED
     NVS -->|read/write| CB
-    RPi <-->|115200 baud UART| UART_HW
+    RPi <-->|921600 baud UART| UART_HW
 ```
 
 ## 2. Startup Flow
@@ -556,7 +556,7 @@ Design rules:
 
 | Protocol | Interface | Speed / Settings | Role |
 |---|---|---|---|
-| **UART** (custom framed) | UART2 / GPIO1 (RX) / GPIO2 (TX) | 115 200 baud, 8N1 | Bi-directional link to Raspberry Pi. Variable-length frames: 19-byte command packets with a 10-byte payload, up to 69 bytes total. |
+| **UART** (custom framed) | UART2 / GPIO1 (RX) / GPIO2 (TX) | 921 600 baud, 8N1 | Bi-directional link to Raspberry Pi. Variable-length frames: 19-byte command packets with a 10-byte payload, up to 69 bytes total. |
 | **I2C** | I2C_NUM_0 / GPIO15 (SCL) / GPIO16 (SDA) | 50 000 Hz | Reads button states and interrupt capture registers from MCP23017 I/O expander at address `0x20`. |
 | **SPI** | SPI2_HOST / GPIO6 (CLK) / GPIO7 (MOSI) / GPIO5 (latch) | 1 MHz | Drives 16-bit parallel-load shift register for button panel LEDs. One full 16-bit frame per `SpiLedDriver::update()`. |
 | **LEDC (PWM)** | Multiple GPIO channels | 4 kHz / 13-bit resolution | Monitor brightness control (GPIO43), button LED PWM (GPIO21), power LED (GPIO3/4), working status LED (GPIO48). |
@@ -599,7 +599,7 @@ Design rules:
 | Constant | Value | Description |
 |---|---|---|
 | `k_port` | `UART_NUM_2` | UART peripheral |
-| `k_baudRate` | 115 200 | Baud rate |
+| `k_baudRate` | 921 600 | Baud rate |
 | `k_txPin` | `GPIO_NUM_2` | TX to Pi |
 | `k_rxPin` | `GPIO_NUM_1` | RX from Pi |
 | `k_bufferSize` | 256 | RX ring buffer bytes |

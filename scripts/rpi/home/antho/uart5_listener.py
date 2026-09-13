@@ -11,7 +11,7 @@ from protocol import compute_checksum, read_packet_with_resync
 
 # === CONFIG ===
 UART_PORT = "/dev/ttyAMA5"   # UART5
-BAUD_RATE = 115200
+BAUD_RATE = 921600
 DRDY_PIN = 23
 DEFAULT_METER_ENABLED = False
 

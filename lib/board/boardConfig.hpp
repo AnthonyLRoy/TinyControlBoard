@@ -27,7 +27,7 @@ namespace board
     namespace serial
     {
         inline constexpr uart_port_t k_port = UART_NUM_2;
-        inline constexpr uint32_t k_baudRate = 115200;
+        inline constexpr uint32_t k_baudRate = 921600;
         inline constexpr gpio_num_t k_txPin = GPIO_NUM_2;
         inline constexpr gpio_num_t k_rxPin = GPIO_NUM_1;
         inline constexpr std::size_t k_bufferSize = 1024;

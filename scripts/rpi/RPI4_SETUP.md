@@ -455,7 +455,7 @@ This section provides diagnostic commands and step-by-step solutions for common 
    - **RPi 4 GPIO 12 (TX5)** $\rightarrow$ **ESP32 RX**
    - **RPi 4 GPIO 13 (RX5)** $\rightarrow$ **ESP32 TX**
    - **GND** $\rightarrow$ **GND** (Common Ground required)
-   - Baud rate: Default is **115200 baud** (must match ESP32 configuration).
+   - Baud rate: Default is **921600 baud** (must match ESP32 configuration).
 
 ---
 
