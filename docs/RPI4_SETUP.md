@@ -611,9 +611,9 @@ This section provides diagnostic commands and step-by-step solutions for common 
 This option requires PeppyALSA driver to be On
 ```
 
-**Root cause:** moOde's `enable_peppyalsa` flag is a **PHP session variable only** — it is never written to the persistent `cfg_system` SQLite table. It defaults to `0` and silently resets whenever the moOde web session resets (reboot, `php-fpm`/nginx restart, browser session/cookie expiry, moOde update). So this can "just stop working" with no settings intentionally changed.
+**Root cause:** moOde's `enable_peppyalsa` can fail if there is a curruption on the service
 
-Also, in the moOde web UI, the **Peppy Display** and **PeppyALSA driver** toggles under **Configure → Peripherals → Local Display** are greyed out/disabled whenever **Local Display** (WebUI shown on the local screen) is **On** — the two modes are mutually exclusive. Our RPi `toggle_meter_display()` handler runs `moodeutl --setdisplay webui` when the meter is turned OFF, which sets `local_display=1`, `peppy_display=0` — this is expected, but it means Local Display stays "On" until you explicitly re-enable Peppy in the UI.
+In the **Peppy Display** and **PeppyALSA driver** toggles under **Configure → Peripherals → Local Display** are greyed out/disabled whenever **Local Display** (WebUI shown on the local screen) is **On** — the two modes are mutually exclusive. Our RPi `toggle_meter_display()` handler runs `moodeutl --setdisplay webui` when the meter is turned OFF, which sets `local_display=1`, `peppy_display=0` — this is expected, but it means Local Display stays "On" until you explicitly re-enable Peppy in the UI.
 
 **Fix:**
 1. Open the moOde web UI → **Configure → Peripherals → Local Display**.
