@@ -119,7 +119,83 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Now-playing strip: hidden when nothing is playing; tap to browse the library -->
+        <!-- Album art box: always visible; shows a centered placeholder icon when no track art
+             is available. Fetched from moOde over HTTP, BLE never carries image data. The
+             brightness strip overlays its bottom-end corner instead of taking a full-width bar. -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="8dp">
+
+            <ImageView
+                android:id="@+id/ivAlbumArt"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/bg_card"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_album"
+                app:tint="@color/menu_icon_default"
+                android:contentDescription="@string/album_art_description" />
+
+            <!-- Compact brightness strip: -/icon/+ stepper plus a small display on/off toggle. -->
+            <LinearLayout
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="8dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:background="@drawable/bg_brightness_strip"
+                android:paddingVertical="4dp">
+
+                <ImageButton
+                    android:id="@+id/btnBrightnessUp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/btn_bright_up"
+                    android:src="@drawable/ic_add_circle"
+                    app:tint="@color/text_primary" />
+
+                <ImageView
+                    android:id="@+id/ivBrightnessIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginVertical="2dp"
+                    android:src="@drawable/ic_brightness"
+                    app:tint="@color/text_secondary" />
+
+                <ImageButton
+                    android:id="@+id/btnBrightnessDown"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/btn_bright_down"
+                    android:src="@drawable/ic_remove_circle"
+                    app:tint="@color/text_primary" />
+
+                <View
+                    android:layout_width="20dp"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="4dp"
+                    android:background="@color/menu_card_border" />
+
+                <ImageButton
+                    android:id="@+id/btnDisplayToggle"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:background="@drawable/bg_icon_circle"
+                    android:contentDescription="@string/btn_display_on"
+                    android:padding="4dp"
+                    android:src="@drawable/ic_brightness"
+                    app:tint="@color/menu_icon_default" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <!-- Now-playing strip: tap to browse the library -->
         <TextView
             android:id="@+id/tvNowPlaying"
             android:layout_width="match_parent"
@@ -144,7 +220,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
-            android:paddingBottom="6dp"
+            android:paddingBottom="0dp"
             android:visibility="visible">
 
             <TextView
@@ -177,16 +253,157 @@
 
         </LinearLayout>
 
-        <!-- Album art: fetched from moOde over HTTP, hidden until a track with art is playing -->
-        <ImageView
-            android:id="@+id/ivAlbumArt"
+        <!-- Row 1: primary transport (previous / play-pause / next). Centered, not stretched,
+             with play/pause noticeably larger than its neighbors. -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="8dp"
-            android:scaleType="centerCrop"
-            android:contentDescription="@string/album_art_description"
-            android:visibility="gone" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingVertical="2dp">
+
+            <FrameLayout
+                android:id="@+id/btnPrev"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginHorizontal="12dp"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_skip_previous"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/btn_prev" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/btnPlayPause"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginHorizontal="12dp"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale">
+
+                <View
+                    android:id="@+id/playPauseHighlight"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_icon_active_highlight"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/ivPlayPauseIcon"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_play"
+                    app:tint="@color/menu_accent"
+                    android:contentDescription="@string/btn_play_pause" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/btnNext"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginHorizontal="12dp"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_skip_next"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/btn_next" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Row 2: menu / shuffle / repeat. Evenly spaced, smaller and consistent icon size. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="32dp"
+            android:paddingBottom="4dp">
+
+            <FrameLayout
+                android:id="@+id/btnMenu"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_menu"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/view_selection_title" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/btnShuffle"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale">
+
+                <View
+                    android:id="@+id/shuffleHighlight"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_icon_active_highlight"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/ivShuffleIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_shuffle"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/btn_random" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/btnRepeat"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale">
+
+                <View
+                    android:id="@+id/repeatHighlight"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_icon_active_highlight"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/ivRepeatIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_repeat"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/btn_repeat" />
+            </FrameLayout>
+
+        </LinearLayout>
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
@@ -194,14 +411,14 @@
             android:layout_weight="1"
             android:fillViewport="true">
 
-            <!-- Button grid -->
+            <!-- Remaining secondary options (Cover/Meter/DAC/Library) -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvButtons"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="8dp"
+                android:paddingVertical="4dp"
                 android:clipToPadding="false" />
 
         </androidx.core.widget.NestedScrollView>

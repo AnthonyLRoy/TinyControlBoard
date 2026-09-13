@@ -44,14 +44,21 @@ class MainActivity : AppCompatActivity() {
 
         buttonAdapter = ButtonPanelAdapter { commandId ->
             when (commandId) {
-                ButtonCatalog.CMD_VIEW_MENU   -> startActivity(Intent(this, ViewSelectionActivity::class.java))
                 ButtonCatalog.CMD_LIBRARY     -> startActivity(Intent(this, LibraryActivity::class.java))
-                ButtonCatalog.CMD_PLAYLIST    -> startActivity(Intent(this, PlaylistActivity::class.java))
-                ButtonCatalog.CMD_DISPLAY_OFF -> vm.toggleDisplay()
                 else                          -> vm.sendCommand(commandId)
             }
         }
-        
+
+        b.btnPrev.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_PREV) }
+        b.btnPlayPause.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_PLAY) }
+        b.btnNext.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_NEXT) }
+        b.btnMenu.setOnClickListener { startActivity(Intent(this, ViewSelectionActivity::class.java)) }
+        b.btnShuffle.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_SHUFFLE) }
+        b.btnRepeat.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_REPEAT) }
+        b.btnBrightnessDown.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_BRIGHT_DOWN) }
+        b.btnBrightnessUp.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_BRIGHT_UP) }
+        b.btnDisplayToggle.setOnClickListener { vm.toggleDisplay() }
+
         b.rvButtons.apply {
             layoutManager = GridLayoutManager(this@MainActivity, 4).apply {
                 spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
@@ -128,10 +135,13 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             vm.albumArt.collectLatest { art ->
                 if (art != null) {
+                    b.ivAlbumArt.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                    b.ivAlbumArt.imageTintList = null
                     b.ivAlbumArt.setImageBitmap(art)
-                    b.ivAlbumArt.visibility = android.view.View.VISIBLE
                 } else {
-                    b.ivAlbumArt.visibility = android.view.View.GONE
+                    b.ivAlbumArt.scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+                    b.ivAlbumArt.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, R.color.menu_icon_default))
+                    b.ivAlbumArt.setImageResource(R.drawable.ic_album)
                 }
             }
         }
@@ -154,9 +164,35 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             vm.boardStatus.collectLatest { status ->
                 buttonAdapter.updateStatus(status)
+                updateTransportUi(status)
                 refreshStatusBadge(vm.connectionState.value, status?.powerStateName)
             }
         }
+    }
+
+    /** Mirrors the LED bitmask onto the fixed transport row's highlight/tint state, since
+     *  these buttons are no longer part of the [ButtonPanelAdapter] grid. */
+    private fun updateTransportUi(status: com.tinycb.remote.model.BoardStatus?) {
+        val accent = ContextCompat.getColor(this, R.color.menu_accent)
+        val default = ContextCompat.getColor(this, R.color.menu_icon_default)
+
+        val isPlaying = status?.isTrackPlaying == true
+        b.ivPlayPauseIcon.setImageResource(if (isPlaying) R.drawable.ic_play_pause else R.drawable.ic_play)
+        b.playPauseHighlight.visibility = if (isPlaying) android.view.View.VISIBLE else android.view.View.GONE
+
+        val bitmask = status?.buttonLedBitmask ?: 0
+        val isShuffleOn = (bitmask and (1 shl 9)) != 0
+        b.shuffleHighlight.visibility = if (isShuffleOn) android.view.View.VISIBLE else android.view.View.GONE
+        b.ivShuffleIcon.imageTintList = ColorStateList.valueOf(if (isShuffleOn) accent else default)
+
+        val isRepeatOn = (bitmask and (1 shl 8)) != 0
+        b.repeatHighlight.visibility = if (isRepeatOn) android.view.View.VISIBLE else android.view.View.GONE
+        b.ivRepeatIcon.imageTintList = ColorStateList.valueOf(if (isRepeatOn) accent else default)
+
+        // Display LED reports the opposite of the desired highlight (see BrightnessAction);
+        // the toggle should look "active" when the monitor is ON.
+        val isDisplayOn = (bitmask and (1 shl 6)) == 0
+        b.btnDisplayToggle.imageTintList = ColorStateList.valueOf(if (isDisplayOn) accent else default)
     }
 
     private fun updateProgressBar(progress: MainViewModel.ProgressState) {

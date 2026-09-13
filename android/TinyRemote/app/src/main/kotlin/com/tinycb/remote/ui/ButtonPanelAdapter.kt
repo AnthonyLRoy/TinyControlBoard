@@ -67,7 +67,7 @@ class ButtonPanelAdapter(
     }
 
     inner class HeaderViewHolder(private val b: ItemGroupHeaderBinding) : RecyclerView.ViewHolder(b.root) {
-        fun bind(header: GridItem.Header) { b.tvGroupHeader.text = header.title }
+        fun bind(header: GridItem.Header) { /* purely a divider line now; no title text to bind */ }
     }
 
     inner class StepperViewHolder(private val b: ItemBrightnessStepperBinding) : RecyclerView.ViewHolder(b.root) {
@@ -89,8 +89,24 @@ class ButtonPanelAdapter(
         fun bind(btn: ButtonDef, status: BoardStatus?) {
             ivIcon.setImageResource(btn.iconRes)
             ivIcon.contentDescription = btn.name
+            resizeForIcon(btn.iconSizeDp)
             root.setOnClickListener { onButtonClick(btn.commandId) }
             updateActiveState(btn, status)
+        }
+
+        /** Icon and its active-state highlight both scale with [iconSizeDp] so emphasized
+         *  controls (e.g. Play/Pause) can render larger while sharing the same styling. */
+        private fun resizeForIcon(iconSizeDp: Int) {
+            val density = root.resources.displayMetrics
+            fun dp(value: Int) = android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), density
+            ).toInt()
+
+            val iconPx = dp(iconSizeDp)
+            ivIcon.layoutParams = ivIcon.layoutParams.apply { width = iconPx; height = iconPx }
+
+            val highlightPx = dp(iconSizeDp + 24)
+            activeHighlight.layoutParams = activeHighlight.layoutParams.apply { width = highlightPx; height = highlightPx }
         }
 
         fun updateActiveState(btn: ButtonDef, status: BoardStatus?) {
