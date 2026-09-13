@@ -4,7 +4,7 @@ namespace relays
 {
 
 static constexpr const char *k_logTag = "Relay           ";
-
+// i have no way to test this on actual hardware, so i am relying on the code logic and documentation, i hope it works as intended
 void StandardRelay::init(gpio_num_t pinRelay)
 {
     ESP_LOGI(k_logTag, "Initializing relay on GPIO %d", pinRelay);
