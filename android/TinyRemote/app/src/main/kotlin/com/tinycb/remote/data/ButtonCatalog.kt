@@ -24,13 +24,9 @@ object ButtonCatalog {
     // fixed views in activity_main.xml rather than grid items; only the remaining
     // secondary options live in this scrollable catalog.
     val gridItems: List<GridItem> = buildList {
-        add(GridItem.Header("DISPLAY"))
-        add(GridItem.Button(ButtonDef(7,  "Cover",       0x0119,  7, R.drawable.ic_album,         spanSize = 2)))
-        add(GridItem.Button(ButtonDef(12, "Meter",       0x0115, 12, R.drawable.ic_meter,         spanSize = 2)))
-
-        add(GridItem.Header("OPTIONS"))
-        add(GridItem.Button(ButtonDef(10, "DAC",         0x0113, 10, R.drawable.ic_tune,          spanSize = 2)))
-        add(GridItem.Button(ButtonDef(16, "Library",     CMD_LIBRARY, -1, R.drawable.ic_folder,    spanSize = 2)))
+        add(GridItem.Button(ButtonDef(7,  "Cover",       0x0119,  7, R.drawable.ic_album,         spanSize = 1, iconSizeDp = 48, isToggle = true)))
+        add(GridItem.Button(ButtonDef(12, "Meter",       0x0115, 12, R.drawable.ic_radio_wave,    spanSize = 1, iconSizeDp = 48, isToggle = true)))
+        add(GridItem.Button(ButtonDef(10, "DAC",         0x0113, 10, R.drawable.ic_tune,          spanSize = 1, iconSizeDp = 48, isToggle = true)))
     }
 
     const val CMD_LIBRARY = -1

@@ -58,9 +58,10 @@ class MainActivity : AppCompatActivity() {
         b.btnBrightnessDown.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_BRIGHT_DOWN) }
         b.btnBrightnessUp.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_BRIGHT_UP) }
         b.btnDisplayToggle.setOnClickListener { vm.toggleDisplay() }
+        b.btnLibrary.setOnClickListener { startActivity(Intent(this, LibraryActivity::class.java)) }
 
         b.rvButtons.apply {
-            layoutManager = GridLayoutManager(this@MainActivity, 4).apply {
+            layoutManager = GridLayoutManager(this@MainActivity, 3).apply {
                 spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
                     override fun getSpanSize(position: Int): Int =
                         (buttonAdapter.currentList.getOrNull(position) as? GridItem)?.spanSize ?: 1
@@ -178,7 +179,7 @@ class MainActivity : AppCompatActivity() {
 
         val isPlaying = status?.isTrackPlaying == true
         b.ivPlayPauseIcon.setImageResource(if (isPlaying) R.drawable.ic_play_pause else R.drawable.ic_play)
-        b.playPauseHighlight.visibility = if (isPlaying) android.view.View.VISIBLE else android.view.View.GONE
+        b.playPauseHighlight.visibility = android.view.View.GONE
 
         val bitmask = status?.buttonLedBitmask ?: 0
         val isShuffleOn = (bitmask and (1 shl 9)) != 0
@@ -192,7 +193,8 @@ class MainActivity : AppCompatActivity() {
         // Display LED reports the opposite of the desired highlight (see BrightnessAction);
         // the toggle should look "active" when the monitor is ON.
         val isDisplayOn = (bitmask and (1 shl 6)) == 0
-        b.btnDisplayToggle.imageTintList = ColorStateList.valueOf(if (isDisplayOn) accent else default)
+        b.ivDisplayToggleIcon.setImageResource(if (isDisplayOn) R.drawable.ic_monitor else R.drawable.ic_monitor_off)
+        b.ivDisplayToggleIcon.imageTintList = ColorStateList.valueOf(if (isDisplayOn) accent else default)
     }
 
     private fun updateProgressBar(progress: MainViewModel.ProgressState) {

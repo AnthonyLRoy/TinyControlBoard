@@ -119,6 +119,38 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <!-- Library button explicitly placed above the album art box, left-aligned -->
+        <LinearLayout
+            android:id="@+id/btnLibrary"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_icon_button_ripple"
+            android:stateListAnimator="@animator/icon_press_scale">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_folder"
+                app:tint="@color/menu_icon_default"
+                android:contentDescription="@string/library_title" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="16dp"
+                android:text="@string/library_title"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <!-- Album art box: always visible; shows a centered placeholder icon when no track art
              is available. Fetched from moOde over HTTP, BLE never carries image data. The
              brightness strip overlays its bottom-end corner instead of taking a full-width bar. -->
@@ -138,78 +170,26 @@
                 app:tint="@color/menu_icon_default"
                 android:contentDescription="@string/album_art_description" />
 
-            <!-- Compact brightness strip: -/icon/+ stepper plus a small display on/off toggle. -->
-            <LinearLayout
-                android:layout_width="36dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="8dp"
-                android:orientation="vertical"
-                android:gravity="center_horizontal"
-                android:background="@drawable/bg_brightness_strip"
-                android:paddingVertical="4dp">
-
-                <ImageButton
-                    android:id="@+id/btnBrightnessUp"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/btn_bright_up"
-                    android:src="@drawable/ic_add_circle"
-                    app:tint="@color/text_primary" />
-
-                <ImageView
-                    android:id="@+id/ivBrightnessIcon"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_marginVertical="2dp"
-                    android:src="@drawable/ic_brightness"
-                    app:tint="@color/text_secondary" />
-
-                <ImageButton
-                    android:id="@+id/btnBrightnessDown"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/btn_bright_down"
-                    android:src="@drawable/ic_remove_circle"
-                    app:tint="@color/text_primary" />
-
-                <View
-                    android:layout_width="20dp"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="4dp"
-                    android:background="@color/menu_card_border" />
-
-                <ImageButton
-                    android:id="@+id/btnDisplayToggle"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:background="@drawable/bg_icon_circle"
-                    android:contentDescription="@string/btn_display_on"
-                    android:padding="4dp"
-                    android:src="@drawable/ic_brightness"
-                    app:tint="@color/menu_icon_default" />
-
-            </LinearLayout>
-
         </FrameLayout>
 
         <!-- Now-playing strip: tap to browse the library -->
         <TextView
             android:id="@+id/tvNowPlaying"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="6dp"
+            android:gravity="center_vertical"
             android:textColor="@color/text_secondary"
-            android:textSize="13sp"
+            android:textSize="20sp"
             android:foreground="?attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
+            android:focusableInTouchMode="true"
             android:drawablePadding="8dp"
             android:singleLine="true"
-            android:ellipsize="end"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
             android:visibility="visible" />
 
         <!-- Track progress strip: hidden when duration is unknown (nothing playing) -->
@@ -258,22 +238,23 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingVertical="2dp">
+            android:gravity="center_vertical"
+            android:paddingHorizontal="32dp"
+            android:layout_marginBottom="0dp">
 
             <FrameLayout
                 android:id="@+id/btnPrev"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_marginHorizontal="12dp"
+                android:layout_width="0dp"
+                android:layout_height="84dp"
+                android:layout_weight="1"
                 android:background="@drawable/bg_icon_button_ripple"
                 android:stateListAnimator="@animator/icon_press_scale">
 
                 <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_skip_previous"
                     app:tint="@color/menu_icon_default"
@@ -282,24 +263,24 @@
 
             <FrameLayout
                 android:id="@+id/btnPlayPause"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:layout_marginHorizontal="12dp"
+                android:layout_width="0dp"
+                android:layout_height="84dp"
+                android:layout_weight="1"
                 android:background="@drawable/bg_icon_button_ripple"
                 android:stateListAnimator="@animator/icon_press_scale">
 
                 <View
                     android:id="@+id/playPauseHighlight"
-                    android:layout_width="72dp"
-                    android:layout_height="72dp"
+                    android:layout_width="84dp"
+                    android:layout_height="84dp"
                     android:layout_gravity="center"
                     android:background="@drawable/bg_icon_active_highlight"
                     android:visibility="gone" />
 
                 <ImageView
                     android:id="@+id/ivPlayPauseIcon"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_play"
                     app:tint="@color/menu_accent"
@@ -308,15 +289,15 @@
 
             <FrameLayout
                 android:id="@+id/btnNext"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_marginHorizontal="12dp"
+                android:layout_width="0dp"
+                android:layout_height="84dp"
+                android:layout_weight="1"
                 android:background="@drawable/bg_icon_button_ripple"
                 android:stateListAnimator="@animator/icon_press_scale">
 
                 <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_skip_next"
                     app:tint="@color/menu_icon_default"
@@ -332,19 +313,19 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="32dp"
-            android:paddingBottom="4dp">
+            android:layout_marginBottom="4dp">
 
             <FrameLayout
                 android:id="@+id/btnMenu"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="72dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_icon_button_ripple"
                 android:stateListAnimator="@animator/icon_press_scale">
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_menu"
                     app:tint="@color/menu_icon_default"
@@ -354,23 +335,23 @@
             <FrameLayout
                 android:id="@+id/btnShuffle"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="72dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_icon_button_ripple"
                 android:stateListAnimator="@animator/icon_press_scale">
 
                 <View
                     android:id="@+id/shuffleHighlight"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_gravity="center"
                     android:background="@drawable/bg_icon_active_highlight"
                     android:visibility="gone" />
 
                 <ImageView
                     android:id="@+id/ivShuffleIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_shuffle"
                     app:tint="@color/menu_icon_default"
@@ -380,23 +361,23 @@
             <FrameLayout
                 android:id="@+id/btnRepeat"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="72dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_icon_button_ripple"
                 android:stateListAnimator="@animator/icon_press_scale">
 
                 <View
                     android:id="@+id/repeatHighlight"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_gravity="center"
                     android:background="@drawable/bg_icon_active_highlight"
                     android:visibility="gone" />
 
                 <ImageView
                     android:id="@+id/ivRepeatIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_repeat"
                     app:tint="@color/menu_icon_default"
@@ -404,6 +385,123 @@
             </FrameLayout>
 
         </LinearLayout>
+
+        <!-- Row 3: Brightness down / icon / Brightness up / display toggle -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="32dp"
+            android:layout_marginBottom="0dp">
+
+            <!-- 3 anchor columns to perfectly match Row 2's columns -->
+            <View
+                android:id="@+id/colSpacer1"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                app:layout_constraintHorizontal_weight="1"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/colSpacer2"
+                app:layout_constraintHorizontal_chainStyle="spread" />
+
+            <View
+                android:id="@+id/colSpacer2"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                app:layout_constraintHorizontal_weight="1"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/colSpacer1"
+                app:layout_constraintEnd_toStartOf="@id/colSpacer3" />
+
+            <View
+                android:id="@+id/colSpacer3"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                app:layout_constraintHorizontal_weight="1"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/colSpacer2"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Brightness Background Group Rectangle -->
+            <View
+                android:id="@+id/brightnessGroupBg"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_brightness_group"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@id/btnBrightnessDown"
+                app:layout_constraintEnd_toEndOf="@id/btnBrightnessUp" />
+
+            <FrameLayout
+                android:id="@+id/btnBrightnessDown"
+                android:layout_width="48dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@id/colSpacer1"
+                app:layout_constraintEnd_toEndOf="@id/colSpacer1">
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_remove_circle"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/btn_bright_down" />
+            </FrameLayout>
+
+            <ImageView
+                android:id="@+id/ivBrightnessIcon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/ic_brightness"
+                app:tint="@color/text_secondary"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/btnBrightnessDown"
+                android:layout_marginStart="8dp" />
+
+            <FrameLayout
+                android:id="@+id/btnBrightnessUp"
+                android:layout_width="48dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/ivBrightnessIcon"
+                android:layout_marginStart="8dp">
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_add_circle"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/btn_bright_up" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/btnDisplayToggle"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@id/colSpacer3"
+                app:layout_constraintEnd_toEndOf="@id/colSpacer3">
+                <ImageView
+                    android:id="@+id/ivDisplayToggleIcon"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_monitor"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/btn_display_off" />
+            </FrameLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
@@ -417,8 +515,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="4dp"
+                android:paddingHorizontal="32dp"
+                android:paddingVertical="0dp"
                 android:clipToPadding="false" />
 
         </androidx.core.widget.NestedScrollView>
