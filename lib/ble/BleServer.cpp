@@ -392,11 +392,14 @@ static bool pushTrackProgressNotification()
     return notifyBytes(s_trackProgressValHandle, buf, sizeof(buf), "track-progress");
 }
 
-// Builds the MSG_LIBRARY_ENTRY wire payload [entryType, index_lo/hi, total_lo/hi, nameLen, name, album]
-// and pushes it immediately — called directly from the UART receive path, not the poll task.
+// Builds the MSG_LIBRARY_ENTRY wire payload [entryType, index_lo/hi, total_lo/hi, nameLen, name,
+// albumLen, album, hashLen, hash] and pushes it immediately — called directly from the UART
+// receive path, not the poll task.
 void ble::notifyLibraryEntry(const UartMessage &rMsg)
 {
-    uint8_t buf[6 + protocol::k_maxLibraryNameLen + protocol::k_maxLibraryAlbumLen];
+    // Sized for the worst case (max name + max album + max hash) — must track
+    // protocol::k_libraryEntryMaxPayloadSize or this silently overflows the stack.
+    uint8_t buf[protocol::k_libraryEntryMaxPayloadSize];
     buf[0] = rMsg.libraryEntryType;
     buf[1] = static_cast<uint8_t>(rMsg.libraryEntryIndex & 0xFF);
     buf[2] = static_cast<uint8_t>(rMsg.libraryEntryIndex >> 8);
@@ -404,9 +407,17 @@ void ble::notifyLibraryEntry(const UartMessage &rMsg)
     buf[4] = static_cast<uint8_t>(rMsg.libraryEntryTotal >> 8);
     buf[5] = rMsg.libraryEntryNameLen;
     memcpy(buf + 6, rMsg.libraryEntryName, rMsg.libraryEntryNameLen);
-    memcpy(buf + 6 + rMsg.libraryEntryNameLen, rMsg.libraryEntryAlbum, rMsg.libraryEntryAlbumLen);
 
-    notifyBytes(s_libraryValHandle, buf, 6 + rMsg.libraryEntryNameLen + rMsg.libraryEntryAlbumLen, "library-entry");
+    uint8_t offset = 6 + rMsg.libraryEntryNameLen;
+    buf[offset] = rMsg.libraryEntryAlbumLen;
+    memcpy(buf + offset + 1, rMsg.libraryEntryAlbum, rMsg.libraryEntryAlbumLen);
+    offset += 1 + rMsg.libraryEntryAlbumLen;
+
+    buf[offset] = rMsg.libraryEntryArtHashLen;
+    memcpy(buf + offset + 1, rMsg.libraryEntryArtHash, rMsg.libraryEntryArtHashLen);
+    offset += 1 + rMsg.libraryEntryArtHashLen;
+
+    notifyBytes(s_libraryValHandle, buf, offset, "library-entry");
 }
 
 // Builds the MSG_PLAYLIST_RESULT wire payload [ok, message] and pushes it immediately —

@@ -1,3 +1,4 @@
+import hashlib
 import posixpath
 import struct
 import time
@@ -16,6 +17,8 @@ MAX_LIBRARY_ENTRIES = 200  # cap per directory listing, not the whole library
 MAX_FOLDER_TRACKS = 50
 MAX_LIBRARY_NAME_LEN = 55
 MAX_LIBRARY_ALBUM_LEN = 40
+# MD5 hex digest length, used as the moOde thmcache lookup key.
+MAX_LIBRARY_ART_HASH_LEN = 32
 RADIO_DIRECTORY = "RADIO"
 OSDISK_DIRECTORY = "OSDISK"  # internal storage mount, hidden from the Library browser
 SAVED_PLAYLISTS_NAME = "Saved Playlists"
@@ -68,12 +71,17 @@ def _root_entries():
     return filtered
 
 
-def send_library_entry(index, total, entry_type, name, album=""):
+def send_library_entry(index, total, entry_type, name, album="", art_hash=""):
     name_bytes = name.encode("utf-8")[:MAX_LIBRARY_NAME_LEN]
     album_bytes = album.encode("utf-8")[:MAX_LIBRARY_ALBUM_LEN]
+    # art_hash must be a plain MD5 hex digest (or empty) — never send anything else onto the wire.
+    assert len(art_hash) in (0, MAX_LIBRARY_ART_HASH_LEN), f"Invalid art_hash length: {art_hash!r}"
+    hash_bytes = art_hash.encode("ascii")
     payload = (
         bytes([entry_type]) + struct.pack("<HH", index, total)
-        + bytes([len(name_bytes)]) + name_bytes + album_bytes
+        + bytes([len(name_bytes)]) + name_bytes
+        + bytes([len(album_bytes)]) + album_bytes
+        + bytes([len(hash_bytes)]) + hash_bytes
     )
     send_packet_locked(build_packet(MSG_LIBRARY_ENTRY, _state.library_seq, 0, payload))
     _state.library_seq = (_state.library_seq + 1) & 0xFF
@@ -295,7 +303,9 @@ def _run_search(field, text):
 
     for index, (full_path, album, _track_num) in enumerate(results):
         name = posixpath.basename(full_path) or full_path
-        send_library_entry(index, total, LIBRARY_ENTRY_TRACK, name, album)
+        album_dir = posixpath.dirname(full_path)
+        art_hash = hashlib.md5(album_dir.encode("utf-8")).hexdigest() if album_dir else ""
+        send_library_entry(index, total, LIBRARY_ENTRY_TRACK, name, album, art_hash)
         time.sleep(0.008)
 
 

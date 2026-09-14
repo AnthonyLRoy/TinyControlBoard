@@ -6,5 +6,6 @@ data class LibraryEntry(
 	val isDirectory: Boolean,
 	val name: String,
 	val isRadioStation: Boolean = false,
-	val albumName: String = ""
+	val albumName: String = "",
+	val albumArtHash: String = ""
 )

@@ -18,9 +18,10 @@
         android:background="@drawable/bg_search_album_art">
 
         <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
+            android:id="@+id/ivSearchAlbumArt"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_album"
             android:contentDescription="@null"
             android:tint="@color/text_secondary" />

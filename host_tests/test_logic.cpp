@@ -249,8 +249,8 @@ void test_deserialize_message_library_entry_payload()
 {
     UartMessage parsed;
     uint8_t buffer[UART_PACKET_SIZE] = {};
-    // track, index=2, total=5, nameLen=5, name="Track", album="Album"
-    const uint8_t payload[] = {1, 0x02, 0x00, 0x05, 0x00, 5, 'T', 'r', 'a', 'c', 'k', 'A', 'l', 'b', 'u', 'm'};
+    // track, index=2, total=5, nameLen=5, name="Track", albumLen=5, album="Album", hashLen=0
+    const uint8_t payload[] = {1, 0x02, 0x00, 0x05, 0x00, 5, 'T', 'r', 'a', 'c', 'k', 5, 'A', 'l', 'b', 'u', 'm', 0};
 
     build_frame(MSG_LIBRARY_ENTRY, 0, payload, sizeof(payload), buffer);
 
@@ -260,6 +260,56 @@ void test_deserialize_message_library_entry_payload()
     expect_equal(static_cast<uint16_t>(5), parsed.libraryEntryTotal, "Entry total mismatch");
     expect_equal(std::string("Track"), std::string(reinterpret_cast<const char *>(parsed.libraryEntryName)), "Entry name mismatch");
     expect_equal(std::string("Album"), std::string(reinterpret_cast<const char *>(parsed.libraryEntryAlbum)), "Entry album mismatch");
+    expect_equal(static_cast<uint8_t>(0), parsed.libraryEntryArtHashLen, "Entry hash should be empty when absent");
+}
+
+void test_deserialize_message_library_entry_payload_with_art_hash()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const std::string hash = "0123456789abcdef0123456789abcdef"; // 32 chars
+    std::vector<uint8_t> payload = {1, 0x00, 0x00, 0x01, 0x00, 3, 'F', 'o', 'o', 2, 'A', 'B',
+                                     static_cast<uint8_t>(hash.size())};
+    payload.insert(payload.end(), hash.begin(), hash.end());
+
+    build_frame(MSG_LIBRARY_ENTRY, 0, payload.data(), static_cast<uint8_t>(payload.size()), buffer);
+
+    expect_true(deserializeMessage(buffer, parsed), "Library-entry-with-hash deserialize should succeed");
+    expect_equal(std::string("Foo"), std::string(reinterpret_cast<const char *>(parsed.libraryEntryName)), "Entry name mismatch");
+    expect_equal(std::string("AB"), std::string(reinterpret_cast<const char *>(parsed.libraryEntryAlbum)), "Entry album mismatch");
+    expect_equal(static_cast<uint8_t>(32), parsed.libraryEntryArtHashLen, "Entry hash length mismatch");
+    expect_equal(hash, std::string(reinterpret_cast<const char *>(parsed.libraryEntryArtHash)), "Entry hash mismatch");
+}
+
+// Worst-case boundary: max-length name (55) + max-length album (40) + full hash (32) all present
+// at once — proves decodeLibraryEntry doesn't overrun its fixed buffers, and that the resulting
+// BLE notify payload (built the same way by BleServer.cpp::notifyLibraryEntry) stays within
+// protocol::k_libraryEntryMaxPayloadSize (which is itself statically asserted to fit the BLE
+// ATT MTU headroom — see uartProtocol.hpp).
+void test_deserialize_message_library_entry_payload_max_lengths()
+{
+    UartMessage parsed;
+    uint8_t buffer[UART_PACKET_SIZE] = {};
+    const std::string name(protocol::k_maxLibraryNameLen, 'N');
+    const std::string album(protocol::k_maxLibraryAlbumLen, 'A');
+    const std::string hash(protocol::k_maxLibraryArtHashLen, 'H');
+
+    std::vector<uint8_t> payload = {1, 0xFF, 0x00, 0xFF, 0x00, static_cast<uint8_t>(name.size())};
+    payload.insert(payload.end(), name.begin(), name.end());
+    payload.push_back(static_cast<uint8_t>(album.size()));
+    payload.insert(payload.end(), album.begin(), album.end());
+    payload.push_back(static_cast<uint8_t>(hash.size()));
+    payload.insert(payload.end(), hash.begin(), hash.end());
+
+    expect_true(payload.size() <= protocol::k_libraryEntryMaxPayloadSize,
+                "Test payload should fit within the declared max payload size");
+
+    build_frame(MSG_LIBRARY_ENTRY, 0, payload.data(), static_cast<uint8_t>(payload.size()), buffer);
+
+    expect_true(deserializeMessage(buffer, parsed), "Max-length library-entry deserialize should succeed");
+    expect_equal(name, std::string(reinterpret_cast<const char *>(parsed.libraryEntryName)), "Max-length name mismatch");
+    expect_equal(album, std::string(reinterpret_cast<const char *>(parsed.libraryEntryAlbum)), "Max-length album mismatch");
+    expect_equal(hash, std::string(reinterpret_cast<const char *>(parsed.libraryEntryArtHash)), "Max-length hash mismatch");
 }
 
 void test_deserialize_message_playlist_result_payload()
@@ -1264,6 +1314,8 @@ int main()
         {"test_deserialize_message_now_playing_payload", test_deserialize_message_now_playing_payload},
         {"test_deserialize_message_track_progress_payload", test_deserialize_message_track_progress_payload},
         {"test_deserialize_message_library_entry_payload", test_deserialize_message_library_entry_payload},
+        {"test_deserialize_message_library_entry_payload_with_art_hash", test_deserialize_message_library_entry_payload_with_art_hash},
+        {"test_deserialize_message_library_entry_payload_max_lengths", test_deserialize_message_library_entry_payload_max_lengths},
         {"test_deserialize_message_playlist_result_payload", test_deserialize_message_playlist_result_payload},
         {"test_deserialize_message_playlist_result_failure_payload", test_deserialize_message_playlist_result_failure_payload},
         {"test_serialize_message_clamps_playlist_name_to_protocol_limit", test_serialize_message_clamps_playlist_name_to_protocol_limit},

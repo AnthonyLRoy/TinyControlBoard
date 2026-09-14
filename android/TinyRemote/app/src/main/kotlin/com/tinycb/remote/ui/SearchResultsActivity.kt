@@ -38,6 +38,7 @@ class SearchResultsActivity : AppCompatActivity() {
         b.toolbar.subtitle = getString(R.string.search_results_subtitle, query, "\u2026")
 
         adapter = SearchResultsAdapter(
+            scope = lifecycleScope,
             onTrackClicked = { index ->
                 vm.search.addResult(index)
                 Toast.makeText(this, R.string.search_results_added, Toast.LENGTH_SHORT).show()
@@ -112,7 +113,7 @@ class SearchResultsActivity : AppCompatActivity() {
                 for (entry in lastResults) {
                     val albumLabel = entry.albumName.ifEmpty { unknownAlbumLabel }
                     if (albumLabel != currentAlbum) {
-                        add(SearchRow.AlbumHeader(albumLabel, counts.getValue(albumLabel)))
+                        add(SearchRow.AlbumHeader(albumLabel, counts.getValue(albumLabel), entry.albumArtHash))
                         currentAlbum = albumLabel
                     }
                     add(SearchRow.Track(entry))

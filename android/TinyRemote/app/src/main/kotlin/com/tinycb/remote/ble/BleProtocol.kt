@@ -110,16 +110,35 @@ object BleProtocol {
             return emptyList()
         }
 
-        val nameLen = (value[5].toInt() and 0xFF).coerceAtMost(value.size - 6)
+        // Every length byte is clamped against what's actually left in the array — a
+        // truncated/malformed notification must not throw instead of just showing less data.
+        val nameLen = (value[5].toInt() and 0xFF).coerceAtMost((value.size - 6).coerceAtLeast(0))
         val name = value.copyOfRange(6, 6 + nameLen).toTrimmedString()
-        val album = value.copyOfRange(6 + nameLen, value.size).toTrimmedString()
+
+        val albumLenOffset = 6 + nameLen
+        var album = ""
+        var albumArtHash = ""
+        if (albumLenOffset < value.size) {
+            val albumLen = (value[albumLenOffset].toInt() and 0xFF)
+                .coerceAtMost((value.size - albumLenOffset - 1).coerceAtLeast(0))
+            album = value.copyOfRange(albumLenOffset + 1, albumLenOffset + 1 + albumLen).toTrimmedString()
+
+            val hashLenOffset = albumLenOffset + 1 + albumLen
+            if (hashLenOffset < value.size) {
+                val hashLen = (value[hashLenOffset].toInt() and 0xFF)
+                    .coerceAtMost((value.size - hashLenOffset - 1).coerceAtLeast(0))
+                albumArtHash = value.copyOfRange(hashLenOffset + 1, hashLenOffset + 1 + hashLen).toTrimmedString()
+            }
+        }
+
         val entry = LibraryEntry(
             index = index,
             total = total,
             isDirectory = entryType == LIBRARY_ENTRY_FOLDER,
             name = name,
             isRadioStation = entryType == LIBRARY_ENTRY_RADIO,
-            albumName = album
+            albumName = album,
+            albumArtHash = albumArtHash
         )
         
         return if (index == 0) listOf(entry) else currentListing + entry

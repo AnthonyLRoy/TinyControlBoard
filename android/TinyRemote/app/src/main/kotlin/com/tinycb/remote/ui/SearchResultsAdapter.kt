@@ -2,6 +2,7 @@ package com.tinycb.remote.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -10,9 +11,12 @@ import com.tinycb.remote.R
 import com.tinycb.remote.databinding.ItemSearchAlbumHeaderBinding
 import com.tinycb.remote.databinding.ItemSearchTrackBinding
 import com.tinycb.remote.model.LibraryEntry
+import com.tinycb.remote.net.ThumbnailFetcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 sealed class SearchRow {
-    data class AlbumHeader(val albumName: String, val matchCount: Int) : SearchRow()
+    data class AlbumHeader(val albumName: String, val matchCount: Int, val albumArtHash: String = "") : SearchRow()
     data class Track(val entry: LibraryEntry) : SearchRow()
 }
 
@@ -20,6 +24,7 @@ sealed class SearchRow {
  * plain divided rows, a note icon, an optional FLAC/MP3 badge derived from the filename
  * extension, and (when grouped) a sticky album header showing a match count. */
 class SearchResultsAdapter(
+    private val scope: CoroutineScope,
     private val onTrackClicked: (Int) -> Unit,
     private val onAlbumClicked: (String) -> Unit
 ) : ListAdapter<SearchRow, RecyclerView.ViewHolder>(DIFF) {
@@ -50,6 +55,34 @@ class SearchResultsAdapter(
                 R.plurals.search_results_match_count, row.matchCount, row.matchCount
             )
             b.root.setOnClickListener { onAlbumClicked(row.albumName) }
+            showPlaceholderArt()
+
+            val hash = row.albumArtHash
+            if (hash.isNotEmpty()) {
+                // Tag guards against this ViewHolder being recycled/rebound to a different row
+                // before the async fetch completes.
+                b.ivSearchAlbumArt.tag = hash
+                scope.launch {
+                    val bitmap = ThumbnailFetcher.fetch(hash)
+                    if (b.ivSearchAlbumArt.tag != hash) return@launch
+                    if (bitmap != null) {
+                        b.ivSearchAlbumArt.scaleType = ImageView.ScaleType.CENTER_CROP
+                        b.ivSearchAlbumArt.imageTintList = null
+                        b.ivSearchAlbumArt.setImageBitmap(bitmap)
+                    } else {
+                        showPlaceholderArt()
+                    }
+                }
+            }
+        }
+
+        private fun showPlaceholderArt() {
+            b.ivSearchAlbumArt.tag = null
+            b.ivSearchAlbumArt.scaleType = ImageView.ScaleType.CENTER_INSIDE
+            b.ivSearchAlbumArt.imageTintList = android.content.res.ColorStateList.valueOf(
+                ContextCompat.getColor(b.root.context, R.color.text_secondary)
+            )
+            b.ivSearchAlbumArt.setImageResource(R.drawable.ic_album)
         }
     }
 

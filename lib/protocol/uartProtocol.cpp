@@ -72,6 +72,8 @@ bool decodeLibraryEntry(UartMessage &rMsg, const uint8_t *p_payload, uint8_t pay
     rMsg.libraryEntryIndex = static_cast<uint16_t>(p_payload[1]) | (static_cast<uint16_t>(p_payload[2]) << 8);
     rMsg.libraryEntryTotal = static_cast<uint16_t>(p_payload[3]) | (static_cast<uint16_t>(p_payload[4]) << 8);
 
+    // Every length byte below is clamped against what's ACTUALLY left in the payload, never
+    // trusted at face value — a corrupt/malicious declared length must not overrun p_payload.
     const uint8_t declaredNameLen = p_payload[5];
     const uint8_t availableNameLen = (payloadLen - 6 < declaredNameLen) ? payloadLen - 6 : declaredNameLen;
     const uint8_t nameLen = (availableNameLen > protocol::k_maxLibraryNameLen)
@@ -80,13 +82,41 @@ bool decodeLibraryEntry(UartMessage &rMsg, const uint8_t *p_payload, uint8_t pay
     rMsg.libraryEntryName[nameLen] = '\0';
     rMsg.libraryEntryNameLen = nameLen;
 
-    const uint8_t albumOffset = 6 + availableNameLen;
-    const uint8_t availableAlbumLen = (payloadLen > albumOffset) ? payloadLen - albumOffset : 0;
+    const uint8_t albumLenOffset = 6 + availableNameLen;
+    if (payloadLen <= albumLenOffset)
+    {
+        rMsg.libraryEntryAlbum[0] = '\0';
+        rMsg.libraryEntryAlbumLen = 0;
+        rMsg.libraryEntryArtHash[0] = '\0';
+        rMsg.libraryEntryArtHashLen = 0;
+        return true;
+    }
+    const uint8_t declaredAlbumLen = p_payload[albumLenOffset];
+    const uint8_t remainingAfterAlbumLen = payloadLen - (albumLenOffset + 1);
+    const uint8_t availableAlbumLen = (remainingAfterAlbumLen < declaredAlbumLen)
+                                     ? remainingAfterAlbumLen : declaredAlbumLen;
     const uint8_t albumLen = (availableAlbumLen > protocol::k_maxLibraryAlbumLen)
                             ? protocol::k_maxLibraryAlbumLen : availableAlbumLen;
-    memcpy(rMsg.libraryEntryAlbum, p_payload + albumOffset, albumLen);
+    memcpy(rMsg.libraryEntryAlbum, p_payload + albumLenOffset + 1, albumLen);
     rMsg.libraryEntryAlbum[albumLen] = '\0';
     rMsg.libraryEntryAlbumLen = albumLen;
+
+    const uint8_t hashLenOffset = albumLenOffset + 1 + availableAlbumLen;
+    if (payloadLen <= hashLenOffset)
+    {
+        rMsg.libraryEntryArtHash[0] = '\0';
+        rMsg.libraryEntryArtHashLen = 0;
+        return true;
+    }
+    const uint8_t declaredHashLen = p_payload[hashLenOffset];
+    const uint8_t remainingAfterHashLen = payloadLen - (hashLenOffset + 1);
+    const uint8_t availableHashLen = (remainingAfterHashLen < declaredHashLen)
+                                    ? remainingAfterHashLen : declaredHashLen;
+    const uint8_t hashLen = (availableHashLen > protocol::k_maxLibraryArtHashLen)
+                           ? protocol::k_maxLibraryArtHashLen : availableHashLen;
+    memcpy(rMsg.libraryEntryArtHash, p_payload + hashLenOffset + 1, hashLen);
+    rMsg.libraryEntryArtHash[hashLen] = '\0';
+    rMsg.libraryEntryArtHashLen = hashLen;
     return true;
 }
 

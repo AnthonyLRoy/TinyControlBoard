@@ -18,18 +18,35 @@ inline constexpr uint8_t k_legacyPayloadSize = 10; // 5×uint16 params
 inline constexpr uint8_t k_maxNowPlayingLen = 60;
 inline constexpr uint8_t k_maxLibraryNameLen = 55;
 inline constexpr uint8_t k_maxLibraryAlbumLen = 40;
+// MD5 hex digest length, used as the moOde thmcache lookup key (see notifyLibraryEntry).
+inline constexpr uint8_t k_maxLibraryArtHashLen = 32;
 inline constexpr uint16_t k_browseUp = 0xFFFE;
 inline constexpr uint16_t k_browseRoot = 0xFFFF;
 inline constexpr uint8_t k_libraryEntryFolder = 0;
 inline constexpr uint8_t k_libraryEntryTrack = 1;
 inline constexpr uint8_t k_libraryEntryEmpty = 2;
 inline constexpr uint8_t k_libraryEntryRadio = 3;
-// header(6) + name(<=55) + album(<=40), rounded up for margin
-inline constexpr uint8_t k_maxPayloadSize = 104;
-// header(8) + max-payload(60) + checksum(1)
+// entryType/idx/total(5) + nameLen(1) + name(<=55) + albumLen(1) + album(<=40) +
+// hashLen(1) + hash(<=32), i.e. the MSG_LIBRARY_ENTRY layout — the largest payload type.
+inline constexpr uint8_t k_libraryEntryMaxPayloadSize =
+    5 + 1 + k_maxLibraryNameLen + 1 + k_maxLibraryAlbumLen + 1 + k_maxLibraryArtHashLen;
+inline constexpr uint8_t k_maxPayloadSize = k_libraryEntryMaxPayloadSize;
+// header(8) + max-payload + checksum(1)
 inline constexpr uint8_t k_maxPacketSize = k_headerSize + k_maxPayloadSize + 1;
 // header(8) + legacy-params(10) + checksum(1)
 inline constexpr uint8_t k_commandPacketSize = k_headerSize + k_legacyPayloadSize + 1;
+// k_maxPayloadSize/k_maxPacketSize are uint8_t — a silent wraparound here would corrupt
+// every packet's length byte, so fail the build instead of shipping that.
+static_assert(k_libraryEntryMaxPayloadSize <= 255, "library-entry payload exceeds uint8_t range");
+static_assert(static_cast<int>(k_headerSize) + k_maxPayloadSize + 1 <= 255,
+              "k_maxPacketSize would overflow uint8_t");
+// The BLE notify path (BleServer.cpp::notifyLibraryEntry) sends the library-entry fields
+// (without the UART header) as one GATT notification. CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU=256
+// in sdkconfig caps the usable ATT payload at 256-3=253 bytes regardless of what the Android
+// side requests via requestMtu() — this assert stops a future field addition from silently
+// exceeding that ceiling (ble_hs_mbuf_from_flat() would just drop the notification, not crash,
+// but the feature would silently stop working).
+static_assert(k_libraryEntryMaxPayloadSize <= 253, "library-entry payload exceeds BLE ATT MTU headroom");
 } // namespace protocol
 
 #define UART_PROTOCOL_VERSION protocol::k_version
@@ -53,7 +70,8 @@ enum MessageType : uint8_t
     // payload: elapsed_s(u16 LE) + duration_s(u16 LE) + is_playing(u8)
     MSG_TRACK_PROGRESS = 0x06,
     // payload: entryType(u8) + index(u16 LE) + total(u16 LE) + nameLen(u8) + name(nameLen bytes)
-    // + album (remaining bytes, UTF-8, empty for browse/playlist listings)
+    // + albumLen(u8) + album(albumLen bytes, empty for browse/playlist listings)
+    // + hashLen(u8) + hash(hashLen bytes: 0 or 32 ascii-hex MD5 chars, search results only)
     MSG_LIBRARY_ENTRY  = 0x07,
     // ESP32->RPi only; payload = playlist name (UTF-8, no terminator). commandId
     // selects which playlist action (see CMD_PLAYLIST_* below).
@@ -186,6 +204,10 @@ struct UartMessage
     // Album name for search-result entries; empty for browse/playlist listings.
     uint8_t  libraryEntryAlbum[protocol::k_maxLibraryAlbumLen + 1];
     uint8_t  libraryEntryAlbumLen;
+    // MD5 hex digest of the album's directory path, used to fetch moOde's cached thumbnail;
+    // empty for browse/playlist listings (thumbnail lookup is search-results-only).
+    uint8_t  libraryEntryArtHash[protocol::k_maxLibraryArtHashLen + 1];
+    uint8_t  libraryEntryArtHashLen;
     // Outgoing MSG_PLAYLIST_CMD: playlist name payload (ESP32->RPi).
     uint8_t  playlistNameOut[protocol::k_maxLibraryNameLen + 1];
     uint8_t  playlistNameOutLen;
@@ -200,13 +222,14 @@ struct UartMessage
           msgType(MSG_COMMAND), sequence(0), commandId(0), nowPlayingLen(0),
           trackElapsedSec(0), trackDurationSec(0), trackIsPlaying(false),
           libraryEntryType(0), libraryEntryIndex(0), libraryEntryTotal(0),
-          libraryEntryNameLen(0), libraryEntryAlbumLen(0), playlistNameOutLen(0),
+          libraryEntryNameLen(0), libraryEntryAlbumLen(0), libraryEntryArtHashLen(0), playlistNameOutLen(0),
           playlistResultOk(false), playlistResultMessageLen(0), checksum(0)
     {
         memset(params, 0, sizeof(params));
         memset(nowPlayingText, 0, sizeof(nowPlayingText));
         memset(libraryEntryName, 0, sizeof(libraryEntryName));
         memset(libraryEntryAlbum, 0, sizeof(libraryEntryAlbum));
+        memset(libraryEntryArtHash, 0, sizeof(libraryEntryArtHash));
         memset(playlistNameOut, 0, sizeof(playlistNameOut));
         memset(playlistResultMessage, 0, sizeof(playlistResultMessage));
     }
