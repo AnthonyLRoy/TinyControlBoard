@@ -57,4 +57,12 @@
     <color name="menu_accent">#3DDC84</color>
     <color name="menu_accent_dim">#243DDC84</color>
     <color name="menu_accent_border">#743DDC84</color>
+
+    <!-- Search Results redesign -->
+    <color name="search_sticky_header_bg">#1A2420</color>
+    <color name="search_list_divider">#24282B</color>
+    <color name="search_badge_mp3_bg">#202426</color>
+    <color name="search_badge_mp3_text">#7C8A92</color>
+    <color name="search_album_art_start">#2C3D3A</color>
+    <color name="search_album_art_end">#161F1D</color>
 </resources>

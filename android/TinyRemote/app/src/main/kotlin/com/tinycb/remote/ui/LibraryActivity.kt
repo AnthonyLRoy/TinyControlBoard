@@ -93,7 +93,9 @@ class LibraryActivity : AppCompatActivity() {
                     else -> vm.search.searchArtist(text)
                 }
                 dialog.dismiss()
-                startActivity(Intent(this, SearchResultsActivity::class.java))
+                startActivity(Intent(this, SearchResultsActivity::class.java).apply {
+                    putExtra(SearchResultsActivity.EXTRA_QUERY, text)
+                })
             }
         }
         dialog.show()
