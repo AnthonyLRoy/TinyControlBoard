@@ -36,7 +36,14 @@ def fake_mpd_lsinfo(path):
 def fake__mpd_escape(path):
     return path.replace("\\", "\\\\").replace('"', '\\"')
 
+mpd_command_calls = []
+
 def fake_mpd_command(command_line):
+    print(f"Fake mpd_command called with: {command_line!r}")
+    mpd_command_calls.append(command_line)
+    return []
+
+def fake_mpd_search_with_tags(field, text):
     return []
 
 # Inject mock modules for Phase 1
@@ -53,6 +60,7 @@ fake_mpd = ModuleType("mpd_client")
 fake_mpd.mpd_lsinfo = fake_mpd_lsinfo
 fake_mpd._mpd_escape = fake__mpd_escape
 fake_mpd.mpd_command = fake_mpd_command
+fake_mpd.mpd_search_with_tags = fake_mpd_search_with_tags
 sys.modules["mpd_client"] = fake_mpd
 
 try:
@@ -72,7 +80,7 @@ try:
     print("Assertion passed: mpd_lsinfo got 'RADIO'")
     assertions_passed.append("library_browser_radio_browse_path")
 
-    # Assert KEXP.pls entry is sent with KEXP
+    # Assert KEXP.pls entry is sent with KEXP and type 3 (LIBRARY_ENTRY_RADIO)
     assert len(sent_packets) > 0, "No packets sent"
     found_kexp = False
     for pkt in sent_packets:
@@ -80,17 +88,27 @@ try:
         if msg_type == fake_protocol.MSG_LIBRARY_ENTRY:
             entry_type = payload[0]
             index, total = struct.unpack("<HH", payload[1:5])
-            name = payload[5:].decode("utf-8")
+            name_len = payload[5]
+            name = payload[6:6 + name_len].decode("utf-8")
             print(f"Sent Entry: type={entry_type}, index={index}, total={total}, name={name!r}")
-            if name == "KEXP":
+            if name == "KEXP" and entry_type == 3:
                 found_kexp = True
-    assert found_kexp, f"Expected display name 'KEXP', but it was not found in sent packets. Sent packets: {sent_packets}"
-    print("Assertion passed: display name 'KEXP' (no .pls) is sent")
+    assert found_kexp, f"Expected display name 'KEXP' with type 3, but it was not found in sent packets. Sent packets: {sent_packets}"
+    print("Assertion passed: display name 'KEXP' (no .pls, type=3) is sent")
     assertions_passed.append("library_browser_radio_display_name")
+
+    # Test adding radio station to queue uses 'load' command
+    print("\n--- Testing library_browser: handle_add_track for radio station ---")
+    mpd_command_calls.clear()
+    lb.handle_add_track([0])
+    assert 'load "RADIO/KEXP.pls"' in mpd_command_calls, f"Expected mpd_command('load \"RADIO/KEXP.pls\"'), got {mpd_command_calls}"
+    print("Assertion passed: radio station added with 'load'")
+    assertions_passed.append("library_browser_radio_add_load")
 
     # Reset lists
     mpd_lsinfo_calls.clear()
     sent_packets.clear()
+    mpd_command_calls.clear()
 
     print("\n--- Testing library_browser: SET_RADIO_BROWSE(False) ---")
     lb.set_radio_browse(False)
@@ -101,7 +119,7 @@ try:
     print("Assertion passed: mpd_lsinfo got ''")
     assertions_passed.append("library_browser_root_browse_path")
 
-    # Assert normal entry is Track.flac
+    # Assert normal entry is Track.flac with type 1 (LIBRARY_ENTRY_TRACK)
     assert len(sent_packets) > 0, "No packets sent"
     found_track = False
     for pkt in sent_packets:
@@ -109,13 +127,22 @@ try:
         if msg_type == fake_protocol.MSG_LIBRARY_ENTRY:
             entry_type = payload[0]
             index, total = struct.unpack("<HH", payload[1:5])
-            name = payload[5:].decode("utf-8")
+            name_len = payload[5]
+            name = payload[6:6 + name_len].decode("utf-8")
             print(f"Sent Entry: type={entry_type}, index={index}, total={total}, name={name!r}")
-            if name == "Track.flac":
+            if name == "Track.flac" and entry_type == 1:
                 found_track = True
     assert found_track, f"Expected display name 'Track.flac', but it was not found in sent packets"
-    print("Assertion passed: normal entry displayed as 'Track.flac'")
+    print("Assertion passed: normal entry displayed as 'Track.flac' with type=1")
     assertions_passed.append("library_browser_normal_display_name")
+
+    # Test adding regular track uses 'add' command
+    print("\n--- Testing library_browser: handle_add_track for regular track ---")
+    mpd_command_calls.clear()
+    lb.handle_add_track([0])
+    assert 'add "Music/Track.flac"' in mpd_command_calls, f"Expected mpd_command('add \"Music/Track.flac\"'), got {mpd_command_calls}"
+    print("Assertion passed: regular track added with 'add'")
+    assertions_passed.append("library_browser_regular_add_track")
 
 except AssertionError as ae:
     print(f"Assertion failed during library_browser phase: {ae}")
@@ -142,7 +169,25 @@ fake_lb.handle_browse_request = lambda params: None
 fake_lb.handle_add_track = lambda params: None
 fake_lb.handle_playlist_request = lambda params: None
 fake_lb.handle_play_track = lambda params: None
+fake_lb.handle_remove_track = lambda params: None
+fake_lb.handle_add_folder = lambda params: None
+fake_lb.handle_replace_with_folder = lambda params: None
+fake_lb.handle_clear_queue = lambda params: None
+fake_lb.handle_library_search_artist = lambda text: None
+fake_lb.handle_library_search_album = lambda text: None
+fake_lb.handle_library_search_any = lambda text: None
+fake_lb.handle_add_search_result = lambda params: None
+fake_lb.send_library_entry = lambda *args, **kwargs: None
 sys.modules["library_browser"] = fake_lb
+
+# Mock playlist_manager
+fake_playlist_mgr = ModuleType("playlist_manager")
+fake_playlist_mgr.handle_playlist_list_request = lambda params: None
+fake_playlist_mgr.handle_playlist_save = lambda text: None
+fake_playlist_mgr.handle_playlist_save_overwrite = lambda text: None
+fake_playlist_mgr.handle_playlist_load = lambda text: None
+fake_playlist_mgr.handle_playlist_delete = lambda text: None
+sys.modules["playlist_manager"] = fake_playlist_mgr
 
 # Mock command_ids
 fake_cmd = ModuleType("command_ids")
@@ -170,6 +215,20 @@ fake_cmd.CMD_BROWSE_REQUEST = 0x0128
 fake_cmd.CMD_ADD_TRACK = 0x0129
 fake_cmd.CMD_PLAYLIST_REQUEST = 0x012A
 fake_cmd.CMD_PLAY_TRACK = 0x012B
+fake_cmd.CMD_REMOVE_TRACK = 0x012C
+fake_cmd.CMD_ADD_FOLDER = 0x012D
+fake_cmd.CMD_REPLACE_WITH_FOLDER = 0x012E
+fake_cmd.CMD_PLAYLIST_LIST_REQUEST = 0x012F
+fake_cmd.CMD_PLAYLIST_SAVE = 0x0130
+fake_cmd.CMD_PLAYLIST_SAVE_OVERWRITE = 0x0131
+fake_cmd.CMD_PLAYLIST_LOAD = 0x0132
+fake_cmd.CMD_PLAYLIST_DELETE = 0x0133
+fake_cmd.CMD_CLEAR_QUEUE = 0x0134
+fake_cmd.CMD_LIBRARY_SEARCH_ARTIST = 0x0135
+fake_cmd.CMD_LIBRARY_SEARCH_ALBUM = 0x0136
+fake_cmd.CMD_LIBRARY_SEARCH_ANY = 0x0137
+fake_cmd.CMD_ADD_SEARCH_RESULT = 0x0138
+fake_cmd.CMD_SEEK_TO_PERCENT = 0x0139
 sys.modules["command_ids"] = fake_cmd
 
 # Mock panel_control
@@ -200,6 +259,7 @@ fake_playback.toggle_cover_view = lambda params: None
 fake_playback.toggle_repeat = lambda params: None
 fake_playback.toggle_random = lambda params: None
 fake_playback.set_meter_display = lambda enabled: None
+fake_playback.handle_seek_to_percent = lambda params: None
 sys.modules["playback_commands"] = fake_playback
 
 # Mock protocol

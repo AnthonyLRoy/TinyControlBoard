@@ -132,7 +132,12 @@ def handle_browse_request(params):
             name = posixpath.basename(full_path) or full_path
             if _state.radio_browse and name.endswith(".pls"):
                 name = name[:-4]
-        entry_type = LIBRARY_ENTRY_FOLDER if is_dir else LIBRARY_ENTRY_TRACK
+        if is_dir:
+            entry_type = LIBRARY_ENTRY_FOLDER
+        elif _state.radio_browse or full_path.startswith(f"{RADIO_DIRECTORY}/"):
+            entry_type = LIBRARY_ENTRY_RADIO
+        else:
+            entry_type = LIBRARY_ENTRY_TRACK
         send_library_entry(index, total, entry_type, name)
         time.sleep(0.008)  # pace sends so the ESP32 RX/BLE-notify pipeline can keep up
 
@@ -149,10 +154,22 @@ def handle_add_track(params):
         return
 
     try:
-        mpd_command(f'add "{_mpd_escape(full_path)}"')
+        if (_state.radio_browse
+                or _state.browse_path == SAVED_PLAYLISTS_TOKEN
+                or full_path.startswith(f"{RADIO_DIRECTORY}/")
+                or full_path.endswith((".pls", ".m3u", ".m3u8", ".cue", ".asx"))):
+            try:
+                mpd_command(f'load "{_mpd_escape(full_path)}"')
+            except Exception:
+                mpd_command(f'add "{_mpd_escape(full_path)}"')
+        else:
+            try:
+                mpd_command(f'add "{_mpd_escape(full_path)}"')
+            except Exception:
+                mpd_command(f'load "{_mpd_escape(full_path)}"')
         print(f"Added to queue: {full_path}", flush=True)
     except Exception as e:
-        print(f"⚠️ MPD add failed: {e}", flush=True)
+        print(f"⚠️ MPD add/load failed: {e}", flush=True)
 
 
 def _folder_tracks(folder_path, limit=MAX_FOLDER_TRACKS):
@@ -329,7 +346,17 @@ def handle_add_search_result(params):
 
     full_path = _state.search_entries[index]
     try:
-        mpd_command(f'add "{_mpd_escape(full_path)}"')
+        if (full_path.startswith(f"{RADIO_DIRECTORY}/")
+                or full_path.endswith((".pls", ".m3u", ".m3u8", ".cue", ".asx"))):
+            try:
+                mpd_command(f'load "{_mpd_escape(full_path)}"')
+            except Exception:
+                mpd_command(f'add "{_mpd_escape(full_path)}"')
+        else:
+            try:
+                mpd_command(f'add "{_mpd_escape(full_path)}"')
+            except Exception:
+                mpd_command(f'load "{_mpd_escape(full_path)}"')
         print(f"Added to queue from search: {full_path}", flush=True)
     except Exception as e:
-        print(f"⚠️ MPD add failed: {e}", flush=True)
+        print(f"⚠️ MPD add/load failed: {e}", flush=True)
