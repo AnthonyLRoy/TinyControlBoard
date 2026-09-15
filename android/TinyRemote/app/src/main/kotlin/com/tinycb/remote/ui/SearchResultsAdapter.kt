@@ -16,7 +16,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 sealed class SearchRow {
-    data class AlbumHeader(val albumName: String, val matchCount: Int, val albumArtHash: String = "") : SearchRow()
+    data class AlbumHeader(
+        val albumName: String,
+        val matchCount: Int,
+        val albumArtHash: String = "",
+        val isExpanded: Boolean = false
+    ) : SearchRow()
     data class Track(val entry: LibraryEntry) : SearchRow()
 }
 
@@ -26,7 +31,9 @@ sealed class SearchRow {
 class SearchResultsAdapter(
     private val scope: CoroutineScope,
     private val onTrackClicked: (Int) -> Unit,
-    private val onAlbumClicked: (String) -> Unit
+    private val onAlbumAddClicked: (String) -> Unit,
+    private val onAlbumReplaceClicked: (String) -> Unit,
+    private val onAlbumExpandClicked: (String) -> Unit
 ) : ListAdapter<SearchRow, RecyclerView.ViewHolder>(DIFF) {
 
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
@@ -54,7 +61,19 @@ class SearchResultsAdapter(
             b.tvSearchAlbumMatches.text = b.root.resources.getQuantityString(
                 R.plurals.search_results_match_count, row.matchCount, row.matchCount
             )
-            b.root.setOnClickListener { onAlbumClicked(row.albumName) }
+            b.root.setOnClickListener { onAlbumExpandClicked(row.albumName) }
+
+            b.btnSearchAlbumAdd.setOnClickListener { onAlbumAddClicked(row.albumName) }
+            b.btnSearchAlbumReplace.setOnClickListener { onAlbumReplaceClicked(row.albumName) }
+            b.btnSearchAlbumExpand.setOnClickListener { onAlbumExpandClicked(row.albumName) }
+
+            b.btnSearchAlbumExpand.setImageResource(
+                if (row.isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
+            )
+            b.btnSearchAlbumExpand.contentDescription = b.root.context.getString(
+                if (row.isExpanded) R.string.search_results_collapse_album else R.string.search_results_expand_album
+            )
+
             showPlaceholderArt()
 
             val hash = row.albumArtHash

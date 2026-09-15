@@ -8,7 +8,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tinycb.remote.R
 import com.tinycb.remote.databinding.ActivitySearchResultsBinding
 import com.tinycb.remote.model.LibraryEntry
@@ -25,6 +24,7 @@ class SearchResultsActivity : AppCompatActivity() {
     private lateinit var stickyHeaderDecoration: StickyHeaderItemDecoration
     private var lastResults: List<LibraryEntry> = emptyList()
     private var currentRows: List<SearchRow> = emptyList()
+    private var expandedAlbumName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,8 +43,15 @@ class SearchResultsActivity : AppCompatActivity() {
                 vm.search.addResult(index)
                 Toast.makeText(this, R.string.search_results_added, Toast.LENGTH_SHORT).show()
             },
-            onAlbumClicked = { albumName ->
-                showAddAlbumDialog(albumName)
+            onAlbumAddClicked = { albumName ->
+                addAlbumToPlaylist(albumName, replace = false)
+            },
+            onAlbumReplaceClicked = { albumName ->
+                addAlbumToPlaylist(albumName, replace = true)
+            },
+            onAlbumExpandClicked = { albumName ->
+                expandedAlbumName = if (expandedAlbumName == albumName) null else albumName
+                renderResults()
             }
         )
 
@@ -56,7 +63,9 @@ class SearchResultsActivity : AppCompatActivity() {
         b.rvSearchResults.adapter = adapter
         b.rvSearchResults.addItemDecoration(stickyHeaderDecoration)
 
-        b.swGroupByAlbum.setOnCheckedChangeListener { _, _ -> renderResults() }
+        // The new design is always grouped by album and expandable, 
+        // so we hide the toggle as it's no longer relevant.
+        (b.swGroupByAlbum.parent as? View)?.visibility = View.GONE
 
         lifecycleScope.launch {
             vm.search.results.collectLatest { entries ->
@@ -73,17 +82,7 @@ class SearchResultsActivity : AppCompatActivity() {
         }
     }
 
-    private fun showAddAlbumDialog(albumName: String) {
-        MaterialAlertDialogBuilder(this, R.style.Theme_TinyRemote_AlertDialog)
-            .setTitle(albumName)
-            .setPositiveButton(R.string.search_results_add_album_to_playlist) { _, _ ->
-                addAlbumToPlaylist(albumName)
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
-    private fun addAlbumToPlaylist(albumName: String) {
+    private fun addAlbumToPlaylist(albumName: String, replace: Boolean) {
         val unknownAlbumLabel = getString(R.string.search_results_unknown_album)
         val albumTracks = lastResults.filter { entry ->
             val label = entry.albumName.ifEmpty { unknownAlbumLabel }
@@ -92,36 +91,43 @@ class SearchResultsActivity : AppCompatActivity() {
         if (albumTracks.isEmpty()) return
 
         lifecycleScope.launch {
+            if (replace) {
+                vm.library.clearQueue()
+                delay(100L) // Small buffer for server processing
+            }
             for (track in albumTracks) {
                 vm.search.addResult(track.index)
                 delay(20L)
             }
-            Toast.makeText(this@SearchResultsActivity, R.string.search_results_added, Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this@SearchResultsActivity,
+                if (replace) R.string.library_playlist_replaced else R.string.search_results_added,
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
-    /** Builds the row list from the last search results, either flat (one row per track,
-     * original order) or grouped into album-header sections with a per-album match count
-     * (server already sorts results by album then track number, so consecutive same-album
-     * entries form each section). */
+    /** Builds the row list from the last search results, grouped into album-header sections.
+     * Only the tracks for [expandedAlbumName] are included in the list. */
     private fun renderResults() {
         val unknownAlbumLabel = getString(R.string.search_results_unknown_album)
-        val rows = if (b.swGroupByAlbum.isChecked) {
-            val counts = lastResults.groupingBy { it.albumName.ifEmpty { unknownAlbumLabel } }.eachCount()
-            buildList<SearchRow> {
-                var currentAlbum: String? = null
-                for (entry in lastResults) {
-                    val albumLabel = entry.albumName.ifEmpty { unknownAlbumLabel }
-                    if (albumLabel != currentAlbum) {
-                        add(SearchRow.AlbumHeader(albumLabel, counts.getValue(albumLabel), entry.albumArtHash))
-                        currentAlbum = albumLabel
-                    }
+        val counts = lastResults.groupingBy { it.albumName.ifEmpty { unknownAlbumLabel } }.eachCount()
+        
+        val rows = buildList<SearchRow> {
+            var currentAlbum: String? = null
+            for (entry in lastResults) {
+                val albumLabel = entry.albumName.ifEmpty { unknownAlbumLabel }
+                if (albumLabel != currentAlbum) {
+                    val isExpanded = albumLabel == expandedAlbumName
+                    add(SearchRow.AlbumHeader(albumLabel, counts.getValue(albumLabel), entry.albumArtHash, isExpanded))
+                    currentAlbum = albumLabel
+                }
+                if (albumLabel == expandedAlbumName) {
                     add(SearchRow.Track(entry))
                 }
             }
-        } else {
-            lastResults.map<LibraryEntry, SearchRow> { SearchRow.Track(it) }
         }
+        
         currentRows = rows
         stickyHeaderDecoration.invalidateCache()
         adapter.submitList(rows)
