@@ -9,7 +9,6 @@
 #define DELAY_STARTUP_TIME_MS 5000
 #define MAX_CLOCK_FREQ_MHZ 240
 #define MIN_CLOCK_FREQ_MHZ 40
-#define MAX_INIT_ATTEMPTS 3
 
 extern "C" void app_main(void)
 {
@@ -25,26 +24,14 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(DELAY_STARTUP_TIME_MS));  //this is really unfortunate , but we need to wait for the power to stabilise before we start doing anything
 
     controlSystem::ControlBoard board;
-    for (int initAttempt = 1; initAttempt <= MAX_INIT_ATTEMPTS; ++initAttempt)
+    if (!board.init())
     {
-        if (board.init())
-        {
-            break;
-        }
-
-        ESP_LOGE("main", "ControlBoard init failed on attempt %d", initAttempt);
+        // Single attempt only: retrying risks re-driving relays/power sequencing into a bad config.
+        ESP_LOGE("main", "ControlBoard init failed; stopping");
         board.deinit();
-
-        if (initAttempt == MAX_INIT_ATTEMPTS)
-        {
-            ESP_LOGE("main", "ControlBoard init failed after %d attempts; stopping", MAX_INIT_ATTEMPTS);
-            indicators::getBootDiagnosticLeds().begin();
-            indicators::getBootDiagnosticLeds().firmwareInitFailed();
-            return;
-        }
-
-        ESP_LOGI("main", "Retrying ControlBoard init in 1s...");
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        indicators::getBootDiagnosticLeds().begin();
+        indicators::getBootDiagnosticLeds().firmwareInitFailed();
+        return;
     }
 
     static ble::BleServer bleServer;
