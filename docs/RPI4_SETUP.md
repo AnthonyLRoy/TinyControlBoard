@@ -71,10 +71,16 @@ sudo apt install -y git ddcutil
 
 ## 2. Enable UART5 Interface
 
-1. Open the firmware configuration file:
+The tracked firmware configuration uses `config.txt` to include a separate user configuration file. The UART5 overlay is defined in `config-user.txt`, which is loaded by this line in `config.txt`:
+
+```text
+include config-user.txt
+```
+
+1. Open the user firmware configuration file:
 
 ```bash
-sudo nano /boot/firmware/config.txt
+sudo nano /boot/firmware/config-user.txt
 ```
 
 2. Add or confirm the UART5 overlay:
@@ -82,6 +88,8 @@ sudo nano /boot/firmware/config.txt
 ```text
 dtoverlay=uart5
 ```
+
+Do not add a second `dtoverlay=uart5` line to `config.txt`; the existing `include config-user.txt` line loads it automatically.
 
 3. Reboot to apply changes:
 
@@ -457,6 +465,29 @@ This section provides diagnostic commands and step-by-step solutions for common 
    - **RPi 4 GPIO 13 (RX5)** $\rightarrow$ **ESP32 TX**
    - **GND** $\rightarrow$ **GND** (Common Ground required)
    - Baud rate: Default is **921600 baud** (must match ESP32 configuration).
+
+#### Problem: `uart5_listener.service` fails to start after a moOde update
+
+A moOde update can replace `/boot/firmware/config.txt` and remove the line that includes the user configuration file. Check both files:
+
+```bash
+grep -n "include config-user.txt" /boot/firmware/config.txt
+grep -n "dtoverlay=uart5" /boot/firmware/config-user.txt
+```
+
+If the include line is missing, add this line to `/boot/firmware/config.txt`:
+
+```text
+include config-user.txt
+```
+
+Do not duplicate `dtoverlay=uart5` in `config.txt`; keep the overlay in `/boot/firmware/config-user.txt`. Reboot after restoring the configuration, then reconnect and check the service:
+
+```bash
+sudo reboot
+sudo systemctl status uart5_listener.service -l
+journalctl -u uart5_listener.service -n 50 --no-pager
+```
 
 ---
 
