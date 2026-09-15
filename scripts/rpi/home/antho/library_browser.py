@@ -232,28 +232,74 @@ def handle_replace_with_folder(params):
         print(f"⚠️ Replace-folder failed: {e}", flush=True)
 
 
+def _is_radio_entry(file_path, name_tag=""):
+    if name_tag:
+        return True
+    path_lower = file_path.lower()
+    if path_lower.startswith(("http://", "https://", "mms://", "mmsh://", "rtsp://", "rtmp://", "hls://", "icy://", "rtp://")):
+        return True
+    if file_path.startswith(f"{RADIO_DIRECTORY}/") or path_lower.startswith("radio/"):
+        return True
+    if path_lower.endswith((".pls", ".m3u", ".m3u8", ".asx")):
+        return True
+    return False
+
+
+def _parse_playlistinfo(lines):
+    entries = []
+    current_entry = None
+    for line in lines:
+        if line.startswith("file: "):
+            if current_entry is not None:
+                entries.append(current_entry)
+            current_entry = {
+                "file": line[len("file: "):],
+                "name": "",
+                "title": "",
+                "artist": "",
+                "album": ""
+            }
+        elif current_entry is not None:
+            if line.startswith("Name: "):
+                current_entry["name"] = line[len("Name: "):]
+            elif line.startswith("Title: "):
+                current_entry["title"] = line[len("Title: "):]
+            elif line.startswith("Artist: "):
+                current_entry["artist"] = line[len("Artist: "):]
+            elif line.startswith("Album: "):
+                current_entry["album"] = line[len("Album: "):]
+    if current_entry is not None:
+        entries.append(current_entry)
+    return entries
+
+
 def handle_playlist_request(_params):
     try:
-        tracks = [
-            line[len("file: "):]
-            for line in mpd_command("playlistinfo")
-            if line.startswith("file: ")
-        ][:MAX_LIBRARY_ENTRIES]
+        raw_lines = mpd_command("playlistinfo")
+        parsed = _parse_playlistinfo(raw_lines)[:MAX_LIBRARY_ENTRIES]
     except Exception as e:
         print(f"⚠️ MPD playlistinfo failed: {e}", flush=True)
-        tracks = []
+        parsed = []
 
-    _state.playlist_entries = tracks
-    total = len(tracks)
+    _state.playlist_entries = [p["file"] for p in parsed]
+    total = len(parsed)
     print(f"Playlist → {total} tracks", flush=True)
     if total == 0:
         send_library_entry(0, 0, LIBRARY_ENTRY_EMPTY, "")
         return
 
-    for index, full_path in enumerate(tracks):
-        name = posixpath.basename(full_path) or full_path
-        entry_type = LIBRARY_ENTRY_RADIO if full_path.startswith(f"{RADIO_DIRECTORY}/") else LIBRARY_ENTRY_TRACK
-        send_library_entry(index, total, entry_type, name)
+    for index, item in enumerate(parsed):
+        full_path = item["file"]
+        is_radio = _is_radio_entry(full_path, item["name"])
+        if is_radio:
+            entry_type = LIBRARY_ENTRY_RADIO
+            display_name = item["name"] or item["title"] or posixpath.basename(full_path) or full_path
+            if display_name.endswith(".pls"):
+                display_name = display_name[:-4]
+        else:
+            entry_type = LIBRARY_ENTRY_TRACK
+            display_name = posixpath.basename(full_path) or full_path
+        send_library_entry(index, total, entry_type, display_name)
         time.sleep(0.008)
 
 

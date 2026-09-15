@@ -72,14 +72,31 @@ class LibraryAdapter(
                 }
                 is LibraryRow.Entry -> {
                     val entry = row.entry
+                    val isRadio = entry.isRadioStation ||
+                        entry.name.startsWith("http://", ignoreCase = true) ||
+                        entry.name.startsWith("https://", ignoreCase = true) ||
+                        entry.name.startsWith("mms://", ignoreCase = true) ||
+                        entry.name.startsWith("rtsp://", ignoreCase = true) ||
+                        entry.name.endsWith(".pls", ignoreCase = true) ||
+                        entry.name.endsWith(".m3u", ignoreCase = true) ||
+                        entry.name.endsWith(".m3u8", ignoreCase = true) ||
+                        entry.name.endsWith(".asx", ignoreCase = true)
+
                     if (entry.isDirectory) {
                         b.tvEntryName.text = entry.name
                         b.ivEntryIcon.setImageResource(R.drawable.ic_folder)
                         b.ivEntryChevron.visibility = View.VISIBLE
                         b.root.setOnClickListener { onFolderClicked?.invoke(entry.index) }
-                    } else if (entry.isRadioStation) {
-                        b.tvEntryName.text = entry.name
-                        b.ivEntryIcon.setImageResource(R.drawable.ic_radio_wave)
+                    } else if (isRadio) {
+                        var displayName = entry.name
+                        if (displayName.endsWith(".pls", ignoreCase = true) ||
+                            displayName.endsWith(".m3u", ignoreCase = true) ||
+                            displayName.endsWith(".m3u8", ignoreCase = true) ||
+                            displayName.endsWith(".asx", ignoreCase = true)) {
+                            displayName = displayName.substringBeforeLast('.')
+                        }
+                        b.tvEntryName.text = displayName
+                        b.ivEntryIcon.setImageResource(R.drawable.ic_radio)
                         b.ivEntryChevron.visibility = View.GONE
                         b.root.setOnClickListener { onTrackClicked?.invoke(entry.index) }
                     } else {

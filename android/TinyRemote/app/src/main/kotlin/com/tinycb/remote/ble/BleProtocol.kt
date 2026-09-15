@@ -131,12 +131,22 @@ object BleProtocol {
             }
         }
 
+        val isRadio = entryType == LIBRARY_ENTRY_RADIO ||
+            name.startsWith("http://", ignoreCase = true) ||
+            name.startsWith("https://", ignoreCase = true) ||
+            name.startsWith("mms://", ignoreCase = true) ||
+            name.startsWith("rtsp://", ignoreCase = true) ||
+            name.endsWith(".pls", ignoreCase = true) ||
+            name.endsWith(".m3u", ignoreCase = true) ||
+            name.endsWith(".m3u8", ignoreCase = true) ||
+            name.endsWith(".asx", ignoreCase = true)
+
         val entry = LibraryEntry(
             index = index,
             total = total,
             isDirectory = entryType == LIBRARY_ENTRY_FOLDER,
             name = name,
-            isRadioStation = entryType == LIBRARY_ENTRY_RADIO,
+            isRadioStation = isRadio,
             albumName = album,
             albumArtHash = albumArtHash
         )

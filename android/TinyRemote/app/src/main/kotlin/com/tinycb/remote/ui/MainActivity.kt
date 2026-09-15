@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             vm.albumArt.collectLatest { art ->
                 if (art != null) {
-                    b.ivAlbumArt.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                    b.ivAlbumArt.scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
                     b.ivAlbumArt.imageTintList = null
                     b.ivAlbumArt.setImageBitmap(art)
                 } else {

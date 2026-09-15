@@ -39,7 +39,7 @@ class ViewSelectionActivity : AppCompatActivity() {
 
         val options = listOf(
             ViewOption(getString(R.string.view_default),  getString(R.string.view_default_desc),  R.drawable.ic_grid_view,   0x0122),
-            ViewOption(getString(R.string.view_radio),    getString(R.string.view_radio_desc),    R.drawable.ic_podcasts,    0x0123),
+            ViewOption(getString(R.string.view_radio),    getString(R.string.view_radio_desc),    R.drawable.ic_radio,       0x0123),
             ViewOption(getString(R.string.view_playlist), getString(R.string.view_playlist_desc), R.drawable.ic_queue_music, 0x0124),
             ViewOption(getString(R.string.view_folder),   getString(R.string.view_folder_desc),   R.drawable.ic_folder,      0x0125),
             ViewOption(getString(R.string.view_tag),      getString(R.string.view_tag_desc),      R.drawable.ic_label,       0x0126),

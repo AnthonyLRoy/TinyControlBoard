@@ -144,6 +144,56 @@ try:
     print("Assertion passed: regular track added with 'add'")
     assertions_passed.append("library_browser_regular_add_track")
 
+    # Test playlist request containing a radio stream and a regular track
+    print("\n--- Testing library_browser: handle_playlist_request for radio stations ---")
+    sent_packets.clear()
+    mpd_command_calls.clear()
+
+    def fake_playlist_mpd_command(cmd):
+        if cmd == "playlistinfo":
+            return [
+                "file: http://live-aacplus-64.kexp.org/kexp64.aac",
+                "Title: KEXP 90.3 FM",
+                "Name: KEXP",
+                "Pos: 0",
+                "Id: 1",
+                "file: RADIO/SomaFM.pls",
+                "Pos: 1",
+                "Id: 2",
+                "file: Music/Pink Floyd/01-Time.flac",
+                "Artist: Pink Floyd",
+                "Title: Time",
+                "Pos: 2",
+                "Id: 3"
+            ]
+        return []
+
+    fake_mpd.mpd_command = fake_playlist_mpd_command
+    lb.mpd_command = fake_playlist_mpd_command
+    lb.handle_playlist_request([0])
+
+    playlist_entries = []
+    for pkt in sent_packets:
+        msg_type, seq, cmd_id, payload = pkt
+        if msg_type == fake_protocol.MSG_LIBRARY_ENTRY:
+            entry_type = payload[0]
+            index, total = struct.unpack("<HH", payload[1:5])
+            name_len = payload[5]
+            name = payload[6:6 + name_len].decode("utf-8")
+            playlist_entries.append((entry_type, index, total, name))
+
+    print(f"Playlist received entries: {playlist_entries}")
+    assert len(playlist_entries) == 3, f"Expected 3 entries in playlist, got {len(playlist_entries)}"
+    
+    # Entry 0: stream with Name: KEXP -> LIBRARY_ENTRY_RADIO (3), display name 'KEXP'
+    assert playlist_entries[0] == (3, 0, 3, "KEXP"), f"Entry 0 mismatch: {playlist_entries[0]}"
+    # Entry 1: RADIO/SomaFM.pls -> LIBRARY_ENTRY_RADIO (3), display name 'SomaFM' (stripped .pls)
+    assert playlist_entries[1] == (3, 1, 3, "SomaFM"), f"Entry 1 mismatch: {playlist_entries[1]}"
+    # Entry 2: Music track -> LIBRARY_ENTRY_TRACK (1), display name '01-Time.flac'
+    assert playlist_entries[2] == (1, 2, 3, "01-Time.flac"), f"Entry 2 mismatch: {playlist_entries[2]}"
+    print("Assertion passed: playlist request correctly marks radio stations with type=3 and clean names")
+    assertions_passed.append("library_browser_playlist_radio_detection")
+
 except AssertionError as ae:
     print(f"Assertion failed during library_browser phase: {ae}")
     sys.exit(1)
