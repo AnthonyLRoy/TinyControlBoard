@@ -153,9 +153,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             vm.connectionState.collectLatest { state ->
                 refreshStatusBadge(state, vm.powerState.value)
-                if (state is ConnectionState.Disconnected || state is ConnectionState.Error) {
-                    finish()
-                }
+                // Do not finish() on Disconnected/Error anymore; stay on screen and allow auto-reconnect
             }
         }
 

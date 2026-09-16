@@ -60,6 +60,9 @@ class BoardBleManager(context: Context) {
     // instead of libraryListing (see searchArtist()/searchAlbum()/searchAny()).
     @Volatile private var searchMode = false
 
+    @Volatile private var lastDevice: BluetoothDevice? = null
+    @Volatile private var isManualDisconnect = false
+
     // ── Internal state ──────────────────────────────────────────────────────
     private val discoveredDevices = mutableListOf<BluetoothDevice>()
     private var leScanner: BluetoothLeScanner? = null
@@ -72,6 +75,9 @@ class BoardBleManager(context: Context) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val notificationQueue = ArrayDeque<BluetoothGattCharacteristic>()
     private var notificationWriteInFlight = false
+    // Chained fallback reads (status/now-playing/track-progress) fired once shortly after connect —
+    // see onServicesDiscovered for why this exists alongside the notification path.
+    private val initialReadQueue = ArrayDeque<BluetoothGattCharacteristic>()
     private val connectTimeoutMs = 15_000L
     private val connectTimeoutRunnable = Runnable {
         if (_connectionState.value is ConnectionState.Connecting) {
@@ -120,8 +126,16 @@ class BoardBleManager(context: Context) {
                     libraryNotificationsReady = false
                     pendingLibraryCommand = null
                     clearNotificationQueue()
-                    if (status != BluetoothGatt.GATT_SUCCESS) {
-                        _connectionState.value = ConnectionState.Error("Connection failed (GATT status $status)")
+                    
+                    if (!isManualDisconnect && lastDevice != null) {
+                        Log.i(TAG, "Unexpected disconnection; attempting auto-reconnect...")
+                        mainHandler.postDelayed({
+                            lastDevice?.let { connect(it) }
+                        }, 2000L)
+                    }
+
+                    if (status != BluetoothGatt.GATT_SUCCESS && !isManualDisconnect) {
+                        _connectionState.value = ConnectionState.Error("Connection lost (GATT status $status). Reconnecting…")
                     } else {
                         _connectionState.value = ConnectionState.Disconnected
                     }
@@ -216,12 +230,16 @@ class BoardBleManager(context: Context) {
             }
             writeNextNotification(g)
 
-            // Read initial status after a short delay
+            // Explicitly read the current status/now-playing/track-progress values after a short
+            // delay, instead of relying solely on the notification arriving in time. Without this,
+            // if the board was already playing a track before connecting, the UI could show "Nothing
+            // Playing" until the next unrelated notify race resolved it. GATT only allows one
+            // operation in flight at a time, so these are chained via initialReadQueue rather than
+            // fired all at once.
             mainHandler.postDelayed({
-                val sChar = g.getService(BleUuids.SERVICE)?.getCharacteristic(BleUuids.STATUS_CHAR)
-                if (sChar != null) {
-                    g.readCharacteristic(sChar)
-                }
+                initialReadQueue.clear()
+                listOfNotNull(statusChar, nowPlayingChar, trackProgressChar).forEach { initialReadQueue.addLast(it) }
+                readNextInitialChar(g)
             }, 1000L)
         }
 
@@ -291,9 +309,8 @@ class BoardBleManager(context: Context) {
                 return
             }
             Log.d(TAG, "onCharacteristicRead (API33+): uuid=${characteristic.uuid} bytes=${value.size}")
-            if (characteristic.uuid == BleUuids.STATUS_CHAR) {
-                parseStatus(value)
-            }
+            handleInitialRead(characteristic.uuid, value)
+            readNextInitialChar(g)
         }
 
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
@@ -311,9 +328,8 @@ class BoardBleManager(context: Context) {
                 return
             }
             Log.d(TAG, "onCharacteristicRead (legacy): uuid=${characteristic.uuid} bytes=${value.size}")
-            if (characteristic.uuid == BleUuids.STATUS_CHAR) {
-                parseStatus(value)
-            }
+            handleInitialRead(characteristic.uuid, value)
+            readNextInitialChar(g)
         }
     }
 
@@ -388,6 +404,22 @@ class BoardBleManager(context: Context) {
         _playlistOpResult.value = BleProtocol.parsePlaylistResult(value)
     }
 
+    /** Dispatches a fallback characteristic read (see initialReadQueue) to the same parser the
+     *  notification path uses, keyed by UUID since reads share one callback for all 3 chars. */
+    private fun handleInitialRead(uuid: java.util.UUID, value: ByteArray) {
+        when (uuid) {
+            BleUuids.STATUS_CHAR -> parseStatus(value)
+            BleUuids.NOW_PLAYING_CHAR -> parseNowPlaying(value)
+            BleUuids.TRACK_PROGRESS_CHAR -> parseTrackProgress(value)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun readNextInitialChar(g: BluetoothGatt) {
+        val next = initialReadQueue.pollFirst() ?: return
+        g.readCharacteristic(next)
+    }
+
     private fun enqueueNotification(characteristic: BluetoothGattCharacteristic) {
         notificationQueue.addLast(characteristic)
     }
@@ -449,7 +481,13 @@ class BoardBleManager(context: Context) {
     }
 
     fun connect(device: BluetoothDevice) {
+        if (_connectionState.value is ConnectionState.Connecting && lastDevice?.address == device.address) {
+            Log.d(TAG, "Already connecting to ${device.address}, ignoring redundant request")
+            return
+        }
         stopScan()
+        lastDevice = device
+        isManualDisconnect = false
         _connectionState.value = ConnectionState.Connecting(device)
         gatt = device.connectGatt(appContext, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
         if (gatt == null) {
@@ -480,6 +518,8 @@ class BoardBleManager(context: Context) {
 
     fun disconnect() {
         mainHandler.removeCallbacks(connectTimeoutRunnable)
+        isManualDisconnect = true
+        lastDevice = null
         stopScan()
         gatt?.disconnect()
         gatt?.close()
