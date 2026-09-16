@@ -41,6 +41,7 @@ class PlaylistListActivity : AppCompatActivity() {
         )
 
         adapter = LibraryAdapter(
+            scope = lifecycleScope,
             onTrackClicked = { index -> onItemTapped(index) }
         )
         b.rvPlaylistNames.layoutManager = LinearLayoutManager(this)

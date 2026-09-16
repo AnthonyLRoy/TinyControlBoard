@@ -300,7 +300,9 @@ def handle_playlist_request(_params):
             entry_type = LIBRARY_ENTRY_TRACK
             display_name = posixpath.basename(full_path) or full_path
         metadata = " - ".join(filter(None, (item["artist"], item["album"])))
-        send_library_entry(index, total, entry_type, display_name, album=metadata)
+        album_dir = posixpath.dirname(full_path)
+        art_hash = hashlib.md5(album_dir.encode("utf-8")).hexdigest() if album_dir and not is_radio else ""
+        send_library_entry(index, total, entry_type, display_name, album=metadata, art_hash=art_hash)
         time.sleep(0.008)
 
 

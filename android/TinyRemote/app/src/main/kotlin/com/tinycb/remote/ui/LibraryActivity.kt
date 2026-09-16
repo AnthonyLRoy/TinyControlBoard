@@ -36,6 +36,7 @@ class LibraryActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         adapter = LibraryAdapter(
+            scope = lifecycleScope,
             onUpClicked = {
                 depth = (depth - 1).coerceAtLeast(0)
                 vm.library.browseUp()

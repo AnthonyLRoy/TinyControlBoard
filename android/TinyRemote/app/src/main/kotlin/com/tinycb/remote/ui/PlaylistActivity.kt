@@ -21,10 +21,8 @@ class PlaylistActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityPlaylistBinding
     private val vm: MainViewModel by viewModels()
-    private val adapter = LibraryAdapter(
-        onTrackClicked = { index -> vm.library.playTrack(index) },
-        playlistMode = true
-    )
+    private lateinit var adapter: LibraryAdapter
+    private lateinit var touchHelper: ItemTouchHelper
     private var currentEntries: List<LibraryEntry> = emptyList()
     private var draggedFrom = RecyclerView.NO_POSITION
     private var draggedTo = RecyclerView.NO_POSITION
@@ -37,8 +35,15 @@ class PlaylistActivity : AppCompatActivity() {
         setSupportActionBar(b.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         b.rvPlaylist.layoutManager = LinearLayoutManager(this)
+        adapter = LibraryAdapter(
+            scope = lifecycleScope,
+            onTrackClicked = { index -> vm.library.playTrack(index) },
+            playlistMode = true,
+            onDragRequested = { holder -> touchHelper.startDrag(holder) }
+        )
         b.rvPlaylist.adapter = adapter
-        ItemTouchHelper(queueTouchCallback).attachToRecyclerView(b.rvPlaylist)
+        touchHelper = ItemTouchHelper(queueTouchCallback)
+        touchHelper.attachToRecyclerView(b.rvPlaylist)
 
         b.btnPlaylistManagement.setOnClickListener {
             startActivity(

@@ -10,6 +10,10 @@ import com.tinycb.remote.R
 import com.tinycb.remote.databinding.ItemAlbumHeaderBinding
 import com.tinycb.remote.databinding.ItemLibraryEntryBinding
 import com.tinycb.remote.model.LibraryEntry
+import com.tinycb.remote.net.MoodeSettings
+import com.tinycb.remote.net.ThumbnailFetcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 sealed class LibraryRow {
     object Up : LibraryRow()
@@ -18,11 +22,13 @@ sealed class LibraryRow {
 }
 
 class LibraryAdapter(
+    private val scope: CoroutineScope,
     private val onUpClicked: (() -> Unit)? = null,
     private val onFolderClicked: ((Int) -> Unit)? = null,
     private val onTrackClicked: ((Int) -> Unit)? = null,
     private val onAlbumClicked: ((String) -> Unit)? = null,
-    private val playlistMode: Boolean = false
+    private val playlistMode: Boolean = false,
+    private val onDragRequested: ((RecyclerView.ViewHolder) -> Unit)? = null
 ) : ListAdapter<LibraryRow, RecyclerView.ViewHolder>(DIFF) {
 
     private var currentTrack: String? = null
@@ -89,7 +95,20 @@ class LibraryAdapter(
             b.tvTrackNumber.visibility = View.GONE
             b.tvFileType.visibility = View.GONE
             b.tvEntrySubtitle.visibility = View.GONE
+            b.ivEntryIcon.visibility = View.VISIBLE
+            b.ivAlbumArt.visibility = View.GONE
+            b.ivAlbumArt.tag = null
             b.ivDragHandle.visibility = if (playlistMode) View.VISIBLE else View.GONE
+            b.ivDragHandle.setOnTouchListener(null)
+            b.ivDragHandle.setOnClickListener(null)
+            if (playlistMode && onDragRequested != null) {
+                b.ivDragHandle.setOnTouchListener { _, event ->
+                    if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+                        onDragRequested.invoke(this@EntryVH)
+                    }
+                    true
+                }
+            }
             b.root.setCardBackgroundColor(b.root.context.getColor(R.color.bg_card))
             
             when (row) {
@@ -101,6 +120,9 @@ class LibraryAdapter(
                 }
                 is LibraryRow.Entry -> {
                     val entry = row.entry
+                    b.tvEntryName.setSingleLine(!playlistMode)
+                    b.tvEntryName.maxLines = if (playlistMode) 3 else 1
+                    b.tvEntryName.ellipsize = if (playlistMode) android.text.TextUtils.TruncateAt.END else android.text.TextUtils.TruncateAt.END
                     val isCurrent = playlistMode && isCurrentTrack(entry.name, currentTrack)
                     if (isCurrent) {
                         b.root.setCardBackgroundColor(b.root.context.getColor(R.color.bg_card_pressed))
@@ -152,13 +174,39 @@ class LibraryAdapter(
                             b.tvFileType.visibility = View.VISIBLE
                         }
 
-                        b.ivEntryIcon.setImageResource(R.drawable.ic_music_note)
+                        b.ivEntryIcon.visibility = View.GONE
+                        b.ivAlbumArt.visibility = View.VISIBLE
+                        showAlbumArtPlaceholder()
+                        val artHash = entry.albumArtHash
+                        if (artHash.isNotEmpty()) {
+                            b.ivAlbumArt.tag = artHash
+                            scope.launch {
+                                val bitmap = ThumbnailFetcher.fetch(
+                                    artHash,
+                                    MoodeSettings.getHost(b.root.context)
+                                )
+                                if (b.ivAlbumArt.tag != artHash) return@launch
+                                if (bitmap != null) {
+                                    b.ivAlbumArt.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                                    b.ivAlbumArt.imageTintList = null
+                                    b.ivAlbumArt.setImageBitmap(bitmap)
+                                }
+                            }
+                        }
                         b.ivEntryChevron.visibility = View.GONE
                         b.root.setOnClickListener { onTrackClicked?.invoke(entry.index) }
                     }
                 }
                 is LibraryRow.AlbumHeader -> Unit // handled by AlbumHeaderVH
             }
+        }
+
+        private fun showAlbumArtPlaceholder() {
+            b.ivAlbumArt.scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+            b.ivAlbumArt.imageTintList = android.content.res.ColorStateList.valueOf(
+                b.root.context.getColor(R.color.text_secondary)
+            )
+            b.ivAlbumArt.setImageResource(R.drawable.ic_album)
         }
 
         private fun parseTrackInfo(fullName: String): Triple<String?, String, String?> {

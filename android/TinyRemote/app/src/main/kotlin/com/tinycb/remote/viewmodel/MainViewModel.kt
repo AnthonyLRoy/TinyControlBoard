@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -45,9 +46,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
-            nowPlaying.collectLatest { track ->
-                _albumArt.value = if (track.isNullOrEmpty()) null
+            while (isActive) {
+                _albumArt.value = if (nowPlaying.value.isNullOrEmpty()) null
                     else CoverArtFetcher.fetchCoverArt(MoodeSettings.getHost(application))
+                delay(5000)
             }
         }
     }
