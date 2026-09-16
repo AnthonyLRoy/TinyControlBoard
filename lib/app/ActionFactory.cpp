@@ -8,6 +8,7 @@
 
 namespace controlSystem
 {
+    //creates an action object based on the command and its routing classification
     std::unique_ptr<actions::IAction> createAction(CommandId command, uint16_t releaseTimeMs)
     {
         switch (classifyCommand(command, ControlBoardPowerState::ON))

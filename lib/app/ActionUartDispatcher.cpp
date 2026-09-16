@@ -14,6 +14,8 @@ namespace controlSystem
     {
     }
 
+    // needed to reset the toggle states for all toggle commands otherwise  we 
+    // could  will end up with invalid toggle states.
     void ActionUartDispatcher::resetToggleStates()
     {
         for (bool &state : m_toggleStates)
@@ -43,6 +45,7 @@ namespace controlSystem
         };
     } // namespace
 
+    //handles an incoming action and dispatches it over UART if applicable
     bool ActionUartDispatcher::handle(const actions::IAction &action)
     {
         for (size_t index = 0; index < sizeof(k_toggleTable) / sizeof(k_toggleTable[0]); ++index)

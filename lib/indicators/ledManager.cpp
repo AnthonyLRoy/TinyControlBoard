@@ -3,7 +3,7 @@
 
 #define SPI_HOST spi_host_device_t::SPI2_HOST
 namespace indicators {
-
+    // Static instances of various LED drivers and controllers used throughout the system.
     static StatusLed s_activityStatusLed(board::indicators::k_workingStatusLed, LEDC_CHANNEL_0);
     static StatusLed s_buttonStatusLed(board::indicators::k_buttonLedPwmPin,
                                       LEDC_CHANNEL_1,

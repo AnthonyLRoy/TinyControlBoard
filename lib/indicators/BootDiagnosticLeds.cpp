@@ -33,7 +33,7 @@ namespace indicators
     }
 
     // -------------------------------------------------------------------------
-    // Flash task — runs forever; hardware reset is required to recover.
+    // Flash task —this idicates we have failed to start someware we are fu**d - runs forever; hardware reset is required to recover.
     // -------------------------------------------------------------------------
 
     void BootDiagnosticLeds::flashTask(void *arg)
@@ -51,7 +51,7 @@ namespace indicators
             }
         }
 
-        // Flash only the failing pair at 3 Hz forever or until the person notices.
+        // Flash only the failing pair at 3 Hz forever or until the person notices. and starts crying
         bool ledsOn = false;
         while (true)
         {

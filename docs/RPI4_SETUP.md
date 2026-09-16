@@ -1,36 +1,36 @@
-# UART5 Listener, Display & Boot Configuration on Moode (Raspberry Pi 4)
+# UART5 Listener, Display & Boot Configuration on moOde (Raspberry Pi 4)
 
-This guide explains how to clone the repository onto a Raspberry Pi 4 running **Moode Audio**, install required system and Python dependencies, deploy the complete suite of Python companion programs, configure systemd background services, customize boot console settings, and set up splash screen displays (including the animated Plymouth RiverBank theme).
+This guide explains how to clone the repository onto a Raspberry Pi 4 running **moOde Audio**, install the required system and Python dependencies, deploy the Python companion programs, configure systemd services, customize boot console settings, and set up splash screens, including the animated Plymouth RiverBank theme.
 
 ---
 
 ## Repo Layout & Python Companion Suite
 
-Companion assets for the Raspberry Pi are tracked in the GitHub repository under [scripts/rpi](scripts/rpi).
+Companion assets for the Raspberry Pi are tracked in the GitHub repository under [scripts/rpi](../scripts/rpi).
 
 ### Complete List of Python Programs & Modules (`scripts/rpi/home/`)
 
 | Script File | Purpose / Function |
 | :--- | :--- |
-| [uart5_listener.py](scripts/rpi/home/antho/uart5_listener.py) | **Primary Service Entry Point:** Receives UART commands from the ESP32, manages display/meter states, and dispatches actions. |
-| [heartbeat_sender.py](scripts/rpi/home/antho/heartbeat_sender.py) | **Heartbeat Service Script:** Periodically transmits heartbeat packets over UART5 to inform the ESP32 that the Pi is online. |
-| [command_ids.py](scripts/rpi/home/antho/command_ids.py) | **Command Constants:** Defines packet command IDs and message type constants matching the ESP32 protocol. |
-| [protocol.py](scripts/rpi/home/antho/protocol.py) | **Protocol Driver:** Low-level binary protocol implementation (packet framing, byte packing/unpacking, and checksum calculation). |
-| [uart_writer_client.py](scripts/rpi/home/antho/uart_writer_client.py) | **UART Transmission Client:** Thread-safe client socket wrapper for transmitting outgoing packets back to the ESP32. |
-| [mpd_client.py](scripts/rpi/home/antho/mpd_client.py) | **MPD Client Interface:** Low-level socket client for communicating directly with Moode's MPD (Music Player Daemon). |
-| [library_browser.py](scripts/rpi/home/antho/library_browser.py) | **Library Browser:** Handles music library directory navigation, search queries, and catalog responses back to the ESP32. |
-| [playlist_manager.py](scripts/rpi/home/antho/playlist_manager.py) | **Playlist Manager:** Handles playlist creation, track queuing, and playlist item management. |
-| [panel_control.py](scripts/rpi/home/antho/panel_control.py) | **Panel & UI Controller:** Controls Moode UI view switching via Chrome DevTools Protocol (CDP port 9222) and REST/HTTP APIs. |
-| [playback_commands.py](scripts/rpi/home/antho/playback_commands.py) | **Playback Controller:** Executes local playback actions (play, pause, next, prev, volume, mute, power). |
-| [UAart5Listener.py](scripts/rpi/home/antho/UAart5Listener.py) | **Legacy Wrapper:** Backward-compatibility entry point for launching `uart5_listener.py`. |
+| [uart5_listener.py](../scripts/rpi/home/antho/uart5_listener.py) | **Primary Service Entry Point:** Receives UART commands from the ESP32, manages display/meter states, and dispatches actions. |
+| [heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py) | **Heartbeat Service Script:** Periodically transmits heartbeat packets over UART5 to inform the ESP32 that the Pi is online. |
+| [command_ids.py](../scripts/rpi/home/antho/command_ids.py) | **Command Constants:** Defines packet command IDs and message type constants matching the ESP32 protocol. |
+| [protocol.py](../scripts/rpi/home/antho/protocol.py) | **Protocol Driver:** Low-level binary protocol implementation (packet framing, byte packing/unpacking, and checksum calculation). |
+| [uart_writer_client.py](../scripts/rpi/home/antho/uart_writer_client.py) | **UART Transmission Client:** Thread-safe client socket wrapper for transmitting outgoing packets back to the ESP32. |
+| [mpd_client.py](../scripts/rpi/home/antho/mpd_client.py) | **MPD Client Interface:** Low-level socket client for communicating directly with moOde's MPD (Music Player Daemon). |
+| [library_browser.py](../scripts/rpi/home/antho/library_browser.py) | **Library Browser:** Handles music library directory navigation, search queries, and catalog responses back to the ESP32. |
+| [playlist_manager.py](../scripts/rpi/home/antho/playlist_manager.py) | **Playlist Manager:** Handles playlist creation, track queuing, and playlist item management. |
+| [panel_control.py](../scripts/rpi/home/antho/panel_control.py) | **Panel & UI Controller:** Controls moOde view switching through the Chrome DevTools Protocol (CDP port 9222). |
+| [playback_commands.py](../scripts/rpi/home/antho/playback_commands.py) | **Playback Controller:** Executes local playback actions (play, pause, next, prev, volume, mute, power). |
+| [UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py) | **Legacy Wrapper:** Backward-compatibility entry point for launching `uart5_listener.py`; the unusual filename is retained for compatibility. |
 
 ### Other Tracked Configuration & Display Assets
 
-- [scripts/rpi/boot/firmware/config.txt](scripts/rpi/boot/firmware/config.txt): Firmware configuration template with `dtoverlay=uart5`
-- [scripts/rpi/boot/firmware/config-user.txt](scripts/rpi/boot/firmware/config-user.txt): User overlay configuration template
-- [scripts/rpi/boot/firmware/cmdline.txt](scripts/rpi/boot/firmware/cmdline.txt): Boot command line template
-- [scripts/rpi/FinalSplashScreen.png](scripts/rpi/FinalSplashScreen.png): Static splash screen image asset
-- [scripts/rpi/Peppymeter/](scripts/rpi/Peppymeter/): PeppyMeter needle, background graphics, and `meters.txt` configurations
+- [scripts/rpi/boot/firmware/config.txt](../scripts/rpi/boot/firmware/config.txt): Firmware configuration template with the `config-user.txt` include
+- [scripts/rpi/boot/firmware/config-user.txt](../scripts/rpi/boot/firmware/config-user.txt): User overlay configuration template containing `dtoverlay=uart5`
+- [scripts/rpi/boot/firmware/cmdline.txt](../scripts/rpi/boot/firmware/cmdline.txt): Boot command-line template
+- [scripts/rpi/FinalSplashScreen.png](../scripts/rpi/FinalSplashScreen.png): Static splash-screen image asset
+- [scripts/rpi/Peppymeter/](../scripts/rpi/Peppymeter/): PeppyMeter needle, background graphics, and `meters.txt` configurations
 
 ---
 
@@ -49,13 +49,21 @@ git clone https://github.com/<your-username>/TinyControlBoard.git
 
 > *(Replace `<your-username>` with your actual GitHub username or repository URL).*
 
-Deploy the Python companion scripts from the cloned repository folder into `/home/<username>/`:
+Deploy the Python companion scripts from the cloned repository into `/home/<username>/`:
 
 ```bash
 cp /home/<username>/TinyControlBoard/scripts/rpi/home/*/*.py /home/<username>/
-chmod +x /home/<username>/*.py
 sudo chown -R <username>:<username> /home/<username>/
 ```
+
+Run the read-only installation checker from the repository root. It reports missing files, packages, configuration, services, UART devices, MPD, artwork metadata, and display assets:
+
+```bash
+cd /home/<username>/TinyControlBoard
+bash scripts/rpi/check_installation.sh
+```
+
+The checker exits with status `1` if it finds a failure and status `0` if it finds only passes or warnings. It does not modify the Pi. Warnings for `/opt/splash.png`, PeppyMeter assets, or missing `coverurl` can be expected when those optional features are not currently being used or nothing is playing.
 
 ---
 
@@ -103,9 +111,9 @@ sudo reboot
 
 The Python companion script suite relies on three external Python modules:
 
-- `pyserial`: Serial port communication over UART5 (`/dev/ttyAMA1` / `/dev/ttyS0`)
+- `pyserial`: Serial port communication over UART5 (`/dev/ttyAMA5`)
 - `RPi.GPIO`: Hardware GPIO pin control
-- `requests`: HTTP requests for Moode panel control via Chrome DevTools Protocol (CDP port 9222)
+- `requests`: HTTP requests used to discover the Chrome DevTools Protocol endpoint (CDP port 9222)
 
 ### Option 3.1: Distro-Managed System Packages (Recommended)
 
@@ -131,18 +139,46 @@ Verify package installations:
 python3 -c "import serial, RPi.GPIO, requests; print('All Python dependencies installed successfully!')"
 ```
 
+### 3.3 Enable moOde Metadata for Android Cover Artwork
+
+The Android main screen reads the currently playing artwork from moOde's current-song metadata. In current moOde 10.x, enable **Metadata file** before expecting cover artwork to appear in the Android app:
+
+1. Open the moOde Web UI.
+2. Go to **Menu** → **Configure** → **Audio** → **MPD Options**.
+3. Set **Metadata file** to **On**.
+4. Save or apply the configuration.
+
+Verify that moOde is generating the metadata file:
+
+```bash
+cat /var/local/www/currentsong.txt
+```
+
+The output is normally stored as `key=value` lines and should include fields such as `file`, `artist`, `album`, `title`, `coverurl`, and `state`. For example:
+
+```text
+file=RADIO/Example Station.pls
+artist=Radio station
+album=Example Station
+title=Current programme or track
+coverurl=imagesw%2Fradio-logos%2FExample%20Station.jpg
+state=play
+```
+
+The Android app uses `coverurl` for radio station logos and changing radio-track artwork. It checks the current metadata periodically, so the displayed image can change while the same station remains selected. Normal music artwork continues to use moOde's `coverart.php` endpoint.
+
 ---
 
 ## 4. Configure Systemd Services
 
 ### 4.1 UART Listener Service
 
-1. Ensure all Python scripts (`uart5_listener.py`, `protocol.py`, `mpd_client.py`, `library_browser.py`, `playlist_manager.py`, `panel_control.py`, `playback_commands.py`, `command_ids.py`, `uart_writer_client.py`) are present in `/home/<username>/`.
+1. Ensure all required Python scripts and modules are present in `/home/<username>/`.
 
 2. Create the systemd service unit:
 
 ```bash
-sudo nano /etc/systemd/system/uart_listener.service
+sudo nano /etc/systemd/system/uart5_listener.service
 ```
 
 ```ini
@@ -168,14 +204,14 @@ WantedBy=multi-user.target
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable uart_listener.service
-sudo systemctl start uart_listener.service
+sudo systemctl enable uart5_listener.service
+sudo systemctl start uart5_listener.service
 ```
 
 4. Check live logs:
 
 ```bash
-journalctl -u uart_listener.service -f
+journalctl -u uart5_listener.service -f
 ```
 
 ---
@@ -287,10 +323,10 @@ This installs Plymouth and sets up the RiverBank splash theme (a static banner w
 
 #### 1. Copy Theme Folder to the Pi
 
-From your local machine:
+From the repository root on your local machine:
 
 ```bash
-scp -r riverbank-theme pi@<moode-ip>:/tmp/
+scp -r scripts/rpi/riverbank-plymouth-theme/riverbank-theme pi@<moode-ip>:/tmp/
 ```
 
 *(Replace `pi` and `<moode-ip>` with your actual username and Pi IP address).*
@@ -334,11 +370,11 @@ sudo plymouth-set-default-theme -R riverbank
 sudo reboot
 ```
 
-You should see the full-screen RiverBank banner (letterboxed to fit your display without stretching) with a small blue spinner ring rotating near the bottom until Moode services start.
+You should see the full-screen RiverBank banner (letterboxed to fit your display without stretching) with a small blue spinner ring rotating near the bottom until moOde services start.
 
-#### 7. Close The Visual Gap Between Plymouth And Moode's UI
+#### 7. Close the Visual Gap Between Plymouth and moOde's UI
 
-By default, Plymouth quits once the boot sequence reaches its normal exit point, which can happen before Moode's kiosk Chromium UI has actually started rendering, leaving a brief black-screen gap.
+By default, Plymouth quits once the boot sequence reaches its normal exit point, which can happen before moOde's kiosk Chromium UI has started rendering, leaving a brief black-screen gap.
 
 > **Do not try to delay `plymouth quit` until Chromium/CDP is ready.** On a Pi using **console autologin**, `getty@tty1.service` (which starts the autologin shell that runs `startx`/Chromium) is ordered `After=plymouth-quit-wait.service`, and `plymouth-quit-wait.service` blocks on `plymouth --wait` until Plymouth actually quits. Masking `plymouth-quit.service` and gating the quit on Chromium's CDP port creates a boot deadlock: Chromium can't start until Plymouth quits, and Plymouth won't quit until Chromium is up. If you previously masked `plymouth-quit.service` and installed a custom handoff unit for this, revert it:
 > ```bash
@@ -376,10 +412,10 @@ feh --bg-scale /usr/share/plymouth/themes/riverbank/background.png &
 
 If you prefer a simple static image splash screen without Plymouth:
 
-1. Copy the target splash screen image (such as [scripts/rpi/FinalSplashScreen.png](scripts/rpi/FinalSplashScreen.png)) to `/opt/splash.png`:
+1. From the repository root on the Pi, copy the target splash screen image (such as [scripts/rpi/FinalSplashScreen.png](../scripts/rpi/FinalSplashScreen.png)) to `/opt/splash.png`:
 
 ```bash
-sudo cp /home/<username>/FinalSplashScreen.png /opt/splash.png
+sudo cp /home/<username>/TinyControlBoard/scripts/rpi/FinalSplashScreen.png /opt/splash.png
 sudo chmod 644 /opt/splash.png
 ```
 
@@ -389,11 +425,11 @@ sudo chmod 644 /opt/splash.png
 
 ## 7. PeppyMeter Configuration
 
-Copy your meter graphics and configuration files into `/opt/1024x600`:
+Copy the meter graphics and configuration files from the cloned repository into `/opt/1024x600`:
 
 ```bash
 sudo mkdir -p /opt/1024x600
-sudo cp -r /home/<username>/Peppymeter/1024x600/* /opt/1024x600/
+sudo cp -r /home/<username>/TinyControlBoard/scripts/rpi/Peppymeter/1024x600/* /opt/1024x600/
 ```
 
 ---
@@ -404,10 +440,10 @@ sudo cp -r /home/<username>/Peppymeter/1024x600/* /opt/1024x600/
 | :--- | :--- | :--- |
 | GitHub Repository | `/home/<username>/TinyControlBoard` | Source tree cloned on Pi |
 | Script Suite Location | `/home/<username>/TinyControlBoard/scripts/rpi/home/*/*.py` | 11 Python scripts copied to `/home/<username>/` |
-| Firmware Config | `/boot/firmware/config.txt` | Enables `dtoverlay=uart5` |
+| Firmware Config | `/boot/firmware/config-user.txt` | Defines `dtoverlay=uart5`, included by `config.txt` |
 | Boot Parameters | `/boot/firmware/cmdline.txt` | Single line; includes quiet/splash parameters |
-| UART Listener Script | `/home/<username>/uart5_listener.py` | Executable entry point (`chmod +x`) |
-| UART Listener Service | `/etc/systemd/system/uart_listener.service` | Auto-starts UART listener on boot |
+| UART Listener Script | `/home/<username>/uart5_listener.py` | Python entry point used by systemd |
+| UART Listener Service | `/etc/systemd/system/uart5_listener.service` | Auto-starts UART listener on boot |
 | Heartbeat Sender Script | `/home/<username>/heartbeat_sender.py` | Sends periodic UART heartbeats |
 | Heartbeat Service | `/etc/systemd/system/heartbeat.service` | Auto-starts heartbeat sender |
 | Auto-Login Override | `/etc/systemd/system/getty@tty1.service.d/autologin.conf` | Enables console autologin |
@@ -419,19 +455,20 @@ sudo cp -r /home/<username>/Peppymeter/1024x600/* /opt/1024x600/
 
 ## 9. Troubleshooting Guide
 
-This section provides diagnostic commands and step-by-step solutions for common issues when deploying the UART5 listener suite and display setup on Moode Audio.
+This section provides diagnostic commands and step-by-step solutions for common issues when deploying the UART5 listener suite and display setup on moOde Audio.
 
 ---
 
 ### 9.1 UART5 Interface & Hardware Serial Issues
 
-#### Problem: UART listener cannot open or communicate on UART5 (`/dev/ttyAMA1` / `/dev/ttyAMA0`)
+#### Problem: UART listener cannot open or communicate on UART5 (`/dev/ttyAMA5`)
 
 1. **Verify firmware overlay is enabled:**
    ```bash
-   grep uart5 /boot/firmware/config.txt
+   grep -n "include config-user.txt" /boot/firmware/config.txt
+   grep -n "dtoverlay=uart5" /boot/firmware/config-user.txt
    ```
-   If missing, add `dtoverlay=uart5` to `/boot/firmware/config.txt` and reboot.
+   If either line is missing, restore the include in `config.txt` and the overlay in `config-user.txt`, then reboot.
 
 2. **Check loaded device tree overlays:**
    ```bash
@@ -443,7 +480,7 @@ This section provides diagnostic commands and step-by-step solutions for common 
    ```bash
    ls -l /dev/ttyAMA* /dev/ttyS* 2>/dev/null
    ```
-   *Note:* On Raspberry Pi 4, `dtoverlay=uart5` typically creates `/dev/ttyAMA1` (TX on GPIO 12, RX on GPIO 13).
+   The project scripts expect `/dev/ttyAMA5`. Confirm that this device node exists before starting the services.
 
 4. **Check kernel log for serial initialization:**
    ```bash
@@ -451,7 +488,7 @@ This section provides diagnostic commands and step-by-step solutions for common 
    ```
 
 5. **Ensure serial console is not claiming the UART port:**
-   Open `/boot/firmware/cmdline.txt` and verify that no `console=serial0...` or `console=ttyAMA1...` parameters exist. Remove any serial console arguments to prevent serial port conflict.
+   Open `/boot/firmware/cmdline.txt` and verify that no `console=serial0...` or `console=ttyAMA5...` parameters exist. Remove any serial console arguments to prevent a serial-port conflict.
 
 6. **Fix `Permission denied` errors accessing serial port:**
    Ensure your user is in the `dialout` group:
@@ -493,12 +530,12 @@ journalctl -u uart5_listener.service -n 50 --no-pager
 
 ### 9.2 systemd Service & Python Script Execution Failures
 
-#### Problem: `uart_listener.service` or `heartbeat.service` fails to start or keeps restarting
+#### Problem: `uart5_listener.service` or `heartbeat.service` fails to start or keeps restarting
 
 1. **Inspect live service status and journal logs:**
    ```bash
-   sudo systemctl status uart_listener.service -l
-   journalctl -u uart_listener.service -n 50 --no-pager
+   sudo systemctl status uart5_listener.service -l
+   journalctl -u uart5_listener.service -n 50 --no-pager
    ```
 
 2. **`ModuleNotFoundError: No module named '...'`**
@@ -514,17 +551,18 @@ journalctl -u uart5_listener.service -n 50 --no-pager
      ls -la /home/<username>/*.py
      ```
 
-3. **`PermissionDeniedError` or `Exec format error`:**
-   Ensure executable permissions and user ownership are set correctly:
+3. **`PermissionError` or a file ownership error:**
+   Ensure the service user can read the scripts and access the UART device:
    ```bash
-   chmod +x /home/<username>/*.py
    sudo chown -R <username>:<username> /home/<username>/
+   sudo usermod -a -G dialout <username>
    ```
+   The service invokes `/usr/bin/python3` directly, so executable permissions on the `.py` files are not required.
 
 4. **Reload systemd after modifying service unit files:**
    ```bash
    sudo systemctl daemon-reload
-   sudo systemctl restart uart_listener.service
+   sudo systemctl restart uart5_listener.service
    sudo systemctl restart heartbeat.service
    ```
 
@@ -552,7 +590,7 @@ journalctl -u uart5_listener.service -n 50 --no-pager
 
 ---
 
-### 9.4 Moode Panel Switching & Chrome DevTools Protocol (CDP) Issues
+### 9.4 moOde Panel Switching & Chrome DevTools Protocol (CDP) Issues
 
 #### Problem: Panel switching commands fail or `panel_control.py` cannot connect to Chrome DevTools Protocol
 
@@ -563,7 +601,7 @@ journalctl -u uart5_listener.service -n 50 --no-pager
    This should return a JSON array listing the active browser targets/tabs.
 
 2. **If `curl` returns `Connection refused`:**
-   - Moode UI kiosk browser (Chromium) must be running on local display.
+   - The moOde UI kiosk browser (Chromium) must be running on the local display.
    - Verify Chromium start script includes `--remote-debugging-port=9222`.
 
 3. **Manually test panel switching script in terminal:**
@@ -636,18 +674,18 @@ journalctl -u uart5_listener.service -n 50 --no-pager
 
 ### 9.7 Meter Button/UART Command Does Nothing (Peppy Display Won't Switch)
 
-#### Problem: Toggling the Meter button (app or physical) sends the UART command fine (`Handling Command ID: 0x0115` in `uart5_listener` logs), but the display never switches to the peppy meter. `sudo moodeutl --setdisplay peppy` on the RPi prints:
+#### Problem: Toggling the Meter button (app or physical) sends the UART command successfully (`Handling Command ID: 0x0115` appears in the `uart5_listener` logs), but the display never switches to the PeppyMeter. `sudo moodeutl --setdisplay peppy` on the Pi prints:
 
 ```
 This option requires PeppyALSA driver to be On
 ```
 
-**Root cause:** moOde's `enable_peppyalsa` can fail if there is a curruption on the service
+**Root cause:** The PeppyALSA configuration is unavailable or failed to start.
 
-In the **Peppy Display** and **PeppyALSA driver** toggles under **Configure → Peripherals → Local Display** are greyed out/disabled whenever **Local Display** (WebUI shown on the local screen) is **On** — the two modes are mutually exclusive. Our RPi `toggle_meter_display()` handler runs `moodeutl --setdisplay webui` when the meter is turned OFF, which sets `local_display=1`, `peppy_display=0` — this is expected, but it means Local Display stays "On" until you explicitly re-enable Peppy in the UI.
+The **Peppy Display** and **PeppyALSA driver** toggles under **Configure → Peripherals → Local Display** are greyed out or disabled whenever **Local Display** (the Web UI shown on the local screen) is **On**; the two modes are mutually exclusive. The RPi `toggle_meter_display()` handler runs `moodeutl --setdisplay webui` when the meter is turned off, which sets `local_display=1` and `peppy_display=0`. This is expected, but it means Local Display stays on until you explicitly re-enable PeppyMeter in the UI.
 
 **Fix:**
-1. Open the moOde web UI → **Configure → Peripherals → Local Display**.
+1. Open the moOde Web UI → **Configure → Peripherals → Local Display**.
 2. Turn **Local Display** (WebUI) **Off** first — this un-greys the Peppy controls.
 3. Turn **PeppyALSA driver** **On**.
 4. Turn **Peppy Display** **On**.
@@ -656,7 +694,7 @@ In the **Peppy Display** and **PeppyALSA driver** toggles under **Configure → 
 **Quick diagnostic commands:**
 ```bash
 # Confirm the UART command is actually arriving and being handled
-sudo journalctl -u uart5_listener -n 50 --no-pager
+   sudo journalctl -u uart5_listener.service -n 50 --no-pager
 
 # Check current relevant moOde settings
 sqlite3 /var/local/www/db/moode-sqlite3.db 'select param, value from cfg_system;' \

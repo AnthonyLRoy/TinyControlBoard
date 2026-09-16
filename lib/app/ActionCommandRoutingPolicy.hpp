@@ -11,7 +11,7 @@ namespace controlSystem
         struct CommandRouteEntry { CommandId command; ActionCommandRoute route; };
 
         // Add one row to classify any command that should NOT route to UartDispatch.
-        // Commands absent from this table default to ActionCommandRoute::UartDispatch.
+        // Commands not listed here  from this table default to ActionCommandRoute::UartDispatch.
         constexpr CommandRouteEntry k_commandRouteTable[] = {
             { CMD_SYS_RPI_SHUTDOWN, ActionCommandRoute::System    },
             { CMD_EXIT_ITEM,        ActionCommandRoute::System    },

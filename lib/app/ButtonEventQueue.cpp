@@ -8,7 +8,7 @@ namespace controlSystem
     {
         stop();
     }
-
+    //start the button event queue and create task for processing events
     bool ButtonEventQueue::start(ControlBoardInputDispatcher &rDispatcher)
     {
         mp_dispatcher = &rDispatcher;
@@ -30,7 +30,7 @@ namespace controlSystem
 
         return true;
     }
-
+//stop the button event queue and delete the associated task
     void ButtonEventQueue::stop()
     {
         if (m_taskHandle)
@@ -44,7 +44,7 @@ namespace controlSystem
             m_queue = nullptr;
         }
     }
-
+    //enqueue a button press event
     bool ButtonEventQueue::enqueue(const ButtonEvent &event, const char *p_eventName)
     {
         if (!m_queue)
@@ -86,7 +86,7 @@ namespace controlSystem
     {
         static_cast<ButtonEventQueue *>(pvParam)->run();
     }
-
+    //main loop for processing button events . note that the  hold time for the button is handled else where not here
     void ButtonEventQueue::run()
     {
         ButtonEvent event{};

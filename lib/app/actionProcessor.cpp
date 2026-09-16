@@ -108,6 +108,7 @@ namespace controlSystem
     {
         // Scaffold only: protocol-specific inbound handling will be added in a
         // dedicated pass once ACK/STATUS semantics are finalized.
+        // For now, just log the inbound message and return false to indicate it was not handled.
         ESP_LOGI(k_logTag, "Inbound UART message received (type=%u cmd=0x%04X seq=%u)",
                  message.msgType, message.commandId, message.sequence);
         return false;

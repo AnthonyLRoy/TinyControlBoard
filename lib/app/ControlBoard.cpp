@@ -10,6 +10,8 @@
 
 namespace controlSystem
 {
+
+    //this in the main controlling context everything revolves around the control board
     static constexpr const char *k_logTag = "Control_Board   ";
 
     bool ControlBoard::init()

@@ -9,8 +9,7 @@ namespace controlSystem { struct ActionContext; }
 
 namespace actions
 {
-    /// Abstract base for all command objects produced by the action pipeline.
-    /// Carries the data fields previously held by the Action struct and adds
+    /// Abstract base for all command objects p
     /// two virtual methods:
     ///   requiresPowerOn() — governs the power gate in ActionProcessor.
     ///   execute()         — performs the side-effects for this command.
