@@ -286,14 +286,38 @@ Add the following override content:
 ```ini
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin <username> --noclear %I $TERM
+ExecStart=-/sbin/agetty --autologin <username> --noissue --nohostname --noclear %I $TERM
 ```
 
 *(Replace `<username>` with your actual username, e.g. `pi`).*
 
+The `--noissue` option suppresses the `/etc/issue` banner, and `--nohostname` suppresses the `hostname login:` text. Reload systemd after changing the override:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart getty@tty1.service
+```
+
+The `moOde (automatic login)` message is printed by `agetty` itself and may still flash briefly. The steps below suppress the remaining login and boot output.
+
+### 5.2 Silence Post-Login Output
+
+Create `.hushlogin` for the autologin user and clear the message of the day:
+
+```bash
+touch ~/.hushlogin
+sudo truncate -s 0 /etc/motd
+```
+
+If you also want to remove the shell prompt from tty1, append this line to `~/.bash_profile`:
+
+```bash
+[ "$(tty)" = /dev/tty1 ] && clear
+```
+
 ---
 
-### 5.2 Hide Kernel Boot Messages & Cursor
+### 5.3 Hide Kernel Boot Messages & Cursor
 
 Edit the boot command line:
 
@@ -301,13 +325,32 @@ Edit the boot command line:
 sudo nano /boot/firmware/cmdline.txt
 ```
 
-Append the following parameters to the end of the existing single line:
+Keep the file on one line. If it contains `console=tty1`, change that entry to `console=tty3` so boot output is sent to an unused virtual terminal. Also make sure the following parameters are present:
 
 ```text
-quiet loglevel=0 vt.global_cursor_default=0
+console=tty3 quiet loglevel=0 logo.nologo vt.global_cursor_default=0
 ```
 
 > **Note:** `/boot/firmware/cmdline.txt` must remain a single continuous line. Do not introduce newlines.
+
+### 5.4 Optional: Disable the tty1 Getty
+
+If moOde's local display is started by its own systemd service and nothing depends on the tty1 login session, autologin may not be needed. Disable and mask the tty1 getty:
+
+```bash
+sudo systemctl disable getty@tty1.service
+sudo systemctl mask getty@tty1.service
+```
+
+This leaves tty2 through tty6 and SSH available for recovery. To restore tty1 later:
+
+```bash
+sudo systemctl unmask getty@tty1.service
+sudo systemctl enable getty@tty1.service
+sudo systemctl start getty@tty1.service
+```
+
+> **Caution:** Masking `getty@tty1.service` removes the tty1 login entirely. Use this only after confirming that moOde's local display does not depend on the tty1 session.
 
 ---
 
@@ -374,23 +417,84 @@ You should see the full-screen RiverBank banner (letterboxed to fit your display
 
 #### 7. Close the Visual Gap Between Plymouth and moOde's UI
 
-By default, Plymouth quits once the boot sequence reaches its normal exit point, which can happen before moOde's kiosk Chromium UI has started rendering, leaving a brief black-screen gap.
+By default, Plymouth quits once the boot sequence reaches its normal exit point, which can happen before moOde's kiosk UI has started rendering, leaving a brief black-screen gap. The clean way to close this gap is to keep Plymouth's splash on screen (instead of letting it quit early) and only tell it to quit — while **retaining** the last splash frame in the framebuffer — right after your own splash image (`feh`) has been drawn over it. This removes the black frame entirely instead of racing to paint over it.
 
-> **Do not try to delay `plymouth quit` until Chromium/CDP is ready.** On a Pi using **console autologin**, `getty@tty1.service` (which starts the autologin shell that runs `startx`/Chromium) is ordered `After=plymouth-quit-wait.service`, and `plymouth-quit-wait.service` blocks on `plymouth --wait` until Plymouth actually quits. Masking `plymouth-quit.service` and gating the quit on Chromium's CDP port creates a boot deadlock: Chromium can't start until Plymouth quits, and Plymouth won't quit until Chromium is up. If you previously masked `plymouth-quit.service` and installed a custom handoff unit for this, revert it:
-> ```bash
-> sudo systemctl disable --now moode-plymouth-handoff.service
-> sudo systemctl unmask plymouth-quit.service
-> sudo systemctl daemon-reload
-> ```
-
-Instead, paint the same background Plymouth used as the X root window immediately in `~/.xinitrc`, *before* Chromium launches, so there is no visible gap even though Plymouth quits at its normal (earlier) time:
+**a. Stop Plymouth from quitting on its own:**
 
 ```bash
-# near the top of ~/.xinitrc, before the chromium-browser launch line
-feh --bg-scale /usr/share/plymouth/themes/riverbank/background.png &
+sudo systemctl mask plymouth-quit.service plymouth-quit-wait.service
 ```
 
-(`feh` must be installed: `sudo apt install -y feh`. If you'd rather not add a dependency, `xsetroot -solid '#050508'` with a color sampled from the theme background works almost as well.)
+The splash now stays up until explicitly told to quit — step **c** below does that. Don't skip step **c** or the boot will appear stuck on the splash screen indefinitely.
+
+**b. Start X on the same VT, without painting a background:**
+
+Wherever your session normally calls `startx` (autologin shell profile, or the unit that launches the local UI), use:
+
+```bash
+startx -- vt1 -keeptty -nocursor -background none
+```
+
+`-background none` stops the X server from painting the root window black, so the retained Plymouth splash frame stays visible underneath until `feh` draws over it.
+
+**c. Quit Plymouth only after `feh` has drawn**, in `~/.xinitrc`:
+
+```bash
+xset s off -dpms s noblank
+feh --fullscreen --hide-pointer --no-fehbg /usr/share/plymouth/themes/riverbank/background.png &
+sleep 0.3
+sudo /usr/bin/plymouth quit --retain-splash
+exec /path/to/your-ui   # e.g. the chromium-browser kiosk launch line
+```
+
+`--retain-splash` leaves the last splash frame in the framebuffer instead of clearing it, so there's no black frame during handover. The short `sleep 0.3` gives `feh` time to finish drawing before Plymouth's frame is released.
+
+(`feh` must be installed: `sudo apt install -y feh`.)
+
+> **Important:** The `exec` line above ultimately runs moOde's WebUI launch block further down in `~/.xinitrc` (under `# Launch WebUI or Peppy` / `if [ $WEBUI_SHOW = "1" ]`). That block **must** include `--remote-debugging-port=9222` on the `chromium` command, or `panel_control.py`'s menu/panel switching (which drives Chromium over the Chrome DevTools Protocol) will silently do nothing:
+>
+> ```bash
+> # Launch WebUI or Peppy
+> if [ $WEBUI_SHOW = "1" ]; then
+> 	# Clear browser cache
+> 	$(/var/www/util/sysutil.sh clearbrcache)
+> 	# Launch chromium browser
+> 	chromium \
+> 	--app="http://localhost/" \
+> 	--window-size="$SCREEN_RES" \
+> 	--window-position="0,0" \
+> 	--enable-features="OverlayScrollbar" \
+> 	--no-first-run \
+>         --remote-debugging-port=9222 \
+> 	--disable-infobars \
+> 	--disable-session-crashed-bubble \
+> 	--kiosk
+> ```
+>
+> If you're editing `~/.xinitrc` for the first time (or restoring it after a moOde update overwrote it), double-check this flag is still present — moOde's stock `.xinitrc` does not include it by default.
+
+Add a sudoers rule so `plymouth quit` doesn't prompt for a password (replace `<username>` with your autologin user):
+
+```bash
+echo '<username> ALL=(root) NOPASSWD: /usr/bin/plymouth' | sudo tee /etc/sudoers.d/plymouth
+```
+
+**d. Diagnose any remaining delay.** If the gap is still long after the above, X is simply starting late rather than flickering:
+
+```bash
+systemd-analyze blame | head -20
+systemd-analyze critical-chain localui.service
+```
+
+Look for `network-online.target`, `nginx`, or `mpd` in the chain. Moving your local-UI unit to `After=systemd-user-sessions.service` and dropping any `Wants=network-online.target` can pull X startup forward by several seconds.
+
+To watch the exact handover timing without a full reboot cycle:
+
+```bash
+sudo plymouthd --debug
+```
+
+Writes to `/var/log/plymouth-debug.log`.
 
 #### Plymouth Notes & Previewing
 
@@ -449,6 +553,7 @@ sudo cp -r /home/<username>/TinyControlBoard/scripts/rpi/Peppymeter/1024x600/* /
 | Auto-Login Override | `/etc/systemd/system/getty@tty1.service.d/autologin.conf` | Enables console autologin |
 | Plymouth RiverBank Theme | `/usr/share/plymouth/themes/riverbank/` | Primary animated splash screen theme |
 | Static Splash Image | `/opt/splash.png` | Alternative static splash screen asset |
+| Plymouth Sudoers Rule | `/etc/sudoers.d/plymouth` | Lets `plymouth quit` run passwordless from `.xinitrc` |
 | PeppyMeter Config | `/opt/1024x600/` | Meter graphics & `meters.txt` config |
 
 ---
@@ -603,6 +708,7 @@ journalctl -u uart5_listener.service -n 50 --no-pager
 2. **If `curl` returns `Connection refused`:**
    - The moOde UI kiosk browser (Chromium) must be running on the local display.
    - Verify Chromium start script includes `--remote-debugging-port=9222`.
+   - This flag lives on the `chromium` command in the `# Launch WebUI or Peppy` block of `~/.xinitrc` (inside `if [ $WEBUI_SHOW = "1" ]`). moOde's stock `.xinitrc` does not enable it by default, and it can also get dropped again after a moOde update overwrites `.xinitrc` — re-check it any time panel switching stops working after an update.
 
 3. **Manually test panel switching script in terminal:**
    ```bash
@@ -645,6 +751,20 @@ journalctl -u uart5_listener.service -n 50 --no-pager
 
 4. **Raspberry Pi OS Trixie / Kernel DRM Graphics Bug:**
    If using newer Debian/Trixie kernel builds where simpledrm/kms driver initialization delays KMS output, Plymouth may default to text or 3-dot mode. A full reboot with physical display attached is required for accurate verification.
+
+#### Problem: Boot appears stuck on the splash screen and never reaches the UI
+
+- This happens if `plymouth-quit.service` / `plymouth-quit-wait.service` were masked (per step 7a above) but the `sudo plymouth quit --retain-splash` call in `~/.xinitrc` never runs or fails silently.
+- Check that `sudoers.d/plymouth` is in place so the call doesn't block on a password prompt: `sudo cat /etc/sudoers.d/plymouth`.
+- Check that `startx` is actually reaching `.xinitrc` (X may be failing to start — check `~/.local/share/xorg/Xorg.0.log` or run `startx -- vt1 -keeptty -nocursor -background none` manually from a console).
+- As a recovery step, unmask the services and reboot: `sudo systemctl unmask plymouth-quit.service plymouth-quit-wait.service`.
+
+#### Problem: Brief black screen still appears between Plymouth and the UI
+
+- Confirm `plymouth-quit.service`/`plymouth-quit-wait.service` are masked (`systemctl is-enabled plymouth-quit.service` should show `masked`).
+- Confirm `startx` is passed `-background none` — without it, X paints the root window black before `feh` draws.
+- Increase the `sleep 0.3` in `.xinitrc` slightly if `feh` is drawing after the `plymouth quit --retain-splash` call rather than before it.
+- Use `systemd-analyze blame` / `systemd-analyze critical-chain localui.service` (or whatever unit starts your local UI) to check whether X itself is starting late rather than flickering.
 
 ---
 
