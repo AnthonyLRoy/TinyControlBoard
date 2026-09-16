@@ -119,36 +119,59 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Library button explicitly placed above the album art box, left-aligned -->
+        <!-- Library button + moOde IP settings icon, placed above the album art box -->
         <LinearLayout
-            android:id="@+id/btnLibrary"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginHorizontal="16dp"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="4dp"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@drawable/bg_icon_button_ripple"
-            android:stateListAnimator="@animator/icon_press_scale">
+            android:gravity="center_vertical">
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="8dp"
-                android:src="@drawable/ic_folder"
-                app:tint="@color/menu_icon_default"
-                android:contentDescription="@string/library_title" />
-
-            <TextView
+            <LinearLayout
+                android:id="@+id/btnLibrary"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_icon_button_ripple"
+                android:stateListAnimator="@animator/icon_press_scale">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/ic_folder"
+                    app:tint="@color/menu_icon_default"
+                    android:contentDescription="@string/library_title" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:text="@string/library_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnMoodeSettings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_marginEnd="16dp"
-                android:text="@string/library_title"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:src="@drawable/ic_settings"
+                app:tint="@color/menu_icon_default"
+                android:contentDescription="@string/moode_settings_title" />
         </LinearLayout>
 
         <!-- Album art box: always visible; shows a centered placeholder icon when no track art

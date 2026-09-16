@@ -82,7 +82,7 @@ class SearchResultsAdapter(
                 // before the async fetch completes.
                 b.ivSearchAlbumArt.tag = hash
                 scope.launch {
-                    val bitmap = ThumbnailFetcher.fetch(hash)
+                    val bitmap = ThumbnailFetcher.fetch(hash, com.tinycb.remote.net.MoodeSettings.getHost(b.root.context))
                     if (b.ivSearchAlbumArt.tag != hash) return@launch
                     if (bitmap != null) {
                         b.ivSearchAlbumArt.scaleType = ImageView.ScaleType.CENTER_CROP

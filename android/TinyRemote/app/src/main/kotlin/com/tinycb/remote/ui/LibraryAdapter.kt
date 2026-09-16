@@ -21,8 +21,34 @@ class LibraryAdapter(
     private val onUpClicked: (() -> Unit)? = null,
     private val onFolderClicked: ((Int) -> Unit)? = null,
     private val onTrackClicked: ((Int) -> Unit)? = null,
-    private val onAlbumClicked: ((String) -> Unit)? = null
+    private val onAlbumClicked: ((String) -> Unit)? = null,
+    private val playlistMode: Boolean = false
 ) : ListAdapter<LibraryRow, RecyclerView.ViewHolder>(DIFF) {
+
+    private var currentTrack: String? = null
+
+    fun setCurrentTrack(track: String?) {
+        if (currentTrack == track) return
+        val previousTrack = currentTrack
+        currentTrack = track
+        if (!playlistMode) return
+
+        for (position in 0 until itemCount) {
+            val row = getItem(position) as? LibraryRow.Entry ?: continue
+            val wasCurrent = isCurrentTrack(row.entry.name, previousTrack)
+            val isCurrent = isCurrentTrack(row.entry.name, track)
+            if (wasCurrent != isCurrent) notifyItemChanged(position)
+        }
+    }
+
+    private fun isCurrentTrack(entryName: String, nowPlaying: String?): Boolean {
+        if (nowPlaying.isNullOrBlank()) return false
+        fun normalize(value: String): String = value.substringAfterLast('/').substringBeforeLast('.')
+            .trim().lowercase()
+        val entry = normalize(entryName)
+        val current = normalize(nowPlaying)
+        return entry == current || entry.contains(current) || current.contains(entry)
+    }
 
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
         is LibraryRow.AlbumHeader -> VIEW_TYPE_ALBUM_HEADER
@@ -62,6 +88,9 @@ class LibraryAdapter(
         fun bind(row: LibraryRow) {
             b.tvTrackNumber.visibility = View.GONE
             b.tvFileType.visibility = View.GONE
+            b.tvEntrySubtitle.visibility = View.GONE
+            b.ivDragHandle.visibility = if (playlistMode) View.VISIBLE else View.GONE
+            b.root.setCardBackgroundColor(b.root.context.getColor(R.color.bg_card))
             
             when (row) {
                 is LibraryRow.Up -> {
@@ -72,6 +101,10 @@ class LibraryAdapter(
                 }
                 is LibraryRow.Entry -> {
                     val entry = row.entry
+                    val isCurrent = playlistMode && isCurrentTrack(entry.name, currentTrack)
+                    if (isCurrent) {
+                        b.root.setCardBackgroundColor(b.root.context.getColor(R.color.bg_card_pressed))
+                    }
                     val isRadio = entry.isRadioStation ||
                         entry.name.startsWith("http://", ignoreCase = true) ||
                         entry.name.startsWith("https://", ignoreCase = true) ||
@@ -103,6 +136,11 @@ class LibraryAdapter(
                         // Track
                         val (trackNum, cleanName, ext) = parseTrackInfo(entry.name)
                         b.tvEntryName.text = cleanName
+
+                        if (entry.albumName.isNotEmpty()) {
+                            b.tvEntrySubtitle.text = entry.albumName
+                            b.tvEntrySubtitle.visibility = View.VISIBLE
+                        }
                         
                         if (trackNum != null) {
                             b.tvTrackNumber.text = trackNum

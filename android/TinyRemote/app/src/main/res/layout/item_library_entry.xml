@@ -39,15 +39,33 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/tvEntryName"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/text_primary"
-            android:textSize="15sp"
-            android:singleLine="true"
-            android:ellipsize="end" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvEntryName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvEntrySubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvFileType"
@@ -70,6 +88,16 @@
             android:src="@drawable/ic_chevron_right"
             android:contentDescription="@null"
             android:tint="@color/text_secondary" />
+
+        <ImageView
+            android:id="@+id/ivDragHandle"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_drag_handle"
+            android:contentDescription="@string/playlist_reorder"
+            android:tint="@color/text_secondary"
+            android:visibility="gone" />
 
     </LinearLayout>
 

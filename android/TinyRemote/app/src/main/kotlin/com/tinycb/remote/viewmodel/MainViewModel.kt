@@ -12,6 +12,7 @@ import com.tinycb.remote.model.BoardStatus
 import com.tinycb.remote.model.GridItem
 import com.tinycb.remote.model.LibraryEntry
 import com.tinycb.remote.net.CoverArtFetcher
+import com.tinycb.remote.net.MoodeSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,8 +46,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         viewModelScope.launch {
             nowPlaying.collectLatest { track ->
-                _albumArt.value = if (track.isNullOrEmpty()) null else CoverArtFetcher.fetchCoverArt()
+                _albumArt.value = if (track.isNullOrEmpty()) null
+                    else CoverArtFetcher.fetchCoverArt(MoodeSettings.getHost(application))
             }
+        }
+    }
+
+    /** Re-fetches album art for the current track, e.g. after the moOde host was changed. */
+    fun refreshAlbumArt() {
+        val track = nowPlaying.value
+        viewModelScope.launch {
+            _albumArt.value = if (track.isNullOrEmpty()) null
+                else CoverArtFetcher.fetchCoverArt(MoodeSettings.getHost(getApplication()))
         }
     }
 
@@ -94,6 +105,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         fun replaceWithFolder(index: Int) = bleManager.replaceWithFolder(index)
         fun playTrack(index: Int) = bleManager.playTrack(index)
         fun removeTrack(index: Int) = bleManager.removeTrack(index)
+        fun moveTrack(from: Int, to: Int) = bleManager.moveTrack(from, to)
         fun requestQueue() = bleManager.requestPlaylist()
         fun clearQueue() = bleManager.clearQueue()
     }

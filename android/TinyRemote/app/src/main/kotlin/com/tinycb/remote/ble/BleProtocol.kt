@@ -14,6 +14,7 @@ object BleProtocol {
     const val CMD_PLAYLIST_REQUEST = 0x012A
     const val CMD_PLAY_TRACK = 0x012B
     const val CMD_REMOVE_TRACK = 0x012C
+    const val CMD_MOVE_TRACK = 0x013A
     const val CMD_ADD_FOLDER = 0x012D
     const val CMD_REPLACE_WITH_FOLDER = 0x012E
     const val CMD_PLAYLIST_LIST_REQUEST = 0x012F

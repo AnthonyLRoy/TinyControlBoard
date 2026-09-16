@@ -16,7 +16,10 @@ import com.tinycb.remote.ble.ConnectionState
 import com.tinycb.remote.data.ButtonCatalog
 import com.tinycb.remote.databinding.ActivityMainBinding
 import com.tinycb.remote.model.GridItem
+import com.tinycb.remote.net.MoodeSettings
 import com.tinycb.remote.viewmodel.MainViewModel
+import android.widget.EditText
+import android.widget.Toast
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -59,6 +62,7 @@ class MainActivity : AppCompatActivity() {
         b.btnBrightnessUp.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_BRIGHT_UP) }
         b.btnDisplayToggle.setOnClickListener { vm.toggleDisplay() }
         b.btnLibrary.setOnClickListener { startActivity(Intent(this, LibraryActivity::class.java)) }
+        b.btnMoodeSettings.setOnClickListener { showMoodeSettingsDialog() }
 
         b.rvButtons.apply {
             layoutManager = GridLayoutManager(this@MainActivity, 3).apply {
@@ -97,6 +101,35 @@ class MainActivity : AppCompatActivity() {
         } else {
             vm.onPowerClicked()
         }
+    }
+
+    private fun showMoodeSettingsDialog() {
+        val input = EditText(this).apply {
+            setText(MoodeSettings.getHost(this@MainActivity))
+            hint = getString(R.string.moode_settings_hint)
+            setSelection(text.length)
+        }
+        val padding = (16 * resources.displayMetrics.density).toInt()
+        val container = android.widget.FrameLayout(this).apply {
+            setPadding(padding, padding / 2, padding, 0)
+            addView(input)
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.moode_settings_title)
+            .setView(container)
+            .setPositiveButton(R.string.moode_settings_save) { _, _ ->
+                val host = input.text.toString().trim()
+                if (host.isEmpty()) {
+                    Toast.makeText(this, R.string.moode_settings_empty_error, Toast.LENGTH_SHORT).show()
+                } else {
+                    MoodeSettings.setHost(this, host)
+                    Toast.makeText(this, R.string.moode_settings_saved, Toast.LENGTH_SHORT).show()
+                    vm.refreshAlbumArt()
+                }
+            }
+            .setNegativeButton(R.string.moode_settings_cancel, null)
+            .show()
     }
 
     private fun showPowerOptionsDialog() {

@@ -67,6 +67,8 @@ class BoardBleManager(context: Context) {
     @Volatile private var cmdChar: BluetoothGattCharacteristic? = null
     @Volatile private var libraryCmdChar: BluetoothGattCharacteristic? = null
     @Volatile private var playlistCmdChar: BluetoothGattCharacteristic? = null
+    @Volatile private var libraryNotificationsReady = false
+    @Volatile private var pendingLibraryCommand: ByteArray? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val notificationQueue = ArrayDeque<BluetoothGattCharacteristic>()
     private var notificationWriteInFlight = false
@@ -115,6 +117,8 @@ class BoardBleManager(context: Context) {
                     cmdChar = null
                     libraryCmdChar = null
                     playlistCmdChar = null
+                    libraryNotificationsReady = false
+                    pendingLibraryCommand = null
                     clearNotificationQueue()
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         _connectionState.value = ConnectionState.Error("Connection failed (GATT status $status)")
@@ -224,6 +228,13 @@ class BoardBleManager(context: Context) {
         override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.i(TAG, "CCCD write confirmed (handle=${descriptor.characteristic?.uuid}) — notifications active")
+                if (descriptor.characteristic?.uuid == BleUuids.LIBRARY_CHAR) {
+                    libraryNotificationsReady = true
+                    pendingLibraryCommand?.let { bytes ->
+                        pendingLibraryCommand = null
+                        writeToCharacteristic(libraryCmdChar ?: return@let, bytes)
+                    }
+                }
             } else {
                 Log.e(TAG, "CCCD write FAILED status=$status — notifications will not arrive!")
             }
@@ -486,21 +497,30 @@ class BoardBleManager(context: Context) {
         _searchResults.value = null
         playlistNameMode = false
         searchMode = false
+        libraryNotificationsReady = false
+        pendingLibraryCommand = null
     }
 
     fun setSelectedViewId(id: Int?) {
         _selectedViewId.value = id
     }
 
-    private fun writeLibraryCommand(commandId: Int, param: Int) {
+    private fun writeLibraryCommand(commandId: Int, param: Int, secondParam: Int = 0) {
         playlistNameMode = false
         searchMode = false
         val char = libraryCmdChar ?: run { Log.w(TAG, "library cmd 0x%04X: libraryCmdChar is null".format(commandId)); return }
         val bytes = commandId16Bytes(commandId) + byteArrayOf(
             (param and 0xFF).toByte(),
-            ((param shr 8) and 0xFF).toByte()
+            ((param shr 8) and 0xFF).toByte(),
+            (secondParam and 0xFF).toByte(),
+            ((secondParam shr 8) and 0xFF).toByte()
         )
-        writeToCharacteristic(char, bytes)
+        if (libraryNotificationsReady) {
+            writeToCharacteristic(char, bytes)
+        } else {
+            pendingLibraryCommand = bytes
+            Log.d(TAG, "Queueing library command 0x%04X until library notifications are active".format(commandId))
+        }
     }
 
     fun browseRoot() = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, BleProtocol.LIB_BROWSE_ROOT)
@@ -511,8 +531,8 @@ class BoardBleManager(context: Context) {
     fun replaceWithFolder(index: Int) = writeLibraryCommand(BleProtocol.CMD_REPLACE_WITH_FOLDER, index)
     fun playTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_PLAY_TRACK, index)
     fun removeTrack(index: Int) = writeLibraryCommand(BleProtocol.CMD_REMOVE_TRACK, index)
+    fun moveTrack(from: Int, to: Int) = writeLibraryCommand(BleProtocol.CMD_MOVE_TRACK, from, to)
     fun requestPlaylist() {
-        _libraryListing.value = emptyList()
         writeLibraryCommand(BleProtocol.CMD_PLAYLIST_REQUEST, 0)
     }
 

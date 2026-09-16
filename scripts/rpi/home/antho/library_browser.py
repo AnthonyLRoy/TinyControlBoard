@@ -299,7 +299,8 @@ def handle_playlist_request(_params):
         else:
             entry_type = LIBRARY_ENTRY_TRACK
             display_name = posixpath.basename(full_path) or full_path
-        send_library_entry(index, total, entry_type, display_name)
+        metadata = " - ".join(filter(None, (item["artist"], item["album"])))
+        send_library_entry(index, total, entry_type, display_name, album=metadata)
         time.sleep(0.008)
 
 
@@ -335,6 +336,23 @@ def handle_remove_track(params):
         print(f"Removed queue position {index}: {_state.playlist_entries[index]}", flush=True)
     except Exception as e:
         print(f"⚠️ MPD delete failed: {e}", flush=True)
+
+
+def handle_move_track(params):
+    from_index, to_index = params[0], params[1]
+    if not (0 <= from_index < len(_state.playlist_entries)):
+        print(f"⚠️ Invalid move source {from_index}", flush=True)
+        return
+    if not (0 <= to_index < len(_state.playlist_entries)):
+        print(f"⚠️ Invalid move destination {to_index}", flush=True)
+        return
+    try:
+        mpd_command(f"move {from_index} {to_index}")
+        entry = _state.playlist_entries.pop(from_index)
+        _state.playlist_entries.insert(to_index, entry)
+        print(f"Moved queue position {from_index} to {to_index}", flush=True)
+    except Exception as e:
+        print(f"⚠️ MPD move failed: {e}", flush=True)
 
 
 def _run_search(field, text):

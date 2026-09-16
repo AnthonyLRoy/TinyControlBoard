@@ -162,7 +162,9 @@ enum CommandId : uint16_t
     // param0 = index into the last search result listing; appends to the MPD queue
     CMD_ADD_SEARCH_RESULT          = 0x0138,
     // param0 = target position as a percent (0-100) of the current track's duration
-    CMD_SEEK_TO_PERCENT             = 0x0139
+    CMD_SEEK_TO_PERCENT             = 0x0139,
+    // param0 = current queue position, param1 = destination queue position
+    CMD_MOVE_TRACK                  = 0x013A
 };
 
 enum PowerCommand : uint8_t

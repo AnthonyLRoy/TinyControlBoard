@@ -49,6 +49,14 @@
     <string name="view_album">Album View</string>
     <string name="view_album_desc">Grouped by album artwork</string>
 
+    <!-- moOde IP Settings -->
+    <string name="moode_settings_title">moOde IP Address</string>
+    <string name="moode_settings_hint">e.g. 192.168.0.10 or moode.local</string>
+    <string name="moode_settings_save">Save</string>
+    <string name="moode_settings_cancel">Cancel</string>
+    <string name="moode_settings_empty_error">Enter an IP address or hostname</string>
+    <string name="moode_settings_saved">moOde address saved</string>
+
     <!-- Library Browse Screen -->
     <string name="library_title">Library</string>
     <string name="library_up">Up</string>
@@ -85,6 +93,10 @@
         <item quantity="other">%d matches</item>
     </plurals>
     <string name="playlist_title">Current Playlist</string>
+    <string name="playlist_empty">Your playlist is empty</string>
+    <string name="playlist_empty_hint">Browse the library and add tracks to get started.</string>
+    <string name="playlist_browse_library">Browse Library</string>
+    <string name="playlist_reorder">Reorder playlist</string>
     <string name="playlist_play_now">Play Now</string>
     <string name="playlist_remove">Remove</string>
 
