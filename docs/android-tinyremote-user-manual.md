@@ -2,17 +2,21 @@
 ## Android Audio Application User Manual
 
 **Application:** DanStreamer (Android package: TinyRemote)  
-**Application version:** 1.0  
-**Manual version:** 1.0  
-**Date:** 13 September 2026
+**Application version:** 1.1 (current UI revision)  
+**Manual version:** 2.0  
+**Date:** 17 September 2026
 
-> **[IMAGE PLACEHOLDER - APPLICATION LOGO]**  
-> Insert the DanStreamer application logo here.
+This manual describes the current DanStreamer app as shipped in the Android codebase. It reflects the newer control-panel layout, the moOde settings flow, and the library and search features used by the app today.
 
-> **[IMAGE PLACEHOLDER - MAIN APPLICATION SCREEN]**  
-> Insert a portrait screenshot of the connected control panel here.
+## Quick Start
 
-This manual describes the user-visible behavior implemented in the Android application and its connected TinyControlBoard player. It does not describe controls that are only present in source code or in development builds.
+1. Turn on Bluetooth on your Android phone.
+2. Power on the TinyControlBoard and the connected audio system.
+3. Open **DanStreamer** and tap **Scan**.
+4. Select **TinyControlBoard** from the discovered devices list.
+5. Use the control panel to play music, browse the library, search tracks, and manage the current queue.
+
+> For the current app revision, the moOde IP address is configured from the gear icon on the main panel. This enables cover-art and current-song metadata to load from the connected player.
 
 ## Contents
 
@@ -21,138 +25,133 @@ This manual describes the user-visible behavior implemented in the Android appli
 3. [Installing and Starting](#installing-and-starting)
 4. [Connecting to the Player](#connecting-to-the-player)
 5. [The Main Control Panel](#the-main-control-panel)
-6. [Choosing the Player Display](#choosing-the-player-display)
-7. [Browsing the Music Library](#browsing-the-music-library)
-8. [Searching for Music](#searching-for-music)
-9. [The Current Playlist](#the-current-playlist)
-10. [Saved Playlists](#saved-playlists)
-11. [Power and Connection Status](#power-and-connection-status)
-12. [Troubleshooting](#troubleshooting)
-13. [Frequently Asked Questions](#frequently-asked-questions)
-14. [Glossary](#glossary)
-15. [Technical Information](#technical-information)
+6. [The moOde Settings and Album Art](#the-moode-settings-and-album-art)
+7. [Choosing the Player Display](#choosing-the-player-display)
+8. [Browsing the Music Library](#browsing-the-music-library)
+9. [Searching for Music](#searching-for-music)
+10. [The Current Playlist](#the-current-playlist)
+11. [Saved Playlists](#saved-playlists)
+12. [Power and Connection Status](#power-and-connection-status)
+13. [Troubleshooting](#troubleshooting)
+14. [Frequently Asked Questions](#frequently-asked-questions)
+15. [Glossary](#glossary)
+16. [Technical Information](#technical-information)
 
-## What DanStreamer Does
+## Product Overview
 
-DanStreamer turns an Android phone into a remote control for a TinyControlBoard-based audio player. The phone communicates with the board over Bluetooth Low Energy (BLE). The board, rather than the phone, provides access to the music library and controls the connected audio system.
+DanStreamer is the Android remote for a TinyControlBoard-based player. The phone communicates with the board over Bluetooth Low Energy (BLE), while the board provides the current playback state and library information. The app also fetches current-song metadata and cover art from the configured moOde host over HTTP so the Android UI can show the active track and album art without storing music locally on the phone.
 
-With the application you can:
+### What DanStreamer Does
+
+DanStreamer enables you to:
 
 - connect to a nearby TinyControlBoard;
-- control playback and track navigation;
-- view and change the player display mode;
-- browse folders and tracks supplied by the player;
-- add tracks or folders to the current playlist;
-- search by artist, album, or any supported library text;
-- view and manage the current queue;
-- save, load, and delete named playlists when the connected player supports those operations;
-- control player brightness, display, cover-art mode, meter mode, and DAC selection where configured;
-- put the player into Sleep or Deep Sleep.
+- control playback, track movement, and the player display;
+- browse the player library by folder and track;
+- add folders or tracks to the current queue;
+- search by artist, album, or any text supported by the connected library;
+- view, play, remove, reorder, and clear the current queue;
+- save, load, and delete named playlists when the player supports them;
+- adjust brightness, cover view, meter view, and DAC selection where configured;
+- trigger Sleep or Deep Sleep through the power dialog.
 
-The application is a remote control. It does not store music on the phone, play the audio through the phone, configure Wi-Fi, or provide an offline mode.
-
-> **[IMAGE PLACEHOLDER - SYSTEM OVERVIEW]**  
-> Show the phone, TinyControlBoard, and connected audio player. Use arrows to show that the phone sends commands over Bluetooth.
+The app is a remote control. It does not store music locally or stream audio through the phone.
 
 ## Before You Start
 
 You need:
 
 - an Android phone with Bluetooth Low Energy support;
-- the DanStreamer application installed;
-- a powered TinyControlBoard running the BLE-enabled firmware;
-- a configured audio player and music library connected to the board.
+- the DanStreamer app installed;
+- a powered TinyControlBoard running the current BLE firmware;
+- a connected audio system with a valid music library;
+- a working moOde host address if you want cover art and current-song metadata to load.
 
-The application requires a Bluetooth connection to work. Wi-Fi is not used by the Android application for its connection to the board.
+The app uses BLE for the control link to the board. Album art and metadata are fetched separately over HTTP from the configured moOde host. Wi-Fi is not used as the primary remote-control connection from the phone to the board.
 
 ### Bluetooth permissions
 
-On Android 12 and later, Android may ask for permission to find and connect to nearby devices. Choose **Allow**.
+On Android 12 and later, Android may ask for permission to find and connect to nearby Bluetooth devices. Choose **Allow**.
 
-On Android 6 through Android 11, Android may ask for Bluetooth and Location permission before a BLE scan can run. Choose **Allow**. The application needs the older Android Location permission for Bluetooth scanning; it does not use the permission to track your physical location.
+On Android 6 through Android 11, Android may ask for Bluetooth and Location permission before a BLE scan can run. Choose **Allow**. The app needs the older Android Location permission for BLE scanning; it does not use your physical location.
 
-If permission is denied, the application displays **Bluetooth permissions required** and cannot scan until permission is granted in the phone's app settings.
+If permission is denied, the app shows **Bluetooth permissions required** and cannot scan until permission is granted from the phone settings.
 
 ## Installing and Starting
 
 ### Install the application
 
-Install the DanStreamer APK supplied for your audio system using the normal Android installation process. The application is identified as **DanStreamer**. The project currently reports application version **1.0**.
+Install the DanStreamer APK using the normal Android installation process. In the project it is identified as **DanStreamer** and the package ID is **com.tinycb.remote**.
 
 ### Start the application
 
 1. Turn on Bluetooth on the phone.
 2. Turn on the TinyControlBoard and the connected audio system.
 3. Open **DanStreamer**.
-4. The first screen shows the DanStreamer title, a Bluetooth symbol, a **Scan** button, and an area for discovered devices.
+4. The first screen shows the DanStreamer title and a **Scan** button.
 5. Tap **Scan** to search for the player.
 
-The screen shows **Searching for DanStreamer...** while scanning. If no device has appeared yet, the device area shows **No devices found yet**.
-
-> **Figure 1 - Start and scan screen**  
-> **[IMAGE PLACEHOLDER - SCAN SCREEN WITH NUMBERED CALLOUTS]**  
-> Identify: 1. Bluetooth symbol, 2. application title, 3. scan status, 4. **Scan** button, and 5. discovered-device list.
+The scan status shows **Searching for DanStreamer…** while scanning. If nothing is found yet, the device area shows **No devices found yet**.
 
 ## Connecting to the Player
 
 1. Tap **Scan**.
-2. Wait for the player to appear in the list. Its normal advertised name is **TinyControlBoard**.
-3. Tap the device row. The row includes the device name and Bluetooth address.
-4. The status changes to **Connecting...** or **Connecting & discovering services...**.
-5. Wait for the control panel to open.
+2. Wait for the board to appear in the list. The normal advertised name is **TinyControlBoard**.
+3. Tap the row to connect.
+4. The app moves to a connecting state and then opens the main control panel.
 
-When the connection succeeds, the application opens the main control panel automatically. The scan stops while the phone is connected.
-
-To disconnect, press the back arrow on the main control panel. The application returns to the scan screen and disconnects from the board. If the connection is lost while another screen is open, that screen closes and the application returns to scanning.
-
-> **Figure 2 - Discovered device**  
-> **[IMAGE PLACEHOLDER - DEVICE LIST]**  
-> Show a device row labelled **TinyControlBoard**, including the name and address.
+When the connection succeeds, the app remains connected and the scan screen is no longer used until you disconnect manually. To disconnect, use the Android back action or the toolbar back arrow from the connected screens. The app returns to the scan state and disconnects cleanly.
 
 ## The Main Control Panel
 
-The main panel is arranged in sections. Button lights and the power status are updated from the connected board.
+The current app is a single-screen remote with a brushed-metal background, a clock/date strip, a power button, and a fixed row of playback and transport controls.
 
-> **Figure 3 - Main control panel**  
-> **[IMAGE PLACEHOLDER - MAIN SCREEN WITH NUMBERED CALLOUTS]**  
-> Identify the power control and status, now-playing text, progress display, transport buttons, display controls, **Menu**, **Playlist**, **Library**, and **DAC**.
+The layout includes:
 
-### Playback controls
+- top bar with title, connection chip, clock/date, and power button;
+- Library button and moOde settings gear icon;
+- album-art panel;
+- now-playing line;
+- track-progress strip;
+- primary transport row for previous, play/pause, and next;
+- secondary controls for menu, shuffle, repeat, brightness, display toggle, cover, meter, and DAC;
+- additional secondary-grid controls for Cover, Meter, and DAC.
 
-| Control | What it does |
-| --- | --- |
-| **Play / Pause** | Starts playback, or pauses the current track. The icon changes according to the current playing state. |
-| **Stop** | Stops playback. |
-| **Prev** | Selects the previous track. |
-| **Next** | Selects the next track. |
-| **Skip Back** | Moves backward within the current track. |
-| **Skip Forward** | Moves forward within the current track. |
-| **Repeat** | Sends the repeat command to the player. The button's indicator shows the command state reported by the board. |
-| **Shuffle** | Sends the shuffle command to the player. The button's indicator shows the command state reported by the board. |
-
-The small indicator dot on a button is lit when the board reports that button's associated state as active. Repeat and Shuffle are toggle commands, but the application does not independently display a separate playback-engine status for them.
-
-### Current track and progress
-
-The now-playing line shows the current track name. When nothing is reported as playing, it shows **nothing playing**. Tap the now-playing line to open **Current Playlist**.
-
-When track progress is available, the panel shows a progress bar, elapsed time, and remaining time. Times use minutes and seconds, for example `1:23` and `-2:22`. The progress area may be hidden when the board has not supplied track-progress information.
-
-### Player display and audio controls
+### Playback and transport controls
 
 | Control | What it does |
 | --- | --- |
+| **Prev** | Moves to the previous track. |
+| **Play / Pause** | Starts or pauses playback. |
+| **Next** | Moves to the next track. |
+| **Shuffle** | Toggles shuffle state for the player, as reported by the board. |
+| **Repeat** | Toggles repeat state for the player, as reported by the board. |
 | **Menu** | Opens the display-view selection screen. |
-| **Playlist** | Opens the current queue. |
-| **Library** | Opens the music-library browser. |
-| **Bright -** | Decreases the player display brightness by one step. |
-| **Bright +** | Increases the player display brightness by one step. |
-| **Display Off / Display On** | Toggles the player display. The label changes to show the next available action. Audio playback is not stopped. |
-| **Cover** | Requests the player display's album-cover view. |
-| **Meter** | Shows or hides the player display's audio-level meter. |
-| **DAC** | Selects the next configured audio output when the system has multiple DAC outputs. |
+| **Brightness - / +** | Decreases or increases the player display brightness. |
+| **Display Off / Display On** | Toggles the player display without stopping playback. |
 
-Some controls depend on the connected player configuration. For example, **DAC** has no useful change when only one output is configured.
+The app reflects the board’s reported LED bitmask in the visual state of the shuffle and repeat buttons. The transport row is fixed in the app and does not use the scrollable button catalog.
+
+### Current track, album art, and progress
+
+The now-playing line shows the active track title. If nothing is playing, it shows **nothing playing**. Tapping the now-playing line opens the current queue.
+
+The app always shows an album-art box. If metadata and cover art are unavailable, it falls back to the default album icon. The current song and cover-art data are fetched from the moOde host over HTTP, not directly from BLE.
+
+When track progress is available, the app shows a progress bar with elapsed and remaining time. If no track duration is available, the progress strip is hidden.
+
+## The moOde Settings and Album Art
+
+The gear icon opens the **moOde IP Address** dialog. This is where you enter the host used by the app to fetch cover art and current-song metadata.
+
+Typical values are:
+
+- an IP address such as `192.168.0.10`
+- a hostname such as `moode.local`
+
+The app stores the host and refreshes cover art after the value is saved. It is not a general Wi‑Fi setup screen; it is specifically for the moOde HTTP metadata source used by the current app design.
+
+This matters because the Android app does not carry track art data over BLE. Instead, it asks the connected moOde server for the current cover and track metadata separately.
 
 ## Choosing the Player Display
 
@@ -163,118 +162,89 @@ Some controls depend on the connected player configuration. For example, **DAC**
 
 The available choices are:
 
-| View | Description shown by the application |
-| --- | --- |
-| **Default View** | Standard layout, all tracks. |
-| **Radio Stations** | Browse by broadcast station. |
-| **Playlist** | Your saved song collections. |
-| **Folder View** | Browse by file directory. |
-| **Tag View** | Group tracks by custom tags. |
-| **Album View** | Group tracks by album artwork. |
+- **Default View**
+- **Radio Stations**
+- **Playlist**
+- **Folder View**
+- **Tag View**
+- **Album View**
 
-These choices change the view requested from the player display. They do not change the Android library browser layout.
-
-> **Figure 4 - Display-view selection**  
-> **[IMAGE PLACEHOLDER - DISPLAY VIEW LIST]**  
-> Show the six view rows and the selected-row indicator.
+The selections request a new player display state from the board. They do not change the Android library browser layout itself.
 
 ## Browsing the Music Library
 
 ### Open the library
 
-1. From the main control panel, tap **Library**.
-2. The application requests the top level of the player library.
-3. Folders and tracks are shown in a list.
+1. Tap **Library** from the main control panel.
+2. The app requests the top level of the player library.
+3. Folders and tracks appear as rows.
 
-Folder rows use a folder icon. Track rows use a music-note icon. Radio entries, when supplied by the player, use the radio-entry presentation. The Android application displays the names and metadata supplied by the player; it does not create album artwork or music metadata itself.
-
-> **Figure 5 - Library root**  
-> **[IMAGE PLACEHOLDER - LIBRARY SCREEN]**  
-> Show the **Library** title, **Search** control, folders, and tracks.
+The app shows folder rows, track rows, and player-supplied entries using the metadata the player provides. It does not synthesize track metadata or local album art.
 
 ### Open a folder
 
 1. Tap a folder row.
 2. The **Folder actions** dialog opens.
-3. Choose one action:
-   - **Add folder to playlist** adds the folder's contents to the current playlist and shows **Folder added to playlist**.
-   - **Replace playlist** replaces the current playlist with the folder and shows **Playlist replaced**.
-   - **Open** enters the folder and displays its contents.
-4. Inside a folder, tap **Up** to return to the previous folder level.
+3. Choose one of these actions:
+   - **Add folder to playlist** adds the folder contents to the current queue;
+   - **Replace playlist** replaces the current queue with the folder;
+   - **Open** browses the folder contents.
+4. Inside a folder, tap **Up** to return to the parent level.
 
-The **Up** row is shown only after entering a folder. Pressing the Android or toolbar back arrow leaves the Library screen instead of browsing up one level.
-
-> **Figure 6 - Folder actions**  
-> **[IMAGE PLACEHOLDER - FOLDER ACTIONS DIALOG]**  
-> Show the three actions: **Add folder to playlist**, **Replace playlist**, and **Open**.
+The **Up** row appears only after entering a folder. The Android back arrow leaves the Library screen rather than moving up one level.
 
 ### Add a track
 
-Tap a track row. The application sends that track to the current playlist and displays **Added to playlist**. There is no separate Android confirmation dialog.
+Tap a track row. The app sends that track to the current queue and shows **Added to playlist**.
 
 ## Searching for Music
 
-Search is opened from the Library screen.
+Search is opened from the **Library** screen.
 
-1. Open **Library** from the main control panel.
+1. Open **Library**.
 2. Tap **Search**.
-3. In the **Search** dialog, select a search type under **Search by**:
-   - **Artist** searches the artist field supported by the player.
-   - **Album** searches the album field supported by the player.
-   - **Any** uses the player's general search behavior.
-4. Tap **Search text** and enter a term.
+3. In the search dialog, select the search type:
+   - **Artist**
+   - **Album**
+   - **Any**
+4. Enter the text to search for.
 5. Tap **OK**.
-6. Review the **Search Results** screen.
 
-The default search type is **Artist**. Search text is required. If it is empty, the dialog remains open and shows **Enter search text**. Tap **Cancel** to close the dialog without searching.
+The default search type is **Artist**. Search text is required; a blank value keeps the dialog open with **Enter search text**. Tap **Cancel** to close without searching.
 
-The Android application sends the selected search type and text to the connected player. Matching, including whether the player treats case and partial text in a particular way, is controlled by the player. The Android source does not guarantee a case-sensitive, case-insensitive, or prefix-only rule.
+The app sends the selected search type and term to the connected player. Matching rules are controlled by the player itself, not by the Android app.
 
-> **Figure 7 - Search dialog**  
-> **[IMAGE PLACEHOLDER - SEARCH DIALOG WITH NUMBERED CALLOUTS]**  
-> Identify: 1. search-type choices, 2. **Search text**, 3. **OK**, and 4. **Cancel**.
+### Search results
 
-### Use search results
+Search results are grouped by album and the album sections can be expanded or collapsed. Results with no album metadata are grouped under **Unknown Album**.
 
-Each result is a track supplied by the player. Tap a track to add it to the current playlist. The application displays **Added to playlist**.
+Each track row can be tapped to add it to the queue. Album headings include actions to add the album to the queue or replace the queue with that album. If the player returns no matches, the app displays **No results found**.
 
-If the player returns no matches, the screen displays **No results found**.
-
-To organize results by album, turn on **Group by Album**. Album headings appear between groups of tracks. Results without album metadata are grouped under **Unknown Album**. With grouping off, results are shown as a flat list in the order supplied by the player.
-
-Tap an album heading to open a dialog named for that album. Choose **Add Album to Playlist** to add all tracks in that result group. Choose **Cancel** to close the dialog without adding them.
-
-> **Figure 8 - Search results**  
-> **[IMAGE PLACEHOLDER - SEARCH RESULTS WITH GROUP BY ALBUM]**  
-> Show the **Group by Album** switch, at least one album heading, track rows, and the empty-results message where applicable.
+This differs from the earlier UI, which exposed a separate **Group by Album** toggle. The current design keeps that grouping built into the results view and hides the toggle from the active layout.
 
 ## The Current Playlist
 
-The current playlist is the queue currently known to the player. It is not the same as a saved playlist.
+The current playlist is the queue currently known to the board. It is not the same as a saved playlist.
 
 ### Open the queue
 
-1. Tap **Playlist** on the main control panel, or tap the now-playing line.
+1. Tap **Playlist** on the main panel or tap the now-playing line.
 2. The **Current Playlist** screen opens.
-3. The queued tracks are shown in the order supplied by the player.
+3. The queue entries are shown in the order supplied by the board.
 
-### Play or remove a queued track
+### Play, remove, reorder, and clear
 
-1. Tap a track in **Current Playlist**.
-2. Choose **Play Now** to start that track.
-3. Choose **Remove** to remove it from the current queue.
+- Tap any track to play it now.
+- Use the track options to **Play Now** or **Remove**.
+- Drag entries to reorder them in the current queue.
+- Swipe left on a row to remove a track.
+- Use **Playlist Management** to save, load, delete, or clear the queue.
 
-Tap the back arrow to return to the main control panel. The queue is requested again whenever the Current Playlist screen becomes visible.
-
-> **Figure 9 - Current Playlist track options**  
-> **[IMAGE PLACEHOLDER - TRACK OPTIONS DIALOG]**  
-> Show a selected track and the **Play Now** and **Remove** actions.
-
-Tap **Playlist Management** to open the saved-playlist controls.
+The queue is refreshed when the screen becomes visible again, so operations that happen from the playlist-management screen are reflected on return.
 
 ## Saved Playlists
 
-The **Playlists** screen provides four actions:
+The **Playlists** screen supports four actions:
 
 - **Save Playlist**
 - **Load Playlist**
@@ -286,50 +256,36 @@ The **Playlists** screen provides four actions:
 1. Tap **Save Playlist**.
 2. Enter a name in **Playlist name**.
 3. Tap **Save Tracks as Playlist**.
-4. If the name already exists, choose **Overwrite** or **Cancel**.
-5. On success, the application displays **Playlist created**.
+4. If a playlist with the same name already exists, the app asks whether to overwrite it.
+5. On success, the app shows **Playlist created**.
 
-The save button is disabled when the current queue is empty. The dialog displays **Add tracks to the queue before saving.** Names may not contain `/` and may not exceed the application's configured maximum length. Invalid names show **Name can't contain '/'** or **Name is too long**.
-
-> **Figure 10 - Save Playlist dialog**  
-> **[IMAGE PLACEHOLDER - SAVE PLAYLIST DIALOG]**  
-> Show the playlist-name field, save action, cancel action, and validation message.
+The save button is disabled when the queue is empty. Validation blocks names containing `/` and rejects names longer than the app limits. The app shows appropriate errors such as **Name can't contain '/'** or **Name is too long**.
 
 ### Load a saved playlist
 
 1. Tap **Load Playlist**.
-2. Wait for the saved playlist names to appear.
+2. Wait for the saved names to appear.
 3. Tap the playlist to load.
-4. When the operation succeeds, the application displays **Playlist loaded**. Tap **OK**.
+4. On success, the app shows **Playlist loaded**.
 
-If no saved playlists are returned, the screen displays **No playlists found**. If the names cannot be fetched, the application displays **Couldn't fetch playlists.** Choose **Retry** or **Cancel**.
+If no playlists are returned, the app shows **No playlists found**. If the fetch fails, the app asks whether to retry or cancel.
 
 ### Delete a saved playlist
 
 1. Tap **Delete Playlist**.
-2. Tap the playlist name.
-3. Confirm with **Delete**, or choose **Cancel**.
-4. If deletion succeeds, the list is refreshed.
+2. Choose the playlist to delete.
+3. Confirm the delete action.
+4. On success, the list refreshes.
 
 ### Clear the current queue
 
 1. Tap **Clear Queue**.
-2. Read **Clear the current queue?**
-3. Choose **Clear** to remove the current queue, or **Cancel** to leave it unchanged.
-
-> **Figure 11 - Playlist management**  
-> **[IMAGE PLACEHOLDER - PLAYLIST MANAGEMENT SCREEN]**  
-> Show the four management actions.
-
-### Playlist support note
-
-The Android interface for saving, loading, and deleting playlists is implemented. These operations also require matching playlist support on the connected player/server. If the player-side support is not installed or is incomplete, the application may show a failure message or wait until its operation timeout. This is a system limitation, not a missing Android button.
+2. Confirm the warning **Clear the current queue?**
+3. Choose **Clear** to remove it, or **Cancel** to leave it unchanged.
 
 ## Power and Connection Status
 
-### Read the status
-
-The main panel shows connection and player power information. The player states reported by the application include:
+The main panel shows the board power state through the real-time status chip and the power button. Supported states include:
 
 - **ON**
 - **OFF**
@@ -340,84 +296,66 @@ The main panel shows connection and player power information. The player states 
 - **DEEP SLEEP**
 - **GOING INTO DEEP SLEEP**
 
-The power icon changes color for the reported state and may flash while the player is changing state. Wait for the transition to finish before sending normal playback commands.
-
-### Turn the player on
-
-When the player is off or asleep, tap the power icon. The application sends the power-on command. Wait for the status to become **ON**.
-
-### Sleep or Deep Sleep
-
-When the player is **ON**:
-
-1. Tap the power icon.
-2. In **Power Options**, choose **Sleep**, **Deep Sleep**, or **Cancel**.
-3. Wait for the status to show the resulting state.
-
-> **Figure 12 - Power options**  
-> **[IMAGE PLACEHOLDER - POWER OPTIONS DIALOG]**  
-> Show **Sleep**, **Deep Sleep**, and **Cancel**.
+When the player is off or asleep, tapping the power button sends the power-on command. When it is on, tapping the power button opens the **Power Options** dialog with **Sleep** and **Deep Sleep** choices.
 
 ## Troubleshooting
 
 | Problem | What you see | What to do |
 | --- | --- | --- |
-| Bluetooth is off | A toast says **Please enable Bluetooth**. | Turn on Bluetooth in Android settings, return to DanStreamer, and tap **Scan** again. |
-| Permission was denied | **Bluetooth permissions required** appears. | Open Android Settings, find DanStreamer, allow Nearby devices/Bluetooth. On Android 6-11 also allow Location, then return and scan again. |
-| No player is found | The list remains empty or says **No devices found yet**. | Confirm the board is powered, Bluetooth is on, and the phone is nearby. Tap **Scan** again. The board must be running BLE-enabled firmware. |
-| The connection fails | The scan screen shows an error message or returns to **Disconnected. Tap Scan to reconnect.** | Move closer, check board power, and scan again. |
-| The app disconnects while in use | The current screen closes and the scan screen reappears. | Check the board and Bluetooth connection, then scan and reconnect. |
-| A command has no visible effect | The player is off, asleep, or still changing power state. | Wait for **ON**, then try the command again. Some controls also depend on player configuration. |
-| The library is empty or unavailable | No entries are shown after opening Library. | Confirm the audio player has a configured music library and remains connected. The Android app does not contain a local music library. |
-| Search returns nothing | **No results found** appears. | Check the spelling and selected search type. Search matching is performed by the connected player. |
-| Playback does not start | A track is selected but the now-playing line does not change. | Confirm the player is **ON**, the track is available to the audio system, and the BLE connection is still active. |
-| A playlist operation fails | A dialog says **Couldn't save/load/delete playlist** or **Couldn't fetch playlists.** | Choose **Retry**. If it continues, the connected player/server may not support the requested playlist operation. |
+| Bluetooth is off | A toast asks you to enable Bluetooth. | Turn on Bluetooth in Android settings, then scan again. |
+| Permission was denied | **Bluetooth permissions required** appears. | Grant Bluetooth access in app settings. On Android 6-11 also allow Location for BLE scanning. |
+| No player is found | The list remains empty. | Confirm the board is powered on, Bluetooth is enabled, and the phone is nearby. Scan again. |
+| Connection fails | The app stays disconnected or shows an error. | Move closer and confirm the board has the current BLE firmware running. |
+| A command has no visible effect | The board is off or still changing state. | Wait for the power state to settle, then retry the command. |
+| The library is empty | No entries are shown after opening Library. | Confirm the player has a configured music library and the connection is still active. |
+| Search returns nothing | **No results found** appears. | Check the search text and selected type. Matching is controlled by the connected player. |
+| The queue does not refresh | The list seems stale after a save/load/clear action. | Return to the queue screen and let the app re-request the current queue. |
+| Playlist save or delete fails | The app shows a failure message or a retry prompt. | Retry the operation. If it keeps failing, the player/server may not support that playlist action. |
 
 ## Frequently Asked Questions
 
 **How do I play a single track?**  
-Open **Library**, open folders as needed, then tap the track. It is added to the current playlist. Open **Current Playlist**, tap the track, and choose **Play Now** if it is not already playing.
+Open **Library**, navigate to the track, and tap it. It is added to the queue. Open **Current Playlist**, tap the track, and choose **Play Now** if it is not already playing.
 
 **How do I play an album?**  
-Search by **Album**, turn on **Group by Album**, tap the album heading, and choose **Add Album to Playlist**. Then open **Current Playlist** and use **Play Now** on the required track.
+Search by **Album**, then tap the album heading and choose **Add Album to Playlist** or **Replace Playlist with Album**. Then open the queue and use **Play Now** on the desired track.
 
 **How do I search for an artist?**  
 Open **Library**, tap **Search**, choose **Artist**, enter the text, and tap **OK**.
 
-**How do I return to the previous screen?**  
-Use the toolbar back arrow. In a library folder, use the **Up** row to browse to the parent folder without leaving the Library screen.
+**How do I return to a previous screen?**  
+Use the toolbar back arrow. In a library folder, use the **Up** row to move upward without leaving the library browser.
 
-**Does the phone need Wi-Fi?**  
-The Android app communicates with the board over BLE. It does not use Wi-Fi for its remote connection.
+**Does the phone need a Wi‑Fi connection?**  
+Not for the control link. The app uses BLE to talk to the board and uses moOde HTTP for album-art metadata fetches.
 
 **Does the app play music through the phone?**  
 No. The connected audio system plays the music.
 
-**Why is there no Settings screen?**  
-The implemented application has no general Settings screen. Bluetooth permission and Bluetooth enablement are handled through Android and the scan screen.
+**Why is there no general Settings screen?**  
+The current app keeps Bluetooth permission handling in Android and uses the gear icon specifically for the moOde host address.
 
 **Can I use the app without the board?**  
-The normal application requires a BLE connection. A **Preview UI (no board)** link may appear in development builds only; it is not a normal playback mode and is not part of the release workflow.
+The normal app requires a live BLE connection. Development builds may expose a preview path, but that is not part of the standard user workflow.
 
 ## Glossary
 
 | Term | Meaning |
 | --- | --- |
-| **BLE** | Bluetooth Low Energy, the short-range connection used between the phone and TinyControlBoard. |
+| **BLE** | Bluetooth Low Energy, the short-range radio connection used between the phone and TinyControlBoard. |
 | **Board** | The TinyControlBoard hardware connected to the audio system. |
-| **Library** | The folders, tracks, and radio entries supplied by the connected player. |
+| **Library** | The folders, tracks, and entries supplied by the connected player. |
+| **Queue** | The current playlist or active playback queue known to the board. |
+| **Saved playlist** | A named playlist stored by the connected player/server for later loading. |
+| **moOde** | The player software that supplies song metadata, artwork, and playlist support for the app. |
 | **Track** | One playable music item. |
 | **Album** | A group of tracks identified by album metadata. |
-| **Artist** | The artist metadata used by the player for search. |
-| **Queue** | The current playlist of tracks waiting to play. |
-| **Saved playlist** | A named playlist stored by the connected player/server for later loading. |
-| **Playback** | The process of playing, pausing, stopping, or changing audio tracks. |
-| **DAC** | Digital-to-analog converter, the configured audio output selected by the player. |
-| **Player display** | The screen or interface on the connected audio system, separate from the Android phone screen. |
+| **DAC** | Digital-to-analog converter, the configured output used by the player. |
+| **Player display** | The display attached to the audio system that the board controls. |
 
 ## Technical Information
 
-This section is provided for owners or installers who need to identify compatibility requirements.
+This section is for installers and maintainers needing compatibility details.
 
 - Application name: **DanStreamer**
 - Android application ID: `com.tinycb.remote`
@@ -426,24 +364,25 @@ This section is provided for owners or installers who need to identify compatibi
 - Required hardware feature: Bluetooth Low Energy
 - Screen orientation: portrait
 - Connection model: one active BLE connection to a TinyControlBoard
-- Android 12 and later permissions: Bluetooth scan and Bluetooth connect
-- Android 6-11 permissions: Bluetooth, Bluetooth administration, and fine Location permission for BLE scanning
+- moOde metadata path: HTTP from the configured host, separate from BLE control traffic
+- Android 12 and later Bluetooth permissions: `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT`
+- Android 6-11 Bluetooth permissions: `BLUETOOTH`, `BLUETOOTH_ADMIN`, and `ACCESS_FINE_LOCATION`
 
-The application exchanges commands and status notifications with the board. Music names, album metadata, queue contents, search results, playback progress, and saved-playlist results come from the connected player. If those services are unavailable, the Android interface cannot manufacture the missing information.
+The app exchanges commands and status notifications with the board over BLE. Music names, album metadata, queue contents, and search results come from the connected player. Cover art and current-song metadata are fetched from moOde over HTTP, which is why the app has a separate moOde settings dialog.
 
-### Screenshot checklist for final production
+### Screenshot checklist
 
-The following images are recommended before publishing this manual:
+Before publishing a final version of this manual, capture:
 
-1. Scan screen with a discovered TinyControlBoard.
-2. Connected main control panel.
-3. Display-view selection screen.
-4. Library root and an opened folder.
-5. Folder actions dialog.
-6. Search dialog and search-type choices.
-7. Search results with **Group by Album** enabled.
-8. Current Playlist and track options.
-9. Playlist management and Save Playlist dialog.
-10. Power Options dialog.
+1. the scan screen with a discovered TinyControlBoard;
+2. the connected main panel with album art and now-playing line;
+3. the moOde IP settings dialog;
+4. the display-view selection screen;
+5. the library browser and opened folder view;
+6. the search dialog and search-results screen;
+7. the current-queue screen with track actions;
+8. the saved-playlist management screen;
+9. the save-playlist dialog with validation;
+10. the power options dialog.
 
-Use portrait screenshots, numbered callouts, and captions matching the figure numbers in this manual. Avoid using the development-only **Preview UI (no board)** link in release documentation.
+Use portrait screenshots and captions that match the current app layout, not the older UI mockup or the earlier preview-build screens.
