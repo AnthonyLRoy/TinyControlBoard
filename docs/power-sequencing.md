@@ -45,7 +45,7 @@ The long-press threshold lives in [lib/power/PowerStateTransitionPolicy.hpp](../
 | `board::timing::k_rpiBootTimeoutMs` | 60000 | max time to wait for heartbeat after power-on |
 | `board::timing::k_rpiShutdownTimeoutMs` | 60000 | max time to wait for heartbeat timeout during shutdown |
 | `board::timing::k_rpiShutdownSettleDelayMs` | 500 | delay between Pi relay off and 3V3 relay off |
-| `board::timing::k_vcc3v3PowerOffDelayMs` | 5000 | delay after 3V3 relay off before LED state changes |
+| `board::timing::k_vcc3v3PowerOffDelayMs` | 5000 | defined for a 3V3 power-off delay; not currently used by the transition handler |
 | `board::timing::k_heartbeatTimeoutMs` | 30000 | inactivity window after which heartbeat is considered lost |
 | `kLongPressThresholdMs` | 3000 | separates sleep from deep sleep on power-button release |
 
@@ -71,11 +71,11 @@ If the current state is `OFF`, `SLEEP`, or `DEEPSLEEP`, a power-button release e
 Current sequence:
 
 1. power LED state is set to `TURNING_ON`,
-2. 3V3 relay is enabled with a 1000 ms delay,
-3. DAC relay is enabled with a 1500 ms delay,
-4. output stage relay is enabled with a 1500 ms delay,
-5. Raspberry Pi relay is enabled with a 1000 ms delay,
-6. `BootDiagnosticLeds::begin()` lights the eight diagnostic LEDs to show that the staged power-on sequence is in progress,
+2. `BootDiagnosticLeds::begin()` lights the eight diagnostic LEDs,
+3. 3V3 relay is enabled with a 1000 ms delay, then its diagnostic pair is extinguished,
+4. DAC relay is enabled with a 1500 ms delay, then its diagnostic pair is extinguished,
+5. output-stage relay is enabled with a 1500 ms delay, then its diagnostic pair is extinguished,
+6. Raspberry Pi relay is enabled with a 1000 ms delay,
 7. firmware waits up to 60 seconds for Pi heartbeat,
 8. if heartbeat received: `BootDiagnosticLeds::stageSuccess(BootStage::RpiComms)` extinguishes the final diagnostic pair,
 9. if timeout: `BootDiagnosticLeds::stageFailure(BootStage::RpiComms)` flashes the final diagnostic pair at about 3 Hz,
@@ -93,15 +93,16 @@ Current sequence:
 3. firmware waits up to 60 seconds for shutdown confirmation via heartbeat timeout,
 4. Raspberry Pi power relay is turned off,
 5. firmware delays 500 ms,
-6. 3V3 power relay is turned off,
-7. firmware delays 5000 ms,
+6. output-stage power relay is turned off,
+7. SPI LEDs are turned off,
 8. power LED state becomes `SLEEP`,
 9. activity status becomes `sleeping`.
 
 Practical result:
 
-- the Raspberry Pi and 3V3 supply are shut down,
-- DAC and output stage power remain on,
+- Raspberry Pi power is removed,
+- 3V3 and DAC power remain on,
+- output-stage power is removed,
 - the board stays in a lower-power standby style state rather than a full deep power-down.
 
 ## 6. Deep-Sleep Sequence
@@ -115,16 +116,16 @@ Current sequence:
 3. firmware waits up to 60 seconds for shutdown confirmation via heartbeat timeout,
 4. Raspberry Pi power relay is turned off,
 5. firmware delays 500 ms,
-6. 3V3 power relay is turned off,
-7. DAC relay is turned off,
-8. output stage relay is turned off,
+6. DAC power relay is turned off,
+7. output-stage power relay is turned off,
+8. SPI LEDs are turned off,
 9. power LED state becomes `DEEPSLEEP`,
 10. activity status becomes `sleeping`.
 
 Practical result:
 
 - Raspberry Pi power is removed,
-- screen power is removed,
+- 3V3 and screen power remain on,
 - DAC power is removed,
 - output stage power is removed,
 - board logic still remains present enough to respond later, so this is a project-specific deep sleep state, not necessarily ESP-IDF chip deep sleep.
@@ -136,7 +137,7 @@ Heartbeat is the synchronization signal between the ESP32 and the Raspberry Pi.
 Current behavior:
 
 - heartbeat received sets the event-group bit used for boot completion,
-- heartbeat timeout sets the event-group bit used for shutdown confirmation,
+- heartbeat timeout sets the event-group bit used for shutdown confirmation; this is treated as confirmation that the Pi is offline,
 - power-on waits for heartbeat reception,
 - sleep and deep-sleep wait for heartbeat timeout.
 
@@ -178,7 +179,7 @@ To test the full firmware on the bench without a connected Raspberry Pi, set the
 
 ```cpp
 namespace board::debug {
-    inline constexpr bool kSimulateRpiBoot = true; // set false for production
+    inline constexpr bool k_simulateRpiBoot = true; // set false for production
 }
 ```
 
@@ -186,16 +187,11 @@ When `true`:
 
 - `RpiBootManager::waitForRpiToBoot()` returns `true` immediately without waiting for a heartbeat,
 - `BootDiagnosticLeds::stageSuccess(BootStage::RpiComms)` is called and the diagnostic pair is extinguished,
-- a warning is logged: `DEBUG: kSimulateRpiBoot is set — skipping RPi heartbeat wait`.
+- a warning is logged that the RPi heartbeat wait is being skipped.
 
 When `false` (default/production): this code path is optimized away entirely by the compiler (`if constexpr`).
 
-- `wait` parameters in relay shutdown helpers are currently unused.
-- The code path sets `GOING_TO_SLEEP` for both sleep and deep-sleep paths.
-- The enum includes states like `SHUTTING_DOWN` and `GOING_INTO_DEEP_SLEEP`, but the current processor code does not clearly transition through them.
-- `waitForRpiShutdown()` is satisfied by heartbeat timeout, which is a practical signal but not a strong explicit shutdown acknowledgment packet.
-
-## 10. Recommended Future Documentation Additions
+## 11. Recommended Future Documentation Additions
 
 Useful follow-ups for this file later:
 
@@ -204,8 +200,9 @@ Useful follow-ups for this file later:
 3. document which subsystems remain powered in each state,
 4. document recovery behavior if heartbeat never appears during boot.
 
-## 11. Related Docs
+## 12. Related Docs
 
-- [docs/project-guide.md](./project-guide.md)
 - [docs/architecture.md](./architecture.md)
 - [docs/wiring-reference.md](./wiring-reference.md)
+- [docs/01-system-architecture.md](./01-system-architecture.md)
+- [docs/06-hardware-interface.md](./06-hardware-interface.md)

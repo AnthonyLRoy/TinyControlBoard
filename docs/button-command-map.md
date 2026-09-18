@@ -4,10 +4,13 @@ This document maps the current firmware button indices to action objects and the
 
 The source of truth for the current mapping is:
 
-- [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp)
-- [lib/app/ControlBoard.cpp](../lib/app/ControlBoard.cpp)
+- [lib/board/boardButtonIds.hpp](../lib/board/boardButtonIds.hpp)
+- [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp)
+- [lib/app/ControlBoardInputDispatcher.cpp](../lib/app/ControlBoardInputDispatcher.cpp)
 - [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
 - [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
+- [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp)
+- [lib/app/commands/BrightnessAction.cpp](../lib/app/commands/BrightnessAction.cpp)
 - [lib/hal/leds/spiLedDriver.cpp](../lib/hal/leds/spiLedDriver.cpp)
 
 ## 1. How To Read This Map
@@ -78,13 +81,13 @@ For toggle-backed buttons, the action can emit one of two raw command IDs depend
 | 3 | Skip Forward | simple command | `0x0008` | `0000 0000 0000 1000` | `0x08 0x00` | `0x0104` | `CMD_SKIP_FORWARD` | `0x0104 CMD_SKIP_FORWARD` | UART command to Pi |
 | 4 | Skip Back | simple command | `0x0010` | `0000 0000 0001 0000` | `0x10 0x00` | `0x0105` | `CMD_SKIP_BACK` | `0x0105 CMD_SKIP_BACK` | UART command to Pi |
 | 5 | Play/Pause | simple command | `0x0020` | `0000 0000 0010 0000` | `0x20 0x00` | `0x0102` | `CMD_PLAY_PAUSE` | `0x0102 CMD_PLAY_PAUSE` | UART command to Pi |
-| 6 | Stop | simple command | `0x0040` | `0000 0000 0100 0000` | `0x40 0x00` | `0x0103` | `CMD_STOP_TRACK` | `0x0103 CMD_STOP_TRACK` | UART command to Pi |
+| 6 | Toggle Display | simple command | `0x0040` | `0000 0000 0100 0000` | `0x40 0x00` | `0x0114` | `CMD_TOGGLE_DISPLAY` | local-only display toggle | toggles the monitor display through the local brightness controller |
 | 7 | Cover | `ToggleAction<CMD_COVER_VIEW_ON, CMD_COVER_VIEW_OFF>` | `0x0080` | `0000 0000 1000 0000` | `0x80 0x00` | `0x0117 / 0x0118` | `CMD_COVER_VIEW_ON / CMD_COVER_VIEW_OFF` | `0x0119 CMD_TOGGLE_COVER_VIEW` with param `1` or `0` | Pi toggles cover view |
 | 8 | Repeat | `ToggleAction<CMD_REPEAT_ON, CMD_REPEAT_OFF>` | `0x0100` | `0000 0001 0000 0000` | `0x00 0x01` | `0x011A / 0x011B` | `CMD_REPEAT_ON / CMD_REPEAT_OFF` | `0x011C CMD_TOGGLE_REPEAT` with param `1` or `0` | Pi toggles repeat mode |
 | 9 | Toggle Random | `ToggleAction<CMD_RANDOM_ON, CMD_RANDOM_OFF>` | `0x0200` | `0000 0010 0000 0000` | `0x00 0x02` | `0x011D / 0x011E` | `CMD_RANDOM_ON / CMD_RANDOM_OFF` | `0x011F CMD_TOGGLE_RANDOM` with param `1` or `0` | Pi toggles random mode |
 | 10 | Toggle DAC | `ToggleAction<CMD_TOGGLE_DAC_ON, CMD_TOGGLE_DAC_OFF>` | `0x0400` | `0000 0100 0000 0000` | `0x00 0x04` | `0x010A / 0x010F` | `CMD_TOGGLE_DAC_ON / CMD_TOGGLE_DAC_OFF` | local-only relay toggle, no normalized UART command | toggles DAC signal-output select relay (GPIO10), not DAC power (GPIO12) |
 | 11 | Next Panel | simple command | `0x0800` | `0000 1000 0000 0000` | `0x00 0x08` | `0x0107` | `CMD_NEXT_MENU_ITEM` | `0x0107 CMD_NEXT_MENU_ITEM` | UART command to Pi; Pi cycles to next moOde panel |
-| 12 | Toggle Meter | `ToggleAction<CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF>` | `0x1000` | `0001 0000 0000 0000` | `0x00 0x10` | `0x010C / 0x010D` | `CMD_TOGGLE_METER_ON / CMD_TOGGLE_METER_OFF` | `0x0115 CMD_TOGGLE_METER` with param `1` or `0` | Pi meter display change |
+| 12 | Toggle Meter | `DynamicToggleAction<CMD_TOGGLE_METER_ON, CMD_TOGGLE_METER_OFF>` | `0x1000` | `0001 0000 0000 0000` | `0x00 0x10` | `0x010C / 0x010D` | `CMD_TOGGLE_METER_ON / CMD_TOGGLE_METER_OFF` | `0x0115 CMD_TOGGLE_METER` with param `1` or `0` | Pi meter display change |
 | 13 | Rotary Left | `RotaryAction<CMD_ROTARY_ACTION>` | n/a | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | `0x0112 CMD_ROTARY_ACTION` with param `0` | Pi interprets as previous/left |
 | 14 | Rotary Right | `RotaryAction<CMD_ROTARY_ACTION>` | n/a | n/a | n/a | `0x0112` | `CMD_ROTARY_ACTION` | `0x0112 CMD_ROTARY_ACTION` with param `1` | Pi interprets as next/right |
 | 15 | Cycle Brightness | simple command | `0x8000` | `1000 0000 0000 0000` | `0x00 0x80` | `0x0116` | `CMD_CYCLE_BRIGHTNESS` | `0x0116 CMD_CYCLE_BRIGHTNESS` | local brightness cycle |
@@ -109,7 +112,13 @@ References:
 - [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp)
 - [lib/app/actionProcessor.cpp](../lib/app/actionProcessor.cpp)
 
-### 4.2 Toggle Buttons
+### 4.2 Display Toggle Button
+
+Button 6 uses `CMD_TOGGLE_DISPLAY`, but it does not go to the Raspberry Pi. The
+command is classified as a brightness action and handled by the local monitor
+brightness controller. Its button LED is maintained as a toggle indicator.
+
+### 4.3 Toggle Buttons
 
 Toggle actions keep internal software state in the action object.
 
@@ -127,7 +136,11 @@ Current toggle-backed buttons:
 - Repeat
 - Toggle Random
 
-### 4.3 Rotary Events
+Toggle Display is separate: its action source is a simple command, while the
+display state is maintained by the local brightness controller and its button
+LED is toggled by the input dispatcher.
+
+### 4.4 Rotary Events
 
 Both rotary directions use the same action object class and the same command ID.
 
@@ -138,7 +151,7 @@ Direction is carried in parameter 0:
 
 Unlike the physical push buttons, rotary movement is handled by `handleRotaryMovement()` and does not currently light a button LED through the SPI shift register.
 
-### 4.4 SPI Payload Format For Button LEDs
+### 4.5 SPI Payload Format For Button LEDs
 
 When a physical button press reaches `handleButtonPressed()`, the firmware uses the button ID directly as the LED index and calls `indicators::getSpiLedDriver().setLed(buttonId, true)`.
 
@@ -179,7 +192,6 @@ These actions send a UART command or message to the Raspberry Pi:
 - play/pause
 - stop
 - next menu
-- menu select
 - panel cycling (next panel)
 - cover view toggle
 - meter toggle
@@ -191,6 +203,7 @@ These actions send a UART command or message to the Raspberry Pi:
 These actions currently stay local:
 
 - power sequencing,
+- display on/off toggle,
 - DAC relay toggle,
 - brightness cycling,
 - relay shutdown sequencing,
@@ -208,7 +221,7 @@ This does not mean they are invalid. It only means there is no direct current bu
 
 ## 7. Related Docs
 
-- [docs/project-guide.md](./project-guide.md)
 - [docs/architecture.md](./architecture.md)
 - [docs/power-sequencing.md](./power-sequencing.md)
-- [docs/protocol-reference.md](./protocol-reference.md)
+- [docs/05-communication-protocol.md](./05-communication-protocol.md)
+- [docs/06-hardware-interface.md](./06-hardware-interface.md)
