@@ -46,6 +46,8 @@ UART wire format and [02-android-developer-guide.md](02-android-developer-guide.
 7. Working on wiring/GPIO/relays? [06-hardware-interface.md](06-hardware-interface.md).
 8. Known gaps, TODOs, and cross-component mismatches: [documentation-gaps.md](documentation-gaps.md).
 9. What was checked against source and what was fixed: [08-quality-check.md](08-quality-check.md).
+10. Adding a new button or action: [09-adding-button-actions.md](09-adding-button-actions.md)
+    (a matching `/add-button-action` prompt lives in `.github/prompts/`).
 
 ## Source snapshot
 

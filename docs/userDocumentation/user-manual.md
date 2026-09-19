@@ -302,7 +302,7 @@ Unlike USB or S/PDIF, I²S carries the audio data and clock signals separately, 
 
 > **Important**
 
-I²S is **not** an industry-standard interface. Different manufacturers use different signal assignments (pinouts).
+There is no standard external I²S connection there is no industry-standard external interface. Different manufacturers use different signal assignments (pinouts).
 
 This DAC is designed for equipment using the **PS Audio I²S pinout**. Before connecting an I²S source, ensure that it is compatible with the PS Audio standard.
 
