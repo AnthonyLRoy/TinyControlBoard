@@ -1,6 +1,4 @@
-<figure>
 ![User manual figure 1](user-manual-media/media/image1.png)
-</figure>
 
 **Front Panel Operating Guide**
 
@@ -196,9 +194,7 @@ If this fails to resolve the issue then the repair will require investigation wi
 
 **Rear panel connection Guide**
 
-<figure>
 ![User manual figure 2](user-manual-media/media/image2.png)
-</figure>
 
 Before connecting your DAC, take a few moments to familiarise yourself with the rear panel. Every connector has been carefully designed to provide reliable operation while offering maximum flexibility when integrating the DAC into your audio system.
 
@@ -463,9 +459,7 @@ Before powering on the system, confirm the following:
 
 ## **Power Supply Front Panel**
 
-<figure>
 ![User manual figure 3](user-manual-media/media/image3.png)
-</figure>
 
 **A Quick Look**
 
