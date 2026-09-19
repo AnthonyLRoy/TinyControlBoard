@@ -161,7 +161,7 @@ flowchart TD
 | Interface | Type | Connector/Location |
 |---|---|---|
 | Front-panel button/rotary/LED harness | 40-pin Molex | See [wiring-reference.md](wiring-reference.md) §1.7 |
-| Raspberry Pi UART link | Wired point-to-point, ESP32 GPIO1/2/41/42 ↔ Pi GPIO12/13/23/24 | Per [docs/RPI4_SETUP.md](RPI4_SETUP.md) |
+| Raspberry Pi UART link | Wired point-to-point, ESP32 GPIO1/2/41/42 ↔ Pi GPIO12/13/23/24 | Per [docs/userDocumentation/RPI4_SETUP.md](userDocumentation/RPI4_SETUP.md) |
 | Power rails | Relay-switched: 3.3V, DAC, Output stage, Raspberry Pi 5V | 4 relays sequenced; 3 auxiliary relays (DAC signal-select, general 1/2) |
 | USB (firmware flashing) | ESP32-S3 native USB / UART bootloader | Development only |
 
@@ -172,7 +172,7 @@ flowchart TD
 | ESP32-S3 (16MB flash variant) | Main controller | `boards/esp32-s3-devkitc-1-16mb.json`, `platformio.ini` |
 | MCP23018 | 16-bit I2C GPIO expander for button/rotary input | `board::i2c::mcpAddress = 0x20`, `lib/hal/buttons/mcpInputHandler.cpp` |
 | 16-bit SPI shift register (e.g. 74HC595-class device) | Front-panel button LED driver | `lib/hal/leds/spiLedDriver.cpp` — exact part number **TODO – not present in supplied source** |
-| Raspberry Pi 4 | Audio playback host (moOde Audio) | `docs/RPI4_SETUP.md`, repo-wide references |
+| Raspberry Pi 4 | Audio playback host (moOde Audio) | `docs/userDocumentation/RPI4_SETUP.md`, repo-wide references |
 | Relay modules ×7 | Power-rail and signal switching | `lib/board/boardConfig.hpp::relays` |
 
 ## 14. Safety Notes

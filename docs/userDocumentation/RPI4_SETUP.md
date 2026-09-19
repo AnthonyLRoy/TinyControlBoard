@@ -6,31 +6,31 @@ This guide explains how to clone the repository onto a Raspberry Pi 4 running **
 
 ## Repo Layout & Python Companion Suite
 
-Companion assets for the Raspberry Pi are tracked in the GitHub repository under [scripts/rpi](../scripts/rpi).
+Companion assets for the Raspberry Pi are tracked in the GitHub repository under [scripts/rpi](../../scripts/rpi).
 
 ### Complete List of Python Programs & Modules (`scripts/rpi/home/`)
 
 | Script File | Purpose / Function |
 | :--- | :--- |
-| [uart5_listener.py](../scripts/rpi/home/antho/uart5_listener.py) | **Primary Service Entry Point:** Receives UART commands from the ESP32, manages display/meter states, and dispatches actions. |
-| [heartbeat_sender.py](../scripts/rpi/home/antho/heartbeat_sender.py) | **Heartbeat Service Script:** Periodically transmits heartbeat packets over UART5 to inform the ESP32 that the Pi is online. |
-| [command_ids.py](../scripts/rpi/home/antho/command_ids.py) | **Command Constants:** Defines packet command IDs and message type constants matching the ESP32 protocol. |
-| [protocol.py](../scripts/rpi/home/antho/protocol.py) | **Protocol Driver:** Low-level binary protocol implementation (packet framing, byte packing/unpacking, and checksum calculation). |
-| [uart_writer_client.py](../scripts/rpi/home/antho/uart_writer_client.py) | **UART Transmission Client:** Thread-safe client socket wrapper for transmitting outgoing packets back to the ESP32. |
-| [mpd_client.py](../scripts/rpi/home/antho/mpd_client.py) | **MPD Client Interface:** Low-level socket client for communicating directly with moOde's MPD (Music Player Daemon). |
-| [library_browser.py](../scripts/rpi/home/antho/library_browser.py) | **Library Browser:** Handles music library directory navigation, search queries, and catalog responses back to the ESP32. |
-| [playlist_manager.py](../scripts/rpi/home/antho/playlist_manager.py) | **Playlist Manager:** Handles playlist creation, track queuing, and playlist item management. |
-| [panel_control.py](../scripts/rpi/home/antho/panel_control.py) | **Panel & UI Controller:** Controls moOde view switching through the Chrome DevTools Protocol (CDP port 9222). |
-| [playback_commands.py](../scripts/rpi/home/antho/playback_commands.py) | **Playback Controller:** Executes local playback actions (play, pause, next, prev, volume, mute, power). |
-| [UAart5Listener.py](../scripts/rpi/home/antho/UAart5Listener.py) | **Legacy Wrapper:** Backward-compatibility entry point for launching `uart5_listener.py`; the unusual filename is retained for compatibility. |
+| [uart5_listener.py](../../scripts/rpi/home/antho/uart5_listener.py) | **Primary Service Entry Point:** Receives UART commands from the ESP32, manages display/meter states, and dispatches actions. |
+| [heartbeat_sender.py](../../scripts/rpi/home/antho/heartbeat_sender.py) | **Heartbeat Service Script:** Periodically transmits heartbeat packets over UART5 to inform the ESP32 that the Pi is online. |
+| [command_ids.py](../../scripts/rpi/home/antho/command_ids.py) | **Command Constants:** Defines packet command IDs and message type constants matching the ESP32 protocol. |
+| [protocol.py](../../scripts/rpi/home/antho/protocol.py) | **Protocol Driver:** Low-level binary protocol implementation (packet framing, byte packing/unpacking, and checksum calculation). |
+| [uart_writer_client.py](../../scripts/rpi/home/antho/uart_writer_client.py) | **UART Transmission Client:** Thread-safe client socket wrapper for transmitting outgoing packets back to the ESP32. |
+| [mpd_client.py](../../scripts/rpi/home/antho/mpd_client.py) | **MPD Client Interface:** Low-level socket client for communicating directly with moOde's MPD (Music Player Daemon). |
+| [library_browser.py](../../scripts/rpi/home/antho/library_browser.py) | **Library Browser:** Handles music library directory navigation, search queries, and catalog responses back to the ESP32. |
+| [playlist_manager.py](../../scripts/rpi/home/antho/playlist_manager.py) | **Playlist Manager:** Handles playlist creation, track queuing, and playlist item management. |
+| [panel_control.py](../../scripts/rpi/home/antho/panel_control.py) | **Panel & UI Controller:** Controls moOde view switching through the Chrome DevTools Protocol (CDP port 9222). |
+| [playback_commands.py](../../scripts/rpi/home/antho/playback_commands.py) | **Playback Controller:** Executes local playback actions (play, pause, next, prev, volume, mute, power). |
+| [UAart5Listener.py](../../scripts/rpi/home/antho/UAart5Listener.py) | **Legacy Wrapper:** Backward-compatibility entry point for launching `uart5_listener.py`; the unusual filename is retained for compatibility. |
 
 ### Other Tracked Configuration & Display Assets
 
-- [scripts/rpi/boot/firmware/config.txt](../scripts/rpi/boot/firmware/config.txt): Firmware configuration template with the `config-user.txt` include
-- [scripts/rpi/boot/firmware/config-user.txt](../scripts/rpi/boot/firmware/config-user.txt): User overlay configuration template containing `dtoverlay=uart5`
-- [scripts/rpi/boot/firmware/cmdline.txt](../scripts/rpi/boot/firmware/cmdline.txt): Boot command-line template
-- [scripts/rpi/FinalSplashScreen.png](../scripts/rpi/FinalSplashScreen.png): Static splash-screen image asset
-- [scripts/rpi/Peppymeter/](../scripts/rpi/Peppymeter/): PeppyMeter needle, background graphics, and `meters.txt` configurations
+- [scripts/rpi/boot/firmware/config.txt](../../scripts/rpi/boot/firmware/config.txt): Firmware configuration template with the `config-user.txt` include
+- [scripts/rpi/boot/firmware/config-user.txt](../../scripts/rpi/boot/firmware/config-user.txt): User overlay configuration template containing `dtoverlay=uart5`
+- [scripts/rpi/boot/firmware/cmdline.txt](../../scripts/rpi/boot/firmware/cmdline.txt): Boot command-line template
+- [scripts/rpi/FinalSplashScreen.png](../../scripts/rpi/FinalSplashScreen.png): Static splash-screen image asset
+- [scripts/rpi/Peppymeter/](../../scripts/rpi/Peppymeter/): PeppyMeter needle, background graphics, and `meters.txt` configurations
 
 ---
 
@@ -516,7 +516,7 @@ Writes to `/var/log/plymouth-debug.log`.
 
 If you prefer a simple static image splash screen without Plymouth:
 
-1. From the repository root on the Pi, copy the target splash screen image (such as [scripts/rpi/FinalSplashScreen.png](../scripts/rpi/FinalSplashScreen.png)) to `/opt/splash.png`:
+1. From the repository root on the Pi, copy the target splash screen image (such as [scripts/rpi/FinalSplashScreen.png](../../scripts/rpi/FinalSplashScreen.png)) to `/opt/splash.png`:
 
 ```bash
 sudo cp /home/<username>/TinyControlBoard/scripts/rpi/FinalSplashScreen.png /opt/splash.png

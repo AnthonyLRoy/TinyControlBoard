@@ -8,7 +8,7 @@ This manual explains how to operate the Streamer DAC, connect its audio and netw
 
 Welcome to your Stream DAC player. This guide will walk you through everything you need to know to get the most out of your front panel controls — from powering on for the first time to exploring the display and playback options. No technical knowledge is needed; just read along and enjoy your music.
 
-![User manual figure 1](user-manual-media/media/image1.png)
+![User manual figure 1](../user-manual-media/media/image1.png)
 
 ### A Quick Look at the Front Panel
 
@@ -192,7 +192,7 @@ If this fails to resolve the issue then the repair will require investigation wi
 
 ## Rear Panel Connection Guide
 
-![User manual figure 2](user-manual-media/media/image2.png)
+![User manual figure 2](../user-manual-media/media/image2.png)
 
 Before connecting your DAC, take a few moments to familiarise yourself with the rear panel. Every connector has been carefully designed to provide reliable operation while offering maximum flexibility when integrating the DAC into your audio system.
 
@@ -447,7 +447,7 @@ Before powering on the system, confirm the following:
 
 ## Power Supply Front Panel
 
-![User manual figure 3](user-manual-media/media/image3.png)
+![User manual figure 3](../user-manual-media/media/image3.png)
 
 ### A Quick Look
 
@@ -473,7 +473,7 @@ This LED also has two operating states:
 
 - **Green** – The capacitors are fully charged, and the power supply is now delivering power from the capacitors rather than directly from the mains supply.
 
-![User manual figure 4](user-manual-media/media/image4.png)
+![User manual figure 4](../user-manual-media/media/image4.png)
 
 ## Power Supply Back Panel
 

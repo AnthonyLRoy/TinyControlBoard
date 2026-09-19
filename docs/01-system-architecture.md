@@ -144,7 +144,7 @@ sequenceDiagram
 | Raspberry Pi stops sending heartbeats while ON | After 30s with no UART RX (`k_heartbeatTimeoutMs`), `HeartbeatMonitor` fires `onTimeout` → `ActionProcessor::handleHeartbeatTimeout()` forces a transition toward `SLEEP` | `lib/hal/uart/heartbeatMonitor.cpp`, `lib/app/actionProcessor.cpp` |
 | UART communication fails (framing/checksum error) | Raspberry Pi's `uart5_listener.py` drops any packet with a bad checksum or wrong `srcApp`; no retry/NACK is sent | `scripts/rpi/home/antho/protocol.py`, `uart5_listener.py` |
 | A GPIO/relay hardware device does not respond | Not detected by software — GPIO relay writes are fire-and-forget (`gpio_set_level`), there is no read-back/verification of relay state | `lib/hal/relay/relay.cpp` |
-| A systemd service fails to start on the Pi | `Restart=always` is set on both `heartbeat_sender.service`/`uart5_listener.service` per `docs/RPI4_SETUP.md`'s service templates — systemd will keep restarting it; no ESP32-side detection beyond the general heartbeat timeout | `docs/RPI4_SETUP.md` |
+| A systemd service fails to start on the Pi | `Restart=always` is set on both `heartbeat_sender.service`/`uart5_listener.service` per `docs/userDocumentation/RPI4_SETUP.md`'s service templates — systemd will keep restarting it; no ESP32-side detection beyond the general heartbeat timeout | `docs/userDocumentation/RPI4_SETUP.md` |
 | BLE connection drops mid-session | `BoardBleManager` auto-reconnects after 2000ms unless the disconnect was user-initiated; a 15s connect watchdog exists during the `Connecting` state | `android/.../ble/BoardBleManager.kt` |
 
 ## 10. System State

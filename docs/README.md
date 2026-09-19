@@ -63,8 +63,8 @@ UART wire format and [02-android-developer-guide.md](02-android-developer-guide.
   documentation set's inputs.
 
 Pre-existing narrower documents (`architecture.md`, `button-command-map.md`,
-`power-sequencing.md`, `wiring-reference.md`, `RPI4_SETUP.md`,
-`android-tinyremote-user-manual.md`, `wifi-transport-plan.md`,
+`power-sequencing.md`, `wiring-reference.md`, `wifi-transport-plan.md`,
 `stream-dac-front-panel-user-guide.md`) remain in this folder and are referenced
 where they contain corroborating detail; this new numbered set supersedes them as
-the primary developer-facing reference.
+the primary developer-facing reference. End-user manuals (`AndroidAppUserManual.md`,
+`user-manual.md`, `RPI4_SETUP.md`) now live under `docs/userDocumentation/`.

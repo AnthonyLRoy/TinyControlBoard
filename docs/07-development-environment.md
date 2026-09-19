@@ -100,5 +100,5 @@ ssh pi@<host> "sudo mv /tmp/*.service /etc/systemd/system/ && \
 |---|---|
 | PlatformIO can't find the board manifest | Ensure `boards/esp32-s3-devkitc-1-16mb.json` exists relative to the project root — it is a project-local board definition, not a stock PlatformIO board |
 | Android Gradle sync fails on JDK version | AGP 9.3.1 requires JDK 17+; set `JAVA_HOME` accordingly |
-| No UART traffic reaches the Pi | Confirm `dtoverlay=uart5` in `/boot/config.txt` and that `/dev/ttyAMA5` exists; see [docs/RPI4_SETUP.md](RPI4_SETUP.md) |
+| No UART traffic reaches the Pi | Confirm `dtoverlay=uart5` in `/boot/config.txt` and that `/dev/ttyAMA5` exists; see [docs/userDocumentation/RPI4_SETUP.md](userDocumentation/RPI4_SETUP.md) |
 | Firmware boots but never leaves `TURNING_ON` | Raspberry Pi services not running or UART miswired — see [04-rpi-developer-guide.md](04-rpi-developer-guide.md) §12 |
