@@ -83,7 +83,7 @@ sequenceDiagram
     participant AP as ActionProcessor
     participant BLE as BleServer
 
-    Main->>Main: esp_pm_configure() (light-sleep config; noted ineffective in a code comment)
+    Main->>Main: esp_pm_configure() (light-sleep config, noted ineffective in a code comment)
     Main->>Main: vTaskDelay(5000ms) — power-stabilization delay
     Main->>CB: board.init()
     CB->>BS: prepareStartupIndicators() — power LED TURNING_ON, flash all button LEDs
@@ -99,7 +99,7 @@ sequenceDiagram
     CB->>BS: finalizeStartupIndicators() — 5s init delay
     CB->>AP: triggerInitialPowerOn() — runs the PowerOn relay sequence (see §12)
     Main->>BLE: BleServer::start() — NimBLE GATT init, statusNotifyTask (stack 4096, prio 3)
-    Main->>Main: while(true) vTaskDelay(1000ms) — idle; all work happens in tasks
+    Main->>Main: while(true) vTaskDelay(1000ms) — idle, all work happens in tasks
 ```
 
 If `board.init()` returns false, `app_main()` logs an error, calls `board.deinit()`, then
