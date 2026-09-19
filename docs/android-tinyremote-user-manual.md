@@ -28,11 +28,11 @@ Before you begin, make sure that:
 5. Tap **TinyControlBoard**.
 6. Wait for the main control screen to open.
 
-> **Screenshot placeholder 1 - Find your player**
+> **Find your player**
 >
-> <img src="user-manual-media/media/ScreenScan.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="360" style="max-width: 100% height: auto;">
+> <img src="user-manual-media/media/ScreenScan.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100% height: auto;">
 >
-> Suggested caption: *Tap TinyControlBoard to connect.*
+> *Tap TinyControlBoard to connect.*
 
 If the player does not appear, see [Can't find the player](#cant-find-the-player).
 
@@ -40,22 +40,26 @@ If the player does not appear, see [Can't find the player](#cant-find-the-player
 
 The main screen is where you will normally control your music. It shows the song that is playing, album artwork when available, and the most useful controls.
 
-> **Screenshot placeholder 2 - Main controls**
-> <img src="user-manual-media/media/MainScreen.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="360" style="max-width: 100%; ">
-> Insert a portrait screenshot of the connected main screen. Add numbered callouts for: Library, current song, previous, play/pause, next, shuffle, repeat, screen brightness, display on/off, settings, and power.
+> **Main controls**
+>
+> <img src="user-manual-media/media/MainScreen.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+>
+> Library, current song, previous, play/pause, next, shuffle, repeat, screen brightness, display on/off, settings, and power.
 
-| Control | Use it to |
-| --- | --- |
-| **Library** | Find music by browsing folders or searching. |
-| **Current song** | Open the current queue. |
-| **Previous** | Go back to the previous track. |
-| **Play / Pause** | Start or pause music. |
-| **Next** | Skip to the next track. |
-| **Shuffle** | Play tracks in a random order. Tap again to turn it off. |
-| **Repeat** | Repeat the queue. Tap again to turn it off. |
-| **Brightness - / +** | Make the player's display dimmer or brighter. |
-| **Display On / Off** | Turn the player's display on or off without stopping music. |
-| **Power** | Wake the player, or choose Sleep or Deep Sleep. |
+| Icon | Control | Use it to |
+| --- | --- | --- |
+| <img src="user-manual-media/media/icons/folder.svg" alt="Folder icon" width="24"> | **Library** | Find music by browsing folders or searching. |
+| Text | **Current song** | Open the current queue. |
+| <img src="user-manual-media/media/icons/skip-previous.svg" alt="Previous track icon" width="24"> | **Previous** | Go back to the previous track. |
+| <img src="user-manual-media/media/icons/play.svg" alt="Play icon" width="24"> <img src="user-manual-media/media/icons/pause.svg" alt="Pause icon" width="24"> | **Play / Pause** | Start or pause music. The icon changes to show the available action. |
+| <img src="user-manual-media/media/icons/skip-next.svg" alt="Next track icon" width="24"> | **Next** | Skip to the next track. |
+| <img src="user-manual-media/media/icons/menu.svg" alt="Menu icon" width="24"> | **Menu** | Choose the view shown on the player's display. |
+| <img src="user-manual-media/media/icons/shuffle.svg" alt="Shuffle icon" width="24"> | **Shuffle** | Play tracks in a random order. Tap again to turn it off. |
+| <img src="user-manual-media/media/icons/repeat.svg" alt="Repeat icon" width="24"> | **Repeat** | Repeat the queue. Tap again to turn it off. |
+| <img src="user-manual-media/media/icons/brightness-down.svg" alt="Brightness down icon" width="24"> <img src="user-manual-media/media/icons/brightness.svg" alt="Brightness icon" width="24"> <img src="user-manual-media/media/icons/brightness-up.svg" alt="Brightness up icon" width="24"> | **Brightness - / +** | Make the player's display dimmer or brighter. |
+| <img src="user-manual-media/media/icons/monitor.svg" alt="Display icon" width="24"> | **Display On / Off** | Turn the player's display on or off without stopping music. |
+| <img src="user-manual-media/media/icons/settings.svg" alt="Settings icon" width="24"> | **Settings** | Set the moOde player address for album artwork and song details. |
+| <img src="user-manual-media/media/icons/power.svg" alt="Power icon" width="24"> | **Power** | Wake the player, or choose Sleep or Deep Sleep. |
 
 When shuffle, repeat, cover, meter, or DAC mode is active, its button is highlighted. A highlighted button means that option is currently on.
 
@@ -80,8 +84,9 @@ The song name appears above the controls. Tap it at any time to open the current
 
 > **Screenshot placeholder 3 - Browse your music**
 >
-> <img src="user-manual-media/media/SearchResults.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="360" style="max-width: 100%; ">
-> Suggested caption: *Open a folder, then tap a track to add it to your queue.*
+> <img src="user-manual-media/media/Library.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> 
+>*Open a folder, then tap a track to add it to your queue.*
 
 ### Add or play a whole folder
 
@@ -90,6 +95,12 @@ When you tap a folder, choose one of these options:
 - **Open**: look inside the folder;
 - **Add folder to playlist**: add its music after the tracks already in your queue;
 - **Replace playlist**: remove the current queue and use this folder instead.
+
+> **Screenshot placeholder 3 - Browse your music**
+>
+> <img src="user-manual-media/media/FolderList.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> 
+>*Open a folder, then tap a track to add it to your queue.*
 
 Use **Up** inside the library to return to the previous folder.
 
@@ -107,13 +118,13 @@ Results are grouped by album. Tap a track to add it to the queue. Use an album h
 
 > **Screenshot placeholder 4 - Search**
 >
-> Insert a portrait screenshot of the search dialog with the search type selector and keyboard visible.
+><img src="user-manual-media/media/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
 > Suggested caption: *Choose what to search for, enter a name, then tap OK.*
 
 > **Screenshot placeholder 5 - Search results**
 >
-> Insert a portrait screenshot of grouped album results with the album actions visible.
+> <img src="user-manual-media/media/SearchResults.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
 > Suggested caption: *Tap a track, or add a whole album at once.*
 
@@ -133,7 +144,8 @@ Tap the song name on the main screen, or tap **Playlist** if it is shown on your
 - Swipe left on a track to remove it.
 
 > **Screenshot placeholder 6 - Current queue**
-><img src="user-manual-media/media/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="360" style="max-width: 100%; ">
+>
+><img src="user-manual-media/media/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the Current Playlist screen with a drag handle and one track action visible.
 >
 > Suggested caption: *Drag to reorder, swipe left to remove, or tap a track to play it.*
@@ -168,10 +180,10 @@ To save, load, delete, or clear a queue, open the current queue and tap **Playli
 3. Tap **Clear** to remove all tracks, or **Cancel** to keep them.
 
 > **Screenshot placeholder 7 - Playlist management**
-> <img src="user-manual-media/media/ManagePlaylist.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="360" style="max-width: 100%; ">
-> Insert a portrait screenshot of the Playlist Management screen showing Save, Load, Delete, and Clear Queue.
+> 
+><img src="user-manual-media/media/ManagePlaylist.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
-> Suggested caption: *Save a queue for later, or load one you already saved.*
+> *Save a queue for later, or load one you already saved.*
 
 ## Change the Player Display
 
@@ -184,10 +196,11 @@ The app can ask the player to show a different view on its own display.
 Available views may include **Default View**, **Radio Stations**, **Playlist**, **Folder View**, **Tag View**, and **Album View**.
 
 > **Screenshot placeholder 8 - Choose a display view**
->  <img src="user-manual-media/media/displayview.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="360" style="max-width: 100%; ">
+>  
+><img src="user-manual-media/media/displayview.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the Select display menu screen with one selected row.
 >
-> Suggested caption: *Choose what you want to see on the player's display.*
+> *Choose what you want to see on the player's display.*
 
 ## Album Artwork and Song Details
 
@@ -201,10 +214,11 @@ DanStreamer can show the current song name and album artwork. If you see a defau
 This setting is only for album artwork and song details. Your normal remote controls use Bluetooth.
 
 > **Screenshot placeholder 9 - Album art setup**
-> <img src="user-manual-media/media/IPConfiguration.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="360" style="max-width: 100%; ">
+> 
+><img src="user-manual-media/media/IPConfiguration.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the moOde IP Address dialog.
 >
-> Suggested caption: *Enter the address of your moOde player to show artwork and song details.*
+> *Enter the address of your moOde player to show artwork and song details.*
 
 ## Power Options
 
@@ -217,10 +231,10 @@ Tap the power button on the main screen:
 Wait for a power change to finish before sending more commands. The status beside the app title shows whether the player is on, sleeping, or changing state.
 
 > **Screenshot placeholder 10 - Power options**
-><img src="user-manual-media/media/ShutDown.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="360" style="max-width: 100%; ">
-> Insert a portrait screenshot of the Power Options dialog.
 >
-> Suggested caption: *Choose Sleep for everyday use or Deep Sleep for longer breaks.*
+><img src="user-manual-media/media/ShutDown.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+>
+>*Choose Sleep for everyday use or Deep Sleep for longer breaks.*
 
 ## Troubleshooting
 
