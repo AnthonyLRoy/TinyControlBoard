@@ -20,7 +20,7 @@ namespace board
         inline constexpr uint32_t k_rpiOnDelayMs = 1000;
         inline constexpr uint32_t k_rpiBootTimeoutMs = 60000;
         inline constexpr uint32_t k_rpiShutdownTimeoutMs = 60000;
-        inline constexpr uint32_t k_rpiShutdownSettleDelayMs = 500;
+        inline constexpr uint32_t k_rpiShutdownSettleDelayMs = 5500; // we could receive the shutdown signal slightly before the RPi actually powers off
         inline constexpr uint32_t k_vcc3v3PowerOffDelayMs = 5000;
     } // namespace timing
 
