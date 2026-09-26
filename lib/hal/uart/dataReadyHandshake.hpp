@@ -9,8 +9,11 @@ namespace transport::uart
     class DataReadyHandshake
     {
     public:
+        // Configures the Raspberry Pi input pin used to signal incoming UART traffic.
         bool configureRpiInputPin(gpio_num_t pin);
+        // Configures the ESP32 output pin used to notify the Raspberry Pi that data is ready.
         bool configureEsp32OutputPin(gpio_num_t esp32DataReadyPin);
+        // Installs the GPIO ISR that wakes the UART receiver when the Pi asserts the input pin.
         bool installIsrHandler(gpio_num_t rpiDataReadyPin, gpio_isr_t handler, void *p_arg);
 
         // True while the ESP32's own data-ready output is still asserted from a prior send.

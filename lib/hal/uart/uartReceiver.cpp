@@ -1,7 +1,9 @@
 #include "uartReceiver.hpp"
 
+// Creates an empty receive buffer ready to accumulate UART bytes.
 UartReceiver::UartReceiver() : m_bufferLen(0) {}
 
+// Appends incoming UART bytes into the rolling receive buffer without overrunning the storage limit.
 void UartReceiver::pushBytes(const uint8_t *p_data, int len)
 {
     int toCopy = len;
@@ -11,6 +13,7 @@ void UartReceiver::pushBytes(const uint8_t *p_data, int len)
     m_bufferLen += toCopy;
 }
 
+// Extracts the next complete message from the buffer, discarding invalid framing and resynchronizing.
 bool UartReceiver::getNextMessage(UartMessage &rOutMsg)
 {
     // Need the full header (8 bytes) before we know the payload length.

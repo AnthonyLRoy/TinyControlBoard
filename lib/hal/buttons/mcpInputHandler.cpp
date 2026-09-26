@@ -11,6 +11,7 @@ namespace buttons {
 
 static constexpr const char *k_logTag = "MCP             ";
 
+// Creates an MCP23018 driver instance bound to a specific I2C port and device address.
 McpInputHandler::McpInputHandler(uint8_t address, i2c_port_t port)
         : m_i2cAddr(address),
             m_i2cPort(port),
@@ -20,6 +21,7 @@ McpInputHandler::McpInputHandler(uint8_t address, i2c_port_t port)
             m_ticksToWait(pdMS_TO_TICKS(50)),
             mp_interruptTaskHandle(nullptr) {}
 
+// Initializes the I2C bus, MCP23018 chip, interrupt pin, and background task for GPIO edge events.
 esp_err_t McpInputHandler::begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin) {
     m_interruptPin = intPin;
 
@@ -39,17 +41,26 @@ esp_err_t McpInputHandler::begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intP
     return ESP_OK;
 }
 
+// Stores the callback invoked when a button transitions to a pressed state.
 void McpInputHandler::setButtonCallback(std::function<void(uint8_t, bool)> cb) { m_buttonCallback = cb; }
+
+// Stores the callback invoked when a button transitions to a released state.
 void McpInputHandler::setReleaseCallback(std::function<void(uint8_t, bool)> cb) { m_releaseCallback = cb; }
+
+// Stores the callback invoked when the rotary encoder rotates.
 void McpInputHandler::setRotaryCallback(std::function<void(int)> cb) { m_rotaryCallback = cb; }
+
+// Updates the I2C transaction timeout used for MCP reads and writes.
 void McpInputHandler::setTimeout(uint32_t ms) { m_ticksToWait = pdMS_TO_TICKS(ms); }
 
+// Enables or disables the I2C power path for the expansion board.
 void McpInputHandler::enableI2c(bool enable) {
     gpio_set_level(PIN_I2C_ENABLE, enable ? 1 : 0);
     ESP_LOGI(k_logTag, "I2C %s", enable ? "enabled" : "disabled");
 }
 #ifdef DEBUG_MCP_SCAN
 
+// Dumps the MCP23018 register map for debugging the input-expander state.
 void McpInputHandler::dumpRegisters() const {
     for (uint8_t reg = 0x00; reg <= 0x15; ++reg) {
         uint8_t val = readRegister(reg);
@@ -60,7 +71,7 @@ void McpInputHandler::dumpRegisters() const {
 #endif
 
 #ifdef DEBUG_MCP_SCAN
-// Scans the I2C bus for devices and logs their addresses when found. Useful for debugging connectivity issues with the MCP23018.
+// Scans the I2C bus and logs any responding devices to help debug wiring issues.
 void McpInputHandler::scanI2c() const {
     int found = 0;
 
@@ -86,6 +97,7 @@ void McpInputHandler::scanI2c() const {
 
 #endif
 
+// Configures the ESP32 I2C master interface and enables the MCP23018 power rail.
 esp_err_t McpInputHandler::initI2cBus(gpio_num_t sda, gpio_num_t scl) {
     i2c_config_t conf = {};
     conf.mode = I2C_MODE_MASTER;
@@ -103,6 +115,7 @@ esp_err_t McpInputHandler::initI2cBus(gpio_num_t sda, gpio_num_t scl) {
     return ESP_OK;
 }
 
+// Configures the MCP23018 as an input-expander with pull-ups and interrupt support.
 esp_err_t McpInputHandler::initMcp23018() {
     writeRegisterPair(MCP_IODIRA, ALL_INPUTS, ALL_INPUTS);
     writeRegisterPair(MCP_GPPUA, ALL_INPUTS, ALL_INPUTS);
@@ -112,6 +125,7 @@ esp_err_t McpInputHandler::initMcp23018() {
     return ESP_OK;
 }
 
+// Configures the interrupt GPIO so MCP state changes wake the handler task.
 esp_err_t McpInputHandler::initInterruptPin() {
     gpio_config_t io_conf = {
         .pin_bit_mask = 1ULL << m_interruptPin,
@@ -130,6 +144,7 @@ esp_err_t McpInputHandler::initInterruptPin() {
     return ESP_OK;
 }
 
+// Starts the FreeRTOS task that drains MCP interrupts and processes input changes.
 void McpInputHandler::createInterruptTask() {
     if (xTaskCreate([](void *arg) {
         static_cast<McpInputHandler*>(arg)->runInterruptTaskLoop();
@@ -139,6 +154,7 @@ void McpInputHandler::createInterruptTask() {
     }
 }
 
+// Reads the current GPIO state so the next interrupt can be compared against the prior snapshot.
 void McpInputHandler::clearInitialInterrupts() {
     const uint8_t gpioa = readRegister(MCP_GPIOA);
     const uint8_t gpiob = readRegister(MCP_GPIOB);
@@ -149,6 +165,7 @@ void McpInputHandler::clearInitialInterrupts() {
     m_rotaryLast = static_cast<uint8_t>((a << 1) | b);
 }
 
+// ISR stub that wakes the background task when the MCP interrupt line asserts.
 void IRAM_ATTR McpInputHandler::gpioIsr(void *p_arg) {
     auto *p_self = static_cast<McpInputHandler*>(p_arg);
     BaseType_t higherPriorityWoken = pdFALSE;
@@ -159,6 +176,7 @@ void IRAM_ATTR McpInputHandler::gpioIsr(void *p_arg) {
     }
 }
 
+// Runs the background handler loop that processes each MCP interrupt notification.
 void McpInputHandler::runInterruptTaskLoop() {
     while (true) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -166,6 +184,7 @@ void McpInputHandler::runInterruptTaskLoop() {
     }
 }
 
+// Reads the changed MCP input pins and dispatches button presses/releases and rotary changes.
 void McpInputHandler::handleInterrupt() {
     uint8_t intfA = readRegister(MCP_INTFA);
     uint8_t intfB = readRegister(MCP_INTFB);
@@ -200,6 +219,7 @@ void McpInputHandler::handleInterrupt() {
     m_prevState = current;
 }
 
+// Decodes the rotary encoder quadrature state into a signed movement value.
 void McpInputHandler::decodeRotary(uint16_t state) {
     ESP_LOGI(k_logTag, "Decoding rotary with state: 0x%04X", state);
     uint8_t a = !(state & (1 << ROTARY_A_PIN));
@@ -212,6 +232,7 @@ void McpInputHandler::decodeRotary(uint16_t state) {
     m_rotaryLast = (a << 1) | b;
 }
 
+// Writes a raw command/data buffer to the MCP23018 over I2C.
 esp_err_t McpInputHandler::i2cWrite(const uint8_t *p_data, size_t len) const {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
@@ -223,6 +244,7 @@ esp_err_t McpInputHandler::i2cWrite(const uint8_t *p_data, size_t len) const {
     return ret;
 }
 
+// Writes a register address then reads back the requested number of bytes from the MCP23018.
 esp_err_t McpInputHandler::i2cWriteRead(uint8_t reg, uint8_t *p_data, size_t len) const {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
@@ -237,23 +259,27 @@ esp_err_t McpInputHandler::i2cWriteRead(uint8_t reg, uint8_t *p_data, size_t len
     return ret;
 }
 
+// Reads a single GPIO or configuration register from the MCP23018 device.
 uint8_t McpInputHandler::readRegister(uint8_t reg) const {
     uint8_t val = 0;
     i2cWriteRead(reg, &val, 1);
     return val;
 }
 
+// Reads the 16 GPIO pins from port A and B as a single combined value.
 uint16_t McpInputHandler::readGpio16() const {
     uint8_t data[2] = {};
     i2cWriteRead(MCP_GPIOA, data, 2);
     return (data[1] << 8) | data[0];
 }
 
+// Writes a single byte value into a specific MCP23018 register.
 void McpInputHandler::writeRegister(uint8_t reg, uint8_t val) {
     uint8_t buf[] = {reg, val};
     i2cWrite(buf, sizeof(buf));
 }
 
+// Writes a pair of register values used for configuring adjacent MCP23018 banks.
 void McpInputHandler::writeRegisterPair(uint8_t baseReg, uint8_t a, uint8_t b) {
     uint8_t buf[] = {baseReg, a, b};
     i2cWrite(buf, sizeof(buf));

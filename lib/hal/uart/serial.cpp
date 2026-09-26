@@ -7,19 +7,23 @@ using namespace transport::uart;
 
 static constexpr const char *k_logTag = "Serial          ";
 
+// Returns the single shared UART transport instance used across the board.
 UartTransport &UartTransport::getInstance()
 {
     static UartTransport s_instance;
     return s_instance;
 }
 
+// Creates an uninitialized UART transport object with the default UART port.
 UartTransport::UartTransport() : m_uartNumber(UART_NUM_0) {}
 
+// Cleans up the UART driver and associated monitor state during teardown.
 UartTransport::~UartTransport()
 {
     deinitUart();
 }
 
+// Initializes the UART port, handshake pins, and receive pump for communication with the Raspberry Pi.
 bool UartTransport::initUart(uart_port_t uartNum,
                       int baudRate,
                       gpio_num_t txPin,
@@ -94,6 +98,7 @@ bool UartTransport::initUart(uart_port_t uartNum,
     return true;
 }
 
+// Stops the receive pump and heartbeat monitor before deleting the UART driver.
 void UartTransport::deinitUart()
 {
     stopHeartbeatMonitor();
@@ -107,6 +112,7 @@ void UartTransport::deinitUart()
     }
 }
 
+// Serializes and transmits a UART message using the configured connection and log tag.
 void UartTransport::sendUartMessage(const char *p_logTag, UartMessage &rMessage)
 {
     uint8_t txBuffer[UART_PACKET_SIZE];
@@ -124,6 +130,7 @@ void UartTransport::sendUartMessage(const char *p_logTag, UartMessage &rMessage)
     }
 }
 
+// Sends raw byte data across the UART link only when the interface is active and ready.
 bool UartTransport::sendData(const uint8_t *p_data, size_t len)
 {
     if (!p_data || len == 0 || !m_initialized.load(std::memory_order_acquire))
@@ -146,6 +153,7 @@ bool UartTransport::sendData(const uint8_t *p_data, size_t len)
     return written == len;
 }
 
+// Builds a minimal UART message from a command ID and sends it with the supplied tag.
 void UartTransport::sendUartCommand(const char *p_logTag, uint32_t commandId)
 {
     UartMessage msg{};
@@ -153,6 +161,7 @@ void UartTransport::sendUartCommand(const char *p_logTag, uint32_t commandId)
     sendUartMessage(p_logTag, msg);
 }
 
+// ISR helper that notifies the RX pump when the Raspberry Pi raises the data-ready signal.
 void IRAM_ATTR UartTransport::gpioIsrHandler(void *p_arg)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -162,16 +171,19 @@ void IRAM_ATTR UartTransport::gpioIsrHandler(void *p_arg)
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
+// Starts the watchdog that flags a missing UART heartbeat after the requested timeout.
 void UartTransport::startHeartbeatMonitor(uint32_t timeoutMs, std::function<void()> onTimeout)
 {
     m_heartbeat.start(timeoutMs, std::move(onTimeout));
 }
 
+// Stops the heartbeat watchdog and clears any pending timeout state.
 void UartTransport::stopHeartbeatMonitor()
 {
     m_heartbeat.stop();
 }
 
+// Registers the callback used when a valid message is received from the UART bus.
 void UartTransport::setRxCallback(std::function<void(const UartMessage &)> callback)
 {
     m_userRxCallback = std::move(callback);

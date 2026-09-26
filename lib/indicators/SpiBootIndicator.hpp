@@ -17,14 +17,17 @@ namespace indicators
     public:
         /// Start flashing in "waiting for RPi boot" mode (500 ms half-period).
         /// No-op if already running.
+        // Starts the boot-wait flash pattern while the Raspberry Pi is still starting up.
         void startWaiting();
 
         /// RPi heartbeat received — stop flashing and clear all LEDs.
+        // Stops the boot flash and clears all SPI LEDs once the Pi is healthy.
         void notifySuccess();
 
         /// Boot failed (timeout or firmware init error).
         /// If the task is already running (timeout case), switches to the faster 150 ms pattern.
         /// If the task is not yet running (firmware init failure), starts it in the failed state.
+        // Switches the indicator to the failure flash pattern when the boot sequence is not successful.
         void notifyFailure();
 
     private:

@@ -14,9 +14,12 @@ namespace controlSystem
     class ActionUartDispatcher
     {
     public:
+        // Creates the dispatcher bound to the UART sink used to send outbound commands.
         explicit ActionUartDispatcher(IUartCommandSink &rUartCommandSink);
 
+        // Sends the requested action to the UART sink and keeps the toggle state in sync.
         bool handle(const actions::IAction &action);
+        // Clears all remembered toggle states so the next command sequence starts fresh.
         void resetToggleStates();
 
     private:

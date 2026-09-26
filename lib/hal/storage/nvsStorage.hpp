@@ -22,21 +22,32 @@ namespace support
     class NvsStorage
     {
     public:
+        // Creates a storage wrapper bound to a single NVS namespace name.
         explicit NvsStorage(const char* namespaceName);
 
+        // Reads an 8-bit signed integer from the NVS namespace.
         bool readInt8  (const char* key, int8_t&   out) const;
+        // Writes an 8-bit signed integer to the NVS namespace.
         bool writeInt8 (const char* key, int8_t    value);
 
+        // Reads an 8-bit unsigned integer from the NVS namespace.
         bool readUInt8 (const char* key, uint8_t&  out) const;
+        // Writes an 8-bit unsigned integer to the NVS namespace.
         bool writeUInt8(const char* key, uint8_t   value);
 
+        // Reads a 16-bit signed integer from the NVS namespace.
         bool readInt16 (const char* key, int16_t&  out) const;
+        // Writes a 16-bit signed integer to the NVS namespace.
         bool writeInt16(const char* key, int16_t   value);
 
+        // Reads a 32-bit signed integer from the NVS namespace.
         bool readInt32 (const char* key, int32_t&  out) const;
+        // Writes a 32-bit signed integer to the NVS namespace.
         bool writeInt32(const char* key, int32_t   value);
 
+        // Reads a 32-bit unsigned integer from the NVS namespace.
         bool readUInt32 (const char* key, uint32_t& out) const;
+        // Writes a 32-bit unsigned integer to the NVS namespace.
         bool writeUInt32(const char* key, uint32_t  value);
 
         /**

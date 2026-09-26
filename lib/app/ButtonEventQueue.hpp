@@ -15,24 +15,33 @@ namespace controlSystem
     class ButtonEventQueue
     {
     public:
+        // Deletes the queue and task resources when the dispatcher is torn down.
         ~ButtonEventQueue();
 
         /// Creates the queue and spawns the dispatch task.
         /// Must be called after rDispatcher is fully constructed.
+        // Starts the queue and worker task that drains raw button and rotary events.
         bool start(ControlBoardInputDispatcher &rDispatcher);
 
         /// Deletes the task and queue; safe to call more than once.
+        // Stops the worker task and releases the queue used for event dispatch.
         void stop();
 
         /// Sends an event from ISR/callback context. Never blocks.
+        // Queues a raw button or rotary event for the background dispatcher thread.
         bool enqueue(const ButtonEvent &event, const char *p_eventName);
 
+        // Queues a button press event for the given input pin.
         void enqueuePress(uint8_t pin);
+        // Queues a button release event for the given input pin.
         void enqueueRelease(uint8_t pin);
+        // Queues a signed rotary movement event from the encoder.
         void enqueueRotary(int movement);
 
     private:
+        // FreeRTOS trampoline that calls the queue task loop for the dispatcher.
         static void taskEntry(void *pvParam);
+        // Runs the background task that converts queued events into action dispatches.
         void run();
 
         static constexpr uint8_t k_depth = 16;

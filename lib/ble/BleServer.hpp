@@ -25,6 +25,7 @@ namespace ble
     class BleServer
     {
     public:
+        // Starts the BLE GATT server and attaches the action processor callbacks it will use.
         void start(controlSystem::ActionProcessor &processor,
                    controlSystem::SystemState     &state,
                    std::function<void(uint16_t cmdId, uint16_t param)> onLibraryCommand,
@@ -32,9 +33,11 @@ namespace ble
     };
 
     // Pushes a MSG_LIBRARY_ENTRY notification immediately (bypasses the 200ms poll task).
+    // Sends the latest library-entry payload to connected BLE clients as a notify event.
     void notifyLibraryEntry(const UartMessage &rMsg);
 
     // Pushes a MSG_PLAYLIST_RESULT notification immediately (bypasses the 200ms poll task).
+    // Sends the playlist operation result to connected BLE clients as a notify event.
     void notifyPlaylistResult(const UartMessage &rMsg);
 
 } // namespace ble

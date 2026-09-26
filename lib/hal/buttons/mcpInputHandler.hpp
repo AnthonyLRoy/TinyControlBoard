@@ -38,38 +38,62 @@ namespace buttons {
 
 class McpInputHandler {
 public:
+    // Creates a driver instance bound to a specific MCP23018 address and I2C bus.
     McpInputHandler(uint8_t address, i2c_port_t port);
 
+    // Initializes the I2C bus, the MCP23018 chip, and the interrupt handling task.
     esp_err_t begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin);
 
+    // Registers the callback used when a button transitions to the pressed state.
     void setButtonCallback(std::function<void(uint8_t, bool)> cb);
+    // Registers the callback used when a button transitions to the released state.
     void setReleaseCallback(std::function<void(uint8_t, bool)> cb);
+    // Registers the callback used when the rotary encoder reports movement.
     void setRotaryCallback(std::function<void(int)> cb);
 
+    // Updates the I2C transaction timeout used while reading and writing the MCP device.
     void setTimeout(uint32_t ms);
+    // Enables or disables the I2C power rail connected to the MCP board.
     void enableI2c(bool enable);
 #ifdef DEBUG_MCP_SCAN
+    // Dumps the register map for debugging MCP register state.
     void dumpRegisters() const;
+    // Scans the I2C bus and logs any connected devices.
     void scanI2c() const;
 #endif
 
 private:
+    // Configures the ESP32 as the I2C master for the MCP23018 bus.
     esp_err_t initI2cBus(gpio_num_t sda, gpio_num_t scl);
+    // Configures the MCP23018 input-register defaults and interrupt behavior.
     esp_err_t initMcp23018();
+    // Configures the GPIO interrupt line used by the MCP23018 to wake the task.
     esp_err_t initInterruptPin();
+    // Creates the FreeRTOS task that drains GPIO edge notifications from the MCP.
     void createInterruptTask();
+    // Reads the current GPIO state to establish a clean baseline before processing events.
     void clearInitialInterrupts();
 
+    // ISR entry point that wakes the MCP interrupt task from interrupt context.
     static void gpioIsr(void *p_arg);
+    // Runs the background loop that consumes interrupt notifications and processes changes.
     void runInterruptTaskLoop();
+    // Reads the changed pin states and dispatches button and rotary events.
     void handleInterrupt();
+    // Converts the raw rotary quadrature state into a signed movement amount.
     void decodeRotary(uint16_t state);
 
+    // Writes a raw I2C buffer to the MCP23018 register map.
     esp_err_t i2cWrite(const uint8_t *p_data, size_t len) const;
+    // Writes a register address then reads back the requested data bytes.
     esp_err_t i2cWriteRead(uint8_t reg, uint8_t *p_data, size_t len) const;
+    // Reads a single register byte from the MCP23018.
     uint8_t readRegister(uint8_t reg) const;
+    // Reads both GPIO ports as a single 16-bit state value.
     uint16_t readGpio16() const;
+    // Writes a single byte value into one MCP23018 register.
     void writeRegister(uint8_t reg, uint8_t val);
+    // Writes a two-byte register pair in one transaction for adjacent GPIO settings.
     void writeRegisterPair(uint8_t baseReg, uint8_t a, uint8_t b);
 
 private:

@@ -42,20 +42,24 @@ namespace indicators
         /// Illuminate all eight boot diagnostic LEDs.
         /// Stops any running failure-flash task before setting the LEDs.
         /// Call at the start of each power-on sequence.
+        // Turns on all diagnostic LEDs to mark the start of the boot verification sequence.
         void begin();
 
         /// Record a successful boot stage: extinguish its LED pair.
+        // Marks a boot stage as successful by clearing that stage's diagnostic LED pair.
         void stageSuccess(BootStage stage);
 
         /// Record a failed boot stage.
         /// Turns off all remaining diagnostic LEDs, then flashes only the
         /// failing stage's LED pair at 3 Hz continuously until reset.
         /// Has no effect if a failure is already being indicated.
+        // Flashes the failed boot stage's LED pair to highlight the subsystem that did not initialize.
         void stageFailure(BootStage stage);
 
         /// Firmware initialisation failed before the relay power-on sequence.
         /// Flashes all eight diagnostic LEDs at 3 Hz continuously until reset.
         /// Has no effect if a failure is already being indicated.
+        // Flashes all boot-diagnostic LEDs to indicate a firmware startup failure.
         void firmwareInitFailed();
 
     private:
