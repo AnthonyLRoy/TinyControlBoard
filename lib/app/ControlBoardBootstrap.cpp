@@ -13,6 +13,7 @@ namespace controlSystem
 
     namespace bootstrap
     {
+        // Prepares the board LEDs and startup diagnostic pattern before the rest of the hardware is initialized.
         void prepareStartupIndicators()
         {
             indicators::getPowerLed().setState(ControlBoardPowerState::TURNING_ON);
@@ -25,12 +26,14 @@ namespace controlSystem
             indicators::getBootDiagnosticLeds().begin();
         }
 
+        // Completes the startup flash sequence once hardware initialization succeeds and the board is ready.
         void finalizeStartupIndicators()
         {
             ESP_LOGI(k_logTag, "ControlBoard init complete.");
             vTaskDelay(pdMS_TO_TICKS(board::timing::k_initDelayMs));
         }
 
+        // Binds the UART receive and heartbeat-timeout callbacks to the board's transport instance.
         void configureSerialCallbacks(transport::uart::UartTransport &rSerial,
                                       SerialRxCallback onSerialRx,
                                       VoidCallback onHeartbeatTimeout)
@@ -39,6 +42,7 @@ namespace controlSystem
             rSerial.startHeartbeatMonitor(board::timing::k_heartbeatTimeoutMs, std::move(onHeartbeatTimeout));
         }
 
+        // Initializes and de-asserts all relay outputs needed by the board subsystems at boot.
         bool setupRelays()
         {
             ESP_LOGI(k_logTag, "Setting up relays...");
@@ -62,6 +66,7 @@ namespace controlSystem
             return true;
         }
 
+        // Initializes the board UART channel used for Raspberry Pi communication and command handoff.
         bool setupSerial(transport::uart::UartTransport &rSerial)
         {
             ESP_LOGI(k_logTag, "Initializing UART");
@@ -83,6 +88,7 @@ namespace controlSystem
             return true;
         }
 
+        // Configures the MCP I/O expander that reads the physical front-panel button and rotary inputs.
         bool setupMcpHandler(buttons::McpInputHandler &rMcpHandler)
         {
             ESP_LOGI(k_logTag, "Initializing MCP handler");
@@ -107,6 +113,7 @@ namespace controlSystem
             return true;
         }
 
+        // Wires the MCP input callbacks into the button queue so press/release/rotary events are processed asynchronously.
         void configureMcpCallbacks(buttons::McpInputHandler &rMcpHandler,
                                    ButtonCallback onButtonPressed,
                                    ButtonCallback onButtonReleased,

@@ -59,7 +59,9 @@ namespace transport::uart
         void stopHeartbeatMonitor();
 
     private:
+        // Creates the singleton transport facade and its UART helper components.
         UartTransport();
+        // Stops the UART services and releases transport resources.
         ~UartTransport();
 
         uart_port_t m_uartNumber;

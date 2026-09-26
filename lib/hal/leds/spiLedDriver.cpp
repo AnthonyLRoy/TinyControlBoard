@@ -7,14 +7,19 @@
 namespace indicators
 {
 
+    // Stores the SPI host and GPIO pins used to control the LED driver.
     SpiLedDriver::SpiLedDriver(spi_host_device_t spiHost, gpio_num_t mosiPin, gpio_num_t clkPin, gpio_num_t latchPin)
         : m_host(spiHost), m_mosiPin(mosiPin),
           m_clkPin(clkPin), m_latchPin(latchPin)
     {
     }
+
+    // Destroys the SPI LED driver wrapper; the SPI device is managed by the ESP-IDF bus lifecycle.
     SpiLedDriver::~SpiLedDriver()
     {
     }
+
+    // Initializes the SPI bus, attaches the LED driver, and configures the latch output.
     bool SpiLedDriver::init()
     {
         ESP_LOGW(k_logTag, "Initializing LED Driver on SPI host %d with latch pin %d", m_host, m_latchPin);
@@ -65,6 +70,7 @@ namespace indicators
         return true;
     }
 
+    // Updates one cached LED bit and transmits the resulting pattern to the hardware.
     void SpiLedDriver::setLed(uint8_t ledIndex, bool on)
     {
         if (!m_started)
@@ -91,6 +97,7 @@ namespace indicators
         update();
     }
 
+    // Sets the cached state of every LED and transmits the new pattern.
     void SpiLedDriver::setAllLeds(bool on)
     {
         if (!m_started)
@@ -102,6 +109,7 @@ namespace indicators
         update();
     }
 
+    // Sends the cached 16-bit LED pattern over SPI and pulses the latch to display it.
     void SpiLedDriver::update()
     {
         if (!m_started)

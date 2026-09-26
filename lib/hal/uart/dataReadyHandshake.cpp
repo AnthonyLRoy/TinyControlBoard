@@ -12,6 +12,7 @@ namespace
 
 namespace transport::uart
 {
+    // Configures the Raspberry Pi handshake GPIO as a pulled-down rising-edge input.
     bool DataReadyHandshake::configureRpiInputPin(gpio_num_t pin)
     {
         gpio_config_t io_conf = {};
@@ -30,6 +31,7 @@ namespace transport::uart
         return true;
     }
 
+    // Configures the ESP32 handshake GPIO as a low output and stores its pin for later signaling.
     bool DataReadyHandshake::configureEsp32OutputPin(gpio_num_t esp32DataReadyPin)
     {
         m_esp32DataReadyPin = esp32DataReadyPin;
@@ -51,6 +53,7 @@ namespace transport::uart
         return true;
     }
 
+    // Installs the GPIO ISR service once and attaches the receive-wakeup handler to the Pi input pin.
     bool DataReadyHandshake::installIsrHandler(gpio_num_t rpiDataReadyPin, gpio_isr_t handler, void *p_arg)
     {
         static bool s_isrServiceInstalled = false;
@@ -74,11 +77,13 @@ namespace transport::uart
         return true;
     }
 
+    // Checks whether the ESP32 handshake output is currently asserted.
     bool DataReadyHandshake::isPulseInProgress() const
     {
         return gpio_get_level(m_esp32DataReadyPin) == 1;
     }
 
+    // Pulses the ESP32 handshake output high for the required hold time, then returns it low.
     void DataReadyHandshake::pulseDataReady() const
     {
         gpio_set_level(m_esp32DataReadyPin, 1);

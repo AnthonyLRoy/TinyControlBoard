@@ -3,6 +3,7 @@
 
 namespace actions
 {
+    // Executes display and brightness commands by delegating to the board's brightness controller.
     void BrightnessAction::execute(controlSystem::ActionContext &ctx)
     {
         if (command == CMD_TOGGLE_DISPLAY)

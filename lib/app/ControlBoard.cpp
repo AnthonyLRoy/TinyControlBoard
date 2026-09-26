@@ -14,6 +14,7 @@ namespace controlSystem
     //this in the main controlling context everything revolves around the control board
     static constexpr const char *k_logTag = "Control_Board   ";
 
+    // Bootstraps the entire control board, wires the input pipeline, and brings the device into its active state.
     bool ControlBoard::init()
     {
         ESP_LOGI(k_logTag, "Starting ControlBoard init...");
@@ -60,6 +61,7 @@ namespace controlSystem
         return true;
     }
 
+    // Initializes the board's non-volatile settings storage, creating it if needed for persisted state.
     void ControlBoard::initNvs()
     {
         esp_err_t nvsErr = nvs_flash_init();
@@ -74,6 +76,7 @@ namespace controlSystem
         }
     }
 
+    // Wires the UART and relay singletons into the control board and registers the heartbeat-monitor callbacks.
     void ControlBoard::initTransport()
     {
         mp_serialHandler = &transport::uart::UartTransport::getInstance();
@@ -94,6 +97,7 @@ namespace controlSystem
             });
     }
 
+    // Creates the action processor and input dispatcher and connects them to the board callback flow.
     void ControlBoard::initComponents()
     {
         mp_responseProcessor = std::make_unique<ActionProcessor>(
@@ -115,6 +119,7 @@ namespace controlSystem
             static_cast<IControlBoardIndicators &>(*this));
     }
 
+    // Tears down the control board tasks and hardware interfaces before a shutdown or reset.
     void ControlBoard::deinit()
     {
         m_buttonQueue.stop();
@@ -127,12 +132,14 @@ namespace controlSystem
         mp_responseProcessor.reset();
     }
 
+    // Delegates a board action into the main action-processing pipeline for execution.
     void ControlBoard::process(std::unique_ptr<actions::IAction> iaction)
     {
         assert(mp_responseProcessor != nullptr);
         mp_responseProcessor->process(std::move(iaction));
     }
 
+    // Updates the global board activity status and resets toggle state when the system sleeps.
     void ControlBoard::setActivityStatus(ControlBoardWorkingStatus status)
     {
         if (status != ControlBoardWorkingStatus::doingWork)
@@ -151,6 +158,7 @@ namespace controlSystem
         indicators::getActivityStatusLed().sendStatus(status);
     }
 
+    // Sets the physical LED state for a specific button as part of board feedback and system-state tracking.
     void ControlBoard::setButtonLed(uint8_t pin, bool enabled)
     {
         indicators::getSpiLedDriver().setLed(pin, enabled);
@@ -161,12 +169,14 @@ namespace controlSystem
             m_systemState.buttonLedBitmask.fetch_and(static_cast<uint16_t>(~mask), std::memory_order_relaxed);
     }
 
+    // Reports a healthy heartbeat to the power/boot logic so the board keeps its active state.
     void ControlBoard::handleHeartbeatReceived()
     {
         assert(mp_responseProcessor != nullptr);
         mp_responseProcessor->handleHeartbeatReceived();
     }
 
+    // Decodes incoming UART traffic, updates runtime status, and routes protocol events to the right handler.
     void ControlBoard::handleSerialRxMessage(const UartMessage &rMsg)
     {
         ESP_LOGI(k_logTag, "Received UART message: cmd=0x%04X seq=%u type=%u",

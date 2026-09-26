@@ -12,23 +12,29 @@ namespace indicators
     class PowerLed
     {
     public:
-        // Constructor only stores pins/channels, no timers are created
+        // Stores the active and standby LED pins/channels without creating timers.
         PowerLed(gpio_num_t activePin,
                  ledc_channel_t activeChannel,
                  gpio_num_t standbyPin,
                  ledc_channel_t standbyChannel);
 
+        // Stops and releases the periodic timer that updates LED patterns.
         ~PowerLed();
 
-        // Must be called after app_main() starts
+        // Initializes both PWM outputs and starts the periodic pattern-update timer.
         void init();
         bool m_started = false;
+        // Selects the active/standby LED pattern associated with a power state.
         void setState(ControlBoardPowerState state);
+        // Returns the current board power state displayed by this controller.
         ControlBoardPowerState getState() const { return m_currentPowerState; }
+        // Sets the brightness used by the active LED's on state, clamped to the supported range.
         void setBrightness(int brightness);
 
     private:
+        // Computes and applies the current flashing, breathing, or blip pattern.
         void update();
+        // Timer callback that advances the power LED pattern.
         static void handleTimer(void *p_arg);
 
         // LEDs

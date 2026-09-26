@@ -6,6 +6,7 @@
 
 namespace led
 {
+   // Stores the PWM configuration and applies it to the LEDC timer and channel.
    void LedPwm::init(ledc_timer_config_t timerConfig, ledc_channel_config_t channelConfig)
    {
       ESP_LOGI("Led_PWM         ", "Initializing Led_PWM with channel: %d", channelConfig.channel);
@@ -17,11 +18,13 @@ namespace led
       ESP_ERROR_CHECK(ledc_channel_config(&m_ledcChannelConfig));
    }
 
+   // Sets the pending PWM duty cycle for this LED channel.
    esp_err_t LedPwm::setDuty(uint32_t duty)
    {
       return ledc_set_duty(m_ledcTimerConfig.speed_mode, m_ledcChannelConfig.channel, duty);
    }
 
+   // Applies the pending duty cycle to the physical PWM output.
    esp_err_t LedPwm::updateDuty()
    {
       return ledc_update_duty(m_ledcTimerConfig.speed_mode, m_ledcChannelConfig.channel);

@@ -23,6 +23,7 @@ namespace indicators
 {
     namespace
     {
+        // Maps the selected brightness level to the PWM duty for the monitor backlight.
         uint32_t getDutyForBrightnessLevel(int brightnessLevel)
         {
             const int clampedLevel = std::clamp(brightnessLevel, 0, 9);
@@ -31,10 +32,12 @@ namespace indicators
         }
     }
 
+    // Releases resources owned by the monitor brightness controller.
     MonitorBrightnessController::~MonitorBrightnessController()
     {
     }
 
+    // Configures monitor PWM, restores the saved level, and applies its button-LED brightness mapping.
     void MonitorBrightnessController::init()
     {
         ESP_LOGI(k_logTag, "Initializing MonitorBrightnessController hardware");
@@ -92,6 +95,7 @@ namespace indicators
         m_started = true;
     }
 
+    // Applies a bounded brightness adjustment, updates related LEDs, and persists the new level.
     void MonitorBrightnessController::changeBrightnessLevel(int change)
     {
         if (m_displayOffActive)
@@ -110,6 +114,7 @@ namespace indicators
         ESP_LOGI(k_logTag, "Saved brightness level %d to NVS", m_currentBrightnessLevel);
     }
 
+    // Advances through the supported brightness levels and persists the selected level.
     void MonitorBrightnessController::cycleBrightness()
     {
         if (m_displayOffActive)
@@ -126,15 +131,18 @@ namespace indicators
         m_nvsStorage.writeInt8(k_nvsKeyLevel, static_cast<int8_t>(m_currentBrightnessLevel));
         ESP_LOGI(k_logTag, "Saved brightness level %d to NVS", m_currentBrightnessLevel);
     }
+    // Raises the selected brightness by the requested number of levels.
     void MonitorBrightnessController::setBrightnessUp(int levels)
     {
         changeBrightnessLevel(levels);
     }
+    // Lowers the selected brightness by the requested number of levels.
     void MonitorBrightnessController::setBrightnessDown(int levels)
     {
         changeBrightnessLevel(-levels);
     }
 
+    // Saves brightness before power-down and restores it when the board powers on.
     void MonitorBrightnessController::setState(ControlBoardPowerState state)
     {
         m_currentPowerState = state;
@@ -164,6 +172,7 @@ namespace indicators
         }
     }
 
+    // Toggles the temporary display-off mode while preserving the user's selected brightness.
     void MonitorBrightnessController::toggleDisplayOffOn()
     {
         if (!m_displayOffActive)
@@ -187,6 +196,7 @@ namespace indicators
         ESP_LOGI(k_logTag, "Display Off/On disabled, restored brightness level %d", m_currentBrightnessLevel);
     }
 
+    // Exits display-off mode and restores the saved brightness if the mode was active.
     void MonitorBrightnessController::clearDisplayOffMode()
     {
         if (!m_displayOffActive)
@@ -203,6 +213,7 @@ namespace indicators
         ESP_LOGI(k_logTag, "Cleared Display Off/On before power transition, restored brightness level %d", m_currentBrightnessLevel);
     }
 
+    // Blanks or restores the monitor backlight using the current brightness level.
     void MonitorBrightnessController::setBlanked(bool blanked)
     {
         m_blanked = blanked;

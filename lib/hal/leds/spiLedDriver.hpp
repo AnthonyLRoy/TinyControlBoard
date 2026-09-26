@@ -9,13 +9,20 @@ namespace indicators
     {
 
     public:
+        // Creates an SPI LED driver configured for its bus and latch GPIOs.
         SpiLedDriver(spi_host_device_t spiHost, gpio_num_t mosiPin, gpio_num_t clkPin, gpio_num_t latchPin);
+        // Destroys the SPI driver wrapper; ESP-IDF manages the bus and device lifetime.
         ~SpiLedDriver();
 
+        // Initializes the SPI bus, LED device, and output latch pin.
         bool init();
+        // Reports whether the SPI LED hardware has been initialized successfully.
         bool isStarted() const { return m_started; }
+        // Changes one LED in the cached bit pattern and sends the updated pattern to the driver.
         void setLed(uint8_t ledIndex, bool on);
+        // Turns all LEDs on or off and sends the complete pattern to the driver.
         void setAllLeds(bool on);
+        // Transmits the cached LED bit pattern and pulses the latch to apply it.
         void update();
 
     private:

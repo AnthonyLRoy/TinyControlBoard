@@ -10,13 +10,18 @@ namespace transport::uart
     class HeartbeatWatchdog
     {
     public:
+        // Creates a watchdog with an optional timeout duration in milliseconds.
         explicit HeartbeatWatchdog(uint32_t timeoutMs = 0) : m_timeoutMs(timeoutMs) {}
 
+        // Sets the elapsed-time threshold that triggers a heartbeat timeout.
         void setTimeoutMs(uint32_t timeoutMs) { m_timeoutMs = timeoutMs; }
+        // Returns the configured heartbeat timeout in milliseconds.
         uint32_t getTimeoutMs() const { return m_timeoutMs; }
 
+        // Records the timestamp of the most recent received UART data.
         void notifyRx(uint64_t nowUs) { m_lastRxTimeUs.store(nowUs, std::memory_order_relaxed); }
 
+        // Returns the timestamp of the most recently recorded UART data.
         uint64_t getLastRxTimeUs() const { return m_lastRxTimeUs.load(std::memory_order_relaxed); }
 
         // Returns true once when more than timeoutMs has elapsed since the last recorded RX

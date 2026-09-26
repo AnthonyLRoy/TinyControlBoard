@@ -42,10 +42,14 @@ private:
     std::atomic<bool> m_stopLedTask{false};
 
     TaskHandle_t mp_ledTaskHandle = nullptr;
+    // FreeRTOS task entry point that runs the status LED state machine.
     static void runLedTask(void *p_param);
+    // Applies a PWM duty value to this LED's channel.
     void updateDuty(uint32_t duty);
+    // Timer callback that advances the active blink pattern.
     static void handleTimer(TimerHandle_t timerHandle);
 
+    // Returns the PWM duty associated with the LED's current status pattern.
     uint32_t getBlinkDuty(ControlBoardWorkingStatus status);
 };
 

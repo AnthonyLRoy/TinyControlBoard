@@ -4,6 +4,7 @@
 
 namespace actions
 {
+    // Executes DAC and relay-toggle commands using the board relay controller.
     void RelayAction::execute(controlSystem::ActionContext &ctx)
     {
         if (command == CMD_TOGGLE_DAC)

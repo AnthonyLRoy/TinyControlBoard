@@ -2,6 +2,7 @@
 
 namespace controlSystem
 {
+    // Updates the board's background state and clears toggle LED memory when the system enters sleep.
     void ControlBoardInputDispatcher::setBackgroundStatus(ControlBoardWorkingStatus status)
     {
         m_backgroundStatus = status;
@@ -11,6 +12,7 @@ namespace controlSystem
         }
     }
 
+    // Clears any remembered toggle-LED state so the next wake cycle starts from a neutral LED state.
     void ControlBoardInputDispatcher::resetToggleLeds()
     {
         m_buttonLedBitmask = 0;
@@ -23,12 +25,14 @@ namespace controlSystem
         }
     }
 
+    // Suppresses non-power button input while the board is asleep, except for the power button itself.
     bool ControlBoardInputDispatcher::isInputSuppressedInSleep(uint8_t buttonId) const
     {
         return m_backgroundStatus == ControlBoardWorkingStatus::sleeping &&
                buttonId != controlBoardButtons::k_power;
     }
 
+    // Applies the configured LED behavior for the moment a button is pressed.
     void ControlBoardInputDispatcher::applyLedOnPress(uint8_t buttonId, LedPolicy policy)
     {
         switch (policy)
@@ -50,6 +54,7 @@ namespace controlSystem
         }
     }
 
+    // Clears press-time LED feedback when a momentary LED is released.
     void ControlBoardInputDispatcher::applyLedOnRelease(uint8_t buttonId, LedPolicy policy)
     {
         if (policy != LedPolicy::Momentary)
@@ -59,6 +64,7 @@ namespace controlSystem
         mr_indicators.setButtonLed(buttonId, false);
     }
 
+    // Handles a physical press by verifying sleep suppression, updating LED feedback, and emitting the mapped action.
     void ControlBoardInputDispatcher::handleButtonPressed(uint8_t buttonPressedId)
     {
         if (isInputSuppressedInSleep(buttonPressedId))
@@ -86,6 +92,7 @@ namespace controlSystem
         }
     }
 
+    // Handles a button release by emitting the release-phase action and clearing any momentary LED state.
     void ControlBoardInputDispatcher::handleButtonReleased(uint8_t buttonReleasedId)
     {
         if (buttonReleasedId >= controlBoardButtons::k_count)
@@ -112,6 +119,7 @@ namespace controlSystem
         }
     }
 
+    // Handles rotary motion by translating encoder direction into the appropriate action and activity-state update.
     void ControlBoardInputDispatcher::handleRotaryMovement(int direction)
     {
         if (m_backgroundStatus == ControlBoardWorkingStatus::sleeping)
@@ -136,6 +144,7 @@ namespace controlSystem
         mr_indicators.setActivityStatus(m_backgroundStatus);
     }
 
+    // Mirrors a remote toggle event onto the button's LED state so hardware and remote state stay in sync.
     void ControlBoardInputDispatcher::toggleButtonLed(uint8_t buttonId)
     {
         if (buttonId < controlBoardButtons::k_count)

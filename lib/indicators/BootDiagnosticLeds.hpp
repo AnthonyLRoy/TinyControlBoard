@@ -96,8 +96,11 @@ namespace indicators
         std::atomic<uint16_t> m_flashMask{0u};
         TaskHandle_t          m_task{nullptr};
 
+        // Returns the SPI LED bitmask associated with a boot stage.
         static uint16_t stageMaskFor(BootStage stage);
+        // Starts the worker that flashes the provided diagnostic LED mask.
         void            startFlashTask(uint16_t mask);
+        // FreeRTOS worker that repeatedly displays the active failure pattern.
         static void     flashTask(void *arg);
     };
 

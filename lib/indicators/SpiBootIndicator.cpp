@@ -9,6 +9,7 @@ namespace indicators
     // Internal FreeRTOS task
     // -------------------------------------------------------------------------
 
+    // Flashes all SPI LEDs using the current boot state and clears them when stopped.
     void SpiBootIndicator::flashTask(void *arg)
     {
         auto *self = static_cast<SpiBootIndicator *>(arg);
@@ -36,6 +37,7 @@ namespace indicators
     // Private helpers
     // -------------------------------------------------------------------------
 
+    // Starts the worker task that runs the SPI boot-indicator flash pattern.
     void SpiBootIndicator::startTask()
     {
         m_stop.store(false, std::memory_order_release);
@@ -58,6 +60,7 @@ namespace indicators
     // Public API
   
 
+    // Starts the slow boot-wait pattern unless an indicator task is already running.
     void SpiBootIndicator::startWaiting()
     {
         if (m_task != nullptr)
@@ -69,6 +72,7 @@ namespace indicators
         startTask();
     }
 
+    // Requests the active flash task to stop after the Raspberry Pi boot succeeds.
     void SpiBootIndicator::notifySuccess()
     {
         if (m_task == nullptr)
@@ -80,6 +84,7 @@ namespace indicators
         // The task will clear the LEDs and delete itself on its next wake
     }
 
+    // Starts or switches the flash task to the faster boot-failure pattern.
     void SpiBootIndicator::notifyFailure()
     {
         if (m_task != nullptr)

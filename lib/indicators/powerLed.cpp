@@ -6,6 +6,7 @@ static constexpr const char *k_logTag = "Power_Led       ";
 namespace indicators
 {
 
+// Stores both LED hardware configurations; initialization is deferred until init().
 PowerLed::PowerLed(gpio_num_t aPin, ledc_channel_t aChannel,
                                      gpio_num_t s_pin, ledc_channel_t s_channel)
         : m_activePin(aPin), m_activeChannel(aChannel),
@@ -15,6 +16,7 @@ PowerLed::PowerLed(gpio_num_t aPin, ledc_channel_t aChannel,
 }
 
 
+// Stops and deletes the periodic timer when the power LED controller is destroyed.
 PowerLed::~PowerLed()
 {
     if (mp_updateTimer)
@@ -24,6 +26,7 @@ PowerLed::~PowerLed()
     }
 }
 
+// Configures both LEDC channels and starts the periodic pattern-update timer.
 void PowerLed::init()
 {
     ESP_LOGI(k_logTag, "Initializing PowerLed hardware");
@@ -104,6 +107,7 @@ void PowerLed::init()
 }
 
 
+// Timer entry point that advances the owning power LED controller's pattern.
 void PowerLed::handleTimer(void *p_arg)
 {
     PowerLed *p_self = static_cast<PowerLed *>(p_arg);
@@ -111,6 +115,7 @@ void PowerLed::handleTimer(void *p_arg)
 }
 
 
+// Clamps and stores the brightness level used by the active power LED.
 void PowerLed::setBrightness(int brightness)
 {
     if (brightness < 0) brightness = 0;
@@ -120,6 +125,7 @@ void PowerLed::setBrightness(int brightness)
 }
 
 
+// Selects the active and standby LED outputs and effects for the requested power state.
 void PowerLed::setState(ControlBoardPowerState state)
 {
     if (!m_started)
@@ -193,6 +199,7 @@ void PowerLed::setState(ControlBoardPowerState state)
 }
 
 
+// Advances and applies any active flashing, breathing, or periodic-blip effect.
 void PowerLed::update()
 {
     if (!m_started)

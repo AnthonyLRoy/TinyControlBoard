@@ -11,11 +11,13 @@ namespace
 
 namespace transport::uart
 {
+    // Stops the receive task before the pump object is destroyed.
     UartRxPump::~UartRxPump()
     {
         stop();
     }
 
+    // Starts the UART receive worker unless one is already running.
     bool UartRxPump::begin(uart_port_t uartNum)
     {
         m_uartNumber = uartNum;
@@ -36,6 +38,7 @@ namespace transport::uart
         return true;
     }
 
+    // Requests the worker to stop and waits briefly before forcing task deletion if necessary.
     void UartRxPump::stop()
     {
         m_stopTask.store(true, std::memory_order_release);
@@ -61,11 +64,13 @@ namespace transport::uart
         }
     }
 
+    // Replaces the callback invoked for each fully decoded UART message.
     void UartRxPump::setMessageCallback(std::function<void(const UartMessage &)> callback)
     {
         m_onMessage = std::move(callback);
     }
 
+    // Notifies the receive task from GPIO ISR context that bytes may be available.
     void UartRxPump::notifyFromIsr(BaseType_t *p_higherPriorityTaskWoken)
     {
         TaskHandle_t handle = mp_taskHandle.load(std::memory_order_acquire);
@@ -75,11 +80,13 @@ namespace transport::uart
         }
     }
 
+    // FreeRTOS entry point that forwards task startup to the owning pump instance.
     void UartRxPump::taskTrampoline(void *p_arg)
     {
         static_cast<UartRxPump *>(p_arg)->run();
     }
 
+    // Waits for receive notifications, drains UART data, and self-deletes on shutdown.
     void UartRxPump::run()
     {
         while (!m_stopTask.load(std::memory_order_acquire))
@@ -96,6 +103,7 @@ namespace transport::uart
         vTaskDelete(nullptr);
     }
 
+    // Reads buffered UART bytes, parses complete messages, and dispatches them to the registered callback.
     void UartRxPump::drainAvailableBytes()
     {
         // A burst of many packets (e.g. a library listing) can arrive faster than this

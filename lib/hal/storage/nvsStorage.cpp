@@ -7,6 +7,7 @@ static constexpr const char *k_logTag = "NvsStorage      ";
 
 namespace support
 {
+    // Stores the NVS namespace name used by this storage wrapper.
     NvsStorage::NvsStorage(const char* namespaceName)
         : m_namespace(namespaceName)
     {
@@ -15,6 +16,7 @@ namespace support
     // -------------------------------------------------------------------------
     // int8_t
     // -------------------------------------------------------------------------
+    // Reads a signed 8-bit value from the namespace and reports whether the key exists.
     bool NvsStorage::readInt8(const char* key, int8_t& out) const
     {
         nvs_handle_t h;
@@ -25,6 +27,7 @@ namespace support
         return ok;
     }
 
+    // Writes a signed 8-bit value to the namespace and commits it immediately.
     bool NvsStorage::writeInt8(const char* key, int8_t value)
     {
         nvs_handle_t h;
@@ -39,6 +42,7 @@ namespace support
     // -------------------------------------------------------------------------
     // uint8_t
     // -------------------------------------------------------------------------
+    // Reads an unsigned 8-bit value from the namespace and reports whether the key exists.
     bool NvsStorage::readUInt8(const char* key, uint8_t& out) const
     {
         nvs_handle_t h;
@@ -49,6 +53,7 @@ namespace support
         return ok;
     }
 
+    // Writes an unsigned 8-bit value to the namespace and commits it immediately.
     bool NvsStorage::writeUInt8(const char* key, uint8_t value)
     {
         nvs_handle_t h;
@@ -63,6 +68,7 @@ namespace support
     // -------------------------------------------------------------------------
     // int16_t
     // -------------------------------------------------------------------------
+    // Reads a signed 16-bit value from the namespace and reports whether the key exists.
     bool NvsStorage::readInt16(const char* key, int16_t& out) const
     {
         nvs_handle_t h;
@@ -73,6 +79,7 @@ namespace support
         return ok;
     }
 
+    // Writes a signed 16-bit value to the namespace and commits it immediately.
     bool NvsStorage::writeInt16(const char* key, int16_t value)
     {
         nvs_handle_t h;
@@ -87,6 +94,7 @@ namespace support
     // -------------------------------------------------------------------------
     // int32_t
     // -------------------------------------------------------------------------
+    // Reads a signed 32-bit value from the namespace and reports whether the key exists.
     bool NvsStorage::readInt32(const char* key, int32_t& out) const
     {
         nvs_handle_t h;
@@ -97,6 +105,7 @@ namespace support
         return ok;
     }
 
+    // Writes a signed 32-bit value to the namespace and commits it immediately.
     bool NvsStorage::writeInt32(const char* key, int32_t value)
     {
         nvs_handle_t h;
@@ -111,6 +120,7 @@ namespace support
     // -------------------------------------------------------------------------
     // uint32_t
     // -------------------------------------------------------------------------
+    // Reads an unsigned 32-bit value from the namespace and reports whether the key exists.
     bool NvsStorage::readUInt32(const char* key, uint32_t& out) const
     {
         nvs_handle_t h;
@@ -121,6 +131,7 @@ namespace support
         return ok;
     }
 
+    // Writes an unsigned 32-bit value to the namespace and commits it immediately.
     bool NvsStorage::writeUInt32(const char* key, uint32_t value)
     {
         nvs_handle_t h;
@@ -135,6 +146,7 @@ namespace support
     // -------------------------------------------------------------------------
     // string
     // -------------------------------------------------------------------------
+    // Reads a stored string into the caller's buffer and reports missing keys or insufficient capacity.
     bool NvsStorage::readString(const char* key, char* buf, size_t len) const
     {
         nvs_handle_t h;
@@ -145,6 +157,7 @@ namespace support
         return ok;
     }
 
+    // Writes a null-terminated string to the namespace and commits it immediately.
     bool NvsStorage::writeString(const char* key, const char* value)
     {
         nvs_handle_t h;

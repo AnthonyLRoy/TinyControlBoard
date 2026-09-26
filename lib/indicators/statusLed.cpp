@@ -17,6 +17,7 @@ static constexpr uint32_t BLINK_TIMER_PERIOD_MS = 100;
 static constexpr uint32_t LED_TASK_STACK_SIZE = 4096;
 static constexpr UBaseType_t LED_TASK_PRIORITY = 5;
 
+// Stores the LED hardware configuration and initializes its PWM state machine.
 StatusLed::StatusLed(gpio_num_t pin,
                      ledc_channel_t channel,
                      uint32_t idleDuty,
@@ -34,6 +35,7 @@ StatusLed::StatusLed(gpio_num_t pin,
     init();
 }
 
+// Stops the status task and releases its timer and queue resources.
 StatusLed::~StatusLed()
 {
     m_stopLedTask.store(true, std::memory_order_release);
@@ -64,6 +66,7 @@ StatusLed::~StatusLed()
         vQueueDelete(mp_statusQueue);
 }
 
+// Configures the PWM channel, status queue, blink timer, and worker task.
 void StatusLed::init()
 {
     m_stopLedTask.store(false, std::memory_order_release);
@@ -122,11 +125,13 @@ void StatusLed::init()
     }
 }
 
+// Forwards a new working status to the asynchronous LED task.
 void StatusLed::setStatus(ControlBoardWorkingStatus newStatus)
 {
     sendStatus(newStatus);
 }
 
+// Queues the latest status and wakes the LED task to apply its pattern.
 void StatusLed::sendStatus(ControlBoardWorkingStatus status)
 {
     if (mp_statusQueue)
@@ -146,6 +151,7 @@ void StatusLed::sendStatus(ControlBoardWorkingStatus status)
     }
 }
 
+// Processes queued status changes and updates the LED PWM/blink behavior.
 void StatusLed::runLedTask(void *p_param)
 {
     auto *p_self = static_cast<StatusLed *>(p_param);
@@ -200,12 +206,14 @@ void StatusLed::runLedTask(void *p_param)
     vTaskDelete(nullptr);
 }
 
+// Applies a duty cycle to the configured LEDC channel.
 void StatusLed::updateDuty(uint32_t duty)
 {
     ledc_set_duty(LEDC_LOW_SPEED_MODE, m_channel, duty);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, m_channel);
 }
 
+// Advances the current blink pattern and schedules the next timer interval.
 void StatusLed::handleTimer(TimerHandle_t timerHandle)
 {
     auto *p_self = static_cast<StatusLed *>(pvTimerGetTimerID(timerHandle));
@@ -227,6 +235,7 @@ void StatusLed::handleTimer(TimerHandle_t timerHandle)
     }
 }
 
+// Chooses the on-state duty for the supplied status pattern.
 uint32_t StatusLed::getBlinkDuty(ControlBoardWorkingStatus status)
 {
     switch (status)
@@ -242,6 +251,7 @@ uint32_t StatusLed::getBlinkDuty(ControlBoardWorkingStatus status)
     }
 }
 
+// Changes the idle brightness and reapplies it immediately when SolidIdle is active.
 void StatusLed::setIdleDuty(uint32_t duty)
 {
     m_idleDuty.store(duty, std::memory_order_relaxed);

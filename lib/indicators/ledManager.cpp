@@ -15,6 +15,7 @@ namespace indicators {
     static BootDiagnosticLeds s_bootDiagnosticLeds;
 
 
+    // Initializes the monitor brightness service on first access and returns the shared instance.
     MonitorBrightnessController& getMonitorBrightnessController() {
         if (!s_monitorBrightnessController.m_started)
         {
@@ -24,10 +25,12 @@ namespace indicators {
         return s_monitorBrightnessController;
     }
     
+    // Returns the shared status LED used to indicate board activity.
     StatusLed& getActivityStatusLed() {
         return s_activityStatusLed;
     }
 
+    // Initializes the power LED on first access and returns its shared controller.
     PowerLed& getPowerLed() {
         if (!s_powerLed.m_started)
         {
@@ -37,9 +40,11 @@ namespace indicators {
         return s_powerLed;
     }
 
+    // Returns the shared status LED used for button-panel feedback.
     StatusLed& getButtonStatusLed() {
         return s_buttonStatusLed;
     }
+    // Initializes the SPI LED driver on first access and returns the shared driver.
     SpiLedDriver& getSpiLedDriver() {
         if (!s_spiLedDriver.isStarted())
         {
@@ -48,6 +53,7 @@ namespace indicators {
         return s_spiLedDriver;
     }
 
+    // Returns the shared service that displays boot-stage diagnostics on panel LEDs.
     BootDiagnosticLeds& getBootDiagnosticLeds() {
         return s_bootDiagnosticLeds;
     }

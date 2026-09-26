@@ -13,11 +13,13 @@ namespace
 
 namespace transport::uart
 {
+    // Stops the watchdog worker when the monitor is destroyed.
     HeartbeatMonitor::~HeartbeatMonitor()
     {
         stop();
     }
 
+    // Configures the watchdog and starts the task that checks for missing UART traffic.
     void HeartbeatMonitor::start(uint32_t timeoutMs, std::function<void()> onTimeout)
     {
         m_watchdog.setTimeoutMs(timeoutMs);
@@ -39,6 +41,7 @@ namespace transport::uart
         mp_taskHandle.store(handle, std::memory_order_release);
     }
 
+    // Requests the watchdog task to stop and waits briefly before forcing deletion if needed.
     void HeartbeatMonitor::stop()
     {
         TaskHandle_t handle = mp_taskHandle.load(std::memory_order_acquire);
@@ -63,11 +66,13 @@ namespace transport::uart
         }
     }
 
+    // FreeRTOS entry point that forwards task startup to the monitor instance.
     void HeartbeatMonitor::taskTrampoline(void *p_arg)
     {
         static_cast<HeartbeatMonitor *>(p_arg)->run();
     }
 
+    // Periodically checks the watchdog and invokes the timeout callback when UART activity expires.
     void HeartbeatMonitor::run()
     {
         const TickType_t delay = pdMS_TO_TICKS(k_checkIntervalMs);

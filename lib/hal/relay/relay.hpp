@@ -17,15 +17,14 @@ namespace relays
     class StandardRelay
     {
     public:
-        // Singleton instance accessor
         // Returns the single shared relay controller instance for the board.
         static StandardRelay &getInstance() {
             static StandardRelay s_instance;
             return s_instance;
         }
-        // Initialize the relay hardware for the specified GPIO pin.
+        // Configures the specified GPIO pin as a relay output.
         static void init(gpio_num_t pinRelay);
-        // Sets the relay output to either energized or de-energized state.
+        // Sets the specified relay output to its energized or de-energized state.
         static void setRelayState(gpio_num_t relay, bool state);
 
     private:

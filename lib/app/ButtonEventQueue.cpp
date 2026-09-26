@@ -8,7 +8,8 @@ namespace controlSystem
     {
         stop();
     }
-    //start the button event queue and create task for processing events
+
+    // Starts the FreeRTOS queue and worker task that serializes button and rotary input events.
     bool ButtonEventQueue::start(ControlBoardInputDispatcher &rDispatcher)
     {
         mp_dispatcher = &rDispatcher;
@@ -30,7 +31,8 @@ namespace controlSystem
 
         return true;
     }
-//stop the button event queue and delete the associated task
+
+    // Stops the worker task and releases the queue so the queue can be torn down cleanly.
     void ButtonEventQueue::stop()
     {
         if (m_taskHandle)
@@ -44,7 +46,7 @@ namespace controlSystem
             m_queue = nullptr;
         }
     }
-    //enqueue a button press event
+    // Queues a raw event for later processing by the dispatcher thread, dropping it gracefully if the queue is full.
     bool ButtonEventQueue::enqueue(const ButtonEvent &event, const char *p_eventName)
     {
         if (!m_queue)
@@ -86,7 +88,8 @@ namespace controlSystem
     {
         static_cast<ButtonEventQueue *>(pvParam)->run();
     }
-    //main loop for processing button events . note that the  hold time for the button is handled else where not here
+
+    // Runs the background task that converts queued events into physical-button and rotary action dispatches.
     void ButtonEventQueue::run()
     {
         ButtonEvent event{};

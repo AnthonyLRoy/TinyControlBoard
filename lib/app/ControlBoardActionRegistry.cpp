@@ -44,6 +44,7 @@ namespace controlSystem
         };
     } // namespace
 
+    // Builds the button-to-action mapping for the board from the static registration table and owned action sources.
     void ControlBoardActionRegistry::populate(ControlBoardInputDispatcher::ActionMap &rActionMap)
     {
         m_ownedActions.clear();
@@ -88,6 +89,7 @@ namespace controlSystem
         }
     }
 
+    // Resets any persistent state kept by the owned action sources so the board starts a clean cycle after sleep.
     void ControlBoardActionRegistry::resetActionStates()
     {
         for (const auto &actionSource : m_ownedActions)

@@ -57,6 +57,7 @@ namespace support
          * @return false if key not found or buffer is too small.
          */
         bool readString (const char* key, char* buf, size_t len) const;
+        // Writes a null-terminated string value to the NVS namespace.
         bool writeString(const char* key, const char* value);
 
     private:

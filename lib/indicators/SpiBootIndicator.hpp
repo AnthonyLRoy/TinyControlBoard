@@ -41,7 +41,9 @@ namespace indicators
         std::atomic<bool> m_stop{false};
         TaskHandle_t   m_task    = nullptr;
 
+        // Creates the FreeRTOS worker that flashes all SPI button LEDs.
         void startTask();
+        // Runs the boot-wait or failure flash pattern until stopped.
         static void flashTask(void *arg);
     };
 }

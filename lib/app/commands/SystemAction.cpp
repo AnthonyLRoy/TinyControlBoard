@@ -4,6 +4,7 @@
 
 namespace actions
 {
+    // Executes system-level commands such as Pi shutdown and other controller actions through the shared action context.
     void SystemAction::execute(controlSystem::ActionContext &ctx)
     {
         if (command == CMD_SYS_RPI_SHUTDOWN)
