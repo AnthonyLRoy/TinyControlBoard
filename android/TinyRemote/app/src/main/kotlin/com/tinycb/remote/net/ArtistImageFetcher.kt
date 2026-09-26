@@ -18,7 +18,8 @@ object ArtistImageFetcher {
         if (artistName.isBlank()) return@withContext null
         cache.get(artistName)?.let { return@withContext it }
         try {
-            val summary = requestJson("$SUMMARY_URL${URLEncoder.encode(artistName, Charsets.UTF_8.name())}")
+            val pageTitle = URLEncoder.encode(artistName, Charsets.UTF_8.name()).replace("+", "_")
+            val summary = requestJson("$SUMMARY_URL$pageTitle")
             val source = summary.optJSONObject("thumbnail")?.optString("source").orEmpty()
             if (source.isBlank()) return@withContext null
             val bitmap = requestBitmap(source)

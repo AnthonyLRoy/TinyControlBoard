@@ -14,7 +14,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.tinycb.remote.R
 import com.tinycb.remote.musicbrainz.*
+import com.tinycb.remote.net.ArtistImageFetcher
 import com.tinycb.remote.net.CoverArtFetcher
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -63,20 +66,72 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
     }
 
     private fun renderArtist(value: MusicBrainzArtist, metadata: com.tinycb.remote.model.RemoteTrackMetadata) {
-        addArt(); content.addView(heading(value.name)); field("Type", value.type); field("Country", value.country); field("Active", value.lifeSpan)
-        chips("Genres", value.genres); chips("Tags", value.tags); chips("Aliases", value.aliases); field("About", value.disambiguation); links(value.links, "https://musicbrainz.org/artist/${value.id}"); attribution()
+        val imageSlot = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(-1, 230).apply { bottomMargin = 12 }
+        }
+        content.addView(imageSlot)
+        content.addView(heading(value.name))
+        lifecycleScope.launch {
+            ArtistImageFetcher.fetch(this@MusicBrainzInfoActivity, value.name)?.let { image ->
+                imageSlot.removeAllViews()
+                imageSlot.addView(ImageView(this@MusicBrainzInfoActivity).apply {
+                    setImageBitmap(image)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                }, FrameLayout.LayoutParams(-1, -1))
+                imageSlot.addView(label("Artist image via Wikipedia").apply {
+                    setTextColor(ContextCompat.getColor(context, android.R.color.white))
+                    setBackgroundColor(0x99000000.toInt())
+                    setPadding(8, 4, 8, 4)
+                    layoutParams = FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM)
+                })
+            }
+        }
+        section("Profile")
+        field("Type", value.type); field("Country", value.country); field("Active", value.lifeSpan); field("Disambiguation", value.disambiguation)
+        chipSection("Genres", value.genres); chipSection("Tags", value.tags); chipSection("Aliases", value.aliases)
+        links(value.links, "https://musicbrainz.org/artist/${value.id}"); attribution()
     }
 
     private fun renderAlbum(value: MusicBrainzReleaseGroup, metadata: com.tinycb.remote.model.RemoteTrackMetadata) {
-        addArt(); content.addView(heading(value.title)); field("Artist", value.artist.ifBlank { metadata.artist }); field("Release date", value.firstReleaseDate); field("Type", listOf(value.primaryType, *value.secondaryTypes.toTypedArray()).filter { it.isNotBlank() }.joinToString(", "))
-        chips("Genres", value.genres); chips("Tags", value.tags); field("About", value.disambiguation); value.release?.let { release -> field("Release", listOf(release.date, release.country, release.label).filter { it.isNotBlank() }.joinToString(" · ")); content.addView(heading("Tracks")); release.tracks.forEach { field(it.position, it.title) } }; links(value.links, "https://musicbrainz.org/release-group/${value.id}"); attribution()
+        addArt(); content.addView(heading(value.title)); section("Album details")
+        field("Artist", value.artist.ifBlank { metadata.artist }); field("Release date", value.firstReleaseDate); field("Type", listOf(value.primaryType, *value.secondaryTypes.toTypedArray()).filter { it.isNotBlank() }.joinToString(", ")); field("Disambiguation", value.disambiguation)
+        chipSection("Genres", value.genres); chipSection("Tags", value.tags)
+        value.release?.let { release ->
+            section("Release")
+            field("Details", listOf(release.date, release.country, release.label).filter { it.isNotBlank() }.joinToString(" · "))
+            section("Tracks")
+            release.tracks.forEach { field(it.position, it.title) }
+        }
+        links(value.links, "https://musicbrainz.org/release-group/${value.id}"); attribution()
     }
 
     private fun addArt() { art?.let { image -> content.addView(ImageView(this).apply { setImageBitmap(image); scaleType = ImageView.ScaleType.CENTER_CROP }, LinearLayout.LayoutParams(-1, 220).apply { bottomMargin = 12 }) } }
     private fun heading(text: String) = TextView(this).apply { this.text = text; textSize = 24f; setTextColor(ContextCompat.getColor(context, R.color.text_primary)); setPadding(0, 8, 0, 12) }
+    private fun section(text: String) { content.addView(TextView(this).apply { this.text = text.uppercase(); textSize = 12f; setTextColor(ContextCompat.getColor(context, R.color.text_accent)); setPadding(0, 16, 0, 4) }) }
     private fun label(text: String) = TextView(this).apply { this.text = text; textSize = 16f; setTextColor(ContextCompat.getColor(context, R.color.text_primary)); setPadding(0, 12, 0, 12) }
-    private fun field(name: String, value: String) { if (value.isNotBlank()) content.addView(label("$name\n$value")) }
-    private fun chips(name: String, values: List<String>) { if (values.isNotEmpty()) field(name, values.joinToString(" · ")) }
+    private fun field(name: String, value: String) {
+        if (value.isNotBlank()) content.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 4, 0, 4)
+            addView(TextView(context).apply { text = name; textSize = 12f; setTextColor(ContextCompat.getColor(context, R.color.text_secondary)) })
+            addView(TextView(context).apply { text = value; textSize = 16f; setTextColor(ContextCompat.getColor(context, R.color.text_primary)) })
+        })
+    }
+    private fun chipSection(name: String, values: List<String>) {
+        val visible = values.filter { it.isNotBlank() }.distinct()
+        if (visible.isEmpty()) return
+        section(name)
+        content.addView(ChipGroup(this).apply {
+            isSingleLine = false
+            visible.forEach { value ->
+                addView(Chip(context).apply {
+                    text = value
+                    isClickable = false
+                    isCheckable = false
+                })
+            }
+        })
+    }
     private fun button(text: String, action: () -> Unit) = Button(this).apply { this.text = text; setOnClickListener { action() } }
     private fun links(values: List<Pair<String, String>>, mbUrl: String) { content.addView(button("Open MusicBrainz page") { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(mbUrl))) }); values.forEach { (name, url) -> content.addView(button(name) { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }) } }
     private fun attribution() { content.addView(label("Data provided by MusicBrainz")) }
