@@ -20,6 +20,9 @@ import com.tinycb.remote.net.MoodeSettings
 import com.tinycb.remote.viewmodel.MainViewModel
 import android.widget.EditText
 import android.widget.Toast
+import android.view.GestureDetector
+import android.view.MotionEvent
+import com.tinycb.remote.net.CoverArtFetcher
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -92,6 +95,18 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PlaylistActivity::class.java))
         }
 
+        val albumArtGesture = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(event: MotionEvent): Boolean = true
+            override fun onDoubleTap(event: MotionEvent): Boolean {
+                showMusicBrainzChoice()
+                return true
+            }
+            override fun onLongPress(event: MotionEvent) {
+                showMusicBrainzChoice()
+            }
+        })
+        b.ivAlbumArt.setOnTouchListener { _, event -> albumArtGesture.onTouchEvent(event) }
+
         observeViewModel()
     }
 
@@ -140,6 +155,22 @@ class MainActivity : AppCompatActivity() {
                     0 -> vm.onPowerClicked()
                     1 -> vm.onDeepSleepClicked()
                 }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showMusicBrainzChoice() {
+        if (vm.nowPlaying.value.isNullOrBlank()) return
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("MusicBrainz information")
+            .setItems(arrayOf("Artist", "Album")) { _, which ->
+                val kind = if (which == 0) "artist" else "album"
+                startActivity(Intent(this, MusicBrainzInfoActivity::class.java).apply {
+                    putExtra(MusicBrainzInfoActivity.EXTRA_KIND, kind)
+                    putExtra(MusicBrainzInfoActivity.EXTRA_HOST, MoodeSettings.getHost(this@MainActivity))
+                    putExtra(MusicBrainzInfoActivity.EXTRA_EXPECTED_TRACK, vm.nowPlaying.value)
+                })
             }
             .setNegativeButton(R.string.cancel, null)
             .show()

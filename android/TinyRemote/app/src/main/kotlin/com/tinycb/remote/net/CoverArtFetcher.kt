@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import org.json.JSONObject
+import com.tinycb.remote.model.RemoteTrackMetadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -30,8 +31,8 @@ object CoverArtFetcher {
 
     suspend fun fetchCoverArt(host: String = DEFAULT_BOARD_HOST): Bitmap? = withContext(Dispatchers.IO) {
         try {
-            val coverUrl = fetchCurrentSongCoverUrl(host)
-            if (!coverUrl.isNullOrEmpty()) fetchBitmap(host, coverUrl)
+            val metadata = fetchCurrentSongMetadataInternal(host)
+            if (!metadata?.coverUrl.isNullOrEmpty()) fetchBitmap(host, metadata?.coverUrl!!)
             else fetchCurrentSongFilePath(host)?.let { fetchCoverArtBitmap(host, it) }
         } catch (e: Exception) {
             Log.w(TAG, "Cover art fetch failed: ${e.message}")
@@ -39,9 +40,19 @@ object CoverArtFetcher {
         }
     }
 
+    suspend fun fetchCurrentSongMetadata(host: String = DEFAULT_BOARD_HOST): RemoteTrackMetadata? =
+        withContext(Dispatchers.IO) {
+            try {
+                fetchCurrentSongMetadataInternal(host)
+            } catch (e: Exception) {
+                Log.w(TAG, "Current-song metadata fetch failed: ${e.message}")
+                null
+            }
+        }
+
     // moOde's get_currentsong command returns JSON generated from currentsong.txt.
     // Older builds may expose the backing file format directly, so accept both forms.
-    private fun fetchCurrentSongCoverUrl(host: String): String? {
+    private fun fetchCurrentSongMetadataInternal(host: String): RemoteTrackMetadata? {
         val connection = URL("http://$host$CURRENT_SONG_PATH").openConnection() as HttpURLConnection
         connection.connectTimeout = CONNECT_TIMEOUT_MS
         connection.readTimeout = READ_TIMEOUT_MS
@@ -50,10 +61,33 @@ object CoverArtFetcher {
         return try {
             if (connection.responseCode != HttpURLConnection.HTTP_OK) return null
             val body = connection.inputStream.bufferedReader().use { it.readText() }
-            parseCoverUrl(body)
+            parseCurrentSong(body)
         } finally {
             connection.disconnect()
         }
+    }
+
+    private fun parseCurrentSong(body: String): RemoteTrackMetadata? {
+        val trimmed = body.trim()
+        if (trimmed.startsWith("{")) {
+            val json = JSONObject(trimmed)
+            val title = json.optString("title").ifBlank { json.optString("name") }
+            val artist = json.optString("artist")
+            val album = json.optString("album")
+            val file = json.optString("file")
+            if (title.isBlank() && artist.isBlank() && album.isBlank() && file.isBlank()) return null
+            return RemoteTrackMetadata(title, artist, album, file, json.optString("coverurl").ifBlank { null })
+        }
+
+        val fields = trimmed.lineSequence()
+            .mapNotNull { line -> line.split('=', limit = 2).takeIf { it.size == 2 } }
+            .associate { it[0].lowercase() to it[1] }
+        val title = fields["title"].orEmpty().ifBlank { fields["name"].orEmpty() }
+        val artist = fields["artist"].orEmpty()
+        val album = fields["album"].orEmpty()
+        val file = fields["file"].orEmpty()
+        if (title.isBlank() && artist.isBlank() && album.isBlank() && file.isBlank()) return null
+        return RemoteTrackMetadata(title, artist, album, file, fields["coverurl"])
     }
 
     private fun parseCoverUrl(body: String): String? {
