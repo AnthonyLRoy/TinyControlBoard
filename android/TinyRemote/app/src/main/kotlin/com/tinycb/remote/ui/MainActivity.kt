@@ -161,13 +161,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showMusicBrainzChoice() {
-        if (vm.nowPlaying.value.isNullOrBlank()) return
+        val artistInput = EditText(this).apply {
+            hint = "Optional test artist name"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS
+            setSingleLine(true)
+        }
+        val padding = (16 * resources.displayMetrics.density).toInt()
+        val container = android.widget.FrameLayout(this).apply {
+            setPadding(padding, 0, padding, 0)
+            addView(artistInput)
+        }
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("MusicBrainz information")
-            .setItems(arrayOf("Artist", "Album")) { _, which ->
-                val kind = if (which == 0) "artist" else "album"
+            .setMessage("Enter an artist name to test the info screen, or leave it blank to use the current track.")
+            .setView(container)
+            .setPositiveButton("Artist") { _, _ ->
                 startActivity(Intent(this, MusicBrainzInfoActivity::class.java).apply {
-                    putExtra(MusicBrainzInfoActivity.EXTRA_KIND, kind)
+                    putExtra(MusicBrainzInfoActivity.EXTRA_KIND, "artist")
+                    putExtra(MusicBrainzInfoActivity.EXTRA_HOST, MoodeSettings.getHost(this@MainActivity))
+                    putExtra(MusicBrainzInfoActivity.EXTRA_EXPECTED_TRACK, vm.nowPlaying.value)
+                    putExtra(MusicBrainzInfoActivity.EXTRA_TEST_ARTIST, artistInput.text.toString().trim())
+                })
+            }
+            .setNeutralButton("Album") {
+                _, _ -> startActivity(Intent(this, MusicBrainzInfoActivity::class.java).apply {
+                    putExtra(MusicBrainzInfoActivity.EXTRA_KIND, "album")
                     putExtra(MusicBrainzInfoActivity.EXTRA_HOST, MoodeSettings.getHost(this@MainActivity))
                     putExtra(MusicBrainzInfoActivity.EXTRA_EXPECTED_TRACK, vm.nowPlaying.value)
                 })

@@ -52,7 +52,7 @@ class MusicBrainzRepository(context: Context) {
         val left = a.lowercase().replace(Regex("[^a-z0-9]"), "")
         val right = b.lowercase().replace(Regex("[^a-z0-9]"), "")
         if (left == right) return 1.0
-        val distance = Array(left.length + 1) { it }
+        val distance = Array(right.length + 1) { it }
         for (i in 1..left.length) {
             var diagonal = distance[0]
             distance[0] = i

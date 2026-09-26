@@ -31,9 +31,10 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
         val kind = intent.getStringExtra(EXTRA_KIND).orEmpty()
         val host = intent.getStringExtra(EXTRA_HOST).orEmpty()
         val expected = intent.getStringExtra(EXTRA_EXPECTED_TRACK)
+        val testArtist = intent.getStringExtra(EXTRA_TEST_ARTIST).orEmpty()
         lifecycleScope.launch {
-            art = CoverArtFetcher.fetchCoverArt(host)
-            vm.load(kind, host, expected)
+            if (testArtist.isBlank()) art = CoverArtFetcher.fetchCoverArt(host)
+            vm.load(kind, host, expected, testArtist)
         }
         lifecycleScope.launch { vm.state.collectLatest(::render) }
     }
@@ -91,5 +92,6 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
         const val EXTRA_KIND = "kind"
         const val EXTRA_HOST = "host"
         const val EXTRA_EXPECTED_TRACK = "expected_track"
+        const val EXTRA_TEST_ARTIST = "test_artist"
     }
 }
