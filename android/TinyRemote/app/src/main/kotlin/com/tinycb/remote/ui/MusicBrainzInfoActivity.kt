@@ -7,6 +7,8 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import android.graphics.drawable.GradientDrawable
+import android.text.TextUtils
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +29,8 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
     private lateinit var progress: ProgressBar
     private var shownCandidates: String? = null
     private var art: Bitmap? = null
+    private var bioText: TextView? = null
+    private var bioExpanded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,30 +70,110 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
     }
 
     private fun renderArtist(value: MusicBrainzArtist, metadata: com.tinycb.remote.model.RemoteTrackMetadata) {
-        val imageSlot = FrameLayout(this).apply {
-            layoutParams = LinearLayout.LayoutParams(-1, 230).apply { bottomMargin = 12 }
-        }
+        val imageSlot = artistHeader(value)
         content.addView(imageSlot)
-        content.addView(heading(value.name))
-        lifecycleScope.launch {
-            ArtistImageFetcher.fetch(this@MusicBrainzInfoActivity, value.name)?.let { image ->
-                imageSlot.removeAllViews()
-                imageSlot.addView(ImageView(this@MusicBrainzInfoActivity).apply {
-                    setImageBitmap(image)
-                    scaleType = ImageView.ScaleType.CENTER_CROP
-                }, FrameLayout.LayoutParams(-1, -1))
-                imageSlot.addView(label("Artist image via Wikipedia").apply {
-                    setTextColor(ContextCompat.getColor(context, android.R.color.white))
-                    setBackgroundColor(0x99000000.toInt())
-                    setPadding(8, 4, 8, 4)
-                    layoutParams = FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM)
-                })
+        section("About")
+        val about = TextView(this).apply {
+            text = "Biography unavailable."
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+            setPadding(0, 4, 0, 0)
+        }
+        bioText = about
+        content.addView(about)
+        var fullBio = ""
+        val showMore = Button(this).apply {
+            text = "Show more"
+            setOnClickListener {
+                bioExpanded = !bioExpanded
+                about.text = if (bioExpanded) fullBio else firstParagraphs(fullBio)
+                about.maxLines = if (bioExpanded) Int.MAX_VALUE else 8
+                about.ellipsize = if (bioExpanded) null else TextUtils.TruncateAt.END
+                text = if (bioExpanded) "Show less" else "Show more"
             }
         }
-        section("Profile")
-        field("Type", value.type); field("Country", value.country); field("Active", value.lifeSpan); field("Disambiguation", value.disambiguation)
-        chipSection("Genres", value.genres); chipSection("Tags", value.tags); chipSection("Aliases", value.aliases)
+        showMore.visibility = View.GONE
+        content.addView(showMore)
+        val soundsLike = (value.genres + value.tags).filter { it.isNotBlank() }.distinct()
+        expandableChips("Sounds like", soundsLike, 5)
+        statCards(value)
+        expandableChips("Aliases", value.aliases, 2)
+        section("Details")
+        field("Disambiguation", value.disambiguation)
         links(value.links, "https://musicbrainz.org/artist/${value.id}"); attribution()
+        lifecycleScope.launch {
+            val supplement = ArtistImageFetcher.fetchSupplement(this@MusicBrainzInfoActivity, value.name)
+            supplement.image?.let { image -> setArtistHeaderImage(imageSlot, image, value) }
+            supplement.extract?.let { extract ->
+                fullBio = extract
+                about.text = firstParagraphs(fullBio)
+                about.maxLines = Int.MAX_VALUE
+                about.ellipsize = null
+                about.post {
+                    val needsMore = about.lineCount > 8
+                    if (!bioExpanded) {
+                        about.maxLines = 8
+                        about.ellipsize = TextUtils.TruncateAt.END
+                    }
+                    showMore.visibility = if (needsMore) View.VISIBLE else View.GONE
+                }
+            }
+        }
+    }
+
+    private fun artistHeader(value: MusicBrainzArtist): FrameLayout = FrameLayout(this).apply {
+        layoutParams = LinearLayout.LayoutParams(-1, 600).apply {
+            marginStart = -16
+            marginEnd = -16
+            bottomMargin = 16
+        }
+        setBackgroundColor(ContextCompat.getColor(context, R.color.bg_card))
+        addView(TextView(context).apply { text = value.name.takeInitials(); textSize = 56f; gravity = Gravity.CENTER; setTextColor(ContextCompat.getColor(context, R.color.text_secondary)) }, FrameLayout.LayoutParams(-1, -1))
+        addView(View(context).apply { background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0x00000000, 0xBF000000.toInt())) }, FrameLayout.LayoutParams(-1, -1))
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 8, 16, 12)
+            addView(TextView(context).apply { text = value.name; textSize = 26f; setTextColor(ContextCompat.getColor(context, android.R.color.white)); setTypeface(typeface, android.graphics.Typeface.BOLD) })
+            if (value.disambiguation.isNotBlank()) addView(TextView(context).apply { text = value.disambiguation; textSize = 13f; setTextColor(0xDDFFFFFF.toInt()) })
+            addView(TextView(context).apply { text = "Artist image via Wikipedia"; textSize = 9f; setTextColor(0xAAFFFFFF.toInt()) })
+        }, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
+    }
+
+    private fun setArtistHeaderImage(slot: FrameLayout, image: Bitmap, value: MusicBrainzArtist) {
+        val imageView = ImageView(this).apply {
+            setImageBitmap(image)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setBackgroundColor(ContextCompat.getColor(context, R.color.bg_card))
+        }
+        slot.addView(imageView, 0, FrameLayout.LayoutParams(-1, -1))
+    }
+
+    private fun statCards(value: MusicBrainzArtist) {
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; weightSum = 2f; setPadding(0, 4, 0, 4) }
+        statCard("Active", formatLifeSpan(value.lifeSpan)).also { row.addView(it, LinearLayout.LayoutParams(0, 72, 1f).apply { marginEnd = 6 }) }
+        statCard("Origin", countryName(value.country)).also { row.addView(it, LinearLayout.LayoutParams(0, 72, 1f).apply { marginStart = 6 }) }
+        content.addView(row)
+    }
+
+    private fun statCard(title: String, value: String) = TextView(this).apply { text = "$title\n$value"; textSize = 14f; setTextColor(ContextCompat.getColor(context, R.color.text_primary)); gravity = Gravity.CENTER_VERTICAL; setPadding(14, 8, 14, 8); background = GradientDrawable().apply { cornerRadius = 12f; setColor(ContextCompat.getColor(context, R.color.bg_card)) } }
+
+    private fun formatLifeSpan(value: String): String = value.replace(" - ", "–").ifBlank { "Unknown" }
+    private fun countryName(value: String): String = mapOf("US" to "United States", "GB" to "United Kingdom", "AU" to "Australia", "CA" to "Canada", "DE" to "Germany", "FR" to "France", "IE" to "Ireland", "JP" to "Japan")[value] ?: value.ifBlank { "Unknown" }
+    private fun firstParagraphs(value: String): String = value.split(Regex("\\n\\s*\\n")).filter { it.isNotBlank() }.take(2).joinToString("\n\n")
+    private fun String.takeInitials(): String = trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.take(2).joinToString("") { it.first().uppercase() }
+
+    private fun expandableChips(title: String, values: List<String>, initialCount: Int) {
+        val visible = values.filter { it.isNotBlank() }.distinct()
+        if (visible.isEmpty()) return
+        section(title)
+        val group = ChipGroup(this).apply { isSingleLine = false }
+        fun render(expanded: Boolean) {
+            group.removeAllViews()
+            val shown = if (expanded) visible else visible.take(initialCount)
+            shown.forEach { value -> group.addView(Chip(this@MusicBrainzInfoActivity).apply { text = value; isClickable = false; isCheckable = false }) }
+            if (visible.size > initialCount) group.addView(Chip(this@MusicBrainzInfoActivity).apply { text = if (expanded) "Show less" else "+${visible.size - initialCount} more"; setOnClickListener { render(!expanded) } })
+        }
+        render(false); content.addView(group)
     }
 
     private fun renderAlbum(value: MusicBrainzReleaseGroup, metadata: com.tinycb.remote.model.RemoteTrackMetadata) {
