@@ -20,7 +20,11 @@ class MusicBrainzRepository(context: Context) {
     suspend fun artistById(id: String): MusicBrainzArtist = parseArtist(api.get("artist/$id?inc=aliases+tags+genres+url-rels&fmt=json"))
 
     suspend fun releaseGroup(artist: String, album: String): MusicBrainzLookup<MusicBrainzReleaseGroup> {
-        val query = "releasegroup:${MusicBrainzApiClient.query(album)} AND artist:${MusicBrainzApiClient.query(artist)}"
+        val query = if (artist.isBlank()) {
+            "releasegroup:${MusicBrainzApiClient.query(album)}"
+        } else {
+            "releasegroup:${MusicBrainzApiClient.query(album)} AND artist:${MusicBrainzApiClient.query(artist)}"
+        }
         val search = api.get("release-group/?query=${MusicBrainzApiClient.encoded(query)}&fmt=json&limit=8")
         val candidates = search.optJSONArray("release-groups").toCandidates()
         val selected = select(album, candidates) ?: throw MusicBrainzNoMatchException()

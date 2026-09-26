@@ -22,6 +22,8 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MusicBrainzInfoActivity : AppCompatActivity() {
     private val vm: MusicBrainzInfoViewModel by viewModels()
@@ -39,9 +41,10 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
         val host = intent.getStringExtra(EXTRA_HOST).orEmpty()
         val expected = intent.getStringExtra(EXTRA_EXPECTED_TRACK)
         val testArtist = intent.getStringExtra(EXTRA_TEST_ARTIST).orEmpty()
+        val testAlbum = intent.getStringExtra(EXTRA_TEST_ALBUM).orEmpty()
         lifecycleScope.launch {
             if (testArtist.isBlank()) art = CoverArtFetcher.fetchCoverArt(host)
-            vm.load(kind, host, expected, testArtist)
+            vm.load(kind, host, expected, testArtist, testAlbum)
         }
         lifecycleScope.launch { vm.state.collectLatest(::render) }
     }
@@ -161,6 +164,19 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
     private fun countryName(value: String): String = mapOf("US" to "United States", "GB" to "United Kingdom", "AU" to "Australia", "CA" to "Canada", "DE" to "Germany", "FR" to "France", "IE" to "Ireland", "JP" to "Japan")[value] ?: value.ifBlank { "Unknown" }
     private fun firstParagraphs(value: String): String = value.split(Regex("\\n\\s*\\n")).filter { it.isNotBlank() }.take(2).joinToString("\n\n")
     private fun String.takeInitials(): String = trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.take(2).joinToString("") { it.first().uppercase() }
+    private fun formatDate(value: String): String = try {
+        SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(value)?.let { SimpleDateFormat("MMMM d, yyyy", Locale.US).format(it) } ?: value
+    } catch (_: Exception) { value }
+
+    private fun trackRow(position: String, title: String) {
+        content.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 8, 0, 8)
+            addView(TextView(context).apply { text = position; textSize = 13f; setTextColor(ContextCompat.getColor(context, R.color.text_secondary)); gravity = Gravity.CENTER }, LinearLayout.LayoutParams(42, -2))
+            addView(TextView(context).apply { text = title; textSize = 16f; setTextColor(ContextCompat.getColor(context, R.color.text_primary)) })
+        })
+    }
 
     private fun expandableChips(title: String, values: List<String>, initialCount: Int) {
         val visible = values.filter { it.isNotBlank() }.distinct()
@@ -177,16 +193,73 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
     }
 
     private fun renderAlbum(value: MusicBrainzReleaseGroup, metadata: com.tinycb.remote.model.RemoteTrackMetadata) {
-        addArt(); content.addView(heading(value.title)); section("Album details")
-        field("Artist", value.artist.ifBlank { metadata.artist }); field("Release date", value.firstReleaseDate); field("Type", listOf(value.primaryType, *value.secondaryTypes.toTypedArray()).filter { it.isNotBlank() }.joinToString(", ")); field("Disambiguation", value.disambiguation)
-        chipSection("Genres", value.genres); chipSection("Tags", value.tags)
+        val artistName = value.artist.ifBlank { metadata.artist }
+        content.addView(albumHeader(value.title, artistName))
+        section("About")
+        val about = TextView(this).apply {
+            text = "Album description unavailable."
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+            setPadding(0, 4, 0, 0)
+        }
+        content.addView(about)
+        var fullDescription = ""
+        val showMore = Button(this).apply {
+            text = "Show more"
+            visibility = View.GONE
+            setOnClickListener {
+                bioExpanded = !bioExpanded
+                about.text = if (bioExpanded) fullDescription else firstParagraphs(fullDescription)
+                about.maxLines = if (bioExpanded) Int.MAX_VALUE else 8
+                about.ellipsize = if (bioExpanded) null else TextUtils.TruncateAt.END
+                text = if (bioExpanded) "Show less" else "Show more"
+            }
+        }
+        content.addView(showMore)
+        lifecycleScope.launch {
+            ArtistImageFetcher.fetchSupplement(this@MusicBrainzInfoActivity, value.title).extract?.let { extract ->
+                fullDescription = extract
+                about.text = firstParagraphs(fullDescription)
+                about.maxLines = Int.MAX_VALUE
+                about.ellipsize = null
+                about.post {
+                    val needsMore = about.lineCount > 8
+                    if (!bioExpanded) {
+                        about.maxLines = 8
+                        about.ellipsize = TextUtils.TruncateAt.END
+                    }
+                    showMore.visibility = if (needsMore) View.VISIBLE else View.GONE
+                }
+            }
+        }
+        section("Album details")
+        field("Artist", artistName); field("Release date", formatDate(value.firstReleaseDate)); field("Type", listOf(value.primaryType, *value.secondaryTypes.toTypedArray()).filter { it.isNotBlank() }.joinToString(", ")); field("Disambiguation", value.disambiguation)
+        expandableChips("Sounds like", (value.genres + value.tags).filter { it.isNotBlank() }.distinct(), 5)
         value.release?.let { release ->
             section("Release")
-            field("Details", listOf(release.date, release.country, release.label).filter { it.isNotBlank() }.joinToString(" · "))
+            field("Details", listOf(formatDate(release.date), countryName(release.country), release.label).filter { it.isNotBlank() }.joinToString(" · "))
             section("Tracks")
-            release.tracks.forEach { field(it.position, it.title) }
+            release.tracks.forEach { trackRow(it.position, it.title) }
         }
         links(value.links, "https://musicbrainz.org/release-group/${value.id}"); attribution()
+    }
+
+    private fun albumHeader(title: String, artist: String): FrameLayout = FrameLayout(this).apply {
+        layoutParams = LinearLayout.LayoutParams(-1, 600).apply {
+            marginStart = -16
+            marginEnd = -16
+            bottomMargin = 16
+        }
+        setBackgroundColor(ContextCompat.getColor(context, R.color.bg_card))
+        art?.let { image -> addView(ImageView(context).apply { setImageBitmap(image); scaleType = ImageView.ScaleType.FIT_CENTER; setBackgroundColor(ContextCompat.getColor(context, R.color.bg_card)) }, FrameLayout.LayoutParams(-1, -1)) }
+            ?: addView(TextView(context).apply { text = title.takeInitials(); textSize = 56f; gravity = Gravity.CENTER; setTextColor(ContextCompat.getColor(context, R.color.text_secondary)) }, FrameLayout.LayoutParams(-1, -1))
+        addView(View(context).apply { background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0x00000000, 0xBF000000.toInt())) }, FrameLayout.LayoutParams(-1, -1))
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 8, 16, 12)
+            addView(TextView(context).apply { text = title; textSize = 26f; setTextColor(ContextCompat.getColor(context, android.R.color.white)); setTypeface(typeface, android.graphics.Typeface.BOLD) })
+            if (artist.isNotBlank()) addView(TextView(context).apply { text = artist; textSize = 15f; setTextColor(0xDDFFFFFF.toInt()) })
+        }, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
     }
 
     private fun addArt() { art?.let { image -> content.addView(ImageView(this).apply { setImageBitmap(image); scaleType = ImageView.ScaleType.CENTER_CROP }, LinearLayout.LayoutParams(-1, 220).apply { bottomMargin = 12 }) } }
@@ -232,5 +305,6 @@ class MusicBrainzInfoActivity : AppCompatActivity() {
         const val EXTRA_HOST = "host"
         const val EXTRA_EXPECTED_TRACK = "expected_track"
         const val EXTRA_TEST_ARTIST = "test_artist"
+        const val EXTRA_TEST_ALBUM = "test_album"
     }
 }

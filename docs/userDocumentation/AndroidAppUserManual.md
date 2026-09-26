@@ -6,9 +6,9 @@ You do not need technical knowledge to use the app. The phone is a remote contro
 
 **App:** DanStreamer
 
-**Manual version:** 3.0
+**Manual version:** 3.1
 
-**Updated:** 19 September 2026
+**Updated:** 26 September 2026
 
 ## Start Here
 
@@ -128,6 +128,48 @@ Results are grouped by album. Tap a track to add it to the queue. Use an album h
 >
 > Suggested caption: *Tap a track, or add a whole album at once.*
 
+## Artist and Album Information
+
+DanStreamer can look up information about the artist or album currently reported by the remote player. The phone does not play or stop the music while this information is loading.
+
+1. On the main screen, double-tap the album artwork.
+2. Alternatively, press and hold the album artwork for accessibility-friendly access.
+3. Choose **Artist** or **Album**.
+4. Wait while DanStreamer searches MusicBrainz and loads the information.
+
+>
+> <img src="../user-manual-media/media/MusicBrainzChoice.jpg" alt="MusicBrainz Artist or Album choice dialog" width="240" style="max-width: 100%; ">
+>
+>
+> *Choose whether to view information about the current artist or album.*
+
+The information screen keeps the player connection and playback untouched. Tap **X** or use the Android back action to return to the main screen.
+
+
+>
+> <img src="../user-manual-media/media/MusicBrainzArtist.png" alt="MusicBrainz artist information screen with artist image and biography" width="240" style="max-width: 100%; ">
+>
+>
+> *Artist information is grouped into an image header, biography, and sound tags.*
+
+The artist screen may show an artist image and a short biography when an image and biography are available. The image is supplied by Wikipedia and is marked with a small attribution. Missing images or individual fields are omitted or replaced with a simple placeholder.
+
+- **About** shows a short biography. Tap **Show more** to expand it, or **Show less** to collapse it again.
+- **Sounds like** combines MusicBrainz genres and tags into compact chips. Tap **+N more** to show the remaining entries.
+- **Aliases** shows the most relevant aliases first. Tap **+N more** to expand the list.
+- **Active** and **Origin** summarize the artist's dates and country when available.
+- **Open MusicBrainz page** opens the full MusicBrainz artist or release-group page in the browser.
+
+>
+> <img src="../user-manual-media/media/MusicBrainzArtistExpanded.png" alt="Expanded MusicBrainz artist biography and tags" width="240" style="max-width: 100%; ">
+>
+>
+> *Use Show more and +N more when you want the complete information.*
+
+Album information includes the album title, artist, release date, release details, genres, tags, external links, and a scrollable track listing when MusicBrainz has one.
+
+MusicBrainz information needs an internet connection. This is separate from the Bluetooth connection to the player, so playback controls can continue working if MusicBrainz is temporarily unavailable.
+
 ## Manage the Current Queue
 
 The queue is the list of tracks waiting to play. It is sometimes called the current playlist in the app. It is different from a saved playlist.
@@ -143,7 +185,7 @@ Tap the song name on the main screen, or tap **Playlist** if it is shown on your
 - Drag a track to move it to a new position.
 - Swipe left on a track to remove it.
 
-> **Screenshot placeholder 6 - Current queue**
+> **Screenshot placeholder 9 - Current queue**
 >
 ><img src="../user-manual-media/media/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the Current Playlist screen with a drag handle and one track action visible.
@@ -179,7 +221,7 @@ To save, load, delete, or clear a queue, open the current queue and tap **Playli
 2. Read the warning.
 3. Tap **Clear** to remove all tracks, or **Cancel** to keep them.
 
-> **Screenshot placeholder 7 - Playlist management**
+> **Screenshot placeholder 10 - Playlist management**
 > 
 ><img src="../user-manual-media/media/ManagePlaylist.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
@@ -195,7 +237,7 @@ The app can ask the player to show a different view on its own display.
 
 Available views may include **Default View**, **Radio Stations**, **Playlist**, **Folder View**, **Tag View**, and **Album View**.
 
-> **Screenshot placeholder 8 - Choose a display view**
+> **Screenshot placeholder 11 - Choose a display view**
 >  
 ><img src="../user-manual-media/media/displayview.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the Select display menu screen with one selected row.
@@ -213,7 +255,7 @@ DanStreamer can show the current song name and album artwork. If you see a defau
 
 This setting is only for album artwork and song details. Your normal remote controls use Bluetooth.
 
-> **Screenshot placeholder 9 - Album art setup**
+> **Screenshot placeholder 12 - Album art setup**
 > 
 ><img src="../user-manual-media/media/IPConfiguration.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the moOde IP Address dialog.
@@ -230,7 +272,7 @@ Tap the power button on the main screen:
 
 Wait for a power change to finish before sending more commands. The status beside the app title shows whether the player is on, sleeping, or changing state.
 
-> **Screenshot placeholder 10 - Power options**
+> **Screenshot placeholder 13 - Power options**
 >
 ><img src="../user-manual-media/media/ShutDown.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
@@ -264,6 +306,10 @@ Check that the player is still connected and that its music library is available
 
 Open the gear icon and check the moOde player address. Make sure the phone can reach that address on your home network. Music controls can still work even if artwork does not load.
 
+### MusicBrainz information is missing
+
+Check that the phone has internet access. MusicBrainz uses the internet connection, while player controls use Bluetooth. If the artist or album has no matching MusicBrainz entry, no information may be available. Try again later if MusicBrainz is temporarily unavailable.
+
 ### I cannot save or load a playlist
 
 Try again after a few seconds. If it continues to fail, check that the player is connected and supports saved playlists. You cannot save an empty queue.
@@ -276,7 +322,7 @@ No. The player and audio system play the music. The phone is the remote control.
 
 ### Does the phone need Wi-Fi?
 
-Bluetooth is used for everyday controls. Wi-Fi is only needed when you want DanStreamer to load album artwork and song details from the moOde player.
+Bluetooth is used for everyday controls. Wi-Fi is needed when you want DanStreamer to load album artwork and song details from the moOde player, or when you want to look up MusicBrainz information over the internet.
 
 ### How do I disconnect?
 
@@ -305,8 +351,11 @@ Replace each screenshot placeholder with a current portrait screenshot before pu
 3. Library browser with folders and tracks.
 4. Search dialog.
 5. Search results grouped by album.
-6. Current queue with reordering and track actions.
-7. Playlist Management screen.
-8. Select display menu screen.
-9. moOde IP Address dialog.
-10. Power Options dialog.
+6. MusicBrainz Artist or Album choice dialog.
+7. MusicBrainz artist information screen.
+8. MusicBrainz artist screen with the biography and additional chips expanded.
+9. Current queue with reordering and track actions.
+10. Playlist Management screen.
+11. Select display menu screen.
+12. moOde IP Address dialog.
+13. Power Options dialog.

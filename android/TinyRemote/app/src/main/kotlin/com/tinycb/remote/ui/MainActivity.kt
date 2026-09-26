@@ -162,7 +162,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showMusicBrainzChoice() {
         val artistInput = EditText(this).apply {
-            hint = "Optional test artist name"
+            hint = "Artist or album name for testing"
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS
             setSingleLine(true)
         }
@@ -173,7 +173,7 @@ class MainActivity : AppCompatActivity() {
         }
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("MusicBrainz information")
-            .setMessage("Enter an artist name to test the info screen, or leave it blank to use the current track.")
+            .setMessage("Enter an artist or album name to test the information screen, or leave it blank to use the current track.")
             .setView(container)
             .setPositiveButton("Artist") { _, _ ->
                 startActivity(Intent(this, MusicBrainzInfoActivity::class.java).apply {
@@ -188,6 +188,7 @@ class MainActivity : AppCompatActivity() {
                     putExtra(MusicBrainzInfoActivity.EXTRA_KIND, "album")
                     putExtra(MusicBrainzInfoActivity.EXTRA_HOST, MoodeSettings.getHost(this@MainActivity))
                     putExtra(MusicBrainzInfoActivity.EXTRA_EXPECTED_TRACK, vm.nowPlaying.value)
+                    putExtra(MusicBrainzInfoActivity.EXTRA_TEST_ALBUM, artistInput.text.toString().trim())
                 })
             }
             .setNegativeButton(R.string.cancel, null)

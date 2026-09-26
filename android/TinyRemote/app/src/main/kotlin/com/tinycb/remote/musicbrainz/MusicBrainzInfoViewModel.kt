@@ -26,13 +26,15 @@ class MusicBrainzInfoViewModel(application: Application, private val savedState:
     val state: StateFlow<MusicBrainzScreenState> = _state.asStateFlow()
     private var lookupJob: kotlinx.coroutines.Job? = null
 
-    fun load(kind: String, host: String, expectedTrack: String?, testArtist: String = "") {
+    fun load(kind: String, host: String, expectedTrack: String?, testArtist: String = "", testAlbum: String = "") {
         if (savedState.get<String>("kind") == kind && savedState.get<String>("host") == host &&
-            savedState.get<String>("testArtist") == testArtist && _state.value !is MusicBrainzScreenState.Loading) return
+            savedState.get<String>("testArtist") == testArtist && savedState.get<String>("testAlbum") == testAlbum &&
+            _state.value !is MusicBrainzScreenState.Loading) return
         savedState["kind"] = kind
         savedState["host"] = host
         savedState["expected"] = expectedTrack
         savedState["testArtist"] = testArtist
+        savedState["testAlbum"] = testAlbum
         retry()
     }
 
@@ -44,8 +46,11 @@ class MusicBrainzInfoViewModel(application: Application, private val savedState:
                 val host = savedState.get<String>("host").orEmpty()
                 val expected = savedState.get<String>("expected")
                 val testArtist = savedState.get<String>("testArtist").orEmpty()
+                val testAlbum = savedState.get<String>("testAlbum").orEmpty()
                 val metadata = if (testArtist.isNotBlank()) {
                     RemoteTrackMetadata(testArtist, testArtist, "", "test:$testArtist")
+                } else if (testAlbum.isNotBlank()) {
+                    RemoteTrackMetadata(testAlbum, "", testAlbum, "test:$testAlbum")
                 } else {
                     CoverArtFetcher.fetchCurrentSongMetadata(host) ?: throw MusicBrainzNoMatchException()
                 }
@@ -61,7 +66,7 @@ class MusicBrainzInfoViewModel(application: Application, private val savedState:
                         is MusicBrainzLookup.Choose -> _state.value = MusicBrainzScreenState.Choose(result.candidates)
                     }
                 } else {
-                    if (metadata.artist.isBlank() || metadata.album.isBlank()) throw MusicBrainzNoMatchException()
+                    if (metadata.album.isBlank()) throw MusicBrainzNoMatchException()
                     when (val result = repository.releaseGroup(metadata.artist, metadata.album)) {
                         is MusicBrainzLookup.Ready -> _state.value = MusicBrainzScreenState.AlbumReady(result.value, metadata)
                         is MusicBrainzLookup.Choose -> _state.value = MusicBrainzScreenState.Choose(result.candidates)
@@ -89,8 +94,11 @@ class MusicBrainzInfoViewModel(application: Application, private val savedState:
             _state.value = MusicBrainzScreenState.Loading
             try {
                 val testArtist = savedState.get<String>("testArtist").orEmpty()
+                val testAlbum = savedState.get<String>("testAlbum").orEmpty()
                 val metadata = if (testArtist.isNotBlank()) {
                     RemoteTrackMetadata(testArtist, testArtist, "", "test:$testArtist")
+                } else if (testAlbum.isNotBlank()) {
+                    RemoteTrackMetadata(testAlbum, "", testAlbum, "test:$testAlbum")
                 } else {
                     CoverArtFetcher.fetchCurrentSongMetadata(savedState.get<String>("host").orEmpty())
                         ?: throw MusicBrainzNoMatchException()
@@ -113,7 +121,7 @@ class MusicBrainzInfoViewModel(application: Application, private val savedState:
     }
 
     private fun matchesExpected(metadata: RemoteTrackMetadata, expected: String?): Boolean {
-        if (savedState.get<String>("testArtist").orNullIfBlank() != null) return true
+        if (savedState.get<String>("testArtist").orNullIfBlank() != null || savedState.get<String>("testAlbum").orNullIfBlank() != null) return true
         if (expected.isNullOrBlank()) return false
         fun normalized(value: String) = value.substringAfterLast('/').substringBeforeLast('.').trim().lowercase()
         val current = normalized(expected)
