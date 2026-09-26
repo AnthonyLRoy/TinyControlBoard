@@ -18,6 +18,7 @@ PANELS = [
 
 class _PanelState:
     def __init__(self):
+        """Initializes the current panel index and cached debugger socket URL."""
         self.panel_idx = 0
         self.cdp_ws_url = None
 
@@ -92,6 +93,7 @@ def _read_ws_text_frame(sock, timeout=2):
 
 
 def _click_panel(css_selector):
+    """Uses Chrome DevTools Protocol to click the requested moOde panel control."""
     try:
         ws_url = _get_cdp_ws_url()
 
@@ -141,6 +143,7 @@ def _click_panel(css_selector):
 
 
 def _go_to_panel(idx):
+    """Records and activates the panel at the supplied index."""
     _state.panel_idx = idx
     selector, name = PANELS[idx]
     print(f"Panel → {name}", flush=True)
@@ -148,14 +151,18 @@ def _go_to_panel(idx):
 
 
 def make_select_panel_handler(idx):
+    """Creates a command handler that navigates to one fixed panel index."""
     def _handler(params):
+        """Activates the panel captured by the enclosing handler factory."""
         _go_to_panel(idx)
     return _handler
 
 
 def handle_next_panel(params):
+    """Advances to the next panel, wrapping around at the end of the panel list."""
     _go_to_panel((_state.panel_idx + 1) % len(PANELS))
 
 
 def handle_prev_panel(params):
+    """Moves to the previous panel, wrapping around at the start of the panel list."""
     _go_to_panel((_state.panel_idx - 1) % len(PANELS))

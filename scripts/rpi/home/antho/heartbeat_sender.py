@@ -47,6 +47,7 @@ def compute_checksum(data):
     return sum(data[1:8 + payload_len]) % 256
 
 def build_packet(msg_type, seq, cmd_id, payload=b''):
+    """Builds a framed UART packet and appends its protocol checksum."""
     header = struct.pack(HEADER_FORMAT,
                          UART_START_BYTE, VERSION, SRC_APP,
                          msg_type, seq, cmd_id, len(payload))
@@ -69,6 +70,7 @@ def blip():
 _send_lock = threading.Lock()  # guards GPIO24 + ser between the main loop and the writer socket thread
 
 def send_packet(pkt):
+    """Serializes access to the UART and signals the ESP32 after sending a packet."""
     with _send_lock:
         wait_until_low()
         ser.write(pkt)
@@ -76,6 +78,7 @@ def send_packet(pkt):
         blip()
 
 def _recv_exact(conn, n):
+    """Reads exactly n bytes from a socket, returning None if it closes early."""
     buf = b""
     while len(buf) < n:
         chunk = conn.recv(n - len(buf))

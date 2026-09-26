@@ -46,6 +46,7 @@ ROW_FILL = "EAF2F8"
 
 
 def parse_args() -> argparse.Namespace:
+    """Parses output-path and optional single-source command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Build a single DOCX file from the TinyControlBoard Markdown docs."
     )
@@ -99,6 +100,7 @@ def preprocess_mermaid(markdown_text: str) -> str:
 
 
 def ensure_custom_styles(document: Document) -> None:
+    """Creates the document's custom styles and applies its typography defaults."""
     styles = document.styles
 
     if "Code Block" not in styles:
@@ -133,6 +135,7 @@ def ensure_custom_styles(document: Document) -> None:
 
 
 def configure_section(section) -> None:
+    """Applies the standard page margins and header/footer spacing to a section."""
     section.top_margin = Inches(0.75)
     section.bottom_margin = Inches(0.7)
     section.left_margin = Inches(0.75)
@@ -142,6 +145,7 @@ def configure_section(section) -> None:
 
 
 def set_page_layout(section, orientation: WD_ORIENT) -> None:
+    """Changes a section's orientation while preserving its page dimensions."""
     if section.orientation == orientation:
         return
 
@@ -153,6 +157,7 @@ def set_page_layout(section, orientation: WD_ORIENT) -> None:
 
 
 def set_paragraph_bottom_border(paragraph, color: str = HEADER_FILL) -> None:
+    """Adds a single bottom border to a paragraph using the requested color."""
     p_pr = paragraph._p.get_or_add_pPr()
     borders = p_pr.find(qn("w:pBdr"))
     if borders is None:
@@ -171,11 +176,13 @@ def set_paragraph_bottom_border(paragraph, color: str = HEADER_FILL) -> None:
 
 
 def content_width_inches(section) -> float:
+    """Returns the usable page width of a section in inches."""
     usable_width = section.page_width - section.left_margin - section.right_margin
     return usable_width / 914400
 
 
 def set_cell_shading(cell, fill: str) -> None:
+    """Sets the background fill color on a DOCX table cell."""
     tc_pr = cell._tc.get_or_add_tcPr()
     shd = tc_pr.find(qn("w:shd"))
     if shd is None:
@@ -185,6 +192,7 @@ def set_cell_shading(cell, fill: str) -> None:
 
 
 def set_repeat_table_header(row) -> None:
+    """Marks a table row to repeat as the header on subsequent pages."""
     tr_pr = row._tr.get_or_add_trPr()
     tbl_header = OxmlElement("w:tblHeader")
     tbl_header.set(qn("w:val"), "true")
@@ -192,6 +200,7 @@ def set_repeat_table_header(row) -> None:
 
 
 def add_field_run(paragraph, instruction: str, display_text: str = "") -> None:
+    """Adds a Word field code with an optional displayed placeholder value."""
     begin_run = paragraph.add_run()
     begin = OxmlElement("w:fldChar")
     begin.set(qn("w:fldCharType"), "begin")
@@ -218,11 +227,13 @@ def add_field_run(paragraph, instruction: str, display_text: str = "") -> None:
 
 
 def add_page_number(paragraph) -> None:
+    """Adds a page label and Word page-number field to a paragraph."""
     paragraph.add_run("Page ")
     add_field_run(paragraph, "PAGE", "1")
 
 
 def add_title_page(document: Document, sources: list[Path]) -> None:
+    """Adds the documentation cover page and a Word-generated table of contents field."""
     banner = document.add_paragraph()
     banner.alignment = WD_ALIGN_PARAGRAPH.CENTER
     banner_run = banner.add_run("PROJECT DOCUMENTATION PACK")
@@ -267,6 +278,7 @@ def add_title_page(document: Document, sources: list[Path]) -> None:
 
 
 def add_inline_content(paragraph, node, base_dir: Path) -> None:
+    """Converts an inline HTML node and its children into formatted DOCX runs."""
     if isinstance(node, NavigableString):
         text = str(node)
         if text:
@@ -312,6 +324,7 @@ def add_inline_content(paragraph, node, base_dir: Path) -> None:
 
 
 def add_paragraph_from_tag(document: Document, tag: Tag, base_dir: Path, style: str | None = None):
+    """Creates a DOCX paragraph and renders the HTML tag's inline contents into it."""
     paragraph = document.add_paragraph(style=style)
     for child in tag.children:
         add_inline_content(paragraph, child, base_dir)
@@ -319,11 +332,13 @@ def add_paragraph_from_tag(document: Document, tag: Tag, base_dir: Path, style: 
 
 
 def add_source_note(document: Document, source: Path) -> None:
+    """Adds a note identifying the Markdown file used for the following content."""
     paragraph = document.add_paragraph(style="Source Note")
     paragraph.add_run(f"Source: {source.relative_to(ROOT).as_posix()}")
 
 
 def add_list(document: Document, list_tag: Tag, base_dir: Path, ordered: bool, level: int = 0) -> None:
+    """Renders a nested HTML list as numbered or bulleted DOCX paragraphs."""
     style = "List Number" if ordered else "List Bullet"
     for item in list_tag.find_all("li", recursive=False):
         paragraph = document.add_paragraph(style=style)
@@ -340,6 +355,7 @@ def add_list(document: Document, list_tag: Tag, base_dir: Path, ordered: bool, l
 
 
 def add_code_block(document: Document, code_tag: Tag) -> None:
+    """Adds a preformatted code paragraph with the document's code-block styling."""
     paragraph = document.add_paragraph(style="Code Block")
     text = code_tag.get_text().rstrip("\n")
     run = paragraph.add_run(text)
@@ -349,6 +365,7 @@ def add_code_block(document: Document, code_tag: Tag) -> None:
 
 
 def add_image(document: Document, image_tag: Tag, base_dir: Path) -> None:
+    """Adds a local Markdown image to the document and includes its alt text as a caption."""
     src = image_tag.get("src")
     if not src:
         return
@@ -368,6 +385,7 @@ def add_image(document: Document, image_tag: Tag, base_dir: Path) -> None:
 
 
 def shade_paragraph(paragraph, fill: str) -> None:
+    """Applies a background fill color to a paragraph's XML properties."""
     p_pr = paragraph._p.get_or_add_pPr()
     shd = p_pr.find(qn("w:shd"))
     if shd is None:
@@ -377,6 +395,7 @@ def shade_paragraph(paragraph, fill: str) -> None:
 
 
 def add_table(document: Document, table_tag: Tag, base_dir: Path) -> None:
+    """Renders an HTML table on a landscape page with sized columns and styled rows."""
     landscape = document.add_section(WD_SECTION.NEW_PAGE)
     configure_section(landscape)
     set_page_layout(landscape, WD_ORIENT.LANDSCAPE)
@@ -446,6 +465,7 @@ def add_table(document: Document, table_tag: Tag, base_dir: Path) -> None:
 
 
 def render_html_block(document: Document, node, base_dir: Path) -> None:
+    """Renders an HTML block node recursively as paragraphs, lists, tables, images, or code."""
     if isinstance(node, NavigableString):
         if str(node).strip():
             paragraph = document.add_paragraph()
@@ -493,6 +513,7 @@ def render_html_block(document: Document, node, base_dir: Path) -> None:
 
 
 def render_markdown_file(document: Document, source: Path) -> None:
+    """Converts one Markdown source file to HTML and appends its rendered content."""
     markdown_text = source.read_text(encoding="utf-8")
     markdown_text = preprocess_mermaid(markdown_text)
     html = markdown.markdown(
@@ -509,6 +530,7 @@ def render_markdown_file(document: Document, source: Path) -> None:
 
 
 def add_headers_and_footers(document: Document) -> None:
+    """Adds consistent branded headers, footers, and page-number fields to all sections."""
     for section in document.sections:
         configure_section(section)
 
@@ -540,6 +562,7 @@ def add_headers_and_footers(document: Document) -> None:
 
 
 def build_document(output_path: Path, sources: list[Path] | None = None) -> Path:
+    """Builds and saves the combined documentation DOCX from the selected Markdown sources."""
     if sources is None:
         sources = [ROOT / relative_path for relative_path in SOURCE_ORDER if (ROOT / relative_path).exists()]
     document = Document()
@@ -566,6 +589,7 @@ def build_document(output_path: Path, sources: list[Path] | None = None) -> Path
 
 
 def main() -> int:
+    """Resolves command-line inputs, builds the DOCX, and removes temporary diagram images."""
     args = parse_args()
 
     if args.source:

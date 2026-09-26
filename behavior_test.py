@@ -23,27 +23,33 @@ mpd_mock_responses = {
 }
 
 def fake_build_packet(msg_type, seq, cmd_id, payload=b''):
+    """Returns packet arguments as a tuple so library-browser requests can be inspected."""
     return (msg_type, seq, cmd_id, payload)
 
 def fake_send_packet_locked(pkt):
+    """Records a packet sent by the mocked UART writer."""
     sent_packets.append(pkt)
 
 def fake_mpd_lsinfo(path):
+    """Records a mocked MPD directory query and returns its configured entries."""
     print(f"Fake mpd_lsinfo called with: {path!r}")
     mpd_lsinfo_calls.append(path)
     return mpd_mock_responses.get(path, [])
 
 def fake__mpd_escape(path):
+    """Escapes MPD path characters using the same rules as the production helper."""
     return path.replace("\\", "\\\\").replace('"', '\\"')
 
 mpd_command_calls = []
 
 def fake_mpd_command(command_line):
+    """Records a mocked MPD command and returns an empty response."""
     print(f"Fake mpd_command called with: {command_line!r}")
     mpd_command_calls.append(command_line)
     return []
 
 def fake_mpd_search_with_tags(field, text):
+    """Returns no matches for the mocked tagged-search operation."""
     return []
 
 # Inject mock modules for Phase 1
@@ -150,6 +156,7 @@ try:
     mpd_command_calls.clear()
 
     def fake_playlist_mpd_command(cmd):
+        """Returns representative playlist metadata for radio and track entries."""
         if cmd == "playlistinfo":
             return [
                 "file: http://live-aacplus-64.kexp.org/kexp64.aac",
@@ -210,6 +217,7 @@ for mod in ["library_browser", "protocol", "uart_writer_client", "mpd_client", "
 # Mock modules for Phase 2
 mock_set_radio_browse_calls = []
 def mock_set_radio_browse(enabled):
+    """Records each radio-browse state change made by a panel handler."""
     print(f"Mock set_radio_browse called with: {enabled}")
     mock_set_radio_browse_calls.append(enabled)
 
@@ -284,7 +292,9 @@ sys.modules["command_ids"] = fake_cmd
 # Mock panel_control
 panel_select_panel_calls = []
 def mock_make_select_panel_handler(panel_index):
+    """Creates a mock panel handler that records the selected panel and parameters."""
     def dummy_handler(params):
+        """Records a call to the generated panel-selection handler."""
         panel_select_panel_calls.append((panel_index, params))
     return dummy_handler
 
@@ -322,6 +332,7 @@ sys.modules["protocol"] = fake_protocol2
 fake_serial = ModuleType("serial")
 class DummySerial:
     def __init__(self, port, baud, timeout):
+        """Provides a no-op serial object for importing the listener in tests."""
         pass
 fake_serial.Serial = DummySerial
 sys.modules["serial"] = fake_serial

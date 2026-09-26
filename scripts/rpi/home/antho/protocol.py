@@ -26,11 +26,13 @@ MSG_PLAYLIST_RESULT = 0x09
 
 
 def compute_checksum(data):
+    """Calculates the packet checksum over the header fields and declared payload."""
     payload_len = data[7]
     return sum(data[1:8 + payload_len]) % 256
 
 
 def build_packet(msg_type, seq, cmd_id, payload=b''):
+    """Serializes a protocol header and payload and appends the checksum byte."""
     header = struct.pack(HEADER_FORMAT,
                          UART_START_BYTE, PROTOCOL_VERSION, SRC_APP_PI,
                          msg_type, seq, cmd_id, len(payload))
@@ -39,6 +41,7 @@ def build_packet(msg_type, seq, cmd_id, payload=b''):
 
 
 def read_packet_with_resync(ser):
+    """Reads one complete UART packet, synchronizing on its start byte."""
     # Sync to start byte
     while True:
         b = ser.read(1)
