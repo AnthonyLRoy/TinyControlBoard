@@ -5,7 +5,6 @@ MPD_PORT = 6600
 
 
 def _mpd_escape(path):
-    """Escapes backslashes and quotes for an MPD command argument."""
     return path.replace("\\", "\\\\").replace('"', '\\"')
 
 

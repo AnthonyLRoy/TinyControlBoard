@@ -33,11 +33,11 @@ include config-user.txt
 
 # Do not alter this section
 # Integrated adapters
-dtoverlay=disable-bt
-dtoverlay=disable-wifi
+#dtoverlay=disable-bt
+#dtoverlay=disable-wifi
 # Audio overlays
-#dtoverlay=none
-#dtoverlay=force_eeprom_read=0
+dtoverlay=i2s-dac
+#force_eeprom_read=0
 # PCI Express
 #dtparam=pciex1
 #dtparam=pciex1_gen=3
@@ -45,3 +45,5 @@ dtoverlay=disable-wifi
 #dtoverlay=vc4-kms-dsi-7inch,invx,invy
 # Fan speed
 #dtparam=fan_temp0=50000,fan_temp0_hyst=5000,fan_temp0_speed=75
+# External antenna
+#dtparam=ant2

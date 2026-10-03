@@ -28,7 +28,6 @@ SAVED_PLAYLISTS_TOKEN = "\x00saved-playlists\x00"
 
 class _BrowseState:
     def __init__(self):
-        """Initializes browsing, playlist, search, and message-sequence state."""
         self.browse_path = ""       # "" == library root
         self.browse_entries = []    # [(is_directory, full_path), ...] for the last listing sent
         self.radio_browse = False
@@ -47,7 +46,6 @@ def set_radio_browse(enabled):
 
 
 def _list_saved_playlist_names():
-    """Returns saved playlist names from MPD, or an empty list if the query fails."""
     try:
         return [
             line[len("playlist: "):]
@@ -74,7 +72,6 @@ def _root_entries():
 
 
 def send_library_entry(index, total, entry_type, name, album="", art_hash=""):
-    """Encodes and sends one library entry with optional album and artwork metadata."""
     name_bytes = name.encode("utf-8")[:MAX_LIBRARY_NAME_LEN]
     album_bytes = album.encode("utf-8")[:MAX_LIBRARY_ALBUM_LEN]
     # art_hash must be a plain MD5 hex digest (or empty) — never send anything else onto the wire.
@@ -91,7 +88,6 @@ def send_library_entry(index, total, entry_type, name, album="", art_hash=""):
 
 
 def handle_browse_request(params):
-    """Updates the current browse location and streams its entries to the ESP32."""
     target = params[0]
 
     if target == LIB_BROWSE_ROOT:
@@ -147,7 +143,6 @@ def handle_browse_request(params):
 
 
 def handle_add_track(params):
-    """Adds the selected library entry or radio station to the MPD queue."""
     index = params[0]
     if not (0 <= index < len(_state.browse_entries)):
         print(f"⚠️ Invalid add-track index {index}", flush=True)
@@ -199,7 +194,6 @@ def _folder_tracks(folder_path, limit=MAX_FOLDER_TRACKS):
 
 
 def _folder_from_current_listing(params):
-    """Returns the selected folder path, or None when the index is invalid or not a folder."""
     index = params[0]
     if not (0 <= index < len(_state.browse_entries)):
         print(f"⚠️ Invalid folder index {index}", flush=True)
@@ -212,7 +206,6 @@ def _folder_from_current_listing(params):
 
 
 def handle_add_folder(params):
-    """Adds the tracks below the selected folder to the current MPD queue."""
     folder_path = _folder_from_current_listing(params)
     if folder_path is None:
         return
@@ -226,7 +219,6 @@ def handle_add_folder(params):
 
 
 def handle_replace_with_folder(params):
-    """Replaces the MPD queue with tracks found below the selected folder."""
     folder_path = _folder_from_current_listing(params)
     if folder_path is None:
         return
@@ -241,7 +233,6 @@ def handle_replace_with_folder(params):
 
 
 def _is_radio_entry(file_path, name_tag=""):
-    """Determines whether an MPD playlist entry represents a radio stream or station."""
     if name_tag:
         return True
     path_lower = file_path.lower()
@@ -255,7 +246,6 @@ def _is_radio_entry(file_path, name_tag=""):
 
 
 def _parse_playlistinfo(lines):
-    """Groups MPD playlist response lines into per-entry file and metadata records."""
     entries = []
     current_entry = None
     for line in lines:
@@ -284,7 +274,6 @@ def _parse_playlistinfo(lines):
 
 
 def handle_playlist_request(_params):
-    """Fetches the current MPD queue and streams its entries and metadata to the ESP32."""
     try:
         raw_lines = mpd_command("playlistinfo")
         parsed = _parse_playlistinfo(raw_lines)[:MAX_LIBRARY_ENTRIES]
@@ -318,7 +307,6 @@ def handle_playlist_request(_params):
 
 
 def handle_clear_queue(_params):
-    """Clears the current MPD playback queue and reports command failures."""
     try:
         mpd_command("clear")
         print("Queue cleared", flush=True)
@@ -327,7 +315,6 @@ def handle_clear_queue(_params):
 
 
 def handle_play_track(params):
-    """Starts playback of the selected position in the current MPD queue."""
     index = params[0]
     if not (0 <= index < len(_state.playlist_entries)):
         print(f"⚠️ Invalid play-track index {index}", flush=True)
@@ -341,7 +328,6 @@ def handle_play_track(params):
 
 
 def handle_remove_track(params):
-    """Removes the selected position from the current MPD queue."""
     index = params[0]
     if not (0 <= index < len(_state.playlist_entries)):
         print(f"⚠️ Invalid remove-track index {index}", flush=True)
@@ -355,7 +341,6 @@ def handle_remove_track(params):
 
 
 def handle_move_track(params):
-    """Moves a queue entry to a new position and mirrors the move in local state."""
     from_index, to_index = params[0], params[1]
     if not (0 <= from_index < len(_state.playlist_entries)):
         print(f"⚠️ Invalid move source {from_index}", flush=True)
@@ -408,22 +393,18 @@ def _run_search(field, text):
 
 
 def handle_library_search_artist(text):
-    """Searches the library by artist and streams matching entries to the ESP32."""
     _run_search("artist", text)
 
 
 def handle_library_search_album(text):
-    """Searches the library by album and streams matching entries to the ESP32."""
     _run_search("album", text)
 
 
 def handle_library_search_any(text):
-    """Searches all supported MPD metadata fields and streams matching entries."""
     _run_search("any", text)
 
 
 def handle_add_search_result(params):
-    """Adds the selected search result to the MPD queue, loading playlists when appropriate."""
     index = params[0]
     if not (0 <= index < len(_state.search_entries)):
         print(f"⚠️ Invalid add-search-result index {index}", flush=True)
