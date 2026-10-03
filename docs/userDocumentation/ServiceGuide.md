@@ -164,13 +164,13 @@ Approximately 20–30 hours, typically spread over one to two weeks depending on
 
 System Overview
 
-<img src="../user-manual-media/media/service-guide/control-board-architecture-overview.png" style="width:6.26806in;height:6.82466in" />
+<img src="../user-manual-media/media/service-guide/control-board-architecture-overview.svg" alt="Architecture overview showing the ESP32-S3 firmware, NimBLE BLE GATT server, Android BluetoothGatt client, Raspberry Pi UART services, and their connections" style="width:6.26806in;height:auto" />
 
 ## 
 
 #### Overall System Chart
 
-<img src="../user-manual-media/media/service-guide/streamer-dac-system-overview.png" style="width:6.26806in;height:8.22708in" />
+<img src="../user-manual-media/media/service-guide/streamer-dac-system-overview.svg" alt="System overview showing control and Bluetooth connections, digital audio sources, reclocking, ESS and ProtoDAC paths, and RCA and XLR outputs" style="width:6.26806in;height:auto" />
 
 Overall, Power Connection Diagram
 

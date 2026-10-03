@@ -144,7 +144,7 @@ sequenceDiagram
     HW->>ESP: 3.3V rail applied (ESP32 boots)
     ESP->>ESP: esp_pm_configure() + 5000ms startup delay
     ESP->>ESP: ControlBoard::init() — NVS, UART transport, I2C/MCP23018,<br/>button queue, action registry, relay GPIO setup (each relay configured and driven OFF)
-    ESP->>ESP: BleServer registers GATT service; NimBLE starts advertising
+    ESP->>ESP: BleServer registers GATT service, NimBLE starts advertising
     App->>ESP: BLE scan + connect + subscribe to notify characteristics
     ESP-->>App: STATUS/NOW_PLAYING/TRACK_PROGRESS notifications begin
     ESP->>ESP: Boot diagnostic LEDs light (8 LEDs)
