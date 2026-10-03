@@ -90,7 +90,7 @@ sequenceDiagram
     CB->>CB: initNvs() — nvs_flash_init (erase+retry on version mismatch)
     CB->>CB: initTransport() — get UartTransport/StandardRelay singletons, wire RX + heartbeat-timeout callbacks
     CB->>CB: initComponents() — construct ActionProcessor + ControlBoardInputDispatcher
-    CB->>BS: setupRelays() — configure 7 relay GPIOs as outputs, all OFF
+    CB->>BS: setupRelays() — configure 7 relay GPIOs as outputs, each driven OFF via `StandardRelay::init(pin, false)`
     CB->>BS: setupMcpHandler() — I2C init, MCP23018 init, GPIO ISR install
     CB->>CB: ButtonEventQueue::start() — create queue (depth 16) + action_task (stack 4096, prio 5)
     CB->>BS: configureMcpCallbacks() — wire press/release/rotary callbacks into the queue
@@ -257,7 +257,7 @@ flowchart TD
 | DAC power | 12 | Yes (2nd, +1500ms) | Distinct from GPIO10 "toggle DAC" — this is bulk power |
 | Output stage power | 9 | Yes (3rd, +1500ms) | Turned off first on Sleep/DeepSleep |
 | Raspberry Pi power | 11 | Yes (4th, +1000ms; then waits up to 60s for heartbeat) | |
-| DAC signal-select (`ESS_DAC_ENABLED`) | 10 | No — user-toggled independently via "Toggle DAC" button | Selects/enables signal routing, not bulk power |
+| DAC signal-select (`ESS_DAC_ENABLED`) | 10 | No — user-toggled independently via "Toggle DAC" button | Selects/enables signal routing, not bulk power. State is saved in NVS (namespace `relay`, key `dac_en`): `RelayController::suspendDac()` saves it and drops the relay on Sleep/DeepSleep; `ActionProcessor::restoreDacState()` re-applies it when the power state becomes ON |
 | General relay 1 | 47 | No | Not referenced by any action in the inspected source beyond GPIO init |
 | General relay 2 | 39 | No | Initialized only; **dead output**, never referenced elsewhere |
 

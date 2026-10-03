@@ -8,7 +8,7 @@ This guide explains how to clone the repository onto a Raspberry Pi 4 running **
 
 Companion assets for the Raspberry Pi are tracked in the GitHub repository under [scripts/rpi](../../scripts/rpi).
 
-### Complete List of Python Programs & Modules (`scripts/rpi/home/`)
+### Complete List of Python Programs & Modules (`scripts/rpi/home/antho/`)
 
 | Script File | Purpose / Function |
 | :--- | :--- |
@@ -30,7 +30,7 @@ Companion assets for the Raspberry Pi are tracked in the GitHub repository under
 - [scripts/rpi/boot/firmware/config-user.txt](../../scripts/rpi/boot/firmware/config-user.txt): User overlay configuration template containing `dtoverlay=uart5`
 - [scripts/rpi/boot/firmware/cmdline.txt](../../scripts/rpi/boot/firmware/cmdline.txt): Boot command-line template
 - [scripts/rpi/FinalSplashScreen.png](../../scripts/rpi/FinalSplashScreen.png): Static splash-screen image asset
-- [scripts/rpi/Peppymeter/](../../scripts/rpi/Peppymeter/): PeppyMeter needle, background graphics, and `meters.txt` configurations
+- [scripts/rpi/opt/peppymeter/1024x600-moode/](../../scripts/rpi/opt/peppymeter/1024x600-moode/): PeppyMeter needle, background graphics, and `meters.txt` configuration
 
 ---
 
@@ -52,7 +52,7 @@ git clone https://github.com/<your-username>/TinyControlBoard.git
 Deploy the Python companion scripts from the cloned repository into `/home/<username>/`:
 
 ```bash
-cp /home/<username>/TinyControlBoard/scripts/rpi/home/*/*.py /home/<username>/
+cp /home/<username>/TinyControlBoard/scripts/rpi/home/antho/*.py /home/<username>/
 sudo chown -R <username>:<username> /home/<username>/
 ```
 
@@ -369,7 +369,7 @@ This installs Plymouth and sets up the RiverBank splash theme (a static banner w
 From the repository root on your local machine:
 
 ```bash
-scp -r scripts/rpi/riverbank-plymouth-theme/riverbank-theme pi@<moode-ip>:/tmp/
+scp -r scripts/rpi/home/antho/riverbank-plymouth-theme/riverbank-theme pi@<moode-ip>:/tmp/
 ```
 
 *(Replace `pi` and `<moode-ip>` with your actual username and Pi IP address).*
@@ -533,7 +533,7 @@ Copy the meter graphics and configuration files from the cloned repository into 
 
 ```bash
 sudo mkdir -p /opt/1024x600
-sudo cp -r /home/<username>/TinyControlBoard/scripts/rpi/Peppymeter/1024x600/* /opt/1024x600/
+sudo cp -r /home/<username>/TinyControlBoard/scripts/rpi/opt/peppymeter/1024x600-moode/* /opt/1024x600/
 ```
 
 ---
@@ -543,7 +543,7 @@ sudo cp -r /home/<username>/TinyControlBoard/scripts/rpi/Peppymeter/1024x600/* /
 | Purpose | File Path | Notes |
 | :--- | :--- | :--- |
 | GitHub Repository | `/home/<username>/TinyControlBoard` | Source tree cloned on Pi |
-| Script Suite Location | `/home/<username>/TinyControlBoard/scripts/rpi/home/*/*.py` | 11 Python scripts copied to `/home/<username>/` |
+| Script Suite Location | `/home/<username>/TinyControlBoard/scripts/rpi/home/antho/*.py` | 11 Python scripts copied to `/home/<username>/` |
 | Firmware Config | `/boot/firmware/config-user.txt` | Defines `dtoverlay=uart5`, included by `config.txt` |
 | Boot Parameters | `/boot/firmware/cmdline.txt` | Single line; includes quiet/splash parameters |
 | UART Listener Script | `/home/<username>/uart5_listener.py` | Python entry point used by systemd |
@@ -554,7 +554,8 @@ sudo cp -r /home/<username>/TinyControlBoard/scripts/rpi/Peppymeter/1024x600/* /
 | Plymouth RiverBank Theme | `/usr/share/plymouth/themes/riverbank/` | Primary animated splash screen theme |
 | Static Splash Image | `/opt/splash.png` | Alternative static splash screen asset |
 | Plymouth Sudoers Rule | `/etc/sudoers.d/plymouth` | Lets `plymouth quit` run passwordless from `.xinitrc` |
-| PeppyMeter Config | `/opt/1024x600/` | Meter graphics & `meters.txt` config |
+| PeppyMeter Source | `/home/<username>/TinyControlBoard/scripts/rpi/opt/peppymeter/1024x600-moode/` | Source meter graphics & `meters.txt` config |
+| PeppyMeter Config | `/opt/1024x600/` | Installed meter graphics & `meters.txt` config |
 
 ---
 
@@ -650,9 +651,9 @@ journalctl -u uart5_listener.service -n 50 --no-pager
      sudo apt install -y python3-serial python3-rpi.gpio python3-requests
      ```
    - For internal companion modules (e.g., `ModuleNotFoundError: No module named 'protocol'` or `'command_ids'`):
-     Ensure **all 11 Python files** from the repository's `scripts/rpi/home/` folder have been copied into `/home/<username>/`:
+     Ensure **all 11 Python files** from the repository's `scripts/rpi/home/antho/` folder have been copied into `/home/<username>/`:
      ```bash
-     cp /home/<username>/TinyControlBoard/scripts/rpi/home/*/*.py /home/<username>/
+     cp /home/<username>/TinyControlBoard/scripts/rpi/home/antho/*.py /home/<username>/
      ls -la /home/<username>/*.py
      ```
 

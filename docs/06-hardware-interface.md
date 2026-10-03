@@ -70,13 +70,14 @@ button (bit 0 unused — the power button has no LED). See
 | DAC power | `GPIO12` | High = ON | Yes (stage 2); OFF only on Deep Sleep |
 | Output-stage power | `GPIO9` | High = ON | Yes (stage 3); OFF on Sleep and Deep Sleep |
 | Raspberry Pi power | `GPIO11` | High = ON | Yes (stage 4) |
-| DAC signal-select (`ESS_DAC_ENABLED`) | `GPIO10` | High = ON | No — user toggle only |
+| DAC signal-select (`ESS_DAC_ENABLED`) | `GPIO10` | High = ON | No — user toggle; forced OFF on Sleep/Deep Sleep and restored from NVS (`dac_en`) when power returns to ON |
 | General relay 1 | `GPIO47` | High = ON | No — unused by any action in inspected source |
 | General relay 2 | `GPIO39` | High = ON | No — dead output, never referenced |
 
 Active-high confirmed directly in `lib/hal/relay/relay.cpp`
 (`gpio_set_level(relayPin, state ? 1 : 0)`), with internal pull-down enabled and no
-pull-up — i.e. relays default to OFF on an undriven/floating pin.
+pull-up) — i.e. relays default to OFF on an undriven/floating pin. `StandardRelay::init(pin, initialState)`
+drives the pin to `initialState` immediately after configuring it (skipped if GPIO configuration fails).
 
 ## 7. Indicator Outputs
 

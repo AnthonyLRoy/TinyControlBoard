@@ -120,7 +120,7 @@ In the upper-left corner of the panel you will find a small secondary display \[
 
 #### Switching Between Different DACs \[4\]
 
-The player has a **Toggle DAC** button \[4\] that lets you switch between the primary DAC, Ian Canada’s ESS DAC and the secondary ProtoDac. When you press this button, a relay inside the player switches the active audio path. The button will light up to indicate which output is currently selected, and pressing it again toggles back. This is useful if you want to try a different DAC sound depending on your moOde.
+The player has a **Toggle DAC** button \[4\] that lets you switch between the primary DAC, Ian Canada’s ESS DAC and the secondary ProtoDac. When you press this button, a relay inside the player switches the active audio path. The button will light up to indicate which output is currently selected, and pressing it again toggles back. Your selection is remembered when the player goes to sleep and is restored the next time it wakes. This is useful if you want to try a different DAC sound depending on your moOde.
 
 ### The Power Indicator \[18\]
 

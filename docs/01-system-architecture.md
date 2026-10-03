@@ -95,13 +95,14 @@ sequenceDiagram
 
     HW->>ESP: 3.3V rail applied (ESP32 boots)
     ESP->>ESP: esp_pm_configure() + 5000ms startup delay
-    ESP->>ESP: ControlBoard::init() — NVS, UART transport, I2C/MCP23018,<br/>button queue, action registry, relay GPIO setup
+    ESP->>ESP: ControlBoard::init() — NVS, UART transport, I2C/MCP23018,<br/>button queue, action registry, relay GPIO setup (each relay configured and driven OFF)
     ESP->>ESP: Boot diagnostic LEDs light (8 LEDs)
     ESP->>ESP: ActionProcessor::triggerInitialPowerOn()
     ESP->>HW: VCC 3V3 relay ON (+1000ms settle)
     ESP->>HW: DAC relay ON (+1500ms settle)
     ESP->>HW: Output-stage relay ON (+1500ms settle)
     ESP->>HW: RPi relay ON (+1000ms settle)
+    ESP->>ESP: Power state -> ON, saved DAC select state restored from NVS
     ESP->>RPi: RPi power applied — Pi boots, systemd starts<br/>heartbeat_sender.service + uart5_listener.service
     RPi-->>ESP: UART heartbeat (CMD_SYS_HEARTBEAT) within 60s
     ESP->>ESP: Power state -> ON (boot diagnostic LEDs clear)
@@ -130,8 +131,9 @@ sequenceDiagram
     ESP->>ESP: Wait up to 60s (k_rpiShutdownTimeoutMs)
     ESP->>ESP: 500ms settle delay
     ESP->>HW: RPi relay OFF
+    ESP->>ESP: DAC signal-select state saved to NVS, then relay OFF
     ESP->>HW: Output-stage relay OFF
-    Note over ESP,HW: Deep Sleep additionally turns off the DAC relay
+    Note over ESP,HW: Deep Sleep additionally turns off the DAC power relay
     ESP->>ESP: All button LEDs OFF, power state -> SLEEP or DEEPSLEEP
 ```
 
