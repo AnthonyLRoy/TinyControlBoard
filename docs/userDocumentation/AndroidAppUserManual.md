@@ -30,7 +30,7 @@ Before you begin, make sure that:
 
 > **Find your player**
 >
-> <img src="../user-manual-media/media/ScreenScan.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100% height: auto;">
+> <img src="../user-manual-media/media/androidApp/ScreenScan.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100% height: auto;">
 >
 > *Tap TinyControlBoard to connect.*
 
@@ -42,7 +42,7 @@ The main screen is where you will normally control your music. It shows the song
 
 > **Main controls**
 >
-> <img src="../user-manual-media/media/MainScreen.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/MainScreen.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
 > Library, current song, previous, play/pause, next, shuffle, repeat, screen brightness, display on/off, settings, and power.
 
@@ -84,7 +84,7 @@ The song name appears above the controls. Tap it at any time to open the current
 
 > **Screenshot placeholder 3 - Browse your music**
 >
-> <img src="../user-manual-media/media/Library.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/Library.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > 
 >*Open a folder, then tap a track to add it to your queue.*
 
@@ -98,7 +98,7 @@ When you tap a folder, choose one of these options:
 
 > **Screenshot placeholder 3 - Browse your music**
 >
-> <img src="../user-manual-media/media/FolderList.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/FolderList.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > 
 >*Open a folder, then tap a track to add it to your queue.*
 
@@ -118,13 +118,13 @@ Results are grouped by album. Tap a track to add it to the queue. Use an album h
 
 > **Screenshot placeholder 4 - Search**
 >
-><img src="../user-manual-media/media/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+><img src="../user-manual-media/media/androidApp/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
 > Suggested caption: *Choose what to search for, enter a name, then tap OK.*
 
 > **Screenshot placeholder 5 - Search results**
 >
-> <img src="../user-manual-media/media/SearchResults.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/SearchResults.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
 > Suggested caption: *Tap a track, or add a whole album at once.*
 
@@ -138,7 +138,7 @@ DanStreamer can look up information about the artist or album currently reported
 4. Wait while DanStreamer searches MusicBrainz and loads the information.
 
 >
-> <img src="../user-manual-media/media/MusicBrainzChoice.jpg" alt="MusicBrainz Artist or Album choice dialog" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/MusicBrainzChoice.jpg" alt="MusicBrainz Artist or Album choice dialog" width="240" style="max-width: 100%; ">
 >
 >
 > *Choose whether to view information about the current artist or album.*
@@ -147,7 +147,7 @@ The information screen keeps the player connection and playback untouched. Tap *
 
 
 >
-> <img src="../user-manual-media/media/MusicBrainzArtist.png" alt="MusicBrainz artist information screen with artist image and biography" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/MusicBrainzArtist.png" alt="MusicBrainz artist information screen with artist image and biography" width="240" style="max-width: 100%; ">
 >
 >
 > *Artist information is grouped into an image header, biography, and sound tags.*
@@ -161,7 +161,7 @@ The artist screen may show an artist image and a short biography when an image a
 - **Open MusicBrainz page** opens the full MusicBrainz artist or release-group page in the browser.
 
 >
-> <img src="../user-manual-media/media/MusicBrainzArtistExpanded.png" alt="Expanded MusicBrainz artist biography and tags" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/MusicBrainzArtistExpanded.png" alt="Expanded MusicBrainz artist biography and tags" width="240" style="max-width: 100%; ">
 >
 >
 > *Use Show more and +N more when you want the complete information.*
@@ -187,7 +187,7 @@ Tap the song name on the main screen, or tap **Playlist** if it is shown on your
 
 > **Screenshot placeholder 9 - Current queue**
 >
-><img src="../user-manual-media/media/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+><img src="../user-manual-media/media/androidApp/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the Current Playlist screen with a drag handle and one track action visible.
 >
 > Suggested caption: *Drag to reorder, swipe left to remove, or tap a track to play it.*
@@ -223,7 +223,7 @@ To save, load, delete, or clear a queue, open the current queue and tap **Playli
 
 > **Screenshot placeholder 10 - Playlist management**
 > 
-><img src="../user-manual-media/media/ManagePlaylist.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+><img src="../user-manual-media/media/androidApp/ManagePlaylist.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
 > *Save a queue for later, or load one you already saved.*
 
@@ -239,7 +239,7 @@ Available views may include **Default View**, **Radio Stations**, **Playlist**, 
 
 > **Screenshot placeholder 11 - Choose a display view**
 >  
-><img src="../user-manual-media/media/displayview.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+><img src="../user-manual-media/media/androidApp/displayview.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the Select display menu screen with one selected row.
 >
 > *Choose what you want to see on the player's display.*
@@ -257,7 +257,7 @@ This setting is only for album artwork and song details. Your normal remote cont
 
 > **Screenshot placeholder 12 - Album art setup**
 > 
-><img src="../user-manual-media/media/IPConfiguration.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+><img src="../user-manual-media/media/androidApp/IPConfiguration.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 > Insert a portrait screenshot of the moOde IP Address dialog.
 >
 > *Enter the address of your moOde player to show artwork and song details.*
@@ -274,7 +274,7 @@ Wait for a power change to finish before sending more commands. The status besid
 
 > **Screenshot placeholder 13 - Power options**
 >
-><img src="../user-manual-media/media/ShutDown.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+><img src="../user-manual-media/media/androidApp/ShutDown.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
 >
 >*Choose Sleep for everyday use or Deep Sleep for longer breaks.*
 
