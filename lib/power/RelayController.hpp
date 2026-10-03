@@ -2,6 +2,7 @@
 
 #include "hal/relay/relay.hpp"
 #include "hal/uart/serial.hpp"
+#include "hal/storage/nvsStorage.hpp"
 #include <driver/gpio.h>
 #include <cstdint>
 
@@ -21,10 +22,15 @@ namespace controlSystem
         bool toggleDac();
         // Shuts down the Raspberry Pi by sequencing the board's power relay state.
         bool shutdownRpi();
+        // Saves the DAC select state to NVS, then turns the relay off without overwriting the saved value.
+        void suspendDac();
+        // Returns the DAC select state last saved in NVS (false if none).
+        bool loadSavedDacState() const;
 
     private:
         transport::uart::UartTransport &mr_serial;
         relays::StandardRelay &mr_relays;
+        support::NvsStorage m_nvsStorage{"relay"};
         bool m_dacEnabled{false};
         static constexpr const char *k_logTag = "Relay_Controller";
     };

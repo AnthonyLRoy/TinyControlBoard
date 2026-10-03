@@ -96,6 +96,7 @@ namespace controlSystem
         {
             ESP_LOGI(k_logTag, "Initiating sleep sequence");
             runRpiShutdownSequence();
+            mr_relayController.suspendDac();
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getSpiLedDriver().setAllLeds(false);
             indicators::getButtonStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
@@ -108,6 +109,7 @@ namespace controlSystem
         {
             ESP_LOGI(k_logTag, "Initiating deep sleep sequence");
             runRpiShutdownSequence();
+            mr_relayController.suspendDac();
             mr_relayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getSpiLedDriver().setAllLeds(false);

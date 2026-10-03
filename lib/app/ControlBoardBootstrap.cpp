@@ -46,21 +46,13 @@ namespace controlSystem
         bool setupRelays()
         {
             ESP_LOGI(k_logTag, "Setting up relays...");
-            relays::StandardRelay::init(PIN_RELAY_VCC_3V3_POWER);
-            relays::StandardRelay::init(PIN_RELAY_RPI_POWER);
-            relays::StandardRelay::init(PIN_RELAY_DAC_POWER);
-            relays::StandardRelay::init(PIN_RELAY_OUTPUT_STAGE_POWER);
-            relays::StandardRelay::init(PIN_RELAY_ESS_DAC_ENABLED);
-            relays::StandardRelay::init(PIN_RELAY_GENERAL_1);
-            relays::StandardRelay::init(PIN_RELAY_GENERAL_2);
-
-            relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_2, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_VCC_3V3_POWER, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_RPI_POWER, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_DAC_POWER, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_OUTPUT_STAGE_POWER, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_ESS_DAC_ENABLED, false);
-            relays::StandardRelay::setRelayState(PIN_RELAY_GENERAL_1, false);
+            relays::StandardRelay::init(PIN_RELAY_VCC_3V3_POWER, false);
+            relays::StandardRelay::init(PIN_RELAY_RPI_POWER, false);
+            relays::StandardRelay::init(PIN_RELAY_DAC_POWER, false);
+            relays::StandardRelay::init(PIN_RELAY_OUTPUT_STAGE_POWER, false);
+            relays::StandardRelay::init(PIN_RELAY_ESS_DAC_ENABLED, false);
+            relays::StandardRelay::init(PIN_RELAY_GENERAL_1, false);
+            relays::StandardRelay::init(PIN_RELAY_GENERAL_2, false);
 
             indicators::getActivityStatusLed().sendStatus(ControlBoardWorkingStatus::Idle);
             return true;

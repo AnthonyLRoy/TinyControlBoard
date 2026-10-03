@@ -6,7 +6,7 @@ namespace relays
 static constexpr const char *k_logTag = "Relay           ";
 // i have no way to test this on actual hardware, so i am relying on the code logic and documentation, i hope it works as intended
 // Configures the relay GPIO pin as an output and reports configuration errors.
-void StandardRelay::init(gpio_num_t pinRelay)
+void StandardRelay::init(gpio_num_t pinRelay, bool initialState)
 {
     ESP_LOGI(k_logTag, "Initializing relay on GPIO %d", pinRelay);
     // Initialize the GPIO pin for the relay
@@ -22,7 +22,9 @@ void StandardRelay::init(gpio_num_t pinRelay)
     if (err != ESP_OK)
     {
         ESP_LOGE(k_logTag, "Failed to configure relay GPIO %d (err=0x%x)", pinRelay, err);
+        return;
     }
+    setRelayState(pinRelay, initialState);
 }
 
 // Drives the relay GPIO high to energize it or low to de-energize it.
