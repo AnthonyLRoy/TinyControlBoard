@@ -17,11 +17,9 @@ DEFAULT_METER_ENABLED = False
 
 
 def make_select_panel_handler(panel_index):
-    """Creates a panel-selection handler that also updates radio-browse mode."""
     panel_handler = panel.make_select_panel_handler(panel_index)
 
     def handler(params):
-        """Updates the library browse mode and activates the selected panel."""
         library.set_radio_browse(panel_index == 1)
         panel_handler(params)
 
@@ -81,12 +79,10 @@ COMMAND_HANDLERS = {
 }
 
 def setup_gpio():
-    """Configures the Raspberry Pi data-ready input pin."""
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(DRDY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 def handle_command(command_id, params, payload):
-    """Dispatches a decoded command to its registered handler using the correct payload form."""
     print(f"Handling Command ID: {command_id:#06x}, Params: {params}", flush=True)
 
     handler = COMMAND_HANDLERS.get(command_id)
@@ -100,7 +96,6 @@ def handle_command(command_id, params, payload):
         handler(params)
 
 def read_and_process_packet(ser):
-    """Reads, validates, decodes, and dispatches one incoming UART packet."""
     data = read_packet_with_resync(ser)
 
     src_app = data[2]
@@ -126,13 +121,11 @@ def read_and_process_packet(ser):
     handle_command(cmd_id, params, payload)
 
 def wait_for_data_ready():
-    """Waits briefly for a data-ready edge and warns if the ESP32 does not signal."""
     result = GPIO.wait_for_edge(DRDY_PIN, GPIO.RISING, timeout=10000)
     if result is None:
         print(f"⚠️ No DRDY pulse on GPIO {DRDY_PIN} in 10 s — ESP32 not sending", flush=True)
 
 def main():
-    """Initializes the listener hardware and runs the UART command-processing loop."""
     ser = None
 
     try:

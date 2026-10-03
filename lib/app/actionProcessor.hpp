@@ -57,6 +57,9 @@ namespace controlSystem
         bool waitForRpiShutdown(uint32_t timeoutMs = 60000);
 
     private:
+        // Re-applies the NVS-saved DAC select state through the normal action pipeline.
+        void restoreDacState();
+
         std::unique_ptr<ActionUartDispatcher> mp_actionUartDispatcher;
         std::unique_ptr<SerialUartCommandSink> mp_serialUartCommandSink;
         std::unique_ptr<RpiBootManager> mp_rpiBootManager;

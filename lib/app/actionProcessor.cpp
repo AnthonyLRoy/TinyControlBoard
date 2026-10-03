@@ -84,6 +84,20 @@ namespace controlSystem
         {
             m_onRemoteToggle(buttonId);
         }
+
+        if (powerState != ControlBoardPowerState::ON && mr_systemState.powerState.load() == ControlBoardPowerState::ON)
+        {
+            restoreDacState();
+        }
+    }
+
+    void ActionProcessor::restoreDacState()
+    {
+        // Same path as a remote/user toggle so LED, bitmask and toggle-action state follow the relay.
+        if (mp_relayController->loadSavedDacState())
+            process(createAction(CMD_TOGGLE_DAC), /*isRemoteOrigin=*/true);
+        else
+            process(createAction(CMD_TOGGLE_DAC_OFF));
     }
 
     void ActionProcessor::injectCommand(CommandId cmd, uint16_t releaseMs)
@@ -177,6 +191,10 @@ namespace controlSystem
         auto syntheticAction = createAction(CMD_SYS_POWER);
         const auto newState = mp_powerStateTransitionHandler->handle(*syntheticAction);
         mr_systemState.powerState.store(newState);
+        if (newState == ControlBoardPowerState::ON)
+        {
+            restoreDacState();
+        }
         return newState == ControlBoardPowerState::ON;
     }
 }

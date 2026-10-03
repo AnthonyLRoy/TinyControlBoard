@@ -10,7 +10,6 @@ _result_seq = 0
 
 
 def _send_playlist_result(ok, message=""):
-    """Sends a playlist-operation result message and advances its sequence number."""
     global _result_seq
     payload = bytes([1 if ok else 0]) + message[:MAX_PLAYLIST_NAME_LEN].encode("utf-8")
     send_packet_locked(build_packet(MSG_PLAYLIST_RESULT, _result_seq, 0, payload))
@@ -18,7 +17,6 @@ def _send_playlist_result(ok, message=""):
 
 
 def _list_playlist_names():
-    """Returns the bounded list of saved playlist names reported by MPD."""
     return [
         line[len("playlist: "):]
         for line in mpd_command("listplaylists")
@@ -27,7 +25,6 @@ def _list_playlist_names():
 
 
 def handle_playlist_list_request(_params):
-    """Lists saved playlists to the ESP32, including an empty-list sentinel when needed."""
     try:
         names = _list_playlist_names()
     except Exception as e:
@@ -47,7 +44,6 @@ def handle_playlist_list_request(_params):
 
 
 def handle_playlist_save(name):
-    """Saves the current MPD queue as a playlist and reports the result."""
     name = name.strip()
     try:
         mpd_command(f'save "{_mpd_escape(name)}"')
@@ -59,7 +55,6 @@ def handle_playlist_save(name):
 
 
 def handle_playlist_save_overwrite(name):
-    """Replaces a saved playlist with the current MPD queue and reports the result."""
     name = name.strip()
     try:
         mpd_command(f'rm "{_mpd_escape(name)}"')
@@ -75,7 +70,6 @@ def handle_playlist_save_overwrite(name):
 
 
 def handle_playlist_load(name):
-    """Replaces the current MPD queue with the named saved playlist."""
     name = name.strip()
     try:
         mpd_command("clear")
@@ -88,7 +82,6 @@ def handle_playlist_load(name):
 
 
 def handle_playlist_delete(name):
-    """Deletes the named saved playlist and reports whether MPD succeeded."""
     name = name.strip()
     try:
         mpd_command(f'rm "{_mpd_escape(name)}"')

@@ -6,6 +6,11 @@
 
 namespace controlSystem
 {
+    namespace
+    {
+        constexpr const char *k_nvsKeyDacEnabled = "dac_en";
+    }
+
     RelayController::RelayController(transport::uart::UartTransport &rSerial, relays::StandardRelay &rRelays)
         : mr_serial(rSerial), mr_relays(rRelays)
     {
@@ -25,8 +30,23 @@ namespace controlSystem
         // Toggle DAC selects between DAC signal outputs (GPIO10); it does not gate DAC power (GPIO12).
         mr_relays.setRelayState(PIN_RELAY_ESS_DAC_ENABLED, state);
         m_dacEnabled = state;
+        m_nvsStorage.writeUInt8(k_nvsKeyDacEnabled, state ? 1 : 0);
         ESP_LOGI(k_logTag, "DAC output select set to %s", state ? "ON" : "OFF");
         return true;
+    }
+
+    void RelayController::suspendDac()
+    {
+        m_nvsStorage.writeUInt8(k_nvsKeyDacEnabled, m_dacEnabled ? 1 : 0);
+        mr_relays.setRelayState(PIN_RELAY_ESS_DAC_ENABLED, false);
+        m_dacEnabled = false;
+        ESP_LOGI(k_logTag, "DAC output select suspended for sleep");
+    }
+
+    bool RelayController::loadSavedDacState() const
+    {
+        uint8_t saved = 0;
+        return m_nvsStorage.readUInt8(k_nvsKeyDacEnabled, saved) && saved != 0;
     }
 
     bool RelayController::toggleDac()

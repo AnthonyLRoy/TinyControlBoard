@@ -1,2 +1,4 @@
+dtoverlay=disable-bt
+dtoverlay=disable-wifi
 dtoverlay=uart5
-dtoverlay=i2s-dac
+

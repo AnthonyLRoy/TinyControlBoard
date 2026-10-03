@@ -22,8 +22,8 @@ namespace relays
             static StandardRelay s_instance;
             return s_instance;
         }
-        // Configures the specified GPIO pin as a relay output.
-        static void init(gpio_num_t pinRelay);
+        // Configures the specified GPIO pin as a relay output and drives it to initialState.
+        static void init(gpio_num_t pinRelay, bool initialState);
         // Sets the specified relay output to its energized or de-energized state.
         static void setRelayState(gpio_num_t relay, bool state);
 
