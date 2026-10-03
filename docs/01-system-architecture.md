@@ -29,21 +29,69 @@ build, modify, or diagnose any of the three components.
 ## 3. Overall Architecture
 
 ```mermaid
-flowchart TD
-    Android["Android App<br/>(TinyRemote)"]
-    ESP32["ESP32-S3 Firmware"]
-    RPi["Raspberry Pi 4<br/>(moOde Audio + Python services)"]
-    Hardware["Physical Hardware<br/>(buttons, LEDs, relays, DAC, amp)"]
+flowchart LR
+    subgraph Android["Android — TinyRemote"]
+        UI["App UI / ViewModel"]
+        Manager["BoardBleManager<br/>scan, connect, reconnect,<br/>GATT operations, StateFlows"]
+        GattClient["Android BluetoothGatt<br/>LE client"]
+        UI <-->|"commands / observed state"| Manager
+        Manager <-->|"native GATT API"| GattClient
+    end
 
-    Android -- "BLE GATT<br/>(commands, status, library, playlist)" --> ESP32
-    Android -- "HTTP<br/>(album art / thumbnails only)" --> RPi
-    ESP32 -- "UART5 @ 921600 baud<br/>+ 2 GPIO data-ready lines" --> RPi
-    ESP32 -- "I2C (MCP23018)" --> Hardware
-    ESP32 -- "SPI (LED shift register)" --> Hardware
-    ESP32 -- "GPIO (7 relays, PWM LEDs)" --> Hardware
-    RPi -- "MPD TCP :6600" --> RPi
-    RPi -- "Chrome DevTools Protocol :9222" --> RPi
+    subgraph ESP["ESP32-S3 — firmware"]
+        NimBLE["ESP-IDF NimBLE<br/>BLE host / peripheral"]
+        BleServer["BleServer<br/>advertising + GATT callbacks"]
+        Service["Custom GATT service<br/>CMD · STATUS · NOW_PLAYING<br/>TRACK_PROGRESS · LIBRARY<br/>LIBRARY_CMD · PLAYLIST_CMD<br/>PLAYLIST_RESULT"]
+        Processor["ActionProcessor"]
+        State["SystemState<br/>power / LEDs / now-playing / progress"]
+        UartTransport["UART transport<br/>UART5 · 921600 baud"]
+        BoardRx["ControlBoard UART RX<br/>state updates + result callbacks"]
+        NimBLE --> BleServer
+        BleServer --- Service
+        Service -->|"GATT write callbacks"| BleServer
+        BleServer -->|"CMD"| Processor
+        Processor -->|"power / button actions"| State
+        Processor -->|"playback / system commands"| UartTransport
+        BleServer -->|"LIBRARY_CMD / PLAYLIST_CMD"| UartTransport
+        UartTransport --> BoardRx
+        BoardRx -->|"now-playing / progress"| State
+        BoardRx -->|"library-entry / playlist-result callbacks"| BleServer
+        State -->|"reads + status / playback values"| BleServer
+        BleServer -->|"notifications"| Service
+    end
+
+    subgraph Pi["Raspberry Pi 4"]
+        RPiServices["Python UART services"]
+        Moode["moOde / MPD"]
+        Browser["Chromium kiosk / CDP"]
+        RPiServices -->|"MPD TCP :6600"| Moode
+        RPiServices -->|"Chrome DevTools :9222"| Browser
+    end
+    Hardware["Physical hardware<br/>buttons · LEDs · relays · DAC · amp"]
+
+    GattClient <-->|"BLE GATT<br/>custom service + characteristics"| NimBLE
+    UartTransport <-->|"framed UART packets<br/>+ 2 GPIO data-ready lines"| RPiServices
+    ESP -->|"I2C · SPI · GPIO"| Hardware
+    Android -.->|"HTTP: album art / thumbnails"| Moode
 ```
+
+The ESP32 advertises the `TinyControlBoard` service after the NimBLE host synchronizes;
+advertising and Android BLE control do not wait for the Raspberry Pi to finish booting.
+The firmware routes ordinary command writes into `ActionProcessor`, while library and
+playlist writes are forwarded to the Pi over UART. Pi-originated playback state updates
+are exposed through `SystemState`; library entries and playlist results are forwarded as
+BLE notifications.
+
+| GATT characteristic | Android-to-board | Board-to-Android | Purpose |
+|---|---|---|---|
+| `CMD` | Write | — | Button/control command (optional press duration) |
+| `STATUS` | — | Read / notify | Power state and button-LED bitmask |
+| `NOW_PLAYING` | — | Read / notify | Current track text |
+| `TRACK_PROGRESS` | — | Read / notify | Elapsed/duration seconds and playing flag |
+| `LIBRARY` | — | Read / notify | Library/search entries (entries are pushed as notifications) |
+| `LIBRARY_CMD` | Write | — | Library, search, and queue operations forwarded to the Pi |
+| `PLAYLIST_CMD` | Write | — | Playlist operations forwarded to the Pi |
+| `PLAYLIST_RESULT` | — | Read / notify | Playlist operation result |
 
 ## 4. Component Responsibilities
 
@@ -96,6 +144,9 @@ sequenceDiagram
     HW->>ESP: 3.3V rail applied (ESP32 boots)
     ESP->>ESP: esp_pm_configure() + 5000ms startup delay
     ESP->>ESP: ControlBoard::init() — NVS, UART transport, I2C/MCP23018,<br/>button queue, action registry, relay GPIO setup (each relay configured and driven OFF)
+    ESP->>ESP: BleServer registers GATT service; NimBLE starts advertising
+    App->>ESP: BLE scan + connect + subscribe to notify characteristics
+    ESP-->>App: STATUS/NOW_PLAYING/TRACK_PROGRESS notifications begin
     ESP->>ESP: Boot diagnostic LEDs light (8 LEDs)
     ESP->>ESP: ActionProcessor::triggerInitialPowerOn()
     ESP->>HW: VCC 3V3 relay ON (+1000ms settle)
@@ -106,9 +157,6 @@ sequenceDiagram
     ESP->>RPi: RPi power applied — Pi boots, systemd starts<br/>heartbeat_sender.service + uart5_listener.service
     RPi-->>ESP: UART heartbeat (CMD_SYS_HEARTBEAT) within 60s
     ESP->>ESP: Power state -> ON (boot diagnostic LEDs clear)
-    ESP->>App: BLE GATT server starts advertising
-    App->>ESP: BLE scan + connect + subscribe to notify characteristics
-    ESP-->>App: STATUS/NOW_PLAYING/TRACK_PROGRESS notifications begin
 ```
 
 If no heartbeat arrives from the Pi within 60 seconds
