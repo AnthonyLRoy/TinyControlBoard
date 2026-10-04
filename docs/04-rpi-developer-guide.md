@@ -129,6 +129,7 @@ change.**
 | UART device path, baud rate | Hardcoded constants near the top of `uart5_listener.py`/`heartbeat_sender.py` | Must match `/boot/config.txt` `dtoverlay=uart5` and the ESP32's `board::serial` |
 | GPIO handshake pin numbers | Hardcoded constants in the same files | Must match `board::serial::rpiDataReadyPin`/`esp32DataReadyPin` on the ESP32 side |
 | MPD host/port | `localhost:6600` (hardcoded, since MPD runs on the same Pi) | |
+| Rotary track jump | `ROTARY_DEBOUNCE_SECONDS`, `ROTARY_WRAP_AROUND`, `ROTARY_KEEP_PLAY_STATE` at the top of the rotary section in `playback_commands.py` | Clicks accumulate in a lock-protected counter; after 1 s with no click, one `mpc play <position>` jumps by the net count (position read from `mpc status` when the timer fires). Wraps or clamps at the playlist ends; keeps paused/stopped state after the jump. Net count of 0 does nothing |
 | CDP port | `localhost:9222` (hardcoded) | Requires moOde's kiosk browser started with `--remote-debugging-port=9222` |
 
 No credentials/secrets are present in these scripts — MPD and CDP are both unauthenticated

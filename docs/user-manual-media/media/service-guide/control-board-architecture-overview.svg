@@ -1,0 +1,217 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 1120" role="img" aria-labelledby="title description">
+  <title id="title">Tiny control board architecture overview with Bluetooth components</title>
+  <desc id="description">Shows the ESP32 software runtime, hardware abstraction, physical hardware, Android BLE client, and Raspberry Pi host, including BLE GATT and UART data paths.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#444"/>
+    </marker>
+    <marker id="arrow-start" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto">
+      <path d="M10,0 L0,4 L10,8 Z" fill="#7449c6"/>
+    </marker>
+    <marker id="arrow-end" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#7449c6"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #263238; }
+      .title { font-size: 31px; font-weight: 700; }
+      .zone-title { font-size: 21px; font-weight: 700; }
+      .section-title { font-size: 18px; font-weight: 700; }
+      .box-title { font-size: 17px; font-weight: 700; }
+      .label { font-size: 15px; }
+      .small { font-size: 13px; }
+      .tiny { font-size: 12px; }
+      .zone { stroke-width: 2; }
+      .node { stroke-width: 1.7; }
+      .flow { fill: none; stroke: #444; stroke-width: 1.8; marker-end: url(#arrow); }
+      .ble-flow { fill: none; stroke: #7449c6; stroke-width: 2.4; stroke-dasharray: 8 6; marker-start: url(#arrow-start); marker-end: url(#arrow-end); }
+      .uart-flow { fill: none; stroke: #444; stroke-width: 2; marker-start: url(#arrow); marker-end: url(#arrow); }
+      .line-label { font-size: 12px; font-weight: 700; paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="1660" height="1120" fill="#fff"/>
+  <text x="40" y="54" class="title">Tiny control board — architecture overview</text>
+  <text x="40" y="82" class="small">ESP32-S3 firmware with Android Bluetooth LE control and Raspberry Pi services</text>
+
+  <rect x="30" y="110" width="470" height="865" rx="24" fill="#e7f1fc" stroke="#1261b5" class="zone"/>
+  <text x="55" y="145" class="zone-title" fill="#124f91">ESP32-S3 · Software runtime</text>
+
+  <rect x="520" y="110" width="320" height="865" rx="24" fill="#f1f0eb" stroke="#6c6a63" class="zone"/>
+  <text x="545" y="145" class="zone-title">Hardware abstraction</text>
+
+  <rect x="860" y="110" width="270" height="865" rx="24" fill="#edf5e2" stroke="#438119" class="zone"/>
+  <text x="885" y="145" class="zone-title" fill="#315f12">ESP32-S3 · Hardware</text>
+
+  <rect x="1150" y="110" width="480" height="435" rx="24" fill="#f3edfc" stroke="#7449c6" class="zone"/>
+  <text x="1175" y="145" class="zone-title" fill="#56359a">Android app · TinyRemote</text>
+
+  <rect x="1150" y="570" width="480" height="405" rx="24" fill="#f8f4e9" stroke="#8b8067" class="zone"/>
+  <text x="1175" y="605" class="zone-title">Raspberry Pi 4 · External host</text>
+
+  <!-- Software runtime -->
+  <rect x="65" y="165" width="400" height="60" rx="14" fill="#b9d7f2" stroke="#1261b5" class="node"/>
+  <text x="265" y="191" text-anchor="middle" class="box-title">ControlBoard</text>
+  <text x="265" y="212" text-anchor="middle" class="small">Top-level orchestrator</text>
+
+  <rect x="65" y="245" width="400" height="110" rx="16" fill="#f0edff" stroke="#8272e8" class="node"/>
+  <text x="82" y="271" class="section-title" fill="#51449e">Input pipeline</text>
+  <rect x="82" y="282" width="366" height="28" rx="9" fill="#d9d4fa" stroke="#8272e8"/>
+  <text x="265" y="301" text-anchor="middle" class="small">ButtonEventQueue (FreeRTOS)</text>
+  <rect x="82" y="317" width="366" height="27" rx="9" fill="#d9d4fa" stroke="#8272e8"/>
+  <text x="265" y="336" text-anchor="middle" class="small">InputDispatcher</text>
+
+  <rect x="65" y="375" width="400" height="140" rx="16" fill="#f1edff" stroke="#7449c6" class="node"/>
+  <text x="82" y="402" class="section-title" fill="#56359a">Bluetooth LE · BleServer</text>
+  <text x="82" y="428" class="small">GATT CMD writes → ActionProcessor</text>
+  <text x="82" y="451" class="small">Library / playlist writes → UartTransport</text>
+  <text x="82" y="474" class="small">CMD · STATUS · NOW_PLAYING · TRACK_PROGRESS</text>
+  <text x="82" y="497" class="tiny">LIBRARY · LIBRARY_CMD · PLAYLIST_CMD · PLAYLIST_RESULT</text>
+
+  <rect x="65" y="535" width="400" height="125" rx="16" fill="#fbece7" stroke="#ed5126" class="node"/>
+  <text x="82" y="562" class="section-title" fill="#983516">Action pipeline</text>
+  <rect x="82" y="573" width="366" height="25" rx="8" fill="#f6c6b7" stroke="#ed5126"/>
+  <text x="265" y="591" text-anchor="middle" class="small">ActionProcessor</text>
+  <rect x="82" y="604" width="366" height="23" rx="8" fill="#f6c6b7" stroke="#ed5126"/>
+  <text x="265" y="621" text-anchor="middle" class="small">ActionFactory / Registry · IAction subclasses</text>
+  <text x="265" y="647" text-anchor="middle" class="tiny">Physical input and BLE commands share the action path</text>
+
+  <rect x="65" y="680" width="400" height="65" rx="14" fill="#dcecf8" stroke="#598dbd" class="node"/>
+  <text x="265" y="707" text-anchor="middle" class="box-title">SystemState</text>
+  <text x="265" y="730" text-anchor="middle" class="small">Power · button LEDs · now-playing · track progress</text>
+
+  <rect x="65" y="765" width="400" height="105" rx="16" fill="#fff0d8" stroke="#d17b00" class="node"/>
+  <text x="82" y="792" class="section-title" fill="#82500c">Power management</text>
+  <text x="265" y="820" text-anchor="middle" class="small">PowerStateTransitionHandler · RpiBootManager</text>
+  <text x="265" y="846" text-anchor="middle" class="small">RelayController</text>
+
+  <rect x="65" y="890" width="400" height="65" rx="14" fill="#dff5ee" stroke="#078265" class="node"/>
+  <text x="82" y="916" class="section-title" fill="#075b49">Indicators</text>
+  <text x="265" y="941" text-anchor="middle" class="small">Brightness / Power / Status LEDs · SpiBootIndicator</text>
+
+  <!-- Hardware abstraction -->
+  <rect x="545" y="245" width="270" height="70" rx="14" fill="#d8d6ce" stroke="#6c6a63" class="node"/>
+  <text x="680" y="274" text-anchor="middle" class="box-title">McpInputHandler</text>
+  <text x="680" y="297" text-anchor="middle" class="small">Button / rotary input driver</text>
+
+  <rect x="545" y="165" width="270" height="55" rx="14" fill="#d8d6ce" stroke="#6c6a63" class="node"/>
+  <text x="680" y="199" text-anchor="middle" class="label">NVS storage</text>
+
+  <rect x="545" y="385" width="270" height="100" rx="14" fill="#e2def0" stroke="#7449c6" class="node"/>
+  <text x="680" y="416" text-anchor="middle" class="box-title">ESP-IDF NimBLE</text>
+  <text x="680" y="441" text-anchor="middle" class="small">BLE host / GATT peripheral</text>
+  <text x="680" y="464" text-anchor="middle" class="tiny">Advertising · connection · GATT transport</text>
+
+  <rect x="545" y="570" width="270" height="90" rx="14" fill="#d8d6ce" stroke="#6c6a63" class="node"/>
+  <text x="680" y="602" text-anchor="middle" class="box-title">UartTransport</text>
+  <text x="680" y="627" text-anchor="middle" class="small">UART5 · 921600 baud</text>
+  <text x="680" y="647" text-anchor="middle" class="tiny">Commands out · state/results in</text>
+
+  <rect x="545" y="765" width="270" height="70" rx="14" fill="#d8d6ce" stroke="#6c6a63" class="node"/>
+  <text x="680" y="795" text-anchor="middle" class="box-title">StandardRelay</text>
+  <text x="680" y="818" text-anchor="middle" class="small">Relay bank driver</text>
+
+  <rect x="545" y="890" width="270" height="65" rx="14" fill="#d8d6ce" stroke="#6c6a63" class="node"/>
+  <text x="680" y="918" text-anchor="middle" class="box-title">SpiLedDriver</text>
+  <text x="680" y="941" text-anchor="middle" class="small">SPI shift register + PWM</text>
+
+  <!-- Physical hardware -->
+  <rect x="885" y="235" width="220" height="55" rx="13" fill="#c9e3a8" stroke="#438119" class="node"/>
+  <text x="995" y="269" text-anchor="middle" class="label">Button panel</text>
+  <rect x="885" y="305" width="220" height="55" rx="13" fill="#c9e3a8" stroke="#438119" class="node"/>
+  <text x="995" y="339" text-anchor="middle" class="label">Rotary encoder</text>
+
+  <rect x="885" y="395" width="220" height="75" rx="14" fill="#ddcef5" stroke="#7449c6" class="node"/>
+  <text x="995" y="426" text-anchor="middle" class="box-title">ESP32 BLE radio</text>
+  <text x="995" y="450" text-anchor="middle" class="small">Wireless link to Android</text>
+
+  <rect x="885" y="585" width="220" height="65" rx="13" fill="#c9e3a8" stroke="#438119" class="node"/>
+  <text x="995" y="612" text-anchor="middle" class="label">UART GPIO</text>
+  <text x="995" y="635" text-anchor="middle" class="small">TX / RX · data-ready</text>
+
+  <rect x="885" y="765" width="220" height="65" rx="13" fill="#c9e3a8" stroke="#438119" class="node"/>
+  <text x="995" y="804" text-anchor="middle" class="label">Relay bank 9/11/12/13</text>
+  <rect x="885" y="850" width="220" height="50" rx="13" fill="#c9e3a8" stroke="#438119" class="node"/>
+  <text x="995" y="881" text-anchor="middle" class="small">SPI shift register</text>
+  <rect x="885" y="915" width="220" height="45" rx="13" fill="#c9e3a8" stroke="#438119" class="node"/>
+  <text x="995" y="944" text-anchor="middle" class="small">PWM LEDs</text>
+
+  <!-- Android client -->
+  <rect x="1185" y="175" width="410" height="75" rx="14" fill="#fff" stroke="#9b82d4" class="node"/>
+  <text x="1390" y="207" text-anchor="middle" class="box-title">App UI / ViewModel</text>
+  <text x="1390" y="231" text-anchor="middle" class="small">Remote controls · status · library / playlists</text>
+  <rect x="1185" y="270" width="410" height="80" rx="14" fill="#e4daf7" stroke="#9b82d4" class="node"/>
+  <text x="1390" y="302" text-anchor="middle" class="box-title">BoardBleManager</text>
+  <text x="1390" y="326" text-anchor="middle" class="small">Scan · connect / reconnect · GATT operations</text>
+  <text x="1390" y="344" text-anchor="middle" class="tiny">Publishes connection and board state to the UI</text>
+  <rect x="1185" y="375" width="410" height="75" rx="14" fill="#d6c9f0" stroke="#7449c6" class="node"/>
+  <text x="1390" y="406" text-anchor="middle" class="box-title">Android BluetoothGatt client</text>
+  <text x="1390" y="431" text-anchor="middle" class="tiny">Native Android BLE API · no third-party BLE library</text>
+  <text x="1390" y="500" text-anchor="middle" class="small" fill="#56359a">Phone and board connect directly over Bluetooth LE</text>
+
+  <!-- Raspberry Pi services -->
+  <rect x="1185" y="630" width="410" height="120" rx="14" fill="#f5e9cf" stroke="#8b8067" class="node"/>
+  <text x="1390" y="663" text-anchor="middle" class="box-title">Python UART services</text>
+  <text x="1390" y="688" text-anchor="middle" class="small">UART commands ↔ MPD / moodeutl / kiosk controls</text>
+  <text x="1390" y="716" text-anchor="middle" class="small">Heartbeat · playback state · library / playlist results</text>
+  <rect x="1185" y="780" width="195" height="85" rx="13" fill="#fff" stroke="#a99d84" class="node"/>
+  <text x="1282" y="814" text-anchor="middle" class="box-title">moOde / MPD</text>
+  <text x="1282" y="839" text-anchor="middle" class="small">Playback · library</text>
+  <rect x="1400" y="780" width="195" height="85" rx="13" fill="#fff" stroke="#a99d84" class="node"/>
+  <text x="1497" y="814" text-anchor="middle" class="box-title">Chromium kiosk</text>
+  <text x="1497" y="839" text-anchor="middle" class="small">Chrome DevTools</text>
+  <text x="1390" y="913" text-anchor="middle" class="tiny">The Pi handles playback; BLE is a separate direct control path</text>
+
+  <!-- Runtime and hardware paths -->
+  <path d="M265 225 V245" class="flow"/>
+  <path d="M465 195 H500 V270 H545" class="flow"/>
+  <path d="M448 343 H485 V545 H465" class="flow"/>
+  <path d="M265 515 V535" class="flow"/>
+  <path d="M265 660 V680" class="flow"/>
+  <path d="M265 745 V765" class="flow"/>
+  <path d="M265 870 V890" class="flow"/>
+
+  <path d="M465 300 H545" class="flow"/>
+  <text x="505" y="289" text-anchor="middle" class="line-label">input</text>
+  <path d="M465 595 H545" class="flow"/>
+  <text x="505" y="584" text-anchor="middle" class="line-label">actions</text>
+  <path d="M465 618 C500 618 500 624 545 624" class="flow"/>
+  <text x="505" y="644" text-anchor="middle" class="line-label">playback / system</text>
+  <path d="M465 450 H500 V435 H545" class="ble-flow"/>
+  <path d="M815 435 H885" class="ble-flow"/>
+  <path d="M1105 432 H1185" class="ble-flow"/>
+  <text x="522" y="420" text-anchor="middle" class="line-label" fill="#56359a">GATT</text>
+  <text x="850" y="420" text-anchor="middle" class="line-label" fill="#56359a">radio</text>
+  <text x="1145" y="420" text-anchor="middle" class="line-label" fill="#56359a">GATT</text>
+
+  <path d="M680 315 V333 H448" class="flow"/>
+  <text x="553" y="328" text-anchor="middle" class="line-label">button / rotary events</text>
+  <path d="M885 262 H815" class="flow"/>
+  <path d="M885 332 H815" class="flow"/>
+  <path d="M680 660 V712 H465" class="flow"/>
+  <text x="550" y="701" text-anchor="middle" class="line-label">Pi state / results</text>
+  <path d="M465 710 H485 V445 H465" class="flow"/>
+
+  <path d="M465 822 H545" class="flow"/>
+  <path d="M815 800 H885" class="flow"/>
+  <path d="M465 922 H545" class="flow"/>
+  <path d="M815 910 H850 V875 H885" class="flow"/>
+  <path d="M815 935 H885" class="flow"/>
+
+  <path d="M815 615 H885" class="uart-flow"/>
+  <path d="M1105 615 H1140 V690 H1185" class="uart-flow"/>
+  <text x="850" y="603" text-anchor="middle" class="line-label">UART</text>
+
+  <!-- BLE and direct album-art fetch -->
+  <path d="M1390 250 V270" class="flow"/>
+  <path d="M1390 350 V375" class="flow"/>
+  <path d="M1280 750 V780" class="flow"/>
+  <path d="M1500 750 V780" class="flow"/>
+  <path d="M1595 210 H1615 V820 H1380" fill="none" stroke="#777" stroke-width="1.7" marker-end="url(#arrow)"/>
+  <text x="1607" y="530" transform="rotate(-90 1607 530)" text-anchor="middle" class="line-label">HTTP album art / thumbnails</text>
+
+  <!-- Footer -->
+  <rect x="30" y="995" width="1600" height="90" rx="16" fill="#f1f0eb" stroke="#8b8982" stroke-width="1.5"/>
+  <text x="55" y="1028" class="small">Solid arrows: firmware / hardware and UART data paths · dashed purple arrows: Bluetooth LE GATT connection</text>
+  <text x="55" y="1055" class="small">GATT status / playback notifications read SystemState; library, playlist and playback operations that need the Pi travel over UART.</text>
+  <text x="55" y="1077" class="tiny" fill="#666">Boxes correspond to the components described in the accompanying service guide.</text>
+</svg>

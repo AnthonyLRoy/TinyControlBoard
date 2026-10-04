@@ -1,361 +1,316 @@
 # DanStreamer Phone App User Guide
 
-Use DanStreamer to control your TinyControlBoard music player from an Android phone. You can start and pause music, choose what to play, manage the queue, and put the player to sleep.
+DanStreamer lets you control your TinyControlBoard music player from an Android phone. Use it to manage playback, find and queue music, adjust the player's display, and control its power state.
 
-You do not need technical knowledge to use the app. The phone is a remote control: music continues to play through your connected audio system, not through the phone.
+The phone acts as a remote control. Music plays through the player and your connected audio system, not through the phone.
 
 **App:** DanStreamer
 
-**Manual version:** 3.1
+**App version (repository build):** 1.0
 
-**Updated:** 26 September 2026
+**Guide revision:** 3.2
 
-## Start Here
+**Updated:** 4 October 2026
 
-Before you begin, make sure that:
+## Requirements and Permissions
 
-- your TinyControlBoard and audio system are switched on;
-- Bluetooth is switched on on your phone;
-- your phone is close to the player;
-- DanStreamer is installed on your phone.
+- An Android phone or tablet running Android 6.0 (API 23) or later with Bluetooth Low Energy.
+- A powered TinyControlBoard running firmware with the BLE service enabled. The board accepts one BLE connection at a time.
+- Bluetooth enabled on the phone. For album artwork, the phone must also be able to reach the moOde player on the home network. MusicBrainz information requires internet access.
 
-### Connect for the first time
+When you start scanning, DanStreamer requests:
+
+- **Nearby devices / Bluetooth scan and connect** on Android 12 or later, to find and control the board.
+- **Location** on Android 6–11, because those Android versions require it for BLE scanning. DanStreamer does not use your location.
+- The app also uses **Internet access** for album artwork and online artist/album information. Android grants this at installation rather than showing a runtime permission prompt. Normal control commands are sent over Bluetooth.
+
+## Connect to the Player
+
+Before you connect, install DanStreamer, power on the player, enable Bluetooth on your phone, and move the phone near the player.
 
 1. Open **DanStreamer**.
-2. When Android asks to find and connect to nearby devices, choose **Allow**.
+2. If Android asks for permission to find and connect to nearby devices, tap **Allow**.
 3. Tap **Scan**.
-4. Wait for **TinyControlBoard** to appear.
-5. Tap **TinyControlBoard**.
-6. Wait for the main control screen to open.
+4. Wait for **TinyControlBoard** to appear, then tap it.
+5. Wait for the main control screen to open.
 
 > **Find your player**
 >
-> <img src="../user-manual-media/media/ScreenScan.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100% height: auto;">
+> <img src="../user-manual-media/media/androidApp/ScreenScan.jpg" alt="DanStreamer scan screen listing TinyControlBoard" width="240" style="max-width: 100%; height: auto;">
 >
 > *Tap TinyControlBoard to connect.*
 
 If the player does not appear, see [Can't find the player](#cant-find-the-player).
 
-## At a Glance
+## Main Screen and Playback
 
-The main screen is where you will normally control your music. It shows the song that is playing, album artwork when available, and the most useful controls.
+The main screen shows the current song, album artwork when available, and the playback and player controls. Tap the song name to open the queue.
 
 > **Main controls**
 >
-> <img src="../user-manual-media/media/MainScreen.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/MainScreen.jpg" alt="DanStreamer main control screen" width="240" style="max-width: 100%; height: auto;">
 >
-> Library, current song, previous, play/pause, next, shuffle, repeat, screen brightness, display on/off, settings, and power.
+> *The main screen provides playback, display, settings, and power controls.*
 
 | Icon | Control | Use it to |
-| --- | --- | --- |
-| <img src="../user-manual-media/media/icons/folder.svg" alt="Folder icon" width="24"> | **Library** | Find music by browsing folders or searching. |
+|---|---|---|
+| <img src="../user-manual-media/media/icons/folder.svg" alt="Folder icon" width="24"> | **Library** | Browse folders or search for music. |
 | Text | **Current song** | Open the current queue. |
 | <img src="../user-manual-media/media/icons/skip-previous.svg" alt="Previous track icon" width="24"> | **Previous** | Go back to the previous track. |
-| <img src="../user-manual-media/media/icons/play.svg" alt="Play icon" width="24"> <img src="../user-manual-media/media/icons/pause.svg" alt="Pause icon" width="24"> | **Play / Pause** | Start or pause music. The icon changes to show the available action. |
+| <img src="../user-manual-media/media/icons/play.svg" alt="Play icon" width="24"> <img src="../user-manual-media/media/icons/pause.svg" alt="Pause icon" width="24"> | **Play / Pause** | Start or pause playback. The icon shows the available action. |
 | <img src="../user-manual-media/media/icons/skip-next.svg" alt="Next track icon" width="24"> | **Next** | Skip to the next track. |
 | <img src="../user-manual-media/media/icons/menu.svg" alt="Menu icon" width="24"> | **Menu** | Choose the view shown on the player's display. |
-| <img src="../user-manual-media/media/icons/shuffle.svg" alt="Shuffle icon" width="24"> | **Shuffle** | Play tracks in a random order. Tap again to turn it off. |
+| <img src="../user-manual-media/media/icons/shuffle.svg" alt="Shuffle icon" width="24"> | **Shuffle** | Play tracks in random order. Tap again to turn it off. |
 | <img src="../user-manual-media/media/icons/repeat.svg" alt="Repeat icon" width="24"> | **Repeat** | Repeat the queue. Tap again to turn it off. |
-| <img src="../user-manual-media/media/icons/brightness-down.svg" alt="Brightness down icon" width="24"> <img src="../user-manual-media/media/icons/brightness.svg" alt="Brightness icon" width="24"> <img src="../user-manual-media/media/icons/brightness-up.svg" alt="Brightness up icon" width="24"> | **Brightness - / +** | Make the player's display dimmer or brighter. |
-| <img src="../user-manual-media/media/icons/monitor.svg" alt="Display icon" width="24"> | **Display On / Off** | Turn the player's display on or off without stopping music. |
-| <img src="../user-manual-media/media/icons/settings.svg" alt="Settings icon" width="24"> | **Settings** | Set the moOde player address for album artwork and song details. |
-| <img src="../user-manual-media/media/icons/power.svg" alt="Power icon" width="24"> | **Power** | Wake the player, or choose Sleep or Deep Sleep. |
+| <img src="../user-manual-media/media/icons/brightness-down.svg" alt="Decrease brightness icon" width="24"> <img src="../user-manual-media/media/icons/brightness.svg" alt="Brightness icon" width="24"> <img src="../user-manual-media/media/icons/brightness-up.svg" alt="Increase brightness icon" width="24"> | **Brightness - / +** | Make the player's display dimmer or brighter. |
+| <img src="../user-manual-media/media/icons/monitor.svg" alt="Display icon" width="24"> | **Display On / Off** | Turn the player's display off or on without stopping music. |
+| <img src="../user-manual-media/media/icons/settings.svg" alt="Settings icon" width="24"> | **Settings** | Set the moOde player address used to retrieve album artwork. |
+| <img src="../user-manual-media/media/icons/power.svg" alt="Power icon" width="24"> | **Power** | Wake the player or choose Sleep or Deep Sleep. |
 
-When shuffle, repeat, cover, meter, or DAC mode is active, its button is highlighted. A highlighted button means that option is currently on.
+Tap **Play / Pause** to pause or resume playback. Use **Previous** and **Next** to move between tracks, or **Shuffle** and **Repeat** to change how the queue plays.
 
-## Play Music
+When shuffle, repeat, cover, meter, or alternate DAC mode is active, its control is highlighted.
 
-### Pause, resume, or skip
+When track duration is available, the progress bar shows the elapsed and remaining time. Touch or drag along the bar to seek to that position in the track. Seeking requires an active connection and a track with a known duration.
 
-- Tap **Play / Pause** to stop or resume music.
-- Tap **Previous** to go back one track.
-- Tap **Next** to skip one track.
-- Tap **Shuffle** or **Repeat** to change how the queue plays.
+## Find and Play Music
 
-The song name appears above the controls. Tap it at any time to open the current queue.
-
-### Choose a track from the library
+### Browse the library
 
 1. Tap **Library**.
-2. Tap a folder to see what is inside.
+2. Tap a folder to open it.
 3. Tap a track to add it to the queue.
-4. Tap the current song on the main screen to open the queue.
-5. Tap the track you want to hear and choose **Play Now**.
+4. Return to the main screen and tap the song name to open the queue.
+5. Tap the track you want to hear, then choose **Play Now**.
 
-> **Screenshot placeholder 3 - Browse your music**
+> **Browse your music**
 >
-> <img src="../user-manual-media/media/Library.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
-> 
->*Open a folder, then tap a track to add it to your queue.*
-
-### Add or play a whole folder
-
-When you tap a folder, choose one of these options:
-
-- **Open**: look inside the folder;
-- **Add folder to playlist**: add its music after the tracks already in your queue;
-- **Replace playlist**: remove the current queue and use this folder instead.
-
-> **Screenshot placeholder 3 - Browse your music**
+> <img src="../user-manual-media/media/androidApp/Library.jpg" alt="DanStreamer music library showing folders and tracks" width="240" style="max-width: 100%; height: auto;">
 >
-> <img src="../user-manual-media/media/FolderList.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
-> 
->*Open a folder, then tap a track to add it to your queue.*
+> *Open a folder, then tap a track to add it to the queue.*
+
+When you tap a folder, choose what to do:
+
+- **Open** to view its contents.
+- **Add folder to playlist** to add its music after the tracks already in the queue.
+- **Replace playlist** to replace the current queue with the folder's music.
 
 Use **Up** inside the library to return to the previous folder.
 
-> **Tip:** Choose **Replace playlist** when you want to start fresh. Choose **Add folder to playlist** when you want to keep what is already queued.
+> <img src="../user-manual-media/media/androidApp/FolderList.jpg" alt="DanStreamer folder actions" width="240" style="max-width: 100%; height: auto;">
+>
+> *Open a folder, add its tracks to the queue, or replace the queue.*
 
-## Search for Music
+> **Tip:** Choose **Replace playlist** to start fresh. Choose **Add folder to playlist** to keep the tracks already queued.
+
+### Search the library
 
 1. Open **Library**.
 2. Tap **Search**.
 3. Choose **Artist**, **Album**, or **Any**.
-4. Type what you want to find.
-5. Tap **OK**.
+4. Enter your search text and tap **OK**.
 
-Results are grouped by album. Tap a track to add it to the queue. Use an album heading to add the whole album or replace the current queue with it.
+Search results are grouped by album. Tap a track to add it to the queue. Tap an album heading to add the album or replace the queue with it.
 
-> **Screenshot placeholder 4 - Search**
+> <img src="../user-manual-media/media/androidApp/LibrarySearch.jpg" alt="DanStreamer music search dialog" width="240" style="max-width: 100%; height: auto;">
 >
-><img src="../user-manual-media/media/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> *Choose what to search for, enter a name, then tap OK.*
 >
-> Suggested caption: *Choose what to search for, enter a name, then tap OK.*
-
-> **Screenshot placeholder 5 - Search results**
+> <img src="../user-manual-media/media/androidApp/SearchResults.jpg" alt="DanStreamer search results grouped by album" width="240" style="max-width: 100%; height: auto;">
 >
-> <img src="../user-manual-media/media/SearchResults.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
->
-> Suggested caption: *Tap a track, or add a whole album at once.*
+> *Tap a track, or use an album heading to add an album.*
 
-## Artist and Album Information
+## Manage the Queue and Playlists
 
-DanStreamer can look up information about the artist or album currently reported by the remote player. The phone does not play or stop the music while this information is loading.
+The **queue** is the list of tracks waiting to play. The app may also call it the current playlist. A saved playlist is a separate list that you can load later.
 
-1. On the main screen, double-tap the album artwork.
-2. Alternatively, press and hold the album artwork for accessibility-friendly access.
-3. Choose **Artist** or **Album**.
-4. Wait while DanStreamer searches MusicBrainz and loads the information.
+### Open and change the queue
 
->
-> <img src="../user-manual-media/media/MusicBrainzChoice.jpg" alt="MusicBrainz Artist or Album choice dialog" width="240" style="max-width: 100%; ">
->
->
-> *Choose whether to view information about the current artist or album.*
-
-The information screen keeps the player connection and playback untouched. Tap **X** or use the Android back action to return to the main screen.
-
-
->
-> <img src="../user-manual-media/media/MusicBrainzArtist.png" alt="MusicBrainz artist information screen with artist image and biography" width="240" style="max-width: 100%; ">
->
->
-> *Artist information is grouped into an image header, biography, and sound tags.*
-
-The artist screen may show an artist image and a short biography when an image and biography are available. The image is supplied by Wikipedia and is marked with a small attribution. Missing images or individual fields are omitted or replaced with a simple placeholder.
-
-- **About** shows a short biography. Tap **Show more** to expand it, or **Show less** to collapse it again.
-- **Sounds like** combines MusicBrainz genres and tags into compact chips. Tap **+N more** to show the remaining entries.
-- **Aliases** shows the most relevant aliases first. Tap **+N more** to expand the list.
-- **Active** and **Origin** summarize the artist's dates and country when available.
-- **Open MusicBrainz page** opens the full MusicBrainz artist or release-group page in the browser.
-
->
-> <img src="../user-manual-media/media/MusicBrainzArtistExpanded.png" alt="Expanded MusicBrainz artist biography and tags" width="240" style="max-width: 100%; ">
->
->
-> *Use Show more and +N more when you want the complete information.*
-
-Album information includes the album title, artist, release date, release details, genres, tags, external links, and a scrollable track listing when MusicBrainz has one.
-
-MusicBrainz information needs an internet connection. This is separate from the Bluetooth connection to the player, so playback controls can continue working if MusicBrainz is temporarily unavailable.
-
-## Manage the Current Queue
-
-The queue is the list of tracks waiting to play. It is sometimes called the current playlist in the app. It is different from a saved playlist.
-
-### Open the queue
-
-Tap the song name on the main screen, or tap **Playlist** if it is shown on your main screen.
-
-### Change the queue
+Tap the song name on the main screen, or tap **Playlist** if it is shown there.
 
 - Tap a track to play it now.
 - Use a track's options to choose **Play Now** or **Remove**.
-- Drag a track to move it to a new position.
+- Drag a track to move it to a different position.
 - Swipe left on a track to remove it.
 
-> **Screenshot placeholder 9 - Current queue**
+> <img src="../user-manual-media/media/androidApp/Playlist.jpg" alt="DanStreamer current queue with track actions" width="240" style="max-width: 100%; height: auto;">
 >
-><img src="../user-manual-media/media/LibrarySearch.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
-> Insert a portrait screenshot of the Current Playlist screen with a drag handle and one track action visible.
->
-> Suggested caption: *Drag to reorder, swipe left to remove, or tap a track to play it.*
+> *Drag to reorder, swipe left to remove, or tap a track to play it.*
 
-## Save Playlists for Later
+### Save, load, or delete a playlist
 
-To save, load, delete, or clear a queue, open the current queue and tap **Playlist Management**.
+From the current queue screen, tap the queue/music-note icon beside **Current Playlist** to open **Playlists**.
 
-### Save the queue
+To save the queue:
 
 1. Tap **Save Playlist**.
 2. Enter a name.
 3. Tap **Save Tracks as Playlist**.
-4. If asked, choose whether to replace a playlist with the same name.
+4. If prompted, choose whether to replace a playlist with the same name.
 
-### Load a saved playlist
+To load a saved playlist:
 
 1. Tap **Load Playlist**.
 2. Tap the playlist you want.
 3. Wait for the confirmation message.
 
-### Delete a saved playlist
+To delete a saved playlist:
 
 1. Tap **Delete Playlist**.
 2. Tap the playlist.
 3. Confirm the deletion.
 
-### Clear the queue
+To clear the current queue:
 
 1. Tap **Clear Queue**.
 2. Read the warning.
 3. Tap **Clear** to remove all tracks, or **Cancel** to keep them.
 
-> **Screenshot placeholder 10 - Playlist management**
-> 
-><img src="../user-manual-media/media/ManagePlaylist.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> <img src="../user-manual-media/media/androidApp/ManagePlaylist.jpg" alt="DanStreamer playlist management options" width="240" style="max-width: 100%; height: auto;">
 >
-> *Save a queue for later, or load one you already saved.*
+> *Save a queue for later, or load a saved playlist.*
 
-## Change the Player Display
+## Display, Artwork, and Power
 
-The app can ask the player to show a different view on its own display.
+### Change the player's display view
 
 1. On the main screen, tap **Menu**.
 2. Tap the view you want.
 3. Use the back arrow to return to the main screen.
 
-Available views may include **Default View**, **Radio Stations**, **Playlist**, **Folder View**, **Tag View**, and **Album View**.
+The available views are **Default View**, **Radio Stations**, **Playlist**, **Folder View**, **Tag View**, and **Album View**. The screen title is **Select display menu**.
 
-> **Screenshot placeholder 11 - Choose a display view**
->  
-><img src="../user-manual-media/media/displayview.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
-> Insert a portrait screenshot of the Select display menu screen with one selected row.
+> <img src="../user-manual-media/media/androidApp/displayview.jpg" alt="DanStreamer menu for choosing the player's display view" width="240" style="max-width: 100%; height: auto;">
 >
 > *Choose what you want to see on the player's display.*
 
-## Album Artwork and Song Details
+### Set up album artwork
 
-DanStreamer can show the current song name and album artwork. If you see a default music image or no song details, set the address of your moOde player:
+The current-song text and playback status arrive from the player over Bluetooth. DanStreamer retrieves album artwork separately from moOde over your home network. If artwork is missing, enter the address of your moOde player:
 
 1. On the main screen, tap the gear icon.
-2. Enter the moOde player's address. This is usually an address such as `192.168.0.10` or a name such as `moode.local`.
+2. Enter the moOde player's address, usually an address such as `192.168.0.10` or a name such as `moode.local`.
 3. Save the address.
-4. Return to the main screen and wait a moment for the artwork to refresh.
+4. Return to the main screen and wait for the artwork to refresh.
 
-This setting is only for album artwork and song details. Your normal remote controls use Bluetooth.
+This address is used for album artwork, not for the current-song text or playback controls. Bluetooth remains the transport for normal remote-control functions.
 
-> **Screenshot placeholder 12 - Album art setup**
-> 
-><img src="../user-manual-media/media/IPConfiguration.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
-> Insert a portrait screenshot of the moOde IP Address dialog.
+> <img src="../user-manual-media/media/androidApp/IPConfiguration.jpg" alt="DanStreamer moOde player address settings" width="240" style="max-width: 100%; height: auto;">
 >
-> *Enter the address of your moOde player to show artwork and song details.*
+> *Enter the address of your moOde player to retrieve album artwork.*
 
-## Power Options
+### Use power options
 
-Tap the power button on the main screen:
+Tap the power button on the main screen to open the power options:
 
-- If the player is asleep or off, the app asks it to turn on.
+- If the player is asleep or off, tap the power button to wake it.
 - If the player is on, choose **Sleep** for normal standby.
 - Choose **Deep Sleep** when you will not use the player for a longer time.
 
-Wait for a power change to finish before sending more commands. The status beside the app title shows whether the player is on, sleeping, or changing state.
+Wait for the power change to finish before sending another command. The status beside the app title shows whether the player is on, asleep, or changing state.
 
-> **Screenshot placeholder 13 - Power options**
+> <img src="../user-manual-media/media/androidApp/ShutDown.jpg" alt="DanStreamer power options dialog" width="240" style="max-width: 100%; height: auto;">
 >
-><img src="../user-manual-media/media/ShutDown.jpg" alt="DanStreamer scan screen showing TinyControlBoard" width="240" style="max-width: 100%; ">
+> *Choose Sleep for everyday use or Deep Sleep for a longer break.*
+
+## Artist and Album Information
+
+DanStreamer can look up information about the artist or album currently reported by the player. Looking up information does not interrupt playback.
+
+1. On the main screen, double-tap the album artwork or press and hold it.
+2. In the **MusicBrainz information** dialog, leave the name field blank to use the current track, or enter an artist or album name.
+3. Choose **Artist** or **Album**.
+4. Wait while DanStreamer searches MusicBrainz and loads the information.
+
+> <img src="../user-manual-media/media/androidApp/MusicBrainzChoice.jpg" alt="Dialog for choosing artist or album information" width="240" style="max-width: 100%; height: auto;">
 >
->*Choose Sleep for everyday use or Deep Sleep for longer breaks.*
+> *Choose whether to view information about the current artist or album.*
+
+Opening an information screen does not affect the player connection or playback. Tap **X** or use Android's back action to return to the main screen.
+
+The artist screen may show an image and short biography when available. The image is supplied by Wikipedia and includes a small attribution. Missing images or fields may be omitted or shown with a placeholder.
+
+- **About** shows a short biography. Tap **Show more** or **Show less** to expand or collapse it.
+- **Sounds like** combines MusicBrainz genres and tags into chips. Tap **+N more** to show the remaining entries.
+- **Aliases** shows relevant aliases. Tap **+N more** to expand the list.
+- **Active** and **Origin** show dates and country when available.
+- **Open MusicBrainz page** opens the artist or release-group page in a browser.
+
+> <img src="../user-manual-media/media/androidApp/MusicBrainzArtist.png" alt="Artist information with image, biography, and sound tags" width="240" style="max-width: 100%; height: auto;">
+>
+> *Artist information is grouped into an image header, biography, and sound tags.*
+>
+> <img src="../user-manual-media/media/androidApp/MusicBrainzArtistExpanded.png" alt="Expanded artist biography and additional tags" width="240" style="max-width: 100%; height: auto;">
+>
+> *Use Show more and +N more to view the complete information.*
+
+Album information may include the title, artist, release date and details, genres, tags, external links, and a scrollable track listing, depending on the information available from MusicBrainz.
+
+MusicBrainz lookups require internet access. This connection is separate from Bluetooth, so playback controls can continue to work if MusicBrainz is temporarily unavailable.
 
 ## Troubleshooting
 
 ### Can't find the player
 
-1. Check that the TinyControlBoard and audio system are on.
-2. Check that Bluetooth is on on your phone.
+1. Check that the TinyControlBoard is powered on and running firmware with BLE enabled.
+2. Check that Bluetooth is enabled on your phone.
 3. Move your phone closer to the player.
 4. Return to the app and tap **Scan** again.
-5. If Android asks for permission, choose **Allow**.
+5. If Android asks for permission, tap **Allow**.
 
-On older Android phones, Android may also request Location permission to search for Bluetooth devices. Allow it for the scan to work.
+On Android 6 to 11, allow Location permission so Android can perform BLE scanning. DanStreamer does not use your location. On Android 12 or later, allow Nearby devices/Bluetooth scan and connect permissions.
+
+If the scan fails, enable Bluetooth and try **Scan** again. If the connection times out or is lost, keep the app open briefly while it attempts to reconnect. If it does not reconnect, return to the scan screen and scan again.
 
 ### The app says Bluetooth permissions are required
 
-Open your phone's settings, find **Apps**, choose **DanStreamer**, then allow Nearby devices or Bluetooth permission. On Android 6 to Android 11, also allow Location permission.
+Open your phone's **Settings**, go to **Apps**, select **DanStreamer**, and allow Nearby devices or Bluetooth access on Android 12 or later. On Android 6 to 11, allow Location access for BLE scanning; the app does not use your location.
 
 ### A button does not seem to work
 
-Make sure the status shows that the player is on and connected. If it is changing power state, wait until it finishes, then try again.
+Check that the app is connected and the player status shows **ON**. If the player is changing power state, wait for the change to finish before trying again.
 
 ### I cannot see my music library or search results
 
-Check that the player is still connected and that its music library is available. Search results depend on the music library held by the player, not by the phone.
+Check that the app is still connected and the player's music library is available. Search results come from the player, not from music stored on your phone. If the connection was lost, wait briefly for reconnection or return to the scan screen and connect again.
 
 ### Album artwork is missing
 
-Open the gear icon and check the moOde player address. Make sure the phone can reach that address on your home network. Music controls can still work even if artwork does not load.
+Tap the gear icon and check the moOde player address. Make sure your phone can reach that address on the home network. Playback controls can still work even if artwork does not load.
 
 ### MusicBrainz information is missing
 
-Check that the phone has internet access. MusicBrainz uses the internet connection, while player controls use Bluetooth. If the artist or album has no matching MusicBrainz entry, no information may be available. Try again later if MusicBrainz is temporarily unavailable.
+Check that your phone has internet access. MusicBrainz lookups use the internet, while player controls use Bluetooth. Information may be unavailable if there is no matching entry or the service is temporarily unavailable.
 
 ### I cannot save or load a playlist
 
-Try again after a few seconds. If it continues to fail, check that the player is connected and supports saved playlists. You cannot save an empty queue.
+Wait a few seconds, then try again. If the problem persists, check that the app is connected and the player supports saved playlists. You cannot save an empty queue.
 
 ## Common Questions
 
 ### Does the phone play the music?
 
-No. The player and audio system play the music. The phone is the remote control.
+No. The player and audio system play the music; the phone is the remote control.
 
 ### Does the phone need Wi-Fi?
 
-Bluetooth is used for everyday controls. Wi-Fi is needed when you want DanStreamer to load album artwork and song details from the moOde player, or when you want to look up MusicBrainz information over the internet.
+Bluetooth handles everyday player controls and supplies the current-song text. To load album artwork from moOde, your phone must be able to reach the player on your home network. MusicBrainz lookups require internet access.
 
 ### How do I disconnect?
 
-Use the Android back action or the back arrow from a connected screen to return to the scan screen. The app disconnects from the player.
+From the main control screen, use Android's Back action or the back arrow to return to the scan screen and disconnect. From a library, queue, or other secondary screen, go back to the main control screen first.
 
 ### What is the difference between the queue and a saved playlist?
 
-The queue is what is ready to play now. A saved playlist is a named copy you can load again later.
+The queue contains tracks waiting to play now. A saved playlist is a named list that you can load again later.
 
 ## For Installers and Support
 
-This section is not needed for everyday use.
+The following reference information is intended for installers and support:
 
 - App name: **DanStreamer**
 - Android package: `com.tinycb.remote`
-- Android support: Android 6.0 and later
+- Android support: Android 6.0 (API 23) and later; Bluetooth Low Energy required
 - Connection: Bluetooth Low Energy to one TinyControlBoard at a time
-- Artwork and current-song details: fetched from the configured moOde player over the home network
-
-## Image Checklist
-
-Replace each screenshot placeholder with a current portrait screenshot before publishing. Capture real app states with no personal music-library information, device identifiers, IP addresses, or notification content visible.
-
-1. Scan screen with a discovered TinyControlBoard.
-2. Connected main screen with a playing track and album art.
-3. Library browser with folders and tracks.
-4. Search dialog.
-5. Search results grouped by album.
-6. MusicBrainz Artist or Album choice dialog.
-7. MusicBrainz artist information screen.
-8. MusicBrainz artist screen with the biography and additional chips expanded.
-9. Current queue with reordering and track actions.
-10. Playlist Management screen.
-11. Select display menu screen.
-12. moOde IP Address dialog.
-13. Power Options dialog.
+- Current-song text and playback status: received over Bluetooth from the control board
+- Album artwork: fetched from the configured moOde player over the home network

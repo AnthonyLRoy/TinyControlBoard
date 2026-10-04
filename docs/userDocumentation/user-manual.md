@@ -1,526 +1,278 @@
-
-
 # Streamer DAC User Manual
 
-This manual explains how to operate the Streamer DAC, connect its audio and network equipment, and understand the status lights on the DAC and its external power supply. It is written for everyday use, so you can start with the front-panel controls and then refer to the connection and troubleshooting sections as needed.
+Use this manual to set up and operate the Streamer DAC and its external power supply. Follow Quick Start for the initial connections, then refer to the relevant sections for everyday use or troubleshooting.
 
-## Front Panel Operating Guide
+> **Safety:** The external supply contains mains-voltage circuitry. Do not open either enclosure or work on internal wiring. Disconnect the mains lead before handling external cables or connectors. Fuse replacement and internal servicing should be carried out only by a qualified service technician using the specified parts.
+>
+> **Supercapacitor hazard:** The external supply also contains high-current supercapacitors (the UcPure stages). They can store a large amount of energy and remain charged after the mains lead is disconnected and the unit is switched off. Accidentally shorting their terminals can cause severe arcing, burns, fire and damage to the equipment. See [Supercapacitor Safety](#supercapacitor-safety).
 
-Welcome to your Stream DAC player. This guide will walk you through everything you need to know to get the most out of your front panel controls — from powering on for the first time to exploring the display and playback options. No technical knowledge is needed; just read along and enjoy your music.
+## Quick Start
 
-![User manual figure 1](../user-manual-media/media/image1.png)
+1. Make sure the power supply's rear-panel switch is **OFF**.
+2. Connect the DAC to the external power supply. Connect the earth and control leads, then connect the keyed DC power leads. Use the rear-panel diagrams to identify each connection. Never force a plug.
+3. Connect a digital audio source to a compatible input. The I²S input uses an HDMI-style socket, but it is **not** an HDMI connection. Read the I²S input description before connecting a source. Confirm that the source and this unit's installed audio hardware support the format you intend to play.
+4. Connect the DAC's RCA or XLR outputs to an amplifier or pre-amplifier.
+5. Connect Ethernet if you use moOde network features or the Android app's album-art display. Connect other optional sources or USB storage as required.
+6. Connect the mains lead and switch on the power supply.
+7. Briefly press the power button beneath the DAC's front edge. Wait for startup to finish. The expected indicators are described in [Startup and Troubleshooting](#startup-and-troubleshooting).
 
-### A Quick Look at the Front Panel
+![User manual figure 1](../user-manual-media/media/androidApp/image1.png)
 
-Before diving in, here is a brief overview of where everything lives. The panel is divided into a few distinct areas that each handle a different part of your listening experience.
+### Audio Format Compatibility
 
-- **Left button group \[1–6\]** — Controls for the display and how content is presented on screen.
+Audio capability depends on the selected DAC, the digital input and the source/software configuration. The following figures describe the DAC chip or software capability, not independent measurements of the complete Streamer DAC:
 
-- **Right button group \[7–12\]** — Playback controls for your music.
+| DAC option or software | PCM capability | DSD capability | Other reported information |
+|---|---|---|---|
+| ESS ES9038Q2M option | Up to 32-bit / 768 kHz | Native DSD512; DoP up to DSD256 | Reported dynamic range: 128–129 dB; reported THD+N: −120 dB (0.0001%); reported output resistance: 774 Ω. These are supplied module figures, not measurements of the assembled unit. |
+| TDA1387T option | 16-bit input word length; chip datasheet specifies word-select frequency up to 384 kHz | Not specified in the supplied TDA1387T datasheet; do not assume DSD or DoP support | Philips Semiconductors TDA1387T data sheet, preliminary specification dated 11 December 1995. |
+| moOde software | Decodes PCM formats including FLAC, ALAC, WAV, MP3 and AAC; PCM resolutions up to 32-bit / 384 kHz are supported, with higher rates depending on DAC hardware | Native DSD and DoP playback are hardware-dependent; software capability alone does not guarantee support | DSP features such as CamillaDSP depend on the installed software/configuration. |
 
-- **Mini display area \[14, 15, 16\]** — A small secondary screen in the upper-left corner with two nearby buttons. This is for controlling the primary DAC and for switching inputs. For a detailed operation guide on how to use this display and the knob \[14\], please refer to this page from Ian Canada’s [MonitorPi Reference manual](https://github.com/iancanada/DocumentDownload/blob/master/MonitorPi/MonitorPiPro/MonitorPiProManual.pdf):
+The figures above are not a promise that every input or configuration accepts every listed format. The source, input interface, selected DAC and any intervening processing must all support the format. In particular, the TDA1387T figures are limits of the DAC chip's digital input, not a verified end-to-end compatibility test of the assembled unit.
 
-- **Main display \[19\]** — The large central screen showing album artwork, track information, and menus.
+## Everyday Operation
 
-- **Rotary knob \[17\]** — A versatile control for navigating the playlist and managing playback.
+### Front Panel at a Glance
 
-- **Power indicator \[18\]** — A small light in the top-right corner that shows the player is on.
+- **Buttons 1–6** control the main display and its presentation.
+- **Buttons 7–12** control playback.
+- **Mini display [15]** and its adjacent controls [14] and [16] provide supplementary DAC information and controls. For details on using the mini display and knob [14], see Ian Canada's [MonitorPi Reference manual](https://github.com/iancanada/DocumentDownload/blob/master/MonitorPi/MonitorPiPro/MonitorPiProManual.pdf).
+- **Main display [19]** shows album artwork, track information and menus.
+- **Rotary knob [17]** controls track selection and playback.
+- **Power indicator [18]** shows the player's power state.
+- **Power button [13]** is beneath the front edge of the cabinet.
 
-- **Power button \[13\]** — Located on the underside front centre of the cabinet.
+### Power, Sleep (Standby) and Deep Sleep
 
-### Powering the Player On and Off
+Briefly press the power button [13] to wake the player or put it into Sleep (standby). In Sleep, the main display and output stage switch off, but the DAC remains powered so the player can wake quickly.
 
-#### Turning On
+To enter Deep Sleep, press and hold the power button for about **3 seconds**, then release it. The player shuts down before entering Deep Sleep, which switches off both the DAC and output stage. Briefly press the power button to wake the player. If you will not use it for several days, switch off the external power supply.
 
-The power button \[13\] is tucked underneath the cabinet, along the front edge. A short press will wake the player from standby. Below is what you will see for normal operation
+### Playback Controls
 
-1.  The Power LED \[18\] flashes red.
+Use the six buttons on the right side of the panel to control playback:
 
-2.  Button LEDs \[1, 2, 3, 4, 5, 6, 7 and 10\] illuminate blue.
+- **Previous Track [7]** and **Next Track [9]** move to the previous or next track.
+- **Repeat [8]** repeats the playlist. The button stays lit while repeat is on; press it again to turn repeat off.
+- **Skip Backwards [10]** and **Skip Forward [12]** move playback by 10 seconds with each press.
+- **Shuffle (Random) [11]** turns shuffle on or off. The button stays lit while shuffle is on.
 
-3.  As the system initializes, the button LEDs gradually turn off.
+The rotary knob [17] also controls playback: turn it right to move forward through the queue, turn it left to move back, and press it to play or pause. Each click moves one track, but the player does not change track until you stop turning for about one second, and then it jumps straight to the chosen track. This lets you skip several tracks without each one starting to play. Turning past the last track continues from the first (and vice versa), and if you turn back to where you started, nothing changes. If playback is paused or stopped, it stays that way after the jump.
 
-4.  When startup is complete:
+### Display Controls
 
-5.  All button LEDs are off.
+Use the six buttons on the left side of the panel to control the main display:
 
-6.  The Power LED \[18\] changes to solid blue.
+- **Display over Art [1]** shows or hides track information over album artwork. The button stays lit while the overlay is visible.
+- **Screen Brightness [2]** cycles through display brightness levels. The button lighting is synchronised with screen brightness.
+- **Meter Display [3]** shows or hides the audio level meter. The button stays lit while the meter is active.
+- **Toggle DAC [4]** switches the DAC output selection; it does not select a digital audio input. The button stays lit when the alternate output is selected. Input selection depends on the installed audio hardware and moOde configuration.
+- **Switch Display [5]** turns the main display off or on without interrupting music playback.
+- **Switch Display Panel [6]** cycles through the available screen views.
 
-7.  The DAC is now ready for use.
+The other buttons briefly light to confirm a press. For the mini display and its controls, see the linked MonitorPi manual in [Front Panel at a Glance](#front-panel-at-a-glance).
 
-If there is an error during the turn on process the one or more of the lights will flash. See the Errors section at the end of this document.
+### Front-Panel Quick Reference
 
-#### Putting the Player to Sleep (Standby)
+| Ref (fig. 1) | Control | Function |
+|---|---|---|
+| 1 | Display over Art | Shows or hides the interface overlay on album artwork; lit when active. |
+| 2 | Screen Brightness | Cycles through display brightness levels. |
+| 3 | Meter Display | Shows or hides the audio level meter; lit when active. |
+| 4 | Toggle DAC | Switches DAC output; lit when the alternate output is selected. |
+| 5 | Switch Display | Turns the main display off or on. |
+| 6 | Switch Display Panel | Cycles through screen views. |
+| 7 | Previous Track | Moves to the previous track. |
+| 8 | Repeat | Toggles playlist repeat; lit when active. |
+| 9 | Next Track | Moves to the next track. |
+| 10 | Skip Backwards | Moves playback back by 10 seconds. |
+| 11 | Shuffle (Random) | Toggles shuffle; lit when active. |
+| 12 | Skip Forward | Moves playback forward by 10 seconds. |
+| 13 | Power button | Brief press for Sleep/wake; hold about 3 seconds for Deep Sleep. |
+| 17 | Rotary knob | Turn to change tracks (jumps after you pause turning for about 1 second); press to play or pause. |
+| 18 | Power indicator | Indicates the player's power state. |
+| 19 | Main display | Shows artwork, track information and menus. |
 
-When you have finished listening and want to put the player into standby, give the power button \[13\] a short press. The player will save the current brightness level of the monitor and buttons, then go into a low-power sleep mode. The main display will turn off, and the system will be ready to wake up again quickly the next time you press the button. The DAC’s and the output stage will be kept on to keep them in the optimal operating temperature.
+## Connecting Equipment
 
-#### Deep Sleep
+### DAC Rear Panel
 
-If you plan to leave the player unused for a longer period, you can put it into a deeper sleep mode that uses even less power. To do this, press and hold the power button \[13\] for about four seconds, then release. The player will go through a proper shutdown sequence before entering deep sleep. To use the player again after a deep sleep, press the power button as normal. If you are going away for a couple of days it is best to switch the power off completely, see power supply secton.
+![User manual figure 2](../user-manual-media/media/androidApp/image2.png)
 
-### Listening to Music — Playback Controls \[7–12\]
+The rear panel provides power and control connections, digital audio inputs, network and USB connections, and analogue outputs. Most setups only require the power connections, one audio input and one pair of outputs.
 
-The six buttons on the right side of the panel are your everyday music controls. They are arranged so that the most-used navigation buttons are within easy reach.
+#### Power and Ground Connections
 
-#### Moving Between Tracks
+**1 & 3 – Chassis earth connections**
 
-To skip to the next song in your queue, press the **Next Track** button \[9\]. If you want to go back to the song that was just playing, press the **Previous Track** button \[7\]. These buttons will briefly light up when pressed to confirm your input.
+These banana sockets connect the DAC chassis to the earth connection on the external power supply. Connecting the chassis earth to the power supply is recommended. In most installations, no further grounding adjustment is needed.
 
-#### Skipping Forward or Backward Within a Track
+**2 – Power-supply control connection**
 
-If you want to skip ahead within a long track — to get past a slow intro, for example — press the **Skip Forward** button \[12\]. To jump back to an earlier point in the track, press the **Skip Backwards** button \[10\]. Each press moves playback by a 10 seconds, so you can press multiple times to jump further.
+Connects the DAC to the external power supply and carries the control signals used for startup, standby and Deep Sleep.
 
-#### Shuffling Your Music
+**4 & 5 – DC power inputs**
 
-To play your tracks in a random order rather than from start to finish, press the **Random** button \[11\]. When shuffle is active, the button will light up to let you know the mode is on. Pressing it again will turn shuffle off and the light will go out. This is a great way to rediscover tracks you might not have heard in a while.
-
-#### Repeating Tracks
-
-The **Repeat** button \[8\] keeps your music playing on a loop. When you press it, the player will continuously cycle through your playlist from the beginning once it reaches the end. The button will stay lit while repeat is active. Press it again to turn repeat off.
-
-#### The Rotary Control \[17\]
-
-The large knob on the right side of the panel is one of the most versatile controls on the player. It works in three ways:
-
-- **Turn right** to move to the next track in the playlist.
-
-- **Turn left** to move to the previous track.
-
-- **Press (click)** to play or pause the current track. This is a quick and satisfying way to pause your music without looking for a specific button.
-
-The rotary knob is especially useful when you are browsing through a long playlist. A few turns of the knob will get you where you want to be quickly.
-
-### Controlling How the Screen Looks \[1–6\]
-
-The six buttons on the left side of the panel all relate to the display and how information is shown on screen. They let you personalise the look of the interface to suit your preferences.
-
-#### Turning the Main Display On or Off
-
-If you prefer to listen without the screen on — perhaps in a darkened room — you can press the **Switch Display** button \[5\] to turn the main display off entirely. Press it again to bring the display back on. Your music will continue playing uninterrupted either way.
-
-#### Changing Screen and Button Brightness
-
-The **Set Screen Brightness** button \[2\] cycles through the available brightness levels for the main display. Each press steps to the next level, so you can keep pressing until you find a brightness that is comfortable for the room you are in. Note the button lights are synchronised to the screen brightness.
-
-#### Showing Album Artwork with Display Overlay
-
-When album artwork is filling the screen, you can press the **Display cover Art** button \[1\] to show the player interface — track title, artist, and other information — layered on top of the artwork. Press it again to hide the overlay and enjoy the artwork on its own. The button stays lit while the overlay is visible, making it easy to see which mode you are in at a glance.
-
-#### Switching Between Display Panels
-
-The player supports several different screen views, each showing your content in a different way. Press the **Switch Display Panel** button \[6\] to cycle through the available panels. This is a useful way to find the view that works best for you, whether that is a minimalist layout, a full artwork view, or something in between.
-
-#### The Audio Level Meter
-
-The player can show a live audio level meter on the main display — a visual representation of the music as it plays. Press the **Meter Display** button \[3\] to show the meter, and press it again to hide it. The button will stay lit when the meter is active.
-
-### The Mini Display Area \[14, 15, 16\]
-
-In the upper-left corner of the panel you will find a small secondary display \[15\] flanked by two buttons — one above \[14\] and one below \[16\]. This compact screen shows supplementary information independently of the main display. It can display details such as the current input source or audio format, and it’s display can be set independently from the main screen display options.
-
-#### Switching Between Different DACs \[4\]
-
-The player has a **Toggle DAC** button \[4\] that lets you switch between the primary DAC, Ian Canada’s ESS DAC and the secondary ProtoDac. When you press this button, a relay inside the player switches the active audio path. The button will light up to indicate which output is currently selected, and pressing it again toggles back. Your selection is remembered when the player goes to sleep and is restored the next time it wakes. This is useful if you want to try a different DAC sound depending on your moOde.
-
-### The Power Indicator \[18\]
-
-The small light in the top-right corner of the panel \[18\] lets you know that the player is powered and running. It glows steadily when the system is on and active.
-
-### A Note on Control Buttons
-
-Several of the buttons on this panel are designed to stay lit when their feature is turned on. This gives you a clear at-a-glance view of your current settings without having to dig through any menus. If a button is glowing, that feature is active. If it is dark, that feature is off. The buttons that work this way are:
-
-- **Display over Art** \[1\] — lit when the display overlay is showing
-
-- **Meter Display** \[3\] — lit when the audio meter is visible
-
-- **Toggle DAC** \[4\] — lit when the alternate DAC output is selected
-
-- **Repeat** \[8\] — lit when repeat mode is on
-
-- **Random** \[11\] — lit when shuffle mode is on
-
-For all other buttons, a brief flash of light confirms your button press has been registered, and then the light goes off again.
-
-### Quick Reference
-
-| Button Ref (fig 1) | Button | What it does |
-|:--:|----|----|
-| 1 | \[1\] Display cover Art | Shows the player interface overlaid on album artwork. Stays lit when active. |
-| 2 | \[2\] Screen Brightness | Cycles through display brightness levels. |
-| 3 | \[3\] Meter Display | Shows or hides the audio level meter. Stays lit when active. |
-| 4 | \[4\] Toggle DAC | Switches between DAC outputs. Stays lit when alternate output is selected. |
-| 5 | \[5\] Switch Display | Turns the main display on or off. Music continues playing. |
-| 6 | \[6\] Switch Display Panel | Cycles through the available screen views. |
-| 7 | \[7\] Previous Track | Skips back to the previous track. |
-| 8 | \[8\] Repeat | Loops the playlist continuously. Stays lit when active. |
-| 9 | \[9\] Next Track | Skips forward to the next track. |
-| 10 | \[10\] Skip Backwards | Jumps back within the current track. |
-| 11 | \[11\] Random | Plays tracks in a random order. Stays lit when active. |
-| 12 | \[12\] Skip Forward | Jumps forward within the current track. |
-| 13 | \[13\] Power/Standby | Short press to sleep/wake. Hold 3 seconds for deep sleep. Located under cabinet. |
-| 17 | \[17\] Rotary knob | Turn right for next, turn left for previous, press to play or pause. |
-| 18 | \[18\] Power indicator | Glows when the player is on. |
-
-### Error Conditions
-
-Switching on:
-
-Normal Operation
-
-When you first switch on the system you will initially see the power led \[18\] flashing red. The button lights up \[1,2,3,4,5,6,7,10\] and turn blue. As the initialisation process continues you will see the button lights go out until there are no button lights left. And the power light will turn blue. This indicates that the DAC is up and running and ready to play music.
-
-Failure options:
-
-If there is an issue when switching on you will see several states
-
-| Button State | explanation |
-|----|----|
-| Button lights 7 and 10 flashing | There is an issue with the Display Screen |
-| Button lights 3 and 6 flashing | There is an issue with the DAC section |
-| Button lights 2 and 5 flashing | There is an issue with the Clocks or DAC power |
-| Button lights 1 and 4 flashing | There is an issue with the Power to the streamer |
-| All lights Flashing | There is an issue with the control system board |
-
-If any of the above issues occur, you can try a few things
-
-- Ensure that the connections power and control connection at the back for the power supply are securely connected and have not come loose.
-
-- Switch the system off, then turn on after a couple of minutes
-
-If this fails to resolve the issue then the repair will require investigation with by an authorised engineer, of which there are none.
-
-## Rear Panel Connection Guide
-
-![User manual figure 2](../user-manual-media/media/image2.png)
-
-Before connecting your DAC, take a few moments to familiarise yourself with the rear panel. Every connector has been carefully designed to provide reliable operation while offering maximum flexibility when integrating the DAC into your audio system.
-
-Whether you are connecting the external power supply, digital music sources, your home network or your amplifier, the following sections explain the purpose of each connection and when you would typically use it.
-
-If you are new to standalone DACs, don't worry if some of the connection names are unfamiliar. Most users will only use a small number of these connections during normal operation.
-
-### Rear Panel Overview
-
-Before connecting your DAC, take a few moments to familiarise yourself with the rear panel. Every connector has been carefully designed to provide reliable operation while offering maximum flexibility when integrating the DAC into your audio system.
-
-Whether you are connecting the external power supply, digital music sources, your home network or your amplifier, the following sections explain the purpose of each connection and when you would typically use it.
-
-If you are new to standalone DACs, don't worry if some of the connection names are unfamiliar. Most users will only use a small number of these connections during normal operation.
-
-### Rear Panel Layout
-
-The rear panel is divided into six functional areas.
-
-#### Grounding & Control
-
-Connections used for system grounding and communication with the external power supply.
-
-#### DC Power Inputs
-
-Dedicated power connections supplying the DAC from the external power supply.
+These keyed connectors carry DC power from the external supply. Align each connector before inserting it. Do not force it; the locking mechanism secures a correctly aligned connector.
 
 #### Digital Audio Inputs
 
-Connect digital music sources using I²S, USB Audio, Optical (TOSLINK) or Coaxial S/PDIF.
+**8 – I²S digital audio input (HDMI-style connector)**
 
-#### Network & Expansion
+This socket carries I²S digital audio, not HDMI video or audio. External I²S pinouts are not standardised between manufacturers. This input is designed for sources using the **PS Audio I²S pinout**; check compatibility before connecting a source.
 
-Ethernet networking, firmware updates and USB storage support.
+**9 – USB Audio input**
 
-#### Analogue Audio Outputs
+This USB Type-B input connects compatible computers and other supported USB Audio sources. Playback capability depends on the source operating system and software.
 
-Single-ended RCA and balanced XLR outputs for connection to amplifiers or pre-amplifiers.
+**12 – Optical (TOSLINK) input**
 
-#### Ground Lift Controls
+Connect a digital audio source with an optical output, such as a television, media player, game console or CD player.
 
-Optional switches that can help eliminate hum caused by ground loops in certain audio systems.
+**13 – Coaxial S/PDIF input**
 
-### Connector Descriptions
+Connect a digital audio source with a coaxial S/PDIF output, such as a CD transport, streamer or digital audio interface.
 
-#### 1 & 3 – Chassis Earth Connections
+#### Network, USB and Expansion
 
-These banana socket terminals connect the DAC chassis to the earth connection on the external power supply.
+**6 – Firmware update port**
 
-For most installations, no adjustment is required. However, if unwanted hum or electrical noise is present, these connections can help optimise system grounding and reduce interference.
+This port is not for music playback or USB storage. Do not attempt a firmware update through it unless you have the update package and instructions approved for this unit and hardware revision; this manual does not provide an end-user update procedure.
 
-> **Note**
+**7 – USB storage port**
 
-It is advisable to connect the earth from the chassis to the power supply; otherwise, the chassis may not be correctly grounded.
+Connect compatible USB storage, such as a flash drive or externally powered hard drive, then select the device in the DAC's user interface.
 
-In most systems these connections will already be correctly configured and require no further adjustment.
+**10 – Expansion port**
 
-#### 2 – Power Supply Control Connection
+This port is reserved for future expansion and is not currently active. Leave the supplied blanking plate in place.
 
-This connector links the DAC directly to the external power supply.
+**11 – Ethernet network port**
 
-It carries the control signals required to manage the internal power rails and enables features such as **Sleep** and **Deep Sleep** mode. This ensures both units power up and shut down in the correct sequence.
+Use a standard Ethernet cable to connect the DAC to your home network for network features provided by the installed moOde system. The Android app uses the network connection to retrieve album artwork; playback and remote-control commands use Bluetooth between the app and the control board. A wired connection is recommended for reliable network streaming.
 
-#### 4 & 5 – DC Power Inputs
+#### Analogue Outputs
 
-These connectors supply the main DC power from the external power supply to the DAC.
+**14 & 15 – RCA analogue outputs**
 
-Each connector is uniquely keyed and can only be inserted in the correct orientation, preventing accidental incorrect connection.
+- **14** – Right channel
+- **15** – Left channel
 
-Once connected, the locking mechanism ensures a secure and reliable electrical connection.
+Connect these single-ended outputs to RCA inputs on an amplifier or pre-amplifier.
 
-> **Important**
+**16 & 17 – Balanced XLR outputs**
 
-Never force a connector into place. If correctly aligned, each connector will fit easily.
+- **16** – Right channel
+- **17** – Left channel
 
-#### 6 – Firmware Update Port
+Connect these balanced outputs to XLR inputs on an amplifier or pre-amplifier. Balanced connections can help reject electrical interference, particularly with longer cable runs.
 
-This USB connection is reserved exclusively for firmware updates.
+#### Ground-Lift Switches
 
-When new firmware becomes available, this port is used to update the DAC's internal software.
+Switches **18 (RCA)** and **19 (XLR)** are marked **Not Implemented**. Their described ground-lift function is not available; do not use them as a hum-reduction adjustment.
 
-> **Important**
+### DAC Rear-Panel Quick Reference
 
-This port is **not** intended for music playback or USB storage devices.
+| Ref (fig. 2) | Connection | Purpose |
+|---|---|---|
+| 1 & 3 | Chassis earth | Connects the DAC chassis to the power-supply earth. |
+| 2 | Power-supply control | Control link between the DAC and external power supply. |
+| 4 & 5 | DC power inputs | DC power from the external supply. |
+| 6 | Firmware/update port | Not for playback or storage; use only with approved update instructions. |
+| 7 | USB storage | Connects compatible USB storage. |
+| 8 | I²S audio input | I²S digital audio using a compatible PS Audio pinout; not HDMI. |
+| 9 | USB Audio input | USB Type-B digital audio input. |
+| 10 | Expansion port | Reserved; keep the blanking plate fitted. |
+| 11 | Ethernet | Network connection. |
+| 12 | Optical input | TOSLINK digital audio input. |
+| 13 | Coaxial input | Coaxial S/PDIF digital audio input. |
+| 14 & 15 | RCA outputs | Right and left single-ended analogue outputs. |
+| 16 & 17 | XLR outputs | Right and left balanced analogue outputs. |
+| 18 & 19 | Ground-lift switches | Not implemented. |
 
-#### 7 – USB Storage Port
+For remote playback, library, queue and power control from an Android phone, see the [DanStreamer Phone App User Guide](AndroidAppUserManual.md).
 
-This USB port allows music to be played directly from compatible USB storage devices.
+### External Power Supply
 
-Supported devices include:
+#### Front Panel
 
-- USB flash drives
+![User manual figure 3](../user-manual-media/media/androidApp/image3.png)
 
-- Externally powered USB hard drives
+The three LEDs on the power supply's front panel indicate its status:
 
-- Compatible USB solid-state drives (SSDs)
+- **Power indicator [1]** – Indicates that the unit is receiving mains power.
+- **5V UcPure [2]** – Orange while its capacitors charge; green when fully charged and supplying power from the capacitors.
+- **3.3V UcPure [3]** – Orange while its capacitors charge; green when fully charged and supplying power from the capacitors.
 
-Once connected, the storage device can be selected from the DAC's user interface.
+![User manual figure 4](../user-manual-media/media/androidApp/image4.png)
 
-#### 8 – I²S Digital Audio Input (HDMI Connector)
+#### Back Panel
 
-Although this connector uses a standard HDMI-style socket, **it does not carry HDMI video signals**.
+**1 & 3 – Earth connections**
 
-Instead, it provides an **I²S digital audio input**, offering one of the highest-quality methods of transferring digital audio between compatible source devices and the DAC.
+These banana sockets connect the power-supply earth to the DAC chassis. Connecting one of these to the DAC is recommended.
 
-Unlike USB or S/PDIF, I²S carries the audio data and clock signals separately, reducing the amount of clock recovery required within the DAC.
+**2 – Power-supply control connection**
 
-> **Important**
+Connects the external power supply to the DAC's control connection. It enables coordinated startup, standby and Deep Sleep operation.
 
-There is no standard external I²S connection there is no industry-standard external interface. Different manufacturers use different signal assignments (pinouts).
+**9 & 10 – Main power connections**
 
-This DAC is designed for equipment using the **PS Audio I²S pinout**. Before connecting an I²S source, ensure that it is compatible with the PS Audio standard.
+These keyed connectors supply DC power to the DAC. Match each connector to its corresponding socket and never force it into place.
 
-> **Tip**
+**4–7 – Output fuses**
 
-If your source device provides both USB Audio and I²S outputs, either connection can provide excellent sound quality. Many enthusiasts prefer I²S because of its dedicated clock and data signals.
+These fuses protect the power-supply outputs and should not normally need replacing. If a fuse blows, switch off and unplug the supply. Do not replace the fuse yourself; have a qualified service technician identify the cause and fit the specified replacement. A fuse that blows repeatedly may indicate a fault in the connected equipment or wiring.
 
-#### 9 – USB Audio Input
+> **Warning:** The power supply contains mains-voltage circuitry. Do not open it or inspect internal fuses. Disconnect the mains lead and contact a qualified service technician.
 
-This USB Type-B connector allows high-quality music playback directly from compatible USB Audio devices.
+**8 – Mains inlet, fuse and switch**
 
-Typical sources include:
+The IEC mains inlet includes the power switch and an integrated fuse. Before connecting the mains lead, make sure the switch is **OFF** and that the supply voltage matches the unit's rating label.
 
-- Windows PCs
+> **Warning:** Disconnect the mains lead before any service. Do not replace the mains fuse yourself; a qualified service technician must use the specified fuse type and rating.
 
-- macOS computers
+### Supercapacitor Safety
 
-- Linux computers
+The 5V UcPure and 3.3V UcPure stages use high-current supercapacitors as their energy store. Unlike a conventional supply, these can deliver very high currents into a short circuit and hold their charge for a long time after power is removed.
 
-- Compatible tablets
+| Stage | Nominal voltage | Capacitance | Approx. stored energy |
+|---|---|---|---|
+| 5V UcPure | 5 V | 2 × 3000 F cells in series (1500 F total) | about 18.8 kJ (½·C·V²) |
+| 3.3V UcPure | 3.3 V | 2 × 3000 F cells in series (1500 F total) | about 8.2 kJ |
 
-- Compatible smartphones
+These voltages are too low to cause electric shock, but the energy is comparable to a significant battery pack. A short circuit across a fully charged bank can produce currents of thousands of amps, enough to melt tools and cables, weld metal, cause severe burns and start a fire. For comparison, 18.8 kJ is roughly the energy needed to lift a 100 kg person about 19 m.
+> **Warning:** Switching off and unplugging the supply does **not** make the inside safe. The supercapacitors may remain charged, possibly for hours or longer. Never open the enclosure.
 
-This input supports high-resolution digital audio playback from compatible operating systems and playback software.
+- **Do not open the supply.** There are no user-serviceable parts. Only a qualified service technician, trained in handling supercapacitors, may open it, and must first confirm that the capacitors are discharged using a suitable meter and the manufacturer's discharge procedure.
+- **Never short the outputs.** Do not bridge the output terminals or connectors with tools, metal objects, jewellery or damaged cables. A short can cause very high current, arcing, burns, fire and damage to the unit.
+- **Check cables and connectors.** Do not use damaged, frayed or incorrectly wired output cables. Switch off and unplug the supply before connecting or disconnecting the DAC cable.
+- **Wait for the LEDs.** Orange on a UcPure indicator means the capacitors are charging; green means they are fully charged and supplying power. Treat the supply as live whenever either colour is shown, and do not assume it is discharged because the front-panel LEDs are off.
+- **Ventilation and placement.** Keep the supply on a stable, non-flammable surface with its ventilation clear. Do not cover it or place it near heat sources or in damp conditions.
+- **If something goes wrong.** If you smell burning, see smoke or notice swelling, leaking or unusual heat, switch off and unplug the supply (if safe to do so), move away from it, and contact a qualified service technician. Do not touch leaked electrolyte; if it contacts skin or eyes, rinse thoroughly with water and seek medical advice.
+- **Transport and storage.** Disconnect all cables before moving the supply and protect the output connectors from contact with metal objects. Dispose of the unit according to local regulations for electrical equipment and energy-storage components, not with household waste.
 
-#### 10 – Expansion Port
+## Startup and Troubleshooting
 
-This position is reserved for future expansion.
+### Normal Startup
 
-The connector is not currently active and should remain covered by the supplied blanking plate.
+When you press the power button to wake the player, the indicators should behave as follows:
 
-#### 11 – Ethernet Network Port
+1. The active power indicator [18] flashes during startup.
+2. Eight diagnostic button LEDs illuminate.
+3. The diagnostic LEDs turn off in pairs as startup stages complete.
+4. When startup is complete, the diagnostic LEDs are off and the active power indicator is steady. The player is ready to use.
 
-Connect this port to your home network using a standard Ethernet cable.
+### Startup Error Indicators
 
-A network connection enables streaming services, remote control functionality, firmware notifications and other supported network features.
+If startup fails, the flashing diagnostic LED pairs identify the stage that did not complete. Button numbers refer to the labels in figure 1.
 
-> **Tip**
+| Flashing buttons | Startup stage |
+|---|---|
+| 7 and 10 | 3.3V relay |
+| 3 and 6 | DAC power relay |
+| 2 and 5 | Output-stage relay |
+| 1 and 4 | Raspberry Pi communication/boot heartbeat |
+| All eight diagnostic LEDs | Firmware initialization |
 
-A wired Ethernet connection is recommended for the most reliable streaming performance.
-
-#### 12 – Optical (TOSLINK) Input
-
-This input accepts digital audio using a standard TOSLINK optical cable.
-
-Typical devices include:
-
-- Televisions
-
-- Media players
-
-- Games consoles
-
-- CD players with optical outputs
-
-Because optical cables transmit light rather than electrical signals, they are immune to electrical interference and can sometimes eliminate ground-loop related hum.
-
-#### 13 – Coaxial S/PDIF Input
-
-Use this input to connect digital audio sources equipped with a coaxial S/PDIF output.
-
-Common examples include:
-
-- CD transports
-
-- Digital streamers
-
-- Network players
-
-- Digital audio interfaces
-
-#### 14 & 15 – RCA Analogue Outputs
-
-These are the standard single-ended analogue outputs used with amplifiers and pre-amplifiers equipped with RCA (phono) inputs.
-
-- **14** – Right Channel
-
-- **15** – Left Channel
-
-#### 16 & 17 – Balanced XLR Outputs
-
-These balanced analogue outputs are intended for equipment fitted with XLR inputs.
-
-Balanced connections provide excellent rejection of electrical interference and are recommended whenever compatible equipment is available, particularly when using cables longer than approximately **2 metres (6 feet)**.
-
-- **16** – Right Channel
-
-- **17** – Left Channel
-
-#### 18 – RCA Shield Ground Lift Switch (Not Implemented)
-
-This switch changes the grounding arrangement for the RCA outputs.
-
-In most installations, the factory setting provides the best performance.
-
-If a low-frequency hum is present after connecting your amplifier, try both switch positions and leave the switch in the position that produces the lowest background noise.
-
-##### Switch Positions
-
-- **Up** — Ground Lift Enabled
-
-- **Down** — Ground Connected
-
-#### 19 – XLR Ground Lift Switch (Not Implemented)
-
-This switch performs the same function as the RCA Ground Lift switch but applies to the balanced XLR outputs.
-
-Most users will never need to adjust this switch. However, if hum is present when using balanced XLR connections, try both positions and select the setting that provides the quietest operation.
-
-### Quick Reference
-
-| Ref (fig 2) | Connection | Purpose |
-|----|----|----|
-| 1 & 3 | Earth Connections | Optional chassis-to-power-supply earth connection for grounding adjustment and hum reduction |
-| 2 | Power Supply Control | Control link for Sleep and Deep Sleep power management |
-| 4 & 5 | Main Power Connections | DC power input from the external power supply |
-| 6 | Firmware Update Port | Reserved USB connection for firmware updates only |
-| 7 | USB Accessory Connection | Connect USB storage devices or accessories containing music |
-| 8 | HDMI Input | Digital audio input from compatible HDMI devices |
-| 9 | Music USB Input | USB Type-B audio input for computers and compatible devices |
-| 10 | Blanking Plate | Reserved for future expansion |
-| 11 | Ethernet Connection | Network and internet connectivity |
-| 12 | Optical Input | Toslink optical digital audio input |
-| 13 | SPDIF Input | Coaxial digital audio input |
-| 14 | RCA Right Output | Right-channel single-ended analogue output |
-| 15 | RCA Left Output | Left-channel single-ended analogue output |
-| 16 | XLR Right Output | Right-channel balanced analogue output |
-| 17 | XLR Left Output | Left-channel balanced analogue output |
-| 18 | RCA Earth Lift | Grounding adjustment for RCA outputs |
-| 19 | XLR Earth Lift | Grounding adjustment for XLR outputs |
-
-### Quick Setup Checklist
-
-Before powering on the system, confirm the following:
-
-✓ Main power connections are securely connected\
-✓ Audio source is connected to the desired input\
-✓ RCA or XLR outputs are connected to your amplifier or audio system\
-✓ Ethernet connection is attached if network features are required\
-✓ Earth lift switches are set as desired\
-✓ Power supply and DAC control connections are securely fitted
-
-## Power Supply Front Panel
-
-![User manual figure 3](../user-manual-media/media/image3.png)
-
-### A Quick Look
-
-The power supply front panel contains three LEDs that indicate the current operating state of the power supply.
-
-#### Power Indicator \[1\]
-
-When illuminated, this LED indicates that the power supply is receiving power from the mains supply.
-
-#### 5V UcPure \[2\]
-
-This LED has two operating states:
-
-- **Orange** – The power supply is charging the capacitors.
-
-- **Green** – The capacitors are fully charged, and the power supply is now delivering power from the capacitors rather than directly from the mains supply.
-
-#### 3.3V UcPure \[3\]
-
-This LED also has two operating states:
-
-- **Orange** – The power supply is charging the capacitors.
-
-- **Green** – The capacitors are fully charged, and the power supply is now delivering power from the capacitors rather than directly from the mains supply.
-
-![User manual figure 4](../user-manual-media/media/image4.png)
-
-## Power Supply Back Panel
-
-### A Quick Look
-
-### Earth Connections \[1 and 3\]
-
-These banana socket connections allow the DAC chassis to be connected to the power supply earth.
-
-In most systems this will not require adjustment, however if you experience unwanted hum or grounding noise during playback, these connections may help improve system grounding and reduce interference.
-
-It is recommended to connect one of these connections to the Streamer DAC by default
-
-### Power Supply Control Connection \[2\]
-
-This connection links directly to the accompanying power supply and carries the control signals used to manage the internal power rails.
-
-It is used when placing the DAC into **Sleep** or **Deep Sleep** mode, allowing the system to power down and wake up correctly.
-
-### Main Power Connections \[9 and 10\]
-
-These connectors provide the main DC power feed from the external power supply to the DAC.
-
-The connectors are keyed differently, so they can only be connected in the correct orientation. This prevents accidental misconnection and makes installation straightforward.
-
-### Fuses \[4, 5, 6, 7\]
-
-These output fuses provide protection for the connected equipment and the power supply outputs in the event of an electrical fault or excessive current draw.
-
-Under normal operation, these fuses should not require replacement. However, if the power supply is switched on and the **5V UcPure** or **3.3V UcPure** status LEDs on the front panel do not illuminate, it is possible that one or more output fuses may have operated (blown).
-
-Before replacing any fuse, it is recommended to identify and correct the cause of the fault, as repeated fuse failure may indicate an issue with the connected equipment or wiring.
-
-**Warning:**\
-Always switch the power supply off and disconnect the mains power lead before inspecting or replacing any fuse. Failure to do so may expose hazardous voltages and could result in electric shock or damage to the equipment.
-
-Only replace fuses with the **same type and current rating** as originally specified. Using an incorrect fuse may compromise safety and damage the power supply or connected devices.
-
-### Mains Power Connection and Switch \[8\]
-
-This unit is fitted with a standard **IEC 240V AC mains inlet and power switch** for connection to the mains supply.
-
-The mains inlet contains an integrated **5A fuse** that protects the unit against mains-side electrical faults and overcurrent conditions.
-
-This connection is also used to switch power to the Streamer DAC system on and off.
-
-**Warning:**\
-Before connecting the mains lead, ensure that the power switch is in the **OFF** position and that the mains supply voltage is compatible with the unit specifications.
-
-If the mains fuse requires replacement, always disconnect the mains lead first and replace the fuse only with the **5A rated fast blow fuse** from a reputable dealer.
+Check that the external power and control connections are secure. Switch the system off and try one restart. If the fault persists, stop using the unit and contact the supplier or a qualified service technician. Do not attempt internal repairs.
