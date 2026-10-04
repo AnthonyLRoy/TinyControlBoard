@@ -55,7 +55,7 @@ Use the six buttons on the right side of the panel to control playback:
 - **Skip Backwards [10]** and **Skip Forward [12]** move playback by 10 seconds with each press.
 - **Shuffle (Random) [11]** turns shuffle on or off. The button stays lit while shuffle is on.
 
-The rotary knob [17] also controls playback: turn it right for the next track, turn it left for the previous track, and press it to play or pause.
+The rotary knob [17] also controls playback: turn it right to move forward through the queue, turn it left to move back, and press it to play or pause. Each click moves one track, but the player does not change track until you stop turning for about one second, and then it jumps straight to the chosen track. This lets you skip several tracks without each one starting to play. Turning past the last track continues from the first (and vice versa), and if you turn back to where you started, nothing changes. If playback is paused or stopped, it stays that way after the jump.
 
 ### Display Controls
 
@@ -87,7 +87,7 @@ The other buttons briefly light to confirm a press. For the mini display and its
 | 11 | Shuffle (Random) | Toggles shuffle; lit when active. |
 | 12 | Skip Forward | Moves playback forward by 10 seconds. |
 | 13 | Power button | Brief press for Sleep/wake; hold about 3 seconds for Deep Sleep. |
-| 17 | Rotary knob | Turn to change tracks; press to play or pause. |
+| 17 | Rotary knob | Turn to change tracks (jumps after you pause turning for about 1 second); press to play or pause. |
 | 18 | Power indicator | Indicates the player's power state. |
 | 19 | Main display | Shows artwork, track information and menus. |
 

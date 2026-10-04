@@ -1,4 +1,6 @@
+import re
 import subprocess
+import threading
 
 PARAM_DISABLED = 0
 PARAM_ENABLED = 1
@@ -23,11 +25,63 @@ def toggle_meter_display(params):
     set_meter_display(params[0] == PARAM_ENABLED)
 
 
+ROTARY_DEBOUNCE_SECONDS = 1.0
+ROTARY_WRAP_AROUND = True  # False clamps at first/last track instead
+ROTARY_KEEP_PLAY_STATE = True  # False always starts playing after the jump
+
+_rotary_lock = threading.Lock()
+_rotary_pending = 0
+_rotary_timer = None
+
+_STATUS_RE = re.compile(r"\[(playing|paused)\]\s+#(\d+)/(\d+)")
+
+
+def _get_mpc_state():
+    """Return (state, position, length); position is 1-based, None if stopped."""
+    result = subprocess.run(["mpc", "status"], capture_output=True, text=True, check=False)
+    match = _STATUS_RE.search(result.stdout)
+    if match:
+        return match.group(1), int(match.group(2)), int(match.group(3))
+    length_result = subprocess.run(["mpc", "playlist"], capture_output=True, text=True, check=False)
+    length = len([line for line in length_result.stdout.splitlines() if line.strip()])
+    return "stopped", None, length
+
+
+def _rotary_timer_fired():
+    global _rotary_pending, _rotary_timer
+    with _rotary_lock:
+        pending = _rotary_pending
+        _rotary_pending = 0
+        _rotary_timer = None
+        if pending == 0:
+            return
+        state, position, length = _get_mpc_state()
+        if length <= 0:
+            return
+        if position is None:
+            position = 0 if pending > 0 else length + 1
+        target = position + pending
+        if ROTARY_WRAP_AROUND:
+            target = (target - 1) % length + 1
+        else:
+            target = max(1, min(length, target))
+        run_command(["mpc", "play", str(target)])
+        if ROTARY_KEEP_PLAY_STATE and state == "paused":
+            run_command(["mpc", "pause"])
+        elif ROTARY_KEEP_PLAY_STATE and state == "stopped":
+            run_command(["mpc", "stop"])
+
+
 def handle_rotary_action(params):
-    if params[0] == ROTARY_ACTION_NEXT:
-        run_command(["mpc", "next"])
-    else:
-        run_command(["mpc", "prev"])
+    global _rotary_pending, _rotary_timer
+    delta = 1 if params[0] == ROTARY_ACTION_NEXT else -1
+    with _rotary_lock:
+        _rotary_pending += delta
+        if _rotary_timer is not None:
+            _rotary_timer.cancel()
+        _rotary_timer = threading.Timer(ROTARY_DEBOUNCE_SECONDS, _rotary_timer_fired)
+        _rotary_timer.daemon = True
+        _rotary_timer.start()
 
 
 def toggle_cover_view(params):
