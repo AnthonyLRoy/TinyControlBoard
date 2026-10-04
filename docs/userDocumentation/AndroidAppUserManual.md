@@ -6,9 +6,23 @@ The phone acts as a remote control. Music plays through the player and your conn
 
 **App:** DanStreamer
 
-**Manual version:** 3.1
+**App version (repository build):** 1.0
 
-**Updated:** 26 September 2026
+**Guide revision:** 3.2
+
+**Updated:** 4 October 2026
+
+## Requirements and Permissions
+
+- An Android phone or tablet running Android 6.0 (API 23) or later with Bluetooth Low Energy.
+- A powered TinyControlBoard running firmware with the BLE service enabled. The board accepts one BLE connection at a time.
+- Bluetooth enabled on the phone. For album artwork, the phone must also be able to reach the moOde player on the home network. MusicBrainz information requires internet access.
+
+When you start scanning, DanStreamer requests:
+
+- **Nearby devices / Bluetooth scan and connect** on Android 12 or later, to find and control the board.
+- **Location** on Android 6–11, because those Android versions require it for BLE scanning. DanStreamer does not use your location.
+- The app also uses **Internet access** for album artwork and online artist/album information. Android grants this at installation rather than showing a runtime permission prompt. Normal control commands are sent over Bluetooth.
 
 ## Connect to the Player
 
@@ -50,12 +64,14 @@ The main screen shows the current song, album artwork when available, and the pl
 | <img src="../user-manual-media/media/icons/repeat.svg" alt="Repeat icon" width="24"> | **Repeat** | Repeat the queue. Tap again to turn it off. |
 | <img src="../user-manual-media/media/icons/brightness-down.svg" alt="Decrease brightness icon" width="24"> <img src="../user-manual-media/media/icons/brightness.svg" alt="Brightness icon" width="24"> <img src="../user-manual-media/media/icons/brightness-up.svg" alt="Increase brightness icon" width="24"> | **Brightness - / +** | Make the player's display dimmer or brighter. |
 | <img src="../user-manual-media/media/icons/monitor.svg" alt="Display icon" width="24"> | **Display On / Off** | Turn the player's display off or on without stopping music. |
-| <img src="../user-manual-media/media/icons/settings.svg" alt="Settings icon" width="24"> | **Settings** | Set the moOde player address used for album artwork and song details. |
+| <img src="../user-manual-media/media/icons/settings.svg" alt="Settings icon" width="24"> | **Settings** | Set the moOde player address used to retrieve album artwork. |
 | <img src="../user-manual-media/media/icons/power.svg" alt="Power icon" width="24"> | **Power** | Wake the player or choose Sleep or Deep Sleep. |
 
 Tap **Play / Pause** to pause or resume playback. Use **Previous** and **Next** to move between tracks, or **Shuffle** and **Repeat** to change how the queue plays.
 
 When shuffle, repeat, cover, meter, or alternate DAC mode is active, its control is highlighted.
+
+When track duration is available, the progress bar shows the elapsed and remaining time. Touch or drag along the bar to seek to that position in the track. Seeking requires an active connection and a track with a known duration.
 
 ## Find and Play Music
 
@@ -123,7 +139,7 @@ Tap the song name on the main screen, or tap **Playlist** if it is shown there.
 
 ### Save, load, or delete a playlist
 
-From the current queue, tap **Playlist Management**.
+From the current queue screen, tap the queue/music-note icon beside **Current Playlist** to open **Playlists**.
 
 To save the queue:
 
@@ -162,32 +178,32 @@ To clear the current queue:
 2. Tap the view you want.
 3. Use the back arrow to return to the main screen.
 
-The available views may include **Default View**, **Radio Stations**, **Playlist**, **Folder View**, **Tag View**, and **Album View**.
+The available views are **Default View**, **Radio Stations**, **Playlist**, **Folder View**, **Tag View**, and **Album View**. The screen title is **Select display menu**.
 
 > <img src="../user-manual-media/media/androidApp/displayview.jpg" alt="DanStreamer menu for choosing the player's display view" width="240" style="max-width: 100%; height: auto;">
 >
 > *Choose what you want to see on the player's display.*
 
-### Set up album artwork and song details
+### Set up album artwork
 
-DanStreamer can show the current song name and album artwork. If either is missing, enter the address of your moOde player:
+The current-song text and playback status arrive from the player over Bluetooth. DanStreamer retrieves album artwork separately from moOde over your home network. If artwork is missing, enter the address of your moOde player:
 
 1. On the main screen, tap the gear icon.
 2. Enter the moOde player's address, usually an address such as `192.168.0.10` or a name such as `moode.local`.
 3. Save the address.
 4. Return to the main screen and wait for the artwork to refresh.
 
-This address is used only to retrieve artwork and song details. The app uses Bluetooth for its normal remote-control functions.
+This address is used for album artwork, not for the current-song text or playback controls. Bluetooth remains the transport for normal remote-control functions.
 
 > <img src="../user-manual-media/media/androidApp/IPConfiguration.jpg" alt="DanStreamer moOde player address settings" width="240" style="max-width: 100%; height: auto;">
 >
-> *Enter the address of your moOde player to show artwork and song details.*
+> *Enter the address of your moOde player to retrieve album artwork.*
 
 ### Use power options
 
 Tap the power button on the main screen to open the power options:
 
-- If the player is asleep or off, the app asks it to turn on.
+- If the player is asleep or off, tap the power button to wake it.
 - If the player is on, choose **Sleep** for normal standby.
 - Choose **Deep Sleep** when you will not use the player for a longer time.
 
@@ -201,8 +217,8 @@ Wait for the power change to finish before sending another command. The status b
 
 DanStreamer can look up information about the artist or album currently reported by the player. Looking up information does not interrupt playback.
 
-1. On the main screen, double-tap the album artwork.
-2. Or press and hold the artwork.
+1. On the main screen, double-tap the album artwork or press and hold it.
+2. In the **MusicBrainz information** dialog, leave the name field blank to use the current track, or enter an artist or album name.
 3. Choose **Artist** or **Album**.
 4. Wait while DanStreamer searches MusicBrainz and loads the information.
 
@@ -236,17 +252,19 @@ MusicBrainz lookups require internet access. This connection is separate from Bl
 
 ### Can't find the player
 
-1. Check that the TinyControlBoard is powered on.
+1. Check that the TinyControlBoard is powered on and running firmware with BLE enabled.
 2. Check that Bluetooth is enabled on your phone.
 3. Move your phone closer to the player.
 4. Return to the app and tap **Scan** again.
 5. If Android asks for permission, tap **Allow**.
 
-On Android 6 to 11, the system may also request Location permission for Bluetooth scanning. Allow it so the app can scan for the player.
+On Android 6 to 11, allow Location permission so Android can perform BLE scanning. DanStreamer does not use your location. On Android 12 or later, allow Nearby devices/Bluetooth scan and connect permissions.
+
+If the scan fails, enable Bluetooth and try **Scan** again. If the connection times out or is lost, keep the app open briefly while it attempts to reconnect. If it does not reconnect, return to the scan screen and scan again.
 
 ### The app says Bluetooth permissions are required
 
-Open your phone's **Settings**, go to **Apps**, select **DanStreamer**, and allow Nearby devices or Bluetooth access. On Android 6 to 11, also allow Location access.
+Open your phone's **Settings**, go to **Apps**, select **DanStreamer**, and allow Nearby devices or Bluetooth access on Android 12 or later. On Android 6 to 11, allow Location access for BLE scanning; the app does not use your location.
 
 ### A button does not seem to work
 
@@ -254,7 +272,7 @@ Check that the app is connected and the player status shows **ON**. If the playe
 
 ### I cannot see my music library or search results
 
-Check that the app is still connected and the player's music library is available. Search results come from the player, not from music stored on your phone.
+Check that the app is still connected and the player's music library is available. Search results come from the player, not from music stored on your phone. If the connection was lost, wait briefly for reconnection or return to the scan screen and connect again.
 
 ### Album artwork is missing
 
@@ -276,11 +294,11 @@ No. The player and audio system play the music; the phone is the remote control.
 
 ### Does the phone need Wi-Fi?
 
-Bluetooth handles everyday player controls. To load artwork and song details from moOde, your phone must be able to reach the player on your home network. MusicBrainz lookups require internet access.
+Bluetooth handles everyday player controls and supplies the current-song text. To load album artwork from moOde, your phone must be able to reach the player on your home network. MusicBrainz lookups require internet access.
 
 ### How do I disconnect?
 
-From a connected screen, use Android's back action or the back arrow to return to the scan screen and disconnect from the player.
+From the main control screen, use Android's Back action or the back arrow to return to the scan screen and disconnect. From a library, queue, or other secondary screen, go back to the main control screen first.
 
 ### What is the difference between the queue and a saved playlist?
 
@@ -292,6 +310,7 @@ The following reference information is intended for installers and support:
 
 - App name: **DanStreamer**
 - Android package: `com.tinycb.remote`
-- Android support: Android 6.0 and later
+- Android support: Android 6.0 (API 23) and later; Bluetooth Low Energy required
 - Connection: Bluetooth Low Energy to one TinyControlBoard at a time
-- Artwork and current-song details: fetched from the configured moOde player over the home network
+- Current-song text and playback status: received over Bluetooth from the control board
+- Album artwork: fetched from the configured moOde player over the home network

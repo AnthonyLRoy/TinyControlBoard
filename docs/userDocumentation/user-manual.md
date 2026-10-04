@@ -2,17 +2,31 @@
 
 Use this manual to set up and operate the Streamer DAC and its external power supply. Follow Quick Start for the initial connections, then refer to the relevant sections for everyday use or troubleshooting.
 
+> **Safety:** The external supply contains mains-voltage circuitry. Do not open either enclosure or work on internal wiring. Disconnect the mains lead before handling external cables or connectors. Fuse replacement and internal servicing should be carried out only by a qualified service technician using the specified parts.
+
 ## Quick Start
 
 1. Make sure the power supply's rear-panel switch is **OFF**.
 2. Connect the DAC to the external power supply. Connect the earth and control leads, then connect the keyed DC power leads. Use the rear-panel diagrams to identify each connection. Never force a plug.
-3. Connect a digital audio source to a compatible input. The I²S input uses an HDMI-style socket, but it is **not** an HDMI connection. Read the I²S input description before connecting a source.
+3. Connect a digital audio source to a compatible input. The I²S input uses an HDMI-style socket, but it is **not** an HDMI connection. Read the I²S input description before connecting a source. Confirm that the source and this unit's installed audio hardware support the format you intend to play.
 4. Connect the DAC's RCA or XLR outputs to an amplifier or pre-amplifier.
-5. Connect Ethernet if you need network features. Connect other optional sources or USB storage as required.
+5. Connect Ethernet if you use moOde network features or the Android app's album-art display. Connect other optional sources or USB storage as required.
 6. Connect the mains lead and switch on the power supply.
 7. Briefly press the power button beneath the DAC's front edge. Wait for startup to finish. The expected indicators are described in [Startup and Troubleshooting](#startup-and-troubleshooting).
 
 ![User manual figure 1](../user-manual-media/media/androidApp/image1.png)
+
+### Audio Format Compatibility
+
+Audio capability depends on the selected DAC, the digital input and the source/software configuration. The following figures describe the DAC chip or software capability, not independent measurements of the complete Streamer DAC:
+
+| DAC option or software | PCM capability | DSD capability | Other reported information |
+|---|---|---|---|
+| ESS ES9038Q2M option | Up to 32-bit / 768 kHz | Native DSD512; DoP up to DSD256 | Reported dynamic range: 128–129 dB; reported THD+N: −120 dB (0.0001%); reported output resistance: 774 Ω. These are supplied module figures, not measurements of the assembled unit. |
+| TDA1387T option | 16-bit input word length; chip datasheet specifies word-select frequency up to 384 kHz | Not specified in the supplied TDA1387T datasheet; do not assume DSD or DoP support | Philips Semiconductors TDA1387T data sheet, preliminary specification dated 11 December 1995. |
+| moOde software | Decodes PCM formats including FLAC, ALAC, WAV, MP3 and AAC; PCM resolutions up to 32-bit / 384 kHz are supported, with higher rates depending on DAC hardware | Native DSD and DoP playback are hardware-dependent; software capability alone does not guarantee support | DSP features such as CamillaDSP depend on the installed software/configuration. |
+
+The figures above are not a promise that every input or configuration accepts every listed format. The source, input interface, selected DAC and any intervening processing must all support the format. In particular, the TDA1387T figures are limits of the DAC chip's digital input, not a verified end-to-end compatibility test of the assembled unit.
 
 ## Everyday Operation
 
@@ -26,9 +40,9 @@ Use this manual to set up and operate the Streamer DAC and its external power su
 - **Power indicator [18]** shows the player's power state.
 - **Power button [13]** is beneath the front edge of the cabinet.
 
-### Power, Standby and Deep Sleep
+### Power, Sleep (Standby) and Deep Sleep
 
-Briefly press the power button [13] to wake the player or put it into standby. In standby, the main display and output stage switch off, but the DAC remains powered so the player can wake quickly.
+Briefly press the power button [13] to wake the player or put it into Sleep (standby). In Sleep, the main display and output stage switch off, but the DAC remains powered so the player can wake quickly.
 
 To enter Deep Sleep, press and hold the power button for about **3 seconds**, then release it. The player shuts down before entering Deep Sleep, which switches off both the DAC and output stage. Briefly press the power button to wake the player. If you will not use it for several days, switch off the external power supply.
 
@@ -39,7 +53,7 @@ Use the six buttons on the right side of the panel to control playback:
 - **Previous Track [7]** and **Next Track [9]** move to the previous or next track.
 - **Repeat [8]** repeats the playlist. The button stays lit while repeat is on; press it again to turn repeat off.
 - **Skip Backwards [10]** and **Skip Forward [12]** move playback by 10 seconds with each press.
-- **Random [11]** turns shuffle on or off. The button stays lit while shuffle is on.
+- **Shuffle (Random) [11]** turns shuffle on or off. The button stays lit while shuffle is on.
 
 The rotary knob [17] also controls playback: turn it right for the next track, turn it left for the previous track, and press it to play or pause.
 
@@ -50,7 +64,7 @@ Use the six buttons on the left side of the panel to control the main display:
 - **Display over Art [1]** shows or hides track information over album artwork. The button stays lit while the overlay is visible.
 - **Screen Brightness [2]** cycles through display brightness levels. The button lighting is synchronised with screen brightness.
 - **Meter Display [3]** shows or hides the audio level meter. The button stays lit while the meter is active.
-- **Toggle DAC [4]** switches between the DAC outputs. The button stays lit when the alternate output is selected.
+- **Toggle DAC [4]** switches the DAC output selection; it does not select a digital audio input. The button stays lit when the alternate output is selected. Input selection depends on the installed audio hardware and moOde configuration.
 - **Switch Display [5]** turns the main display off or on without interrupting music playback.
 - **Switch Display Panel [6]** cycles through the available screen views.
 
@@ -70,9 +84,9 @@ The other buttons briefly light to confirm a press. For the mini display and its
 | 8 | Repeat | Toggles playlist repeat; lit when active. |
 | 9 | Next Track | Moves to the next track. |
 | 10 | Skip Backwards | Moves playback back by 10 seconds. |
-| 11 | Random | Toggles shuffle; lit when active. |
+| 11 | Shuffle (Random) | Toggles shuffle; lit when active. |
 | 12 | Skip Forward | Moves playback forward by 10 seconds. |
-| 13 | Power button | Brief press for standby/wake; hold about 3 seconds for Deep Sleep. |
+| 13 | Power button | Brief press for Sleep/wake; hold about 3 seconds for Deep Sleep. |
 | 17 | Rotary knob | Turn to change tracks; press to play or pause. |
 | 18 | Power indicator | Indicates the player's power state. |
 | 19 | Main display | Shows artwork, track information and menus. |
@@ -121,7 +135,7 @@ Connect a digital audio source with a coaxial S/PDIF output, such as a CD transp
 
 **6 – Firmware update port**
 
-Use this port only for firmware updates. It is not intended for music playback or USB storage.
+This port is not for music playback or USB storage. Do not attempt a firmware update through it unless you have the update package and instructions approved for this unit and hardware revision; this manual does not provide an end-user update procedure.
 
 **7 – USB storage port**
 
@@ -133,7 +147,7 @@ This port is reserved for future expansion and is not currently active. Leave th
 
 **11 – Ethernet network port**
 
-Use a standard Ethernet cable to connect the DAC to your home network. This enables supported streaming, remote-control, and firmware-notification features. A wired connection is recommended for reliable streaming.
+Use a standard Ethernet cable to connect the DAC to your home network for network features provided by the installed moOde system. The Android app uses the network connection to retrieve album artwork; playback and remote-control commands use Bluetooth between the app and the control board. A wired connection is recommended for reliable network streaming.
 
 #### Analogue Outputs
 
@@ -162,7 +176,7 @@ Switches **18 (RCA)** and **19 (XLR)** are marked **Not Implemented**. Their des
 | 1 & 3 | Chassis earth | Connects the DAC chassis to the power-supply earth. |
 | 2 | Power-supply control | Control link between the DAC and external power supply. |
 | 4 & 5 | DC power inputs | DC power from the external supply. |
-| 6 | Firmware update port | Reserved for firmware updates. |
+| 6 | Firmware/update port | Not for playback or storage; use only with approved update instructions. |
 | 7 | USB storage | Connects compatible USB storage. |
 | 8 | I²S audio input | I²S digital audio using a compatible PS Audio pinout; not HDMI. |
 | 9 | USB Audio input | USB Type-B digital audio input. |
@@ -173,6 +187,8 @@ Switches **18 (RCA)** and **19 (XLR)** are marked **Not Implemented**. Their des
 | 14 & 15 | RCA outputs | Right and left single-ended analogue outputs. |
 | 16 & 17 | XLR outputs | Right and left balanced analogue outputs. |
 | 18 & 19 | Ground-lift switches | Not implemented. |
+
+For remote playback, library, queue and power control from an Android phone, see the [DanStreamer Phone App User Guide](AndroidAppUserManual.md).
 
 ### External Power Supply
 
@@ -204,15 +220,15 @@ These keyed connectors supply DC power to the DAC. Match each connector to its c
 
 **4–7 – Output fuses**
 
-These fuses protect the power-supply outputs and should not normally need replacing. If a fuse blows, identify and correct the cause before replacing it. A fuse that blows repeatedly may indicate a fault in the connected equipment or wiring.
+These fuses protect the power-supply outputs and should not normally need replacing. If a fuse blows, switch off and unplug the supply. Do not replace the fuse yourself; have a qualified service technician identify the cause and fit the specified replacement. A fuse that blows repeatedly may indicate a fault in the connected equipment or wiring.
 
-> **Warning:** Switch the power supply off and disconnect the mains lead before inspecting or replacing a fuse. Replace a fuse only with the same type and current rating specified for that position. If you are unsure of the specification or replacement procedure, contact a qualified service technician.
+> **Warning:** The power supply contains mains-voltage circuitry. Do not open it or inspect internal fuses. Disconnect the mains lead and contact a qualified service technician.
 
 **8 – Mains inlet, fuse and switch**
 
-The IEC mains inlet includes the power switch and an integrated fuse. Before connecting the mains lead, make sure the switch is **OFF** and the mains voltage is compatible with the unit.
+The IEC mains inlet includes the power switch and an integrated fuse. Before connecting the mains lead, make sure the switch is **OFF** and that the supply voltage matches the unit's rating label.
 
-> **Warning:** Disconnect the mains lead before replacing the mains fuse. Use only the specified fuse type and rating.
+> **Warning:** Disconnect the mains lead before any service. Do not replace the mains fuse yourself; a qualified service technician must use the specified fuse type and rating.
 
 ## Startup and Troubleshooting
 
@@ -220,21 +236,21 @@ The IEC mains inlet includes the power switch and an integrated fuse. Before con
 
 When you press the power button to wake the player, the indicators should behave as follows:
 
-1. The power indicator [18] flashes red.
-2. Button LEDs [1, 2, 3, 4, 5, 6, 7 and 10] illuminate blue.
-3. The button LEDs turn off as startup proceeds.
-4. When startup is complete, the button LEDs are off and the power indicator is solid blue. The DAC is ready to use.
+1. The active power indicator [18] flashes during startup.
+2. Eight diagnostic button LEDs illuminate.
+3. The diagnostic LEDs turn off in pairs as startup stages complete.
+4. When startup is complete, the diagnostic LEDs are off and the active power indicator is steady. The player is ready to use.
 
 ### Startup Error Indicators
 
-If the player does not complete startup, the following flashing button combinations indicate a fault:
+If startup fails, the flashing diagnostic LED pairs identify the stage that did not complete. Button numbers refer to the labels in figure 1.
 
-| Flashing buttons | Indicated issue |
+| Flashing buttons | Startup stage |
 |---|---|
-| 7 and 10 | Display screen |
-| 3 and 6 | DAC section |
-| 2 and 5 | Clocks or DAC power |
-| 1 and 4 | Power to the streamer |
-| All buttons | Control system board |
+| 7 and 10 | 3.3V relay |
+| 3 and 6 | DAC power relay |
+| 2 and 5 | Output-stage relay |
+| 1 and 4 | Raspberry Pi communication/boot heartbeat |
+| All eight diagnostic LEDs | Firmware initialization |
 
-Check that the DAC's power and control connections to the power supply are secure. Switch the system off, wait a couple of minutes, and try again. If the fault persists, stop using the unit and contact the supplier or a qualified service technician. Do not attempt internal repairs.
+Check that the external power and control connections are secure. Switch the system off and try one restart. If the fault persists, stop using the unit and contact the supplier or a qualified service technician. Do not attempt internal repairs.
