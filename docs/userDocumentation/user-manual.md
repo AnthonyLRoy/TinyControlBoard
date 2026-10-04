@@ -3,6 +3,8 @@
 Use this manual to set up and operate the Streamer DAC and its external power supply. Follow Quick Start for the initial connections, then refer to the relevant sections for everyday use or troubleshooting.
 
 > **Safety:** The external supply contains mains-voltage circuitry. Do not open either enclosure or work on internal wiring. Disconnect the mains lead before handling external cables or connectors. Fuse replacement and internal servicing should be carried out only by a qualified service technician using the specified parts.
+>
+> **Supercapacitor hazard:** The external supply also contains high-current supercapacitors (the UcPure stages). They can store a large amount of energy and remain charged after the mains lead is disconnected and the unit is switched off. Accidentally shorting their terminals can cause severe arcing, burns, fire and damage to the equipment. See [Supercapacitor Safety](#supercapacitor-safety).
 
 ## Quick Start
 
@@ -229,6 +231,26 @@ These fuses protect the power-supply outputs and should not normally need replac
 The IEC mains inlet includes the power switch and an integrated fuse. Before connecting the mains lead, make sure the switch is **OFF** and that the supply voltage matches the unit's rating label.
 
 > **Warning:** Disconnect the mains lead before any service. Do not replace the mains fuse yourself; a qualified service technician must use the specified fuse type and rating.
+
+### Supercapacitor Safety
+
+The 5V UcPure and 3.3V UcPure stages use high-current supercapacitors as their energy store. Unlike a conventional supply, these can deliver very high currents into a short circuit and hold their charge for a long time after power is removed.
+
+| Stage | Nominal voltage | Capacitance | Approx. stored energy |
+|---|---|---|---|
+| 5V UcPure | 5 V | 2 × 3000 F cells in series (1500 F total) | about 18.8 kJ (½·C·V²) |
+| 3.3V UcPure | 3.3 V | 2 × 3000 F cells in series (1500 F total) | about 8.2 kJ |
+
+These voltages are too low to cause electric shock, but the energy is comparable to a significant battery pack. A short circuit across a fully charged bank can produce currents of thousands of amps, enough to melt tools and cables, weld metal, cause severe burns and start a fire. For comparison, 18.8 kJ is roughly the energy needed to lift a 100 kg person about 19 m.
+> **Warning:** Switching off and unplugging the supply does **not** make the inside safe. The supercapacitors may remain charged, possibly for hours or longer. Never open the enclosure.
+
+- **Do not open the supply.** There are no user-serviceable parts. Only a qualified service technician, trained in handling supercapacitors, may open it, and must first confirm that the capacitors are discharged using a suitable meter and the manufacturer's discharge procedure.
+- **Never short the outputs.** Do not bridge the output terminals or connectors with tools, metal objects, jewellery or damaged cables. A short can cause very high current, arcing, burns, fire and damage to the unit.
+- **Check cables and connectors.** Do not use damaged, frayed or incorrectly wired output cables. Switch off and unplug the supply before connecting or disconnecting the DAC cable.
+- **Wait for the LEDs.** Orange on a UcPure indicator means the capacitors are charging; green means they are fully charged and supplying power. Treat the supply as live whenever either colour is shown, and do not assume it is discharged because the front-panel LEDs are off.
+- **Ventilation and placement.** Keep the supply on a stable, non-flammable surface with its ventilation clear. Do not cover it or place it near heat sources or in damp conditions.
+- **If something goes wrong.** If you smell burning, see smoke or notice swelling, leaking or unusual heat, switch off and unplug the supply (if safe to do so), move away from it, and contact a qualified service technician. Do not touch leaked electrolyte; if it contacts skin or eyes, rinse thoroughly with water and seek medical advice.
+- **Transport and storage.** Disconnect all cables before moving the supply and protect the output connectors from contact with metal objects. Dispose of the unit according to local regulations for electrical equipment and energy-storage components, not with household waste.
 
 ## Startup and Troubleshooting
 
