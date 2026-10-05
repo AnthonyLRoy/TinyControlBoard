@@ -531,6 +531,14 @@ Inner Case
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-inner-case-cad.png" style="width:6.26806in;height:4.14375in" />
 
+**Inner case**
+Front Panel
+<img src="../user-manual-media/media/service-guide/Front-Panel-inner-case.png" style="width:6.26806in;height:4.43125in" />
+
+Rear Panel
+<img src="../user-manual-media/media/service-guide/Back-panel-innerCase.png" style="width:6.26806in;height:4.43125in" />
+
+
 **Final Assembly**
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-final-assembly-cad.png" style="width:6.26806in;height:5.15556in" />
