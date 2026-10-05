@@ -254,16 +254,18 @@ RPI Dac Power
 
 <img src="../user-manual-media/media/service-guide/raspberry-pi-dac-power-board.png" style="width:5.25434in;height:4.58546in" />
 
+Capacitor Bank
+
+<img src="../user-manual-media/media/service-guide/capacitor-bank-photo.png" style="width:6.26806in;height:4.40625in" />
+
+<img src="../user-manual-media/media/service-guide/capacitor-bank-schematic.png" style="width:6.26806in;height:4.40625in" />
+
 Streamer Dac Case Build
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-rear-panel-drawing.png" style="width:6.26806in;height:4.40625in" />
 
 
-Capictor Bank
 
-<img src="../user-manual-media/media/service-guide/capacitor-bank-photo.png" style="width:6.26806in;height:4.40625in" />
-
-<img src="../user-manual-media/media/service-guide/capacitor-bank-schematic.png" style="width:6.26806in;height:4.40625in" />
 
 
 
@@ -281,6 +283,15 @@ Top Panel for streamer and Dac
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-top-panel-drawing.png" style="width:6.26806in;height:4.43125in" />
 
+
+Power Supply
+
+
+Front Panel
+<img src="../user-manual-media/media/service-guide/Power-supply-panel-front.png" style="width:6.26806in;height:4.43125in" />
+
+Rear Panel
+<img src="../user-manual-media/media/service-guide/Power-supply-rear.png" style="width:6.26806in;height:4.43125in" />
 Inner Case
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-inner-case-cad.png" style="width:6.26806in;height:4.14375in" />
