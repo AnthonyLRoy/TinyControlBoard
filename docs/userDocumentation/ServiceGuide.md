@@ -212,17 +212,188 @@ To see detals of this product go to the waveshare website [here](https://www.wav
 
 ## Control board
 
-<img src="../user-manual-media/media/service-guide/control-board-pcb-render.png" style="width:6.26806in;height:3.59375in" />
+# Tiny Control Board for RPi 4 (Streamer DAC): Circuit Documentation
+# Tiny Control Board: Service Guide
 
 <img src="../user-manual-media/media/service-guide/control-board-schematic.png" style="width:4.43092in;height:3.08093in" />
 
 <img src="../user-manual-media/media/service-guide/control-board-pcb-layout.png" style="width:4.17919in;height:3.71803in" />
+
+Control board for the RPi 4 Streamer DAC (`tinyControlBoard.kicad_sch`, KiCad 8.0.0, 2024-08-08).
+
+## What it does
+
+An ESP32-S3 handles the housekeeping for the Raspberry Pi:
+
+- Reads 16 debounced front-panel buttons.
+- Drives 16 button LEDs with adjustable brightness.
+- Switches power to the Pi, DAC, screen and other boards through relay control lines.
+- Talks to the Pi over serial, with two handshake lines.
+
+## Block overview
+
+| Block | Part | Function |
+|---|---|---|
+| MCU | IC8 ESP32-S3-WROOM-1U-N16 | Main controller |
+| Debouncers | IC2, IC3 MAX6818 | Debounce buttons 1-8 and 9-16 |
+| I/O expander | IC5 MCP23018 | Reads the 16 button signals over I2C |
+| LED driver | IC1 STP16CPC26 | 16 constant-current LED outputs; VR1 sets brightness |
+| Level shifter | IC7 TXS0108E | 3.3 V to 5 V for the relay/power control lines |
+| 3.3 V regulator | IC4 LM3940-3.3 | +5V to +3V3 |
+| USB-C | J1 (ESD: U1 USBLC6-2SC6) | Programming, testing, backup 5 V |
+
+## Power
+
+- **Source select (S1):** position 1 = USB 5 V, position 3 = external supply (J8). Output is the +5V rail.
+- **+3V3** comes from IC4 and powers the MCU, debouncers, expander, LED driver and level shifter (A side).
+- **+5V** powers the button LEDs, level shifter (B side), and the 5 V pins on J3 and J6.
+- **Indicators:** D2 green = 3V3 present, D3 red = 5 V present.
+- **Status LED:** D1 green blinks when the ESP32 software is running.
+
+## Connectors
+
+| Ref | Use |
+|---|---|
+| J1 | USB-C for programming and testing |
+| J3 (2x20) | Buttons 1-16, LEDs 1-16, on/standby LEDs. Buttons return to GND pins; LED anodes go to the +5V pins |
+| J6 (2x20) | Pi serial (Tx/Rx), debug serial, handshake lines, relay/power outputs, 5 V and GND |
+| J8 | External supply input |
+
+### J6 signals
+
+| Pin | Signal |
+|---|---|
+| 3 / 4 | Serial Tx / Rx |
+| 5 / 6 | Debug Tx / Rx |
+| 9 | `rpi_data_ready` |
+| 11 | `msg_ir_wait` |
+| 12 | `rpi_status` |
+| 21 | `relay_pwr_1` out |
+| 23 | `dac_on` out |
+| 25 | `screen_on` out |
+| 27 | `dac_power` out |
+| 29 | `rpi_power` out |
+| 31 | `protodac_on` out |
+| 33 | `output_stage` out |
+| 35 | `relay_pwr_2` out |
+| 1, 2, 39, 40 | +5V |
+
+## Controls and adjustments
+
+- **S2 RESET:** resets the ESP32.
+- **S3 BOOT:** hold during reset or power-up to enter the ESP32 download mode.
+- **VR1:** trimmer that sets the brightness of all button LEDs.
+
+## Test points
+
+TP1-TP10 cover the LED-driver serial lines, expander I2C and reset, debug UART and interrupt lines. See the board silkscreen for each label.
+
+## Quick troubleshooting
+
+| Symptom | Check |
+|---|---|
+| No power LEDs | S1 position, supply at J8 or USB, then IC4 output on +3V3 |
+| 5 V LED on, 3.3 V LED off | IC4 and its 33 µF output capacitor |
+| D1 not blinking | ESP32 not running; try S2 reset, check debug serial output |
+| Cannot program the ESP32 | Use S3 BOOT with S2 reset; check the USB cable and J1 |
+| One button not responding | Wiring on J3, then the matching debouncer input and output |
+| All buttons dead | I2C lines (`mcp_clk`, `mcp_sda`), expander reset, +3V3 |
+| LEDs dark or dim | VR1 setting, LED driver supply, +5V at J3 |
+| Relay/power outputs inactive | Level shifter supplies (3V3 and 5V), then the signal at J6 |
+| Pi and ESP32 not communicating | Serial wiring on J6 pins 3/4, then `msg_ir_wait` and `rpi_data_ready` |
+
+## Notes
+
+
+
 
 ## Single to differential Output stage 
 
 <img src="../user-manual-media/media/service-guide/single-ended-to-balanced-output-schematic.png" style="width:6.26806in;height:4.32917in" />
 
 <img src="../user-manual-media/media/service-guide/single-ended-to-balanced-output-board.png" style="width:6.26806in;height:5.43958in" />
+
+# Single-Ended to Balanced Line Driver: Service Guide
+
+Stereo converter board: unbalanced stereo input in, balanced stereo output out, powered from a dual ±5 V supply.
+
+## What it does
+
+Each channel passes through one THAT 1646 balanced line driver (IC1 left, IC2 right; the schematic label reads `1646S08-U`). The driver converts the single-ended input into a differential output, which leaves through a 22 Ω resistor and a ferrite bead on each leg.
+
+**Signal path:** J1 (input) → input network → IC1 / IC2 → 22 Ω + ferrite bead per leg → J2 (left out) / J3 (right out)
+
+## Connectors
+
+All connectors are 3-pin (1725669).
+
+| Ref | Use | Pin 1 | Pin 2 | Pin 3 |
+|---|---|---|---|---|
+| J1 | Input | In L | GND | In R |
+| J2 | Left output | Sout L + | GND | Sout L − |
+| J3 | Right output | Sout R + | GND | Sout R − |
+| J4 | Power input | VCC (+5 V) | GND2 (0 V) | VEE (−5 V) |
+
+## Power supply
+
+- J4 takes a **dual supply: +5 V (VCC) and −5 V (VEE), with 0 V on GND2**.
+- Each rail has 2 x 47 µF bulk capacitors: C7 and C1 on VCC, C2 and C5 on VEE.
+- **D1** (with R1, 3 kΩ) and **D2** (with R2, 3 kΩ) are indicator LEDs on the +5 V and −5 V rails *(verify)*.
+- **GND2** is the supply ground. It joins the signal **GND** only through **R5 (10 Ω) in parallel with C8 (100 nF)**.
+- Each driver has 100 nF decoupling on its supply pins: C12 and C15 on IC1, C14 and C16 on IC2, all returned to GND2.
+
+## Input stage
+
+For each channel, a **47 kΩ resistor in parallel with 220 pF** goes from the input to GND (R3 and C3 for left, R4 and C4 for right). This sets the input impedance and filters RF. The signal then goes directly to pin 4 (IN) of the driver.
+
+## Driver stage (IC1 left, IC2 right)
+
+| Pin | Name | Connection |
+|---|---|---|
+| 1 | OUT− | `out −` net |
+| 2 | SNS− | Via 10 µF to `out −` (C9 left, C10 right) |
+| 3 | GND | GND (signal ground) |
+| 4 | IN | Input signal |
+| 5 | VEE | −5 V |
+| 6 | VCC | +5 V |
+| 7 | SNS+ | Via 10 µF to `out +` (C11 left, C13 right) |
+| 8 | OUT+ | `out +` net |
+
+## Output stage
+
+Each output leg has a **22 Ω series resistor** followed by a **ferrite bead**:
+
+| Channel | Resistors | Ferrite beads |
+|---|---|---|
+| Left | R6, 22R1 | FB1 (−), FB2 (+) |
+| Right | 22R2, 22R3 | FB3 (−), FB4 (+) |
+
+## Quick checks
+
+| Check | Expected |
+|---|---|
+| J4 pin 1 to pin 2 | +5 V |
+| J4 pin 3 to pin 2 | −5 V |
+| IC pin 6 to GND2 | +5 V |
+| IC pin 5 to GND2 | −5 V |
+| D1 and D2 | Both lit |
+
+## Quick troubleshooting
+
+| Symptom | Check |
+|---|---|
+| No output on either channel | J4 supply, D1 and D2, then VCC and VEE at the driver pins |
+| One channel dead | Input wiring on J1, then pin 4 signal, supply pins and output on the affected IC |
+| One output leg dead | The 22 Ω resistor and ferrite bead on that leg, then the connector |
+| Hum or noise | R5 / C8 ground link, GND and GND2 connections, input cable |
+| Distortion or low level | Output loading, supply voltage under load, sense capacitors (C9, C11 left; C10, C13 right) |
+| One rail missing | Supply wiring, the bulk capacitors on that rail, and the supply itself |
+
+## Notes
+
+- The two grounds are intentional: **GND** is the signal ground (input and driver pin 3) and **GND2** is the supply return. Do not link them anywhere except through R5 and C8.
+- The driver part number is read from the schematic label. Confirm against the BOM before ordering replacements.
+
 
 ## Differential to Single Ended Board
 
@@ -256,6 +427,70 @@ RPI Dac Power
 
 Capacitor Bank
 
+# Circuit Documentation: Current-Limited Power Switch with Bulk Capacitor Bank
+
+## 1. Overview
+
+This circuit passes a DC supply rail (Vin) through a TI TPS2555-Q1 current-limited power switch (IC1) to an output rail (Vout) that feeds a large capacitor bank. The switch provides inrush and overload protection. A power LED on the input and test points on key nodes are included for bring-up.
+
+The power path is: **J1 → IC1 → Vout → J2, with the capacitor bank hanging off Vout.**
+
+## 2. Connectors
+
+| Ref | Pin | Net | Function |
+|---|---|---|---|
+| J1 | 2 | Vin | Supply input (+) |
+| J1 | 1 | GND | Supply input (–) |
+| J2 | 1 | Vout | Protected output (+) |
+| J2 | 2 | GND | Output return |
+
+## 3. Components
+
+### Power switch (IC1: TPS2555QDRBTQ1)
+
+| Pin | Name | Connection |
+|---|---|---|
+| 1 | GND | GND |
+| 2, 3 | IN_1, IN_2 | Vin |
+| 4 | EN | R2 (10k) to GND |
+| 5 | ILIM | R3 (160k) to GND, TP3 |
+| 6, 7 | OUT_1, OUT_2 | Vout, TP1, J2 pin 1, capacitor bank |
+| 8 | FAULT | Pulled up to Vin through R1 (100k) |
+| 9 (EP) | Thermal pad | GND |
+
+### Supporting parts
+
+| Ref | Value | Purpose |
+|---|---|---|
+| R1 | 100k | Pull-up for the open-drain, active-low FAULT output |
+| R2 | 10k | Resistor on the EN pin (see Design Notes) |
+| R3 | 160k | Sets the current limit |
+| R4 + D1 | 1k + LED | Power-present indicator on Vin |
+| C22 | 47 µF | Input bulk capacitor |
+| C19 | 0.1 µF | Input high-frequency decoupling |
+| TP1 | Test point | Vout |
+| TP2 | Test point | Vin / FAULT pull-up node |
+| TP3 | Test point | ILIM node |
+| PWR_FLAG x2 | n/a | Marks Vin and GND as driven nets for KiCad ERC |
+
+### Output capacitor bank (C1–C21)
+
+Twenty identical capacitors (Würth 875075361005) are arranged in two rows of ten. All positive pins are on Vout and all negative pins are on GND, so they act as one large parallel bulk capacitance. The total capacitance is 20 times the single-part value, and the ripple current rating scales the same way. Check the part's datasheet for its capacitance and voltage rating.
+
+## 4. Operation
+
+1. When Vin is applied, D1 lights and the input capacitors charge.
+2. When EN is high, IC1 turns on and charges the output bank with current-limited soft-start behaviour.
+3. R3 sets the current limit. If the load or bank charging exceeds it, IC1 limits the current and, on a sustained overload, asserts FAULT low (pulled to Vin by R1).
+4. In a hard short or over-temperature condition, the switch limits and then thermally protects itself.
+
+## 5. Design Notes and Things to Verify
+
+- **EN pin.** In the schematic, EN appears connected only to R2, which goes to GND. The TPS255x enable is active-high, so with only a pull-down the switch would stay off. Check whether the EN wire is meant to be tied to Vin. If it is, you probably want R2 as a pull-down with a separate enable source, or a direct tie to Vin.
+- **Current limit.** Calculate the actual limit for R3 = 160k from the datasheet equation and tolerance table, and confirm it suits your load.
+- **Bank charge time and thermals.** Charging a large capacitance through a current-limited switch dissipates heat in IC1. Check that the combined capacitance does not trigger thermal shutdown or repeated FAULT events at start-up.
+- **Voltage ratings.** The TPS255x family is a low-voltage part (about 2.5–5.5 V input). Confirm that Vin and all capacitor ratings fit that range.
+- **FAULT output.** FAULT is pulled up but not routed to any connector or test point. Add one if you want to monitor it.
 <img src="../user-manual-media/media/service-guide/capacitor-bank-photo.png" style="width:6.26806in;height:4.40625in" />
 
 <img src="../user-manual-media/media/service-guide/capacitor-bank-schematic.png" style="width:6.26806in;height:4.40625in" />
