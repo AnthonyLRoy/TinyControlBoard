@@ -1,12 +1,12 @@
 # Mechanical Construction
 
-[Back to the Service Guide](ServiceGuide.md) · [Power supply subsystem](PowerSupplySubsystem.md) · [System wiring and commissioning](SystemWiring.md)
+[Back to the Service Guide](../ServiceGuide.md) · [Power supply subsystem](PowerSupplySubsystem.md) · [System wiring and commissioning](SystemWiring.md)
 
 ## Enclosure Drawings
 
 ### Streamer and DAC Enclosure
 
-<img src="../user-manual-media/media/service-guide/streamer-dac-rear-panel-drawing.png" style="width:6.26806in;height:4.40625in" />
+<img src="../../user-manual-media/media/service-guide/streamer-dac-rear-panel-drawing.png" style="width:6.26806in;height:4.40625in" />
 
 
 
@@ -14,52 +14,52 @@
 
 #### Front Panel
 
-<img src="../user-manual-media/media/service-guide/streamer-dac-front-panel-drawing.png" style="width:6.26806in;height:4.16389in" />
+<img src="../../user-manual-media/media/service-guide/streamer-dac-front-panel-drawing.png" style="width:6.26806in;height:4.16389in" />
 
 #### Side Panels
 
-<img src="../user-manual-media/media/service-guide/streamer-dac-side-panel-drawing.png" style="width:6.26806in;height:4.41667in" />
+<img src="../../user-manual-media/media/service-guide/streamer-dac-side-panel-drawing.png" style="width:6.26806in;height:4.41667in" />
 
 #### Top Panel
 
 Top panel for the streamer and DAC enclosure.
 
-<img src="../user-manual-media/media/service-guide/streamer-dac-top-panel-drawing.png" style="width:6.26806in;height:4.43125in" />
+<img src="../../user-manual-media/media/service-guide/streamer-dac-top-panel-drawing.png" style="width:6.26806in;height:4.43125in" />
 
 
 ### Power Supply Enclosure
 
 
 #### Front Panel
-<img src="../user-manual-media/media/service-guide/Power-supply-panel-front.png" style="width:6.26806in;height:4.43125in" />
+<img src="../../user-manual-media/media/service-guide/Power-supply-panel-front.png" style="width:6.26806in;height:4.43125in" />
 
 #### Rear Panel
-<img src="../user-manual-media/media/service-guide/Power-supply-rear.png" style="width:6.26806in;height:4.43125in" />
+<img src="../../user-manual-media/media/service-guide/Power-supply-rear.png" style="width:6.26806in;height:4.43125in" />
 
 ### Inner Case
 
-<img src="../user-manual-media/media/service-guide/streamer-dac-inner-case-cad.png" style="width:6.26806in;height:4.14375in" />
+<img src="../../user-manual-media/media/service-guide/streamer-dac-inner-case-cad.png" style="width:6.26806in;height:4.14375in" />
 
 #### Front Panel
-<img src="../user-manual-media/media/service-guide/Front-Panel-inner-case.png" style="width:6.26806in;height:4.43125in" />
+<img src="../../user-manual-media/media/service-guide/Front-Panel-inner-case.png" style="width:6.26806in;height:4.43125in" />
 
 #### Rear Panel
-<img src="../user-manual-media/media/service-guide/Back-panel-innerCase.png" style="width:6.26806in;height:4.43125in" />
+<img src="../../user-manual-media/media/service-guide/Back-panel-innerCase.png" style="width:6.26806in;height:4.43125in" />
 
 
 ### Final Assembly
 
-<img src="../user-manual-media/media/service-guide/streamer-dac-final-assembly-cad.png" style="width:6.26806in;height:5.15556in" />
+<img src="../../user-manual-media/media/service-guide/streamer-dac-final-assembly-cad.png" style="width:6.26806in;height:5.15556in" />
 
 ### MonitorPi Pro
 
 #### PCB Stack-up
 
-<img src="../user-manual-media/media/service-guide/streamer-dac-pcb-stackup.png" style="width:6.26806in;height:4.25625in" />
+<img src="../../user-manual-media/media/service-guide/streamer-dac-pcb-stackup.png" style="width:6.26806in;height:4.25625in" />
 
 See the [MonitorPi Pro manual](https://github.com/iancanada/DocumentDownload/blob/master/MonitorPi/MonitorPiPro/MonitorPiProManual.pdf) for component details.
 
-<img src="../user-manual-media/media/service-guide/monitorpi-pro-product-photo.png" style="width:6.26806in;height:3.39167in" />
+<img src="../../user-manual-media/media/service-guide/monitorpi-pro-product-photo.png" style="width:6.26806in;height:3.39167in" />
 
 ## Main Assembly Bill of Materials
 
@@ -210,82 +210,82 @@ The table below gathers the listed enclosure, panel, connector, and hardware ite
 <td style="text-align: center;">2</td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/fifopi-q7-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/fifopi-q7-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/accessories-and-cases/ian-canada-fifopi-q7-synchronous-fifo-reclocker-board-i2s-32bit-768khz-dsd1024-dop256-p-16855.html"><u>IAN CANADA FIFOPI Q7 Synchronous FIFO Reclocker Board I2S 32bit 768kHz DSD1024 DoP256</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/linearpi-dual-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/linearpi-dual-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/linear-regulated-psu/ian-canada-linearpi-dual-ultra-low-noise-linear-power-supply-module-2x-5v-33v-25a-p-14760.html"><u>IAN CANADA LINEARPI DUAL Ultra-Low Noise Linear Power Supply Module 2x +/-5V / +/-3.3V 2.5A</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/stationpi-pro-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/stationpi-pro-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/accessories-and-cases/ian-canada-stationpi-pro-raspberry-pi-and-hat-boards-adapter-station-p-16550.html"><u>IAN CANADA STATIONPI PRO Raspberry Pi and HAT Boards Adapter Station</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/crystek-cchd957-45-1584mhz-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/crystek-cchd957-45-1584mhz-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/composants-electronique-horloges/crystek-cchd-957-ultra-low-phase-noise-clock-451584mhz-33v-25ppm-p-14165.html"><u>CRYSTEK CCHD-957 Ultra Low Phase Noise Clock 45.1584MHz 3.3V 25ppm</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/crystek-cchd957-49-152mhz-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/crystek-cchd957-49-152mhz-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/composants-electronique-horloges/crystek-cchd-957-ultra-low-phase-noise-clock-49152mhz-33v-25ppm-p-14166.html"><u>CRYSTEK CCHD-957 Ultra Low Phase Noise Clock 49.152MHz 3.3V 25ppm</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/cchd957-clock-adapter-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/cchd957-clock-adapter-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/composants-electronique-horloges/ian-canada-cchd957-supports-adaptateurs-pour-horloges-xo-x2-p-13825.html"><u>IAN CANADA CCHD957 Adapter Supports for XO Clocks and SMT Capacitors (x2)</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/linearpi-mkii-solo-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/linearpi-mkii-solo-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/linear-regulated-psu/ian-canada-linearpi-mkii-solo-ultra-low-noise-linear-power-supply-module-5v-33v-12v-25a-p-17611.html"><u>IAN CANADA LINEARPI MKII SOLO Ultra-Low Noise Linear Power Supply Module 5V / 3.3V / 12V 2.5A</u></a></td>
 <td style="text-align: center;"><strong>2</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/accusilicon-as318-45-1584mhz-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/accusilicon-as318-45-1584mhz-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/composants-electronique-horloges/accusilicon-as318-b-451584-ultra-low-jitter-clock-45mhz-p-14033.html"><u>ACCUSILICON AS318-B-451584 Ultra Low Jitter Clock 45MHz</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/accusilicon-as318-49-152mhz-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/accusilicon-as318-49-152mhz-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/composants-electronique-horloges/accusilicon-as318-b-491520-ultra-low-jitter-clock-49mhz-p-14034.html"><u>ACCUSILICON AS318-B-491520 Ultra Low Jitter Clock 49MHz</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/monitorpi-pro-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/monitorpi-pro-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/accessories-and-cases/ian-canada-monitorpi-pro-control-center-and-signal-analyzer-with-display-for-raspberry-pi-p-18285.html"><u>IAN CANADA MONITORPI PRO Control Center and Signal Analyzer with Display for Raspberry Pi</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/receiverpi-pro-ii-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/receiverpi-pro-ii-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/dac-and-interface-modules/ian-canada-receiverpi-pro-ii-interface-spdif-i2s-hdmi-for-raspberry-pi-p-18283.html"><u>IAN CANADA RECEIVERPI PRO II Interface SPDIF I2S HDMI for Raspberry Pi</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/ucconditioner-mkii-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/ucconditioner-mkii-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/power-supply-accessories/ian-canada-ucconditioner-mkii-ultra-capacitor-conditioner-board-33v-p-17924.html"><u>IAN CANADA UCCONDITIONER MKII Ultra Capacitor Conditioner Board 3.3V</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/aluminium-diy-case-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/aluminium-diy-case-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/aluminium-boxes-cases/100-aluminium-diy-box-case-round-corners-319x239x89mm-black-p-11342.html"><u>100% Aluminium DIY Box / Case round corners 320x240x90mm Black</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/raspberry-pi-gpio-extension-kit-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/raspberry-pi-gpio-extension-kit-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/accessories-and-cases/ian-canada-gpio-40pin-extension-kit-for-raspberry-pi-p-16816.html"><u>IAN CANADA GPIO 40PIN Extension Kit for Raspberry Pi</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/ucconditioner-mkii-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/ucconditioner-mkii-product-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/power-supply-accessories/ian-canada-ucconditioner-mkii-ultra-capacitor-conditioner-board-5v-p-17923.html"><u>IAN CANADA UCCONDITIONER MKII Ultra Capacitor Conditioner Board 5V</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td rowspan="3" style="text-align: center;"><img src="../user-manual-media/media/service-guide/aluminium-d-shaft-knob-thumbnail.jpeg" style="width:0.72917in;height:0.72917in" /><img src="../user-manual-media/media/service-guide/m3x5-socket-head-screw-thumbnail.jpeg" style="width:0.72917in;height:0.72917in" /><img src="../user-manual-media/media/service-guide/linearpi-mkii-solo-bom-thumbnail.jpeg" style="width:0.72917in;height:0.72917in" /></td>
+<td rowspan="3" style="text-align: center;"><img src="../../user-manual-media/media/service-guide/aluminium-d-shaft-knob-thumbnail.jpeg" style="width:0.72917in;height:0.72917in" /><img src="../../user-manual-media/media/service-guide/m3x5-socket-head-screw-thumbnail.jpeg" style="width:0.72917in;height:0.72917in" /><img src="../../user-manual-media/media/service-guide/linearpi-mkii-solo-bom-thumbnail.jpeg" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/knobs-6mm/aluminum-button-d-shaft-40mm-o6mm-black-p-15050.html"><u>Aluminum Button D Shaft 40mm Ø6mm Black</u></a></td>
 <td style="text-align: center;"><strong>4</strong></td>
 </tr>
@@ -298,27 +298,27 @@ The table below gathers the listed enclosure, panel, connector, and hardware ite
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/lhy-lt3042-dual-5v-supply-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/lhy-lt3042-dual-5v-supply-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/linear-regulated-psu/lhy-audio-dual-linear-power-supply-module-lt3042-2x5v-15a-p-17276.html"><u>LHY AUDIO Dual Linear Power Supply Module LT3042 2x5V 1.5A</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/micro-usb-bare-wire-power-cable-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/micro-usb-bare-wire-power-cable-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/power-supply-accessories/micro-usb-male-to-to-bare-wire-power-cable-raspberry-pi-24awg-20cm-p-9405.html"><u>Micro USB male-to-bare-wire power cable, Raspberry Pi, 24 AWG, 20 cm</u></a></td>
 <td style="text-align: center;"><strong>2</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/single-ended-to-balanced-converter-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/single-ended-to-balanced-converter-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/selector-sources-module/single-ended-to-balanced-converter-module-xlr-rca-stereo-p-18248.html"><u>Single-Ended to Balanced Converter Module XLR / RCA Stereo</u></a></td>
 <td style="text-align: center;"><strong>1</strong></td>
 </tr>
 <tr>
-<td style="text-align: center;"><img src="../user-manual-media/media/service-guide/toroidal-transformer-cover-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
+<td style="text-align: center;"><img src="../../user-manual-media/media/service-guide/toroidal-transformer-cover-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
 <td><a href="https://www.audiophonics.fr/en/transformers-accessories/toroid-cover-metal-iron-shield-transformer-88x62mm-p-11513.html"><u>Toroid Cover Metal Iron Shield Transformer 88x62mm</u></a></td>
 <td style="text-align: center;"><strong>2</strong></td>
 </tr>
 <tr>
-<td><p><img src="../user-manual-media/media/service-guide/15va-toroidal-transformer-thumbnail.png" style="width:0.72917in;height:0.72917in" /></p>
+<td><p><img src="../../user-manual-media/media/service-guide/15va-toroidal-transformer-thumbnail.png" style="width:0.72917in;height:0.72917in" /></p>
 <table style="width:22%;">
 <colgroup>
 <col style="width: 22%" />

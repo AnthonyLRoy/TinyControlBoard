@@ -1,8 +1,8 @@
 # System Wiring and Commissioning
 
-[Back to the Service Guide](ServiceGuide.md) · [Power supply subsystem](PowerSupplySubsystem.md) · [DAC and audio subsystem](DacSubsystem.md)
+[Back to the Service Guide](../ServiceGuide.md) · [Power supply subsystem](PowerSupplySubsystem.md) · [DAC and audio subsystem](DacSubsystem.md)
 
-The system block diagrams are in the [Service Guide](ServiceGuide.md#system-architecture). Confirm every connection against the current board schematics and applicable component datasheets. The pin and net notes in the board reference include items that still require verification.
+The system block diagrams are in the [Service Guide](../ServiceGuide.md#system-architecture). Confirm every connection against the current board schematics and applicable component datasheets. The pin and net notes in the board reference include items that still require verification.
 
 ## Wiring Conventions
 

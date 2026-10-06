@@ -1,14 +1,14 @@
 # DAC and Audio Subsystem
 
-[Back to the Service Guide](ServiceGuide.md) · [System wiring and commissioning](SystemWiring.md)
+[Back to the Service Guide](../ServiceGuide.md) · [System wiring and commissioning](SystemWiring.md)
 
 This guide groups the existing DAC and analogue-audio material. Verify board revisions, signal polarity, connector pinouts, and component specifications against the current schematics before use.
 
 ## Single-Ended to Balanced Line Driver
 
-<img src="../user-manual-media/media/service-guide/single-ended-to-balanced-output-schematic.png" style="width:6.26806in;height:4.32917in" />
+<img src="../../user-manual-media/media/service-guide/single-ended-to-balanced-output-schematic.png" style="width:6.26806in;height:4.32917in" />
 
-<img src="../user-manual-media/media/service-guide/single-ended-to-balanced-output-board.png" style="width:6.26806in;height:5.43958in" />
+<img src="../../user-manual-media/media/service-guide/single-ended-to-balanced-output-board.png" style="width:6.26806in;height:5.43958in" />
 
 Stereo converter board: unbalanced stereo input in, balanced stereo output out, powered from a dual ±5 V supply.
 
@@ -92,21 +92,21 @@ Each output leg has a **22 Ω series resistor** followed by a **ferrite bead**:
 
 ## Differential-to-Single-Ended Output Board
 
-<img src="../user-manual-media/media/service-guide/differential-to-single-ended-output-schematic.png" style="width:6.26806in;height:4.35694in" />
+<img src="../../user-manual-media/media/service-guide/differential-to-single-ended-output-schematic.png" style="width:6.26806in;height:4.35694in" />
 
-<img src="../user-manual-media/media/service-guide/differential-to-single-ended-output-board.png" style="width:6.26806in;height:5.44444in" />
+<img src="../../user-manual-media/media/service-guide/differential-to-single-ended-output-board.png" style="width:6.26806in;height:5.44444in" />
 
 ## ProtoDAC Board
 
-<img src="../user-manual-media/media/service-guide/protodac-schematic.png" style="width:6.26806in;height:4.31319in" />
+<img src="../../user-manual-media/media/service-guide/protodac-schematic.png" style="width:6.26806in;height:4.31319in" />
 
-<img src="../user-manual-media/media/service-guide/protodac-pcb-render.png" style="width:6.26806in;height:8.13611in" />
+<img src="../../user-manual-media/media/service-guide/protodac-pcb-render.png" style="width:6.26806in;height:8.13611in" />
 
 ## DAC Output Relay Switch
 
-<img src="../user-manual-media/media/service-guide/relay-dac-output-switch-schematic.png" style="width:6.26806in;height:4.29444in" />
+<img src="../../user-manual-media/media/service-guide/relay-dac-output-switch-schematic.png" style="width:6.26806in;height:4.29444in" />
 
-<img src="../user-manual-media/media/service-guide/relay-dac-output-switch-board.png" style="width:6.26806in;height:4.92222in" />
+<img src="../../user-manual-media/media/service-guide/relay-dac-output-switch-board.png" style="width:6.26806in;height:4.92222in" />
 
 ## Input Selector Board
 

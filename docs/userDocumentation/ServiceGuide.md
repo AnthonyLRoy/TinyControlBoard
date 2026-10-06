@@ -29,11 +29,11 @@ This guide is provided for informational and educational purposes. Construction 
 - [Project Overview](#project-overview)
 - [System Architecture](#system-architecture)
 - [Component Overview](#component-overview)
-- [Circuit Board Reference](CircuitBoardReference.md)
-- [DAC and Audio Subsystem](DacSubsystem.md)
-- [Power Supply Subsystem](PowerSupplySubsystem.md)
-- [Mechanical Construction](MechanicalConstruction.md)
-- [System Wiring and Commissioning](SystemWiring.md)
+- [Circuit Board Reference](service-guide/CircuitBoardReference.md)
+- [DAC and Audio Subsystem](service-guide/DacSubsystem.md)
+- [Power Supply Subsystem](service-guide/PowerSupplySubsystem.md)
+- [Mechanical Construction](service-guide/MechanicalConstruction.md)
+- [System Wiring and Commissioning](service-guide/SystemWiring.md)
 - [Parts Lists](#parts-lists)
 - [Revision History](#revision-history)
 
@@ -107,7 +107,7 @@ The front-panel display presents album artwork and playback information. A secon
 - **Streamer:** Raspberry Pi network streamer running moOde Audio.
 - **DACs:** ESS DAC and ProtoDAC implementations provide selectable conversion architectures.
 - **Clocking:** FIFOPi Q7 reclocking stage with local oscillator clocks.
-- **Control:** ESP32-based controller; see the [Tiny Control Board reference](CircuitBoardReference.md#tiny-control-board-for-raspberry-pi-4).
+- **Control:** ESP32-based controller; see the [Tiny Control Board reference](service-guide/CircuitBoardReference.md#tiny-control-board-for-raspberry-pi-4).
 
 ### Display
 
@@ -117,16 +117,16 @@ See the [Waveshare display documentation](https://www.waveshare.com/wiki/9.3inch
 
 ## Focused Guides
 
-- [Circuit Board Reference](CircuitBoardReference.md) — control, interface, and relay board descriptions and service notes.
-- [DAC and Audio Subsystem](DacSubsystem.md) — digital-to-analogue conversion boards, signal selection, and audio output stages.
-- [Power Supply Subsystem](PowerSupplySubsystem.md) — power boards, supply rails, transformers, and power-supply parts.
-- [Mechanical Construction](MechanicalConstruction.md) — enclosure drawings, mechanical parts, and assembly notes.
-- [System Wiring and Commissioning](SystemWiring.md) — inter-board connections, signal routing, system wiring, and commissioning checks.
+- [Circuit Board Reference](service-guide/CircuitBoardReference.md) — control, interface, and relay board descriptions and service notes.
+- [DAC and Audio Subsystem](service-guide/DacSubsystem.md) — digital-to-analogue conversion boards, signal selection, and audio output stages.
+- [Power Supply Subsystem](service-guide/PowerSupplySubsystem.md) — power boards, supply rails, transformers, and power-supply parts.
+- [Mechanical Construction](service-guide/MechanicalConstruction.md) — enclosure drawings, mechanical parts, and assembly notes.
+- [System Wiring and Commissioning](service-guide/SystemWiring.md) — inter-board connections, signal routing, system wiring, and commissioning checks.
 
 ## Parts Lists
 
-- [Main assembly bill of materials](MechanicalConstruction.md#main-assembly-bill-of-materials)
-- [Power supply bill of materials](PowerSupplySubsystem.md#bill-of-materials)
+- [Main assembly bill of materials](service-guide/MechanicalConstruction.md#main-assembly-bill-of-materials)
+- [Power supply bill of materials](service-guide/PowerSupplySubsystem.md#bill-of-materials)
 
 ## Revision History
 

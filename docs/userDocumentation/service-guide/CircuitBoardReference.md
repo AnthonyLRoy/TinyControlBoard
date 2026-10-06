@@ -1,14 +1,14 @@
 # Circuit Board Reference
 
-[Back to the Service Guide](ServiceGuide.md) · [DAC and audio subsystem](DacSubsystem.md) · [Power supply subsystem](PowerSupplySubsystem.md) · [System wiring and commissioning](SystemWiring.md)
+[Back to the Service Guide](../ServiceGuide.md) · [DAC and audio subsystem](DacSubsystem.md) · [Power supply subsystem](PowerSupplySubsystem.md) · [System wiring and commissioning](SystemWiring.md)
 
 This reference collects the existing board descriptions, connector information, test points, and troubleshooting notes. Treat details marked uncertain as unverified; check the current KiCad schematics and component datasheets before wiring or servicing a board.
 
 ## Tiny Control Board for Raspberry Pi 4
 
-<img src="../user-manual-media/media/service-guide/control-board-schematic.png" style="width:4.43092in;height:3.08093in" />
+<img src="../../user-manual-media/media/service-guide/control-board-schematic.png" style="width:4.43092in;height:3.08093in" />
 
-<img src="../user-manual-media/media/service-guide/control-board-pcb-layout.png" style="width:4.17919in;height:3.71803in" />
+<img src="../../user-manual-media/media/service-guide/control-board-pcb-layout.png" style="width:4.17919in;height:3.71803in" />
 
 Control board for the RPi 4 Streamer DAC (`tinyControlBoard.kicad_sch`, KiCad 8.0.0, 2024-08-08).
 
@@ -185,9 +185,9 @@ All other header pins (SPI, UART0, ID EEPROM, GPIO4, 5, 6, 7, 8, 16, 17, 20, 22,
 
 ## Power Relay Board
 
-<img src="../user-manual-media/media/service-guide/power-relay-board-schematic.png" style="width:6.26806in;height:4.86319in" />
+<img src="../../user-manual-media/media/service-guide/power-relay-board-schematic.png" style="width:6.26806in;height:4.86319in" />
 
-<img src="../user-manual-media/media/service-guide/power-relay-board-layout.png" style="width:6.26806in;height:3.94653in" />
+<img src="../../user-manual-media/media/service-guide/power-relay-board-layout.png" style="width:6.26806in;height:3.94653in" />
 
 ## 6-Channel Relay Board
 
