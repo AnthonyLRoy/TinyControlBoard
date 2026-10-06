@@ -40,4 +40,4 @@ Firmware update procedure (a nice bridge between old-manual aesthetics and the f
 Appendices
 Connector pinout tables
 Relay/switch truth tables if the control logic is non-trivial
-Revision history / changelog
+Revision history / changelog ldld

@@ -1,219 +1,147 @@
-# Riverbank Streamer Dac: DIY Streamer & DAC Build Guide
+# Riverbank Streamer DAC
 
-**Service Manual**
+## Service and Build Guide
 
-*Author: Anthony Roy*
+**Author:** Anthony Roy
 
 <figure>
 <img src="../user-manual-media/media/service-guide/streamer-dac-front-render.png" style="width:6.26772in;height:4.5748in" />
-<figcaption><p>Streamer Dac</p></figcaption>
+<figcaption><p>Riverbank Streamer DAC</p></figcaption>
 </figure>
 
-**⚠️ CRITICAL SAFETY WARNINGS & LIABILITY DISCLAIMER**
+## Safety Information
 
-- **LETHAL AC MAINS VOLTAGE:** This project uses a **toroidal transformer** connected directly to 110V/230V AC mains electricity. Exposed AC terminals can cause **instant death or severe injury via electrocution**.
+> **Warning — hazardous mains voltage:** This project uses a toroidal transformer connected to 110 V or 230 V AC mains. Contact with exposed mains connections can cause fatal electric shock or severe injury.
 
-- **INSULATION REQUIREMENT:** All mains voltage connections (IEC inlet, fuse holder, power switch, and transformer primary wires) **must** be insulated with heat-shrink tubing. Never work inside the chassis while the AC power cord is plugged into the wall.
+- Insulate all mains connections—including the IEC inlet, fuse holder, power switch, and transformer primary wiring—with suitable heat-shrink tubing or equivalent insulation.
+- Disconnect the power cord from the wall outlet before opening the chassis or working on the equipment.
+- Install a slow-blow fuse of the correct rating in the live AC line. Select the fuse for the transformer and the local mains supply; transformer inrush current can be high.
+- Observe DC polarity. Reversed connections can damage microcontrollers, DACs, and other components. Use ESD precautions when handling exposed semiconductor devices.
 
-- **FIRE SAFETY & FUSING:** A slow-blow fuse matching your transformer's primary current rating **must** be installed on the live AC line. Toroidal transformers exhibit massive inrush currents upon startup; unfused builds are a severe fire hazard.
+This guide is provided for informational and educational purposes. Construction and use are undertaken at the builder's own risk. Mains-powered equipment should be assembled, inspected, and tested only by people qualified to work safely with hazardous voltages.
 
-- **POLARITY & ESD HAZARD:** Reversing DC power polarity (+ and -) will instantly destroy your microcontrollers or DAC chips. Use an anti-static wrist strap when handling exposed silicon.
-
-- **DISCLAIMER:** This documentation is for educational purposes. You assume all physical and financial risks associated with the assembly and operation of this high-voltage device.
-
-References: [\[1\]](https://electro-dan.co.uk/electronics/wiringtrans.aspx) [\[2\]](https://soundtraxx.com/content/Reference/Manuals/Tsunami2/Installation-Guide.pdf)
+**Reference:** [Transformer wiring](https://electro-dan.co.uk/electronics/wiringtrans.aspx)
 
 ------------------------------------------------------------------------
 
 ## Table of Contents
 
-- [Project Overview & Architecture](#project-overview--architecture)
-- [System Overview](#system-overview)
-- [Component Descriptions](#component-descriptions-)
-- [Physical Construction & Wiring](#physical-construction--wiring)
+- [Project Overview](#project-overview)
+- [System Architecture](#system-architecture)
+- [Component Overview](#component-overview)
+- [Board Documentation and Service Guides](#board-documentation-and-service-guides)
+  - [Tiny Control Board](#tiny-control-board-for-raspberry-pi-4)
+  - [Single-Ended to Balanced Line Driver](#single-ended-to-balanced-line-driver)
+  - [Raspberry Pi Interface Board](#raspberry-pi-interface-board)
+  - [Input Selector Board](#input-selector-board)
+  - [6-Channel Relay Board](#6-channel-relay-board)
+  - [Current-Limited Power Switch and Capacitor Bank](#current-limited-power-switch-and-capacitor-bank)
+- [Mechanical Construction and Wiring](#mechanical-construction-and-wiring)
 - [Power Supplies](#power-supplies)
-- [Digital Audio Section](#digital-audio-section)
-- [Assembly Procedure (TODO)](#assembly-procedure-todo)
-- [Appendices (TODO)](#appendices-todo)
+- [Digital Audio and Control](#digital-audio-and-control)
+- [Analogue Audio](#analogue-audio)
+- [Assembly and Commissioning](#assembly-and-commissioning)
+- [Parts List](#parts-list)
+- [Revision History](#revision-history)
+- [Appendices](#appendices)
 
 ------------------------------------------------------------------------
 
-# Project Overview & Architecture
+## Project Overview
 
-## Introduction
+### Introduction
 
-Welcome to the build manual for this high-performance, multi-source digital audio streamer and DAC. Designed for audiophiles who enjoy both music reproduction and DIY construction, this project serves as a versatile digital audio hub capable of delivering high-resolution, low-noise audio from a variety of modern digital sources.
+The Riverbank Streamer DAC is a multi-source digital audio streamer and DAC designed as both a high-quality listening system and a substantial DIY electronics project. It combines network playback, digital input selection, reclocking, DAC conversion, and an ESP32-based control interface in a custom enclosure.
 
-#### **Overview** 
+#### System Overview
 
-At its core, the system combines a Raspberry Pi network streamer running moOde Audio with a dedicated ESP32-based control system. The Raspberry Pi provides a flexible software platform for network audio playback, while the ESP32 manages user interaction, input selection, display control, relay switching, system monitoring, and communication between the various hardware subsystems.
+The system combines a Raspberry Pi network streamer running moOde Audio with a dedicated ESP32 control system. The Raspberry Pi handles network playback; the ESP32 manages user input, source selection, display control, relay switching, system monitoring, and communication with other subsystems.
 
-#### **Dac components**
+#### Digital Audio Components
 
-The digital audio path is built around several well-regarded audio modules designed by Ian Canada. Audio data from the Raspberry Pi is first processed by the FIFOPi Q7 reclocking stage, which isolates and reclocks the I2S audio stream using high-performance local oscillators to minimise timing errors and jitter. The reclocked audio is then routed to either an ESS-based DAC or a ProtoDAC, allowing the listener to select between two distinct DAC architectures.
+The digital audio path uses several audio modules, including Ian Canada's FIFOPi Q7 reclocking stage. It isolates and reclocks the Raspberry Pi's I2S stream using local oscillators. The reclocked signal can then be routed to either an ESS-based DAC or a ProtoDAC.
 
-The primary DAC stage is based on Ian Canada's ESS DAC platform, which provides high-resolution digital-to-analogue conversion with excellent measured performance and low distortion. Supporting modules such as the StationPi Pro provide source selection, signal routing, and system integration between the various digital audio components.
+The ESS platform provides the primary digital-to-analogue conversion stage. Supporting modules, including the StationPi Pro, provide source selection, signal routing, and integration between audio components.
 
-#### **Power Supply**
+#### Power Supplies
 
-Particular attention has been paid to power supply design. Multiple independent linear power supplies are used throughout the system to isolate digital, analogue, control, and clock domains. Critical audio circuits are powered through Ian Canada's ultra-capacitor-based UcPure modules, which provide exceptionally low-noise local energy storage and power conditioning. This approach helps minimise power supply noise and interference while providing stable power delivery to sensitive audio circuitry.
+Multiple independent linear power supplies serve the digital, analogue, control, and clock domains. UcPure ultra-capacitor modules provide local energy storage and power conditioning for selected audio circuits.
 
-The completed unit supports multiple digital audio sources, including:
+The system is designed to support these digital audio sources:
 
-Raspberry Pi network streaming via I2S
+- Raspberry Pi network streaming via I2S
+- Optical (TOSLINK) S/PDIF input
+- Coaxial S/PDIF input
+- USB input
 
-Optical (TOSLINK) SPDIF input
+#### Displays and Controls
 
-Coaxial SPDIF input
+The front-panel display presents album artwork and playback information. A secondary OLED display provides input, status, and configuration feedback. Illuminated controls provide direct access to commonly used functions.
 
-USB input
+#### Design Objectives
 
-**Displays**
+- High-quality digital audio reproduction using low-jitter clocking and signal isolation
+- Multiple digital audio sources and selectable DAC architectures
+- Independent linear power regulation for system power domains
+- Noise control through grounding, shielding, and careful power distribution
+- A serviceable enclosure with a modern display and hardware controls
 
-The system incorporates a large front-panel display for album artwork and playback information, together with a secondary OLED display used for input selection, system status, and configuration feedback. A custom front panel with illuminated controls provides direct hardware access to the most commonly used functions.
+#### Software and Build Requirements
 
-#### **Target Performance**
-
-- High-fidelity, ultra-low-noise audio playback
-
-- Low-jitter digital audio architecture
-
-- Multiple independently regulated power domains
-
-- Flexible source selection and control
-
-- High-resolution network audio streaming
-
-#### **Software Stack**
-
-- Raspberry Pi running moOde Audio ™
-
+- Raspberry Pi running moOde Audio
 - Custom ESP32 firmware written in C++
+- UART communication between the Raspberry Pi and ESP32
+- Advanced skill level: the build involves mains wiring, metal chassis work, electronics assembly, Linux command-line use, firmware deployment, and system troubleshooting
+- Estimated build time: approximately 20–30 hours, depending on enclosure work and testing
 
-- UART-based communication between the Raspberry Pi and ESP32 control system
+## System Architecture
 
-#### **Skill Level Required**
-
-Advanced This project involves:
-
-- Working with mains AC voltages
-
-- Metal chassis fabrication and modification
-
-- Low-voltage electronic assembly
-
-- Linux command-line operation
-
-- Firmware compilation and deployment
-
-- System integration and troubleshooting
-
-#### **Estimated Build Time**
-
-Approximately 20–30 hours, typically spread over one to two weeks depending on chassis fabrication requirements and testing procedures.
-
-#### **Design Goals**
-
-- Achieve high-quality digital audio reproduction through low-jitter clocking and signal isolation
-
-- Support multiple digital audio sources within a single chassis
-
-- Provide the ability to switch between two different DAC architectures
-
-- Employ extensive linear power supply regulation throughout the system
-
-- Minimise noise through careful grounding, shielding, and power distribution
-
-- Provide a modern user interface with artwork display and hardware controls
-
-- Create a serviceable and maintainable design suitable for long-term DIY ownership
-
-- Document the complete construction process for replication by other builders
-
-#### **Key Features**
-
-- Raspberry Pi network streamer running moOde Audio
-
-- ESP32-based control and monitoring system
-
-- Ian Canada FIFOPi Q7 ultra-low-jitter I2S reclocking stage
-
-- Ian Canada ESS DAC implementation
-
-- ProtoDAC implementation for alternative sonic presentation
-
-- StationPi Pro digital audio interface and routing platform
-
-- UcPure ultra-capacitor power conditioning modules
-
-- Multiple independent linear power supplies
-
-- Optical (TOSLINK) SPDIF input
-
-- Coaxial SPDIF input
-
-- I2S audio transport architecture
-
-- Large front-panel display for album artwork and playback information
-
-- Secondary OLED status and input display
-
-- Relay-based source and DAC selection
-
-- Fully enclosed custom chassis construction
-
-System Overview
+### Control and Communication Architecture
 
 <img src="../user-manual-media/media/service-guide/control-board-architecture-overview.svg" alt="Architecture overview showing the ESP32-S3 firmware, NimBLE BLE GATT server, Android BluetoothGatt client, Raspberry Pi UART services, and their connections" style="width:6.26806in;height:auto" />
 
-## 
-
-#### Overall System Chart
+### Audio System Overview
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-system-overview.svg" alt="System overview showing control and Bluetooth connections, digital audio sources, reclocking, ESS and ProtoDAC paths, and RCA and XLR outputs" style="width:6.26806in;height:auto" />
 
-Overall, Power Connection Diagram
+### Power Connection Diagram
 
 <img src="../user-manual-media/media/service-guide/power-connection-diagram.png" style="width:6.26806in;height:3.26012in" />
 
-## Component Descriptions 
+## Component Overview
 
-## Power Supply
+### Power Supply Modules
 
-LinearPIPro x 2
+Two LinearPi Pro modules are used.
 
-For details on this product go ian Canada’s documentation on this product [here](https://github.com/iancanada/DocumentDownload/blob/master/LinearPi/LinearPiMkIIDual.jpg)
+See Ian Canada's [LinearPi documentation](https://github.com/iancanada/DocumentDownload/blob/master/LinearPi/LinearPiMkIIDual.jpg).
 
 <img src="../user-manual-media/media/service-guide/linearpi-pro-dual-power-supply.png" style="width:6.26806in;height:4.01875in" />
 
-LHY 5v
+#### UcPure Modules
 
-LED Board
-
-UCPure To see the details of this product go to ian Canada’s site [here](https://github.com/iancanada/DocumentDownload/blob/master/UltraCapacitorPowerSupply/UcPure/OLD/UcPureMkIIManual.pdf)
+See Ian Canada's [UcPure manual](https://github.com/iancanada/DocumentDownload/blob/master/UltraCapacitorPowerSupply/UcPure/OLD/UcPureMkIIManual.pdf).
 
 <img src="../user-manual-media/media/service-guide/ucpure-power-supply-board.png" style="width:6.26806in;height:4.22222in" />
 
-Transformers
+Other power components include an LHY 5 V supply, an LED board, and transformers. Refer to the [power supply documentation](#power-supplies) for the current parts list and distribution details.
 
-## Streamer board 
+### Other Assemblies
 
-## ESS DAC board 
+- **Streamer:** Raspberry Pi network streamer running moOde Audio.
+- **DACs:** ESS DAC and ProtoDAC implementations provide selectable conversion architectures.
+- **Clocking:** FIFOPi Q7 reclocking stage with local oscillator clocks.
+- **Control:** ESP32-based controller; see the [Tiny Control Board service guide](#tiny-control-board-for-raspberry-pi-4).
 
-## Clock board 
+### Display
 
-## Power supply boards 
-
-## Display 
-
-To see detals of this product go to the waveshare website [here](https://www.waveshare.com/wiki/9.3inch_1600x600_LCD#Working_with_Raspberry_Pi)
+See the [Waveshare display documentation](https://www.waveshare.com/wiki/9.3inch_1600x600_LCD#Working_with_Raspberry_Pi).
 
 <img src="../user-manual-media/media/service-guide/waveshare-9-3-inch-display.png" style="width:4.97986in;height:1.97944in" />
 
-## Control board
+## Board Documentation and Service Guides
 
-# Tiny Control Board for RPi 4 (Streamer DAC): Circuit Documentation
-# Tiny Control Board: Service Guide
+### Tiny Control Board for Raspberry Pi 4
 
 <img src="../user-manual-media/media/service-guide/control-board-schematic.png" style="width:4.43092in;height:3.08093in" />
 
@@ -221,7 +149,7 @@ To see detals of this product go to the waveshare website [here](https://www.wav
 
 Control board for the RPi 4 Streamer DAC (`tinyControlBoard.kicad_sch`, KiCad 8.0.0, 2024-08-08).
 
-## What it does
+#### What It Does
 
 An ESP32-S3 handles the housekeeping for the Raspberry Pi:
 
@@ -230,7 +158,7 @@ An ESP32-S3 handles the housekeeping for the Raspberry Pi:
 - Switches power to the Pi, DAC, screen and other boards through relay control lines.
 - Talks to the Pi over serial, with two handshake lines.
 
-## Block overview
+#### Block Overview
 
 | Block | Part | Function |
 |---|---|---|
@@ -242,7 +170,7 @@ An ESP32-S3 handles the housekeeping for the Raspberry Pi:
 | 3.3 V regulator | IC4 LM3940-3.3 | +5V to +3V3 |
 | USB-C | J1 (ESD: U1 USBLC6-2SC6) | Programming, testing, backup 5 V |
 
-## Power
+#### Power
 
 - **Source select (S1):** position 1 = USB 5 V, position 3 = external supply (J8). Output is the +5V rail.
 - **+3V3** comes from IC4 and powers the MCU, debouncers, expander, LED driver and level shifter (A side).
@@ -250,7 +178,7 @@ An ESP32-S3 handles the housekeeping for the Raspberry Pi:
 - **Indicators:** D2 green = 3V3 present, D3 red = 5 V present.
 - **Status LED:** D1 green blinks when the ESP32 software is running.
 
-## Connectors
+#### Connectors
 
 | Ref | Use |
 |---|---|
@@ -259,7 +187,7 @@ An ESP32-S3 handles the housekeeping for the Raspberry Pi:
 | J6 (2x20) | Pi serial (Tx/Rx), debug serial, handshake lines, relay/power outputs, 5 V and GND |
 | J8 | External supply input |
 
-### J6 signals
+##### J6 Signals
 
 | Pin | Signal |
 |---|---|
@@ -278,17 +206,17 @@ An ESP32-S3 handles the housekeeping for the Raspberry Pi:
 | 35 | `relay_pwr_2` out |
 | 1, 2, 39, 40 | +5V |
 
-## Controls and adjustments
+#### Controls and Adjustments
 
 - **S2 RESET:** resets the ESP32.
 - **S3 BOOT:** hold during reset or power-up to enter the ESP32 download mode.
 - **VR1:** trimmer that sets the brightness of all button LEDs.
 
-## Test points
+#### Test Points
 
 TP1-TP10 cover the LED-driver serial lines, expander I2C and reset, debug UART and interrupt lines. See the board silkscreen for each label.
 
-## Quick troubleshooting
+#### Quick Troubleshooting
 
 | Symptom | Check |
 |---|---|
@@ -302,28 +230,24 @@ TP1-TP10 cover the LED-driver serial lines, expander I2C and reset, debug UART a
 | Relay/power outputs inactive | Level shifter supplies (3V3 and 5V), then the signal at J6 |
 | Pi and ESP32 not communicating | Serial wiring on J6 pins 3/4, then `msg_ir_wait` and `rpi_data_ready` |
 
-## Notes
+#### Notes
 
 
-
-
-## Single to differential Output stage 
+### Single-Ended to Balanced Line Driver
 
 <img src="../user-manual-media/media/service-guide/single-ended-to-balanced-output-schematic.png" style="width:6.26806in;height:4.32917in" />
 
 <img src="../user-manual-media/media/service-guide/single-ended-to-balanced-output-board.png" style="width:6.26806in;height:5.43958in" />
 
-# Single-Ended to Balanced Line Driver: Service Guide
-
 Stereo converter board: unbalanced stereo input in, balanced stereo output out, powered from a dual ±5 V supply.
 
-## What it does
+#### What It Does
 
 Each channel passes through one THAT 1646 balanced line driver (IC1 left, IC2 right; the schematic label reads `1646S08-U`). The driver converts the single-ended input into a differential output, which leaves through a 22 Ω resistor and a ferrite bead on each leg.
 
 **Signal path:** J1 (input) → input network → IC1 / IC2 → 22 Ω + ferrite bead per leg → J2 (left out) / J3 (right out)
 
-## Connectors
+#### Connectors
 
 All connectors are 3-pin (1725669).
 
@@ -334,7 +258,7 @@ All connectors are 3-pin (1725669).
 | J3 | Right output | Sout R + | GND | Sout R − |
 | J4 | Power input | VCC (+5 V) | GND2 (0 V) | VEE (−5 V) |
 
-## Power supply
+#### Power Supply
 
 - J4 takes a **dual supply: +5 V (VCC) and −5 V (VEE), with 0 V on GND2**.
 - Each rail has 2 x 47 µF bulk capacitors: C7 and C1 on VCC, C2 and C5 on VEE.
@@ -342,11 +266,11 @@ All connectors are 3-pin (1725669).
 - **GND2** is the supply ground. It joins the signal **GND** only through **R5 (10 Ω) in parallel with C8 (100 nF)**.
 - Each driver has 100 nF decoupling on its supply pins: C12 and C15 on IC1, C14 and C16 on IC2, all returned to GND2.
 
-## Input stage
+#### Input Stage
 
 For each channel, a **47 kΩ resistor in parallel with 220 pF** goes from the input to GND (R3 and C3 for left, R4 and C4 for right). This sets the input impedance and filters RF. The signal then goes directly to pin 4 (IN) of the driver.
 
-## Driver stage (IC1 left, IC2 right)
+#### Driver Stage (IC1 Left, IC2 Right)
 
 | Pin | Name | Connection |
 |---|---|---|
@@ -359,7 +283,7 @@ For each channel, a **47 kΩ resistor in parallel with 220 pF** goes from the in
 | 7 | SNS+ | Via 10 µF to `out +` (C11 left, C13 right) |
 | 8 | OUT+ | `out +` net |
 
-## Output stage
+#### Output Stage
 
 Each output leg has a **22 Ω series resistor** followed by a **ferrite bead**:
 
@@ -368,7 +292,7 @@ Each output leg has a **22 Ω series resistor** followed by a **ferrite bead**:
 | Left | R6, 22R1 | FB1 (−), FB2 (+) |
 | Right | 22R2, 22R3 | FB3 (−), FB4 (+) |
 
-## Quick checks
+#### Quick Checks
 
 | Check | Expected |
 |---|---|
@@ -378,7 +302,7 @@ Each output leg has a **22 Ω series resistor** followed by a **ferrite bead**:
 | IC pin 5 to GND2 | −5 V |
 | D1 and D2 | Both lit |
 
-## Quick troubleshooting
+#### Quick Troubleshooting
 
 | Symptom | Check |
 |---|---|
@@ -389,113 +313,503 @@ Each output leg has a **22 Ω series resistor** followed by a **ferrite bead**:
 | Distortion or low level | Output loading, supply voltage under load, sense capacitors (C9, C11 left; C10, C13 right) |
 | One rail missing | Supply wiring, the bulk capacitors on that rail, and the supply itself |
 
-## Notes
+#### Notes
 
 - The two grounds are intentional: **GND** is the signal ground (input and driver pin 3) and **GND2** is the supply return. Do not link them anywhere except through R5 and C8.
 - The driver part number is read from the schematic label. Confirm against the BOM before ordering replacements.
 
 
-## Differential to Single Ended Board
+### Differential-to-Single-Ended Output Board
 
 <img src="../user-manual-media/media/service-guide/differential-to-single-ended-output-schematic.png" style="width:6.26806in;height:4.35694in" />
 
 <img src="../user-manual-media/media/service-guide/differential-to-single-ended-output-board.png" style="width:6.26806in;height:5.44444in" />
 
-Proto Dac Board
+### ProtoDAC Board
 
 <img src="../user-manual-media/media/service-guide/protodac-schematic.png" style="width:6.26806in;height:4.31319in" />
 
 <img src="../user-manual-media/media/service-guide/protodac-pcb-render.png" style="width:6.26806in;height:8.13611in" />
 
-Relay Dac output switch
+### Raspberry Pi Interface Board
+
+A board that mates with a Raspberry Pi 40-pin header. It provides a filtered 5 V supply for the Pi and brings the I2S and I2C signals out to five signal connectors through 22 Ω series resistors. A few other GPIO lines are named for use elsewhere in the system.
+
+#### What It Does
+
+- **5 V in:** J7 supplies +5 V to the Pi through header pins 2 and 4, with bulk and decoupling capacitors on the rail.
+- **Digital audio out:** I2S data, word clock and bit clock go to three signal connectors through 22 Ω resistors.
+- **I2C out:** SDA and SCL go to two more signal connectors through 22 Ω resistors.
+- **System lines:** a handshake pair, a serial pair and a PWM monitor line are named on the header (see below).
+
+#### Connectors
+
+| Ref | Part | Use |
+|---|---|---|
+| J3 | 70246-4001 (2 x 20) | Raspberry Pi 40-pin header |
+| J7 | 1x03 socket | 5 V power input: pins 1 and 2 = +5 V, pin 3 = GND |
+| J6 | 1725672 (4-pin) | Ground terminal, all four pins tied to GND |
+| J4, J5, J8, J13 | Single pin | +5 V take-off pins |
+| J14 | Single pin | Connected to GND2, labelled "5v pin" (see Notes) |
+| 5 signal connectors | SIG, GND_1, GND_2 | One per signal below (refs J2, J9, J10, J11 and one more; ref positions not clear on the screenshot) |
+| J1 | 2 x 20 "GPIO" header | No connections drawn on this sheet (see Notes) |
+
+#### Signal Outputs
+
+Each signal passes through a 22 Ω series resistor to pin 1 (SIG) of its connector. Pins 2 and 3 are GND.
+
+| Signal | Pi GPIO | Header pin | Resistor |
+|---|---|---|---|
+| I2S data out | GPIO21 / I2S DOUT | 40 | R1 |
+| I2S word clock | GPIO19 / I2S LRCK | 35 | R2 |
+| I2S bit clock | GPIO18 / I2S BCL | 12 | R3 |
+| I2C clock | GPIO3 / SCL1 | 5 | R4 |
+| I2C data | GPIO2 / SDA1 | 3 | R5 |
+
+#### Other Named Lines on J3
+
+These lines are labelled on the header with no connection shown on this sheet.
+
+| Signal | Pi GPIO | Header pin |
+|---|---|---|
+| ESP DRY | GPIO23 | 16 |
+| RPI DRY | GPIO24 | 18 |
+| Serial TX | GPIO12 | 32 |
+| Serial RX | GPIO13 | 33 |
+| Mon PWM | GPIO26 | 37 |
+
+All other header pins (SPI, UART0, ID EEPROM, GPIO4, 5, 6, 7, 8, 16, 17, 20, 22, 25, 27 and others) are marked no-connect.
+
+#### Power
+
+| Item | Detail |
+|---|---|
+| Input | J7 pins 1 and 2 = +5 V, pin 3 = GND |
+| To Pi | +5 V on J3 pins 2 and 4 |
+| 3.3 V | J3 pins 1 and 17 (from the Pi; only a power flag on this sheet) |
+| GND | J3 pins 6, 9, 14, 20, 25, 30, 34, 39 |
+| Bulk capacitance | C2, C3, C5, C6 (470 µF each, 1880 µF total) |
+| Other capacitors | C4 (4.7 µF), C7 (0.1 µF) |
+| Indicator | D1 with R6 (1 kΩ), lit when +5 V is present |
+
+#### Quick Checks
+
+| Check | Expected |
+|---|---|
+| J7 pin 1 or 2 to pin 3 | +5 V |
+| D1 | Lit |
+| J3 pin 2 or 4 to GND | +5 V |
+| J3 pin 1 or 17 to GND | +3.3 V (Pi running) |
+| Signal pin on a connector | 3.3 V logic from the Pi when active |
+
+#### Quick Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| D1 off | Supply on J7, polarity, then R6 and D1 |
+| Pi does not power up | +5 V at J3 pins 2 and 4, supply current capability, connector seating on the Pi |
+| No I2S or I2C signal at a connector | Pi software configuration, then the 22 Ω resistor, then the connector |
+| I2S output distorted or missing | Check all three I2S signals (clock, word clock, data) are reaching their connectors |
+| Rail droops or Pi resets | Supply wiring and capacity, bulk capacitors C2, C3, C5, C6 |
+| Noisy signals | Ground connections at pins 2 and 3 of each signal connector, GND link to J6 |
+
+#### Notes
+
+- **Powering the Pi from the 40-pin header** bypasses the Pi's own input protection. Use a supply of the correct voltage and rating, and do not connect USB power at the same time as J7.
+- **J14** is labelled "5v pin" but is connected to GND2, which has no other connection on this sheet. Check whether it is a mislabelled ground pin.
+- **J1** shows no wiring on this sheet. It may be a footprint-only or unfinished part; confirm in the KiCad project.
+- **I2C lines** have only 22 Ω series resistors on this sheet and no pull-ups. The Pi has on-board pull-ups on GPIO2 and GPIO3, but check the downstream device if I2C is unreliable.
+- Pin and net details were read from a screenshot. Confirm against the KiCad schematic before using them for repairs.
+
+
+### DAC Output Relay Switch
 
 <img src="../user-manual-media/media/service-guide/relay-dac-output-switch-schematic.png" style="width:6.26806in;height:4.29444in" />
 
 <img src="../user-manual-media/media/service-guide/relay-dac-output-switch-board.png" style="width:6.26806in;height:4.92222in" />
 
-Power Relay Board
+### Input Selector Board
+
+A two-input analogue source selector. Three relays switch between **Input 1** and **Input 2** for stereo balanced and stereo single-ended signals. All relays switch together from one control input.
+
+#### What It Does
+
+- **K1** switches the left balanced signal, **K2** the right balanced signal, and **K3** the stereo single-ended signal.
+- Each relay is a two-pole changeover. With the relay **off**, **Input 1** is routed to the output. With the relay **on**, **Input 2** is routed to the output.
+- A ULN2003LV driver (IC1) energises all three relay coils together when the control input is driven.
+
+**Signal path:** input connectors → K1 / K2 / K3 contacts → output connectors J17, J18, J19
+
+#### Connectors
+
+All connectors are 3-pin (1725669) unless noted.
+
+##### Signal Inputs
+
+| Ref | Signal | Pin 1 | Pin 2 | Pin 3 |
+|---|---|---|---|---|
+| J15 | Input 1 balanced left | − | sig ground | + |
+| J16 | Input 1 balanced right | − | sig ground | + |
+| J13 | Input 2 balanced left | − | sig ground | + |
+| J14 | Input 2 balanced right | − | sig ground | + |
+| J10 | Input 1 single-ended | L | sig ground | R |
+| J12 | Input 2 single-ended | L | sig ground | R |
+
+##### Signal Outputs
+
+| Ref | Signal | Pin 1 | Pin 2 | Pin 3 |
+|---|---|---|---|---|
+| J18 | Balanced left out | + | sig ground | − |
+| J17 | Balanced right out | + | sig ground | − |
+| J19 | Single-ended out | R | sig ground | L |
+
+**The output pin order is reversed compared with the inputs.** On the balanced outputs, pin 1 is + and pin 3 is −. On the single-ended output, pin 1 is R and pin 3 is L.
+
+##### Power and Control
+
+| Ref | Use | Pins |
+|---|---|---|
+| J3 | 5 V DC power | 1 = GND, 2 and 3 = +5 V |
+| J1 | Switch control input | 1 = GND, 2 and 3 = control (tied together) |
+| J2 | Earth | Single socket to chassis earth |
+
+#### Relays
+
+| Ref | Part | Switches | Off (Input 1) | On (Input 2) |
+|---|---|---|---|---|
+| K1 | EC2-5SNU | Balanced left | Pins 3 and 10 | Pins 5 and 8 |
+| K2 | EC2-5SNU | Balanced right | Pins 3 and 10 | Pins 5 and 8 |
+| K3 | EC2-5SNU | Single-ended L and R | Pins 3 and 10 | Pins 5 and 8 |
+
+- Common (output) contacts are pin 4 (− or L) and pin 9 (+ or R).
+- The coil is between +5 V (pin 1) and `switch power` (pin 12), which IC1 pulls to ground.
+
+#### Control Circuit
+
+- **J1:** driving the control input high turns all three relays on.
+- **IC1 (ULN2003LVDR):** IN1 to IN5 are tied together, and OUT1 to OUT5 are tied together, which gives one high-current sink for all three coils. IN6, IN7, OUT6 and OUT7 are unused. COM goes to +5 V.
+- **D2 and R2 (1 kΩ):** indicator LED, lit when the control input is high.
+- A schematic note says all lines are switched together unless testing.
+
+#### Power
+
+- **J3** supplies +5 V. **D1 with R1 (1 kΩ)** is the power indicator.
+- **C1 (100 nF)** decouples the 5 V rail.
+- **R3 (10 Ω)** links the signal ground (`sig ground`) to the power ground (`GND2`). They are not connected directly.
+
+#### Quick Checks
+
+| Check | Expected |
+|---|---|
+| J3 pin 2 or 3 to pin 1 | +5 V |
+| D1 | Lit when powered |
+| J1 control low | D2 off, relays off, Input 1 selected |
+| J1 control high | D2 lit, relays click, Input 2 selected |
+| Relay coil voltage (pin 1 to pin 12) | About 5 V when control is high, 0 V when low |
+
+#### Quick Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| No power LED | J3 supply and polarity, then R1 and D1 |
+| No relay operates | +5 V on the relay rail, IC1 GND (pin 8) and COM (pin 9), control signal at J1 |
+| D2 lit but relays do not switch | IC1 outputs, `switch power` net, relay coils |
+| D2 never lights | Control signal on J1, R2 and D2 |
+| No signal at output | Selected input connected, relay contacts, output wiring |
+| Left or right channel reversed or inverted | Output pin order is reversed (see connectors) |
+| Hum or noise | R3 ground link, input grounds, earth connection on J2 |
+
+#### Notes
+
+- Relay symbols show S+ and R+ coil markings. The part (EC2-5SNU) should be a single-coil non-latching relay; confirm with the datasheet if a relay does not return to Input 1 when control is released.
+- The control input has no stated voltage range in the schematic. Check the ULN2003LV datasheet for the input threshold before connecting a controller.
+- Pin and net details were read from a screenshot. Confirm against the KiCad schematic before using them for repairs.
+
+
+### Power Relay Board
 
 <img src="../user-manual-media/media/service-guide/power-relay-board-schematic.png" style="width:6.26806in;height:4.86319in" />
 
 <img src="../user-manual-media/media/service-guide/power-relay-board-layout.png" style="width:6.26806in;height:3.94653in" />
 
-RPI Dac Power
+### 6-Channel Relay Board
+
+A six-relay switching board. Logic-level control inputs drive a ULN2003LV transistor array, which energises six 5 V relays. Each relay brings out one switched contact pair on a screw terminal.
+
+#### What It Does
+
+**Signal path:** J2 (control inputs) → IC1 ULN2003LVDR → relay coils K1–K6 → contact pairs on J4 and J5
+
+An input going high turns on the matching driver output, which pulls the relay coil to GND and closes the relay.
+
+#### Connectors
+
+| Ref | Use | Pins |
+|---|---|---|
+| J1 | Power input | 1 = GND, 2 and 3 = supply (+5 V, see Notes) |
+| J2 | Control inputs | 1 to 6 = Relay 1 In to Relay 6 In |
+| J4 | Relay contacts, K1 to K3 | 1-2 = K1, 3-4 = K2, 5-6 = K3 |
+| J5 | Relay contacts, K4 to K6 | 1-2 = K4, 3-4 = K5, 5-6 = K6 |
+
+All connectors are screw terminals.
+
+#### Input-to-Relay Mapping
+
+**The numbering is reversed between the inputs and the relays.**
+
+| J2 input | IC1 input | IC1 output | Relay | Contacts at |
+|---|---|---|---|---|
+| Relay 6 In (pin 6) | IN1 | OUT1 | K1 | J4 pins 1-2 |
+| Relay 5 In (pin 5) | IN2 | OUT2 | K2 | J4 pins 3-4 |
+| Relay 4 In (pin 4) | IN3 | OUT3 | K3 | J4 pins 5-6 |
+| Relay 3 In (pin 3) | IN4 | OUT4 | K4 | J5 pins 1-2 |
+| Relay 2 In (pin 2) | IN5 | OUT5 | K5 | J5 pins 3-4 |
+| Relay 1 In (pin 1) | IN6 | OUT6 | K6 | J5 pins 5-6 |
+
+IN7 and OUT7 are not used.
+
+#### Components
+
+| Ref | Part | Function |
+|---|---|---|
+| IC1 | ULN2003LVDR | 7-channel low-voltage Darlington driver; 6 channels used |
+| K1–K6 | EE2-5NU | 5 V coil signal relays |
+| C1 | 100 nF | Decoupling on the supply rail |
+| R1 + D1 | 300 Ω + LED | Power-on indicator |
+
+##### Relay Wiring
+
+- **Coil:** pin 1 goes to the supply rail and pin 8 to the driver output.
+- **Contacts:** only pins 5 and 6 of each relay are brought out, so each relay gives one switched contact pair. Pin 7 and pins 2 to 4 are unused.
+- IC1 pin 9 (COM) is tied to the supply rail, which connects the driver's internal flyback diodes to the coil supply.
+
+#### Quick Checks
+
+| Check | Expected |
+|---|---|
+| J1 pin 2 or 3 to pin 1 | Supply voltage (+5 V) |
+| D1 | Lit when powered |
+| Relay coil (pin 1 to pin 8) with input high | About supply voltage, relay clicks |
+| Relay coil with input low | 0 V across the coil |
+
+#### Quick Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| D1 off | Supply on J1, polarity, then R1 and D1 |
+| No relay operates | Supply on the relay rail, IC1 pin 8 (GND) and pin 9 (COM) |
+| One relay does not operate | Input signal on J2, then IC1 input and output, then the coil |
+| Wrong relay switches | Input numbering is reversed (see mapping table) |
+| Relay clicks but no contact change | Wiring on J4 or J5, then the relay contacts |
+| Relay stuck on | Input pin held high, shorted IC1 output, or damaged relay |
+| Intermittent resets or noise | C1 and the supply rail |
+
+#### Notes
+
+- The supply voltage is not labelled in the schematic. The EE2-5NU coils are 5 V, so it should be +5 V. Confirm before connecting.
+- The reversed numbering between J2 and the relays is easy to miss. Check which relay you are testing.
+- Whether the contact on pin 5 is normally open or normally closed depends on the relay datasheet. Confirm before wiring the load.
+- Pin and net details were read from a screenshot. Confirm against the KiCad schematic before using them for repairs.
+
+### Raspberry Pi DAC Power Board
 
 <img src="../user-manual-media/media/service-guide/raspberry-pi-dac-power-schematic.png" style="width:6.26806in;height:4.29792in" />
 
 <img src="../user-manual-media/media/service-guide/raspberry-pi-dac-power-board.png" style="width:5.25434in;height:4.58546in" />
 
-Capacitor Bank
+# Raspberry Pi Interface Board (5 V Supply and I2S / I2C Outputs): Service Guide
 
-# Circuit Documentation: Current-Limited Power Switch with Bulk Capacitor Bank
+A board that mates with a Raspberry Pi 40-pin header. It provides a filtered 5 V supply for the Pi and brings the I2S and I2C signals out to five signal connectors through 22 Ω series resistors. A few other GPIO lines are named for use elsewhere in the system.
 
-## 1. Overview
+## What it does
 
-This circuit passes a DC supply rail (Vin) through a TI TPS2555-Q1 current-limited power switch (IC1) to an output rail (Vout) that feeds a large capacitor bank. The switch provides inrush and overload protection. A power LED on the input and test points on key nodes are included for bring-up.
+- **5 V in:** J7 supplies +5 V to the Pi through header pins 2 and 4, with bulk and decoupling capacitors on the rail.
+- **Digital audio out:** I2S data, word clock and bit clock go to three signal connectors through 22 Ω resistors.
+- **I2C out:** SDA and SCL go to two more signal connectors through 22 Ω resistors.
+- **System lines:** a handshake pair, a serial pair and a PWM monitor line are named on the header (see below).
 
-The power path is: **J1 → IC1 → Vout → J2, with the capacitor bank hanging off Vout.**
+## Connectors
 
-## 2. Connectors
+| Ref | Part | Use |
+|---|---|---|
+| J3 | 70246-4001 (2 x 20) | Raspberry Pi 40-pin header |
+| J7 | 1x03 socket | 5 V power input: pins 1 and 2 = +5 V, pin 3 = GND |
+| J6 | 1725672 (4-pin) | Ground terminal, all four pins tied to GND |
+| J4, J5, J8, J13 | Single pin | +5 V take-off pins |
+| J14 | Single pin | Connected to GND2, labelled "5v pin" (see Notes) |
+| 5 signal connectors | SIG, GND_1, GND_2 | One per signal below (refs J2, J9, J10, J11 and one more; ref positions not clear on the screenshot) |
+| J1 | 2 x 20 "GPIO" header | No connections drawn on this sheet (see Notes) |
 
-| Ref | Pin | Net | Function |
+## Signal outputs
+
+Each signal passes through a 22 Ω series resistor to pin 1 (SIG) of its connector. Pins 2 and 3 are GND.
+
+| Signal | Pi GPIO | Header pin | Resistor |
 |---|---|---|---|
-| J1 | 2 | Vin | Supply input (+) |
-| J1 | 1 | GND | Supply input (–) |
-| J2 | 1 | Vout | Protected output (+) |
-| J2 | 2 | GND | Output return |
+| I2S data out | GPIO21 / I2S DOUT | 40 | R1 |
+| I2S word clock | GPIO19 / I2S LRCK | 35 | R2 |
+| I2S bit clock | GPIO18 / I2S BCL | 12 | R3 |
+| I2C clock | GPIO3 / SCL1 | 5 | R4 |
+| I2C data | GPIO2 / SDA1 | 3 | R5 |
 
-## 3. Components
+## Other named lines on J3
 
-### Power switch (IC1: TPS2555QDRBTQ1)
+These lines are labelled on the header with no connection shown on this sheet.
+
+| Signal | Pi GPIO | Header pin |
+|---|---|---|
+| ESP DRY | GPIO23 | 16 |
+| RPI DRY | GPIO24 | 18 |
+| Serial TX | GPIO12 | 32 |
+| Serial RX | GPIO13 | 33 |
+| Mon PWM | GPIO26 | 37 |
+
+All other header pins (SPI, UART0, ID EEPROM, GPIO4, 5, 6, 7, 8, 16, 17, 20, 22, 25, 27 and others) are marked no-connect.
+
+## Power
+
+| Item | Detail |
+|---|---|
+| Input | J7 pins 1 and 2 = +5 V, pin 3 = GND |
+| To Pi | +5 V on J3 pins 2 and 4 |
+| 3.3 V | J3 pins 1 and 17 (from the Pi; only a power flag on this sheet) |
+| GND | J3 pins 6, 9, 14, 20, 25, 30, 34, 39 |
+| Bulk capacitance | C2, C3, C5, C6 (470 µF each, 1880 µF total) |
+| Other capacitors | C4 (4.7 µF), C7 (0.1 µF) |
+| Indicator | D1 with R6 (1 kΩ), lit when +5 V is present |
+
+## Quick checks
+
+| Check | Expected |
+|---|---|
+| J7 pin 1 or 2 to pin 3 | +5 V |
+| D1 | Lit |
+| J3 pin 2 or 4 to GND | +5 V |
+| J3 pin 1 or 17 to GND | +3.3 V (Pi running) |
+| Signal pin on a connector | 3.3 V logic from the Pi when active |
+
+## Quick troubleshooting
+
+| Symptom | Check |
+|---|---|
+| D1 off | Supply on J7, polarity, then R6 and D1 |
+| Pi does not power up | +5 V at J3 pins 2 and 4, supply current capability, connector seating on the Pi |
+| No I2S or I2C signal at a connector | Pi software configuration, then the 22 Ω resistor, then the connector |
+| I2S output distorted or missing | Check all three I2S signals (clock, word clock, data) are reaching their connectors |
+| Rail droops or Pi resets | Supply wiring and capacity, bulk capacitors C2, C3, C5, C6 |
+| Noisy signals | Ground connections at pins 2 and 3 of each signal connector, GND link to J6 |
+
+## Notes
+
+- **Powering the Pi from the 40-pin header** bypasses the Pi's own input protection. Use a supply of the correct voltage and rating, and do not connect USB power at the same time as J7.
+- **J14** is labelled "5v pin" but is connected to GND2, which has no other connection on this sheet. Check whether it is a mislabelled ground pin.
+- **J1** shows no wiring on this sheet. It may be a footprint-only or unfinished part; confirm in the KiCad project.
+- **I2C lines** have only 22 Ω series resistors on this sheet and no pull-ups. The Pi has on-board pull-ups on GPIO2 and GPIO3, but check the downstream device if I2C is unreliable.
+- Pin and net details were read from a screenshot. Confirm against the KiCad schematic before using them for repairs.
+
+### Current-Limited Power Switch and Capacitor Bank
+
+#### Circuit Schematic and Board
+
+
+<img src="../user-manual-media/media/service-guide/capacitor-bank-photo.png" style="width:6.26806in;height:4.40625in" />
+
+<img src="../user-manual-media/media/service-guide/capacitor-bank-schematic.png" style="width:6.26806in;height:4.40625in" />
+
+A DC supply passes through a TPS2556-Q1 current-limited power switch into a large capacitor bank and an output connector. The switch limits inrush and overload current.
+
+#### What It Does
+
+- **IC1 (TPS2556QDRBTQ1)** is an adjustable current-limit high-side switch. It is always enabled and limits output current to a level set by R3.
+- Twenty parallel capacitors on the output (C1 to C18, C20, C21) form a bulk store.
+- A fault flag (`FAULT`) goes low when the switch is in overcurrent or thermal shutdown.
+
+**Power path:** J1 (Vin) → IC1 → Vout → J2, with the capacitor bank on Vout
+
+#### Connectors
+
+| Ref | Pin | Net |
+|---|---|---|
+| J1 | 2 | Vin (supply +) |
+| J1 | 1 | GND |
+| J2 | 1 | Vout (protected +) |
+| J2 | 2 | GND |
+
+#### Components
+
+| Ref | Value | Function |
+|---|---|---|
+| IC1 | TPS2556QDRBTQ1 | Current-limited power switch |
+| R1 | 100k | Pull-up on `FAULT` (open-drain, active low) |
+| R2 | 10k | Pull-down on EN to GND; keeps the switch enabled |
+| R3 | 160k | ILIM resistor, sets the current limit |
+| R4 + D1 | 1k + LED | Power-present indicator on Vin |
+| C22 | 47 µF | Input bulk capacitor |
+| C19 | 0.1 µF | Input decoupling |
+| C1 to C18, C20, C21 | 875075361005 (x20) | Output bulk capacitors, all in parallel |
+| TP1 | Test point | Vout |
+| TP2 | Test point | Vin |
+| TP3 | Test point | ILIM node |
+
+##### IC1 Pin Connections
 
 | Pin | Name | Connection |
 |---|---|---|
 | 1 | GND | GND |
 | 2, 3 | IN_1, IN_2 | Vin |
-| 4 | EN | R2 (10k) to GND |
-| 5 | ILIM | R3 (160k) to GND, TP3 |
-| 6, 7 | OUT_1, OUT_2 | Vout, TP1, J2 pin 1, capacitor bank |
-| 8 | FAULT | Pulled up to Vin through R1 (100k) |
+| 4 | EN | GND through R2 |
+| 5 | ILIM | R3 to GND, TP3 |
+| 6, 7 | OUT_1, OUT_2 | Vout |
+| 8 | FAULT | Pulled to Vin by R1 |
 | 9 (EP) | Thermal pad | GND |
 
-### Supporting parts
+#### Operation
 
-| Ref | Value | Purpose |
-|---|---|---|
-| R1 | 100k | Pull-up for the open-drain, active-low FAULT output |
-| R2 | 10k | Resistor on the EN pin (see Design Notes) |
-| R3 | 160k | Sets the current limit |
-| R4 + D1 | 1k + LED | Power-present indicator on Vin |
-| C22 | 47 µF | Input bulk capacitor |
-| C19 | 0.1 µF | Input high-frequency decoupling |
-| TP1 | Test point | Vout |
-| TP2 | Test point | Vin / FAULT pull-up node |
-| TP3 | Test point | ILIM node |
-| PWR_FLAG x2 | n/a | Marks Vin and GND as driven nets for KiCad ERC |
+1. With Vin applied, D1 lights.
+2. EN is held low, so IC1 turns on and charges the output bank.
+3. If the load or bank charge current reaches the limit set by R3, IC1 holds the current at that limit instead of passing more.
+4. In a sustained overload or over-temperature condition, `FAULT` goes low and the switch protects itself.
 
-### Output capacitor bank (C1–C21)
+#### Quick Checks
 
-Twenty identical capacitors (Würth 875075361005) are arranged in two rows of ten. All positive pins are on Vout and all negative pins are on GND, so they act as one large parallel bulk capacitance. The total capacitance is 20 times the single-part value, and the ripple current rating scales the same way. Check the part's datasheet for its capacitance and voltage rating.
+| Check | Expected |
+|---|---|
+| J1 pin 2 to pin 1 | Supply voltage, within 2.5 V to 6.5 V |
+| D1 | Lit |
+| TP2 | Same as supply voltage |
+| TP1 (Vout) | Close to Vin once the bank has charged |
+| IC1 pin 8 (`FAULT`) | High (about Vin) in normal operation |
+| IC1 pin 4 (EN) | Low (0 V) |
 
-## 4. Operation
+#### Quick Troubleshooting
 
-1. When Vin is applied, D1 lights and the input capacitors charge.
-2. When EN is high, IC1 turns on and charges the output bank with current-limited soft-start behaviour.
-3. R3 sets the current limit. If the load or bank charging exceeds it, IC1 limits the current and, on a sustained overload, asserts FAULT low (pulled to Vin by R1).
-4. In a hard short or over-temperature condition, the switch limits and then thermally protects itself.
+| Symptom | Check |
+|---|---|
+| D1 off | Supply on J1, polarity, then R4 and D1 |
+| No Vout | Vin at IC1 pins 2 and 3, EN at 0 V, `FAULT` state, then IC1 |
+| `FAULT` low | Overcurrent or over-temperature; check for a short or an overloaded output, then remove the load |
+| Vout rises slowly or cycles on and off | Bank charging at the current limit; IC1 may be heating and restarting. Check for shorts, then check that the load is not drawing current during start-up |
+| Vout low under load | Load current is above the limit set by R3 |
+| IC1 very hot | Output short, load above the limit, or a large bank charging at the limit |
+| Limit looks wrong | R3 value and its connection to ILIM (TP3), then the datasheet table |
 
-## 5. Design Notes and Things to Verify
+#### Notes
 
-- **EN pin.** In the schematic, EN appears connected only to R2, which goes to GND. The TPS255x enable is active-high, so with only a pull-down the switch would stay off. Check whether the EN wire is meant to be tied to Vin. If it is, you probably want R2 as a pull-down with a separate enable source, or a direct tie to Vin.
-- **Current limit.** Calculate the actual limit for R3 = 160k from the datasheet equation and tolerance table, and confirm it suits your load.
-- **Bank charge time and thermals.** Charging a large capacitance through a current-limited switch dissipates heat in IC1. Check that the combined capacitance does not trigger thermal shutdown or repeated FAULT events at start-up.
-- **Voltage ratings.** The TPS255x family is a low-voltage part (about 2.5–5.5 V input). Confirm that Vin and all capacitor ratings fit that range.
-- **FAULT output.** FAULT is pulled up but not routed to any connector or test point. Add one if you want to monitor it.
-<img src="../user-manual-media/media/service-guide/capacitor-bank-photo.png" style="width:6.26806in;height:4.40625in" />
+- **Current limit:** R3 = 160k. For reference, the datasheet lists 61.9k as about 1.8 A typical, so 160k should be roughly 0.7 A. This is an estimate; confirm with the datasheet equation and tolerance table.
+- **EN polarity:** the TPS2556 enable is active low, so pulling EN to GND through R2 leaves the switch on permanently. Do not change this to a pull-up.
+- **Input range:** 2.5 V to 6.5 V. Check that Vin and every output capacitor rating fit this range.
+- **Bank capacitance:** the total is 20 times the single-part value (see the BOM). Charge time is roughly total capacitance x Vin / current limit.
+- **FAULT** is not routed to a connector or test point. Probe IC1 pin 8 or the right-hand end of R1.
+- Pin and net details were read from a screenshot. Confirm against the KiCad schematic before using them for repairs.
 
-<img src="../user-manual-media/media/service-guide/capacitor-bank-schematic.png" style="width:6.26806in;height:4.40625in" />
 
-Streamer Dac Case Build
+
+
+## Mechanical Construction and Wiring
+
+### Enclosure Drawings
+
+#### Streamer and DAC Enclosure
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-rear-panel-drawing.png" style="width:6.26806in;height:4.40625in" />
 
@@ -503,55 +817,56 @@ Streamer Dac Case Build
 
 
 
-
-FRONT Panel
+##### Front Panel
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-front-panel-drawing.png" style="width:6.26806in;height:4.16389in" />
 
-Side Panels
+##### Side Panels
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-side-panel-drawing.png" style="width:6.26806in;height:4.41667in" />
 
-Streamer Top
+##### Top Panel
 
-Top Panel for streamer and Dac
+Top panel for the streamer and DAC enclosure.
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-top-panel-drawing.png" style="width:6.26806in;height:4.43125in" />
 
 
-Power Supply
+#### Power Supply Enclosure
 
 
-Front Panel
+##### Front Panel
 <img src="../user-manual-media/media/service-guide/Power-supply-panel-front.png" style="width:6.26806in;height:4.43125in" />
 
-Rear Panel
+##### Rear Panel
 <img src="../user-manual-media/media/service-guide/Power-supply-rear.png" style="width:6.26806in;height:4.43125in" />
-Inner Case
+
+#### Inner Case
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-inner-case-cad.png" style="width:6.26806in;height:4.14375in" />
 
-**Inner case**
-Front Panel
+##### Front Panel
 <img src="../user-manual-media/media/service-guide/Front-Panel-inner-case.png" style="width:6.26806in;height:4.43125in" />
 
-Rear Panel
+##### Rear Panel
 <img src="../user-manual-media/media/service-guide/Back-panel-innerCase.png" style="width:6.26806in;height:4.43125in" />
 
 
-**Final Assembly**
+#### Final Assembly
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-final-assembly-cad.png" style="width:6.26806in;height:5.15556in" />
 
-**MonitorPi Pro**
+#### MonitorPi Pro
 
-**PCB Stackup order**
+##### PCB Stack-up
 
 <img src="../user-manual-media/media/service-guide/streamer-dac-pcb-stackup.png" style="width:6.26806in;height:4.25625in" />
 
-**To see the details of this component pop off to ian canada’s web site [here](https://github.com/iancanada/DocumentDownload/blob/master/MonitorPi/MonitorPiPro/MonitorPiProManual.pdf)**
+See the [MonitorPi Pro manual](https://github.com/iancanada/DocumentDownload/blob/master/MonitorPi/MonitorPiPro/MonitorPiProManual.pdf) for component details.
 
 <img src="../user-manual-media/media/service-guide/monitorpi-pro-product-photo.png" style="width:6.26806in;height:3.39167in" />
+
+### Main Assembly Bill of Materials
 
 <table style="width:93%;">
 <colgroup>
@@ -561,32 +876,12 @@ Rear Panel
 </colgroup>
 <thead>
 <tr>
-<th><strong><u>DESCRIPTION</u></strong></th>
-<th><strong><u>PART NUMBER</u></strong></th>
-<th style="text-align: center;"><strong><u>ITEMS</u></strong></th>
+<th>Description</th>
+<th>Part number</th>
+<th style="text-align: center;">Quantity</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td> </td>
-<td> </td>
-<td style="text-align: center;"> </td>
-</tr>
-<tr>
-<td> </td>
-<td> </td>
-<td style="text-align: center;"> </td>
-</tr>
-<tr>
-<td> </td>
-<td> </td>
-<td style="text-align: center;"> </td>
-</tr>
-<tr>
-<td> </td>
-<td> </td>
-<td style="text-align: center;"> </td>
-</tr>
 <tr>
 <td>Super Capacitors 25f</td>
 <td><a href="https://www.mouser.co.uk/ProductDetail/723-BCAP0325P270S19"><u>723-BCAP0325P270S19</u></a></td>
@@ -608,7 +903,7 @@ Rear Panel
 <td style="text-align: center;">1</td>
 </tr>
 <tr>
-<td>schaffner Filter</td>
+<td>Schaffner filter</td>
 <td>FN9290-4-06</td>
 <td style="text-align: center;">1</td>
 </tr>
@@ -638,12 +933,12 @@ Rear Panel
 <td style="text-align: center;">2</td>
 </tr>
 <tr>
-<td>Etherenet Panel</td>
+<td>Ethernet panel</td>
 <td>ENCOS24D2S65R</td>
 <td style="text-align: center;">1</td>
 </tr>
 <tr>
-<td>Optical Inpt</td>
+<td>Optical input</td>
 <td>CP30217MB</td>
 <td style="text-align: center;">1</td>
 </tr>
@@ -812,7 +1107,7 @@ Rear Panel
 </tr>
 <tr>
 <td style="text-align: center;"><img src="../user-manual-media/media/service-guide/micro-usb-bare-wire-power-cable-thumbnail.png" style="width:0.72917in;height:0.72917in" /></td>
-<td><a href="https://www.audiophonics.fr/en/power-supply-accessories/micro-usb-male-to-to-bare-wire-power-cable-raspberry-pi-24awg-20cm-p-9405.html"><u>Micro USB male to to bare wire Power Cable Raspberry Pi 24AWG 20cm</u></a></td>
+<td><a href="https://www.audiophonics.fr/en/power-supply-accessories/micro-usb-male-to-to-bare-wire-power-cable-raspberry-pi-24awg-20cm-p-9405.html"><u>Micro USB male-to-bare-wire power cable, Raspberry Pi, 24 AWG, 20 cm</u></a></td>
 <td style="text-align: center;"><strong>2</strong></td>
 </tr>
 <tr>
@@ -845,31 +1140,29 @@ Rear Panel
 </tbody>
 </table>
 
-## Physical Construction & Wiring
+### Wiring Guide
 
-*The sections below are still being completed with photos, diagrams, and measured values. Items marked (TODO) are outstanding.*
+*Wiring documentation is still in progress. Items marked “To do” need diagrams, photographs, or measured values before the build procedure is complete.*
 
-### Chassis Layout (TODO)
+#### Chassis Layout — To Do
 
 *Photo of the complete internal layout.*
 
-#### Board Placement (TODO)
+##### Board Placement — To Do
 
 *Photo for each board location.*
 
-#### Front Panel Assembly (TODO)
+##### Front Panel Assembly — To Do
 
 *Buttons, LEDs, display.*
 
-#### Rear Panel Assembly (TODO)
+##### Rear Panel Assembly — To Do
 
 *Connectors, switches, fuses.*
 
-#### Transformer Placement (TODO)
+##### Transformer Placement — To Do
 
 *Photos and dimensions.*
-
-### Wiring Guide
 
 #### Wiring Conventions
 
@@ -882,23 +1175,25 @@ Wire colours, cable types, shielding, and connector types used throughout the bu
 | I2S Data  | Blue   |
 | I2S Clock | Yellow |
 
-#### Interconnect Diagram (TODO)
+#### Interconnect Diagram — To Do
 
 *Full system wiring diagram.*
 
-#### Power Wiring (TODO)
+#### Power Wiring — To Do
 
 *Detailed diagrams.*
 
-#### Signal Wiring (TODO)
+#### Signal Wiring — To Do
 
 *Detailed diagrams.*
 
-#### Grounding Scheme (TODO)
+#### Grounding Scheme — To Do
 
-*Very important for DAC builders — show chassis earth, signal ground, power ground, and shield connections.*
+*Document chassis earth, signal ground, power ground, and cable-shield connections.*
 
 ## Power Supplies
+
+*Supply currents and distribution details are still to be confirmed; replace placeholder values with measured or verified specifications before construction.*
 
 ### Supply Overview
 
@@ -1255,89 +1550,93 @@ Wire colours, cable types, shielding, and connector types used throughout the bu
 </tbody>
 </table>
 
-### Power Distribution (TODO)
+### Power Distribution — To Do
 
 *Diagram showing every rail.*
 
-### Transformer Connections (TODO)
+### Transformer Connections — To Do
 
 *Photos plus wiring diagrams.*
 
-## Digital Audio Section
+## Digital Audio and Control
 
-### Streamer
+*Signal routing and control-connection details are still being documented.*
 
-### I2S Routing
+### Streamer — To Do
 
-### Clock Distribution
+### I2S Routing — To Do
 
-### Control Interface
+### Clock Distribution — To Do
 
-#### Component Connections (TODO)
+### Control Interface — To Do
+
+#### Component Connections — To Do
 
 *Document Raspberry Pi connections, ESP32 connections, UART links, I2S routing, and clock routing.*
 
-##### Raspberry Pi Connections
+##### Raspberry Pi Connections — To Do
 
-##### ESP32 Connections
+##### ESP32 Connections — To Do
 
-##### UART Links
+##### UART Links — To Do
 
-##### I2S Routing
+##### I2S Routing — To Do
 
-##### Clock Routing
+##### Clock Routing — To Do
 
-### Analogue Audio Section
+## Analogue Audio
 
-#### DAC Stage
+*Analogue signal-flow documentation is still in progress.*
 
-#### Output Stage
+### DAC Stage — To Do
 
-#### Balanced Outputs
+### Output Stage — To Do
 
-#### Single-Ended Outputs
+### Balanced Outputs — To Do
 
-*(TODO: explain signal flow.)*
+### Single-Ended Outputs — To Do
 
-## Assembly Procedure (TODO)
+*To do: document the analogue signal flow.*
 
-*Step-by-step build order.*
+## Assembly and Commissioning
 
-### Chassis Preparation
+*The step-by-step build procedure is still in progress.*
 
-### Mounting Boards
+### Chassis Preparation — To Do
 
-### Installing Transformers
+### Mounting Boards — To Do
 
-### Power Wiring
+### Installing Transformers — To Do
 
-### Signal Wiring
+### Power Wiring — To Do
 
-### Final Inspection
+### Signal Wiring — To Do
+
+### Final Inspection — To Do
 
 *Lots of photos here.*
 
 ### Testing and Commissioning
 
-#### Pre-Power Checks (TODO)
+#### Pre-Power Checks — To Do
 
 *Resistance checks.*
 
-#### First Power-Up (TODO)
+#### First Power-Up — To Do
 
 *Expected voltages.*
 
-#### Functional Testing (TODO)
+#### Functional Testing — To Do
 
 *Expected LED states.*
 
-#### Audio Testing (TODO)
+#### Audio Testing — To Do
 
 *Signal path verification.*
 
 ### Troubleshooting
 
-*Very useful for builders.*
+Use these topics as a starting point when the system does not behave as expected:
 
 - No Power
 - Display Not Working
@@ -1347,32 +1646,27 @@ Wire colours, cable types, shielding, and connector types used throughout the bu
 - Relay Problems
 - Clock Problems
 
-*(TODO: include photos of error indicators if you have them.)*
+*To do: add photographs of error indicators where available.*
 
-### Parts List (BOM)
+## Parts List
 
-#### Purchased Assemblies
+The current parts lists are grouped with their related documentation:
 
-#### Custom PCBs
+- [Main assembly bill of materials](#main-assembly-bill-of-materials)
+- [Power supply bill of materials](#bill-of-materials)
 
-#### Connectors
-
-#### Hardware
-
-#### Revision History
+## Revision History
 
 | Revision | Date | Changes |
 |----------|------|---------|
-| 1.0 | xx/xx/xxxx | Initial Release |
+| 1.0 | TBD | Initial release |
 
-## Appendices (TODO)
+## Appendices
+
+*Reference material to be added as the documentation is completed.*
 
 - Wiring Diagram
 - Connector Pinouts
 - Voltage Reference Table
 - Board-to-Board Connection Tables
 - Software/Firmware Versions
-
----
-
-> **Author's note:** priority areas for future documentation effort are System Architecture (block diagrams), Mechanical Construction (photos), the Wiring Guide (board-to-board connections), and Testing & Commissioning (expected voltages and LED indications) — these are the sections future builders will reference most.
