@@ -2,7 +2,7 @@
 
 [Back to the Service Guide](../ServiceGuide.md) · [Power supply subsystem](PowerSupplySubsystem.md) · [DAC and audio subsystem](DacSubsystem.md)
 
-The system block diagrams are in the [Service Guide](../ServiceGuide.md#system-architecture). Confirm every connection against the current board schematics and applicable component datasheets. The pin and net notes in the board reference include items that still require verification.
+The system-level control and audio diagrams are in [01 — System Architecture](../../01-system-architecture.md#3-system-context-and-scope). Confirm every physical connection against the current board schematics and applicable component datasheets. The pin and net notes in the board reference include items that still require verification.
 
 ## Wiring Conventions
 

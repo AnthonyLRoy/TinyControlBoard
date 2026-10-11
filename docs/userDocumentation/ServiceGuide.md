@@ -41,44 +41,34 @@ Use the focused guides for board-level information, construction, wiring, and su
 
 ## Project Overview
 
-### Introduction
+The Riverbank Streamer DAC combines a Raspberry Pi running moOde Audio, the TinyControlBoard
+controller, digital audio modules, and analogue output stages in a custom enclosure. For
+the canonical system boundaries, control flow, and architecture diagrams, see
+[01 — System Architecture](../01-system-architecture.md).
 
-The Riverbank Streamer DAC is a multi-source digital audio streamer and DAC designed as both a high-quality listening system and a substantial DIY electronics project. It combines network playback, digital input selection, reclocking, DAC conversion, and an ESP32-based control interface in a custom enclosure.
+This build guide focuses on construction and service. The audio assembly includes a
+FIFOPi Q7 reclocking stage, selectable ESS DAC and ProtoDAC paths, and independent linear
+supplies for selected digital, analogue, control, and clock domains. UcPure
+ultra-capacitor modules provide local energy storage and conditioning in selected circuits.
 
-#### System Overview
-
-The system combines a Raspberry Pi network streamer running moOde Audio with a dedicated ESP32 control system. The Raspberry Pi handles network playback; the ESP32 manages user input, source selection, display control, relay switching, system monitoring, and communication with other subsystems.
-
-#### Digital Audio Components
-
-The digital audio path uses several audio modules, including Ian Canada's FIFOPi Q7 reclocking stage. It isolates and reclocks the Raspberry Pi's I2S stream using local oscillators. The reclocked signal can then be routed to either an ESS-based DAC or a ProtoDAC.
-
-The ESS platform provides the primary digital-to-analogue conversion stage. Supporting modules, including the StationPi Pro, provide source selection, signal routing, and integration between audio components.
-
-#### Power Supplies
-
-Multiple independent linear power supplies serve the digital, analogue, control, and clock domains. UcPure ultra-capacitor modules provide local energy storage and power conditioning for selected audio circuits.
-
-The system is designed to support these digital audio sources:
+The documented digital audio sources are:
 
 - Raspberry Pi network streaming via I2S
 - Optical (TOSLINK) S/PDIF input
 - Coaxial S/PDIF input
 - USB input
 
-#### Displays and Controls
+The audio source and output topology is shown in the architecture document. For board
+details, consult the focused [DAC and audio subsystem guide](service-guide/DacSubsystem.md).
 
-The front-panel display presents album artwork and playback information. A secondary OLED display provides input, status, and configuration feedback. Illuminated controls provide direct access to commonly used functions.
+### Displays and Controls
 
-#### Design Objectives
+The front-panel display presents artwork and playback information. A secondary OLED
+provides input, status, and configuration feedback, and illuminated controls provide
+direct access to common functions. The software components and their responsibilities are
+described in the architecture and developer guides; this guide covers the physical build.
 
-- High-quality digital audio reproduction using low-jitter clocking and signal isolation
-- Multiple digital audio sources and selectable DAC architectures
-- Independent linear power regulation for system power domains
-- Noise control through grounding, shielding, and careful power distribution
-- A serviceable enclosure with a modern display and hardware controls
-
-#### Software and Build Requirements
+### Build Requirements
 
 - Raspberry Pi running moOde Audio
 - Custom ESP32 firmware written in C++
@@ -88,26 +78,16 @@ The front-panel display presents album artwork and playback information. A secon
 
 ## System Architecture
 
-### Control and Communication Architecture
-
-<img src="../user-manual-media/media/service-guide/control-board-architecture-overview.svg" alt="Architecture overview showing the ESP32-S3 firmware, NimBLE BLE GATT server, Android BluetoothGatt client, Raspberry Pi UART services, and their connections" style="width:6.26806in;height:auto" />
-
-### Audio System Overview
-
-<img src="../user-manual-media/media/service-guide/streamer-dac-system-overview.svg" alt="System overview showing control and Bluetooth connections, digital audio sources, reclocking, ESS and ProtoDAC paths, and RCA and XLR outputs" style="width:6.26806in;height:auto" />
+The control/communication and audio-system diagrams are maintained in
+[01 — System Architecture](../01-system-architecture.md#3-system-context-and-scope) to
+avoid divergent copies. Use the architecture document for system-level views and the
+focused subsystem guides below for build and service detail.
 
 ### Power Connection Diagram
 
 <img src="../user-manual-media/media/service-guide/power-connection-diagram.png" style="width:6.26806in;height:3.26012in" />
 
 ## Component Overview
-
-### Other Assemblies
-
-- **Streamer:** Raspberry Pi network streamer running moOde Audio.
-- **DACs:** ESS DAC and ProtoDAC implementations provide selectable conversion architectures.
-- **Clocking:** FIFOPi Q7 reclocking stage with local oscillator clocks.
-- **Control:** ESP32-based controller; see the [Tiny Control Board reference](service-guide/CircuitBoardReference.md#tiny-control-board-for-raspberry-pi-4).
 
 ### Display
 
