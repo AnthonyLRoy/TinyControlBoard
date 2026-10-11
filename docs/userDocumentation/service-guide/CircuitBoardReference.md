@@ -1,4 +1,4 @@
-﻿# Circuit Board Reference
+﻿# Custom Circuit Board Reference
 
 [Back to the Service Guide](../ServiceGuide.md) · [DAC and audio subsystem](DacSubsystem.md) · [Power supply subsystem](PowerSupplySubsystem.md) · [System wiring and commissioning](SystemWiring.md)
 
@@ -10,3 +10,12 @@ This reference collects the existing board descriptions, connector information, 
 - [Raspberry Pi Interface Board](boards/RaspberryPiInterfaceBoard.md): 40-pin header board with filtered 5 V and I2S/I2C signal outputs.
 - [Power Relay Board](boards/PowerRelayBoard.md): power switching board (schematic and layout).
 - [6-Channel Relay Board](boards/SixChannelRelayBoard.md): six-relay board driven by a ULN2003LV array.
+
+## DAC subsystem
+
+- [Single-Ended to Balanced Line Driver](dac-subsystem/SingleEndedToBalancedLineDriver.md)
+- [Differential-to-Single-Ended Output Board](dac-subsystem/DifferentialToSingleEndedOutputBoard.md)
+- [ProtoDAC Board](dac-subsystem/ProtoDACBoard.md)
+- [DAC Output Relay Switch](dac-subsystem/DACOutputRelaySwitch.md)
+- [Input Selector Board](dac-subsystem/InputSelectorBoard.md)
+- [Analogue Audio](dac-subsystem/AnalogueAudio.md)
