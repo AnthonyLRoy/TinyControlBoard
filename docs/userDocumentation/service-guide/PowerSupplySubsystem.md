@@ -1,5 +1,7 @@
 # Power Supply Subsystem
 
+> **Capacitor Bank update (2026-10-11):** the detailed board document now lives at [boards/CapacitorBank/CapacitorBank-EngineeringAndService.md](boards/CapacitorBank/CapacitorBank-EngineeringAndService.md). The requested August 2025 `CapacitorBank` KiCad project is effectively empty; the older summary below appears to describe the newer `CapBank2\CapacitorBank` revision instead. See also [boards/CapacitorBank/OpenQuestions.md](boards/CapacitorBank/OpenQuestions.md).
+
 [Back to the Service Guide](../ServiceGuide.md) · [Circuit board reference](CircuitBoardReference.md) · [System wiring and commissioning](SystemWiring.md)
 
 > **Mains-voltage hazard:** This subsystem includes mains-connected transformers. Do not work on internal wiring while connected to mains. Protective-earth bonding, fusing, insulation, and wiring must be verified by a person qualified to work safely with hazardous voltages. Do not rely on this draft as a complete mains-wiring procedure.

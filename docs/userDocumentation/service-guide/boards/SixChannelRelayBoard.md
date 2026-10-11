@@ -1,4 +1,6 @@
-﻿# 6-Channel Relay Board
+﻿> **Superseded in part.** See the full [Six-Channel Relay Board engineering and service document](SixChannelRelayBoard/SixChannelRelayBoard-EngineeringAndService.md). Corrections: connectors are 2.54 mm pin headers (not screw terminals); the EE2-5NU relay is 2 Form C with one pair brought out (normally open, inferred); the schematic exists in KiCad, so it is no longer read from a screenshot.
+
+# 6-Channel Relay Board
 
 [Back to the Circuit Board Reference](../CircuitBoardReference.md) · [Service Guide](../../ServiceGuide.md)
 
@@ -78,4 +80,5 @@ IN7 and OUT7 are not used.
 - The reversed numbering between J2 and the relays is easy to miss. Check which relay you are testing.
 - Whether the contact on pin 5 is normally open or normally closed depends on the relay datasheet. Confirm before wiring the load.
 - Pin and net details were read from a screenshot. Confirm against the KiCad schematic before using them for repairs.
+
 

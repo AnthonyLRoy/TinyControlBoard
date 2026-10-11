@@ -1,3 +1,5 @@
+> **Superseded note.** For the full KiCad-sourced board service document, including ERC/DRC results, design checks and open questions, see [SE to Diff board – Engineering and Service Document](../boards/SeToDiffBoard/SeToDiffBoard-EngineeringAndService.md).
+
 # Single-Ended to Balanced Line Driver
 
 [DAC and audio subsystem](../DacSubsystem.md) · [Circuit Board Reference](../CircuitBoardReference.md) · [Service Guide](../../ServiceGuide.md)

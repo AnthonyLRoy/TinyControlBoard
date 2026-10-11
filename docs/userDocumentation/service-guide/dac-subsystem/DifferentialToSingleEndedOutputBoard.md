@@ -1,3 +1,5 @@
+> **Superseded summary.** The full engineering and service document for this board is now at [../boards/DiffToSingleEndedBoard/DiffToSingleEndedBoard-EngineeringAndService.md](../boards/DiffToSingleEndedBoard/DiffToSingleEndedBoard-EngineeringAndService.md). Open questions are tracked in [../boards/DiffToSingleEndedBoard/OpenQuestions.md](../boards/DiffToSingleEndedBoard/OpenQuestions.md).
+
 # Differential-to-Single-Ended Output Board
 
 [DAC and audio subsystem](../DacSubsystem.md) · [Circuit Board Reference](../CircuitBoardReference.md) · [Service Guide](../../ServiceGuide.md)

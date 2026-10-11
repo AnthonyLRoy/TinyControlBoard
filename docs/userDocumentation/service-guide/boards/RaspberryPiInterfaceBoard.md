@@ -1,5 +1,7 @@
 ﻿# Raspberry Pi Interface Board
 
+> **Superseded summary for the Pi4 Hat / PiHat board.** Use the full service guide at [PiHat/PiHat-EngineeringAndService.md](PiHat/PiHat-EngineeringAndService.md) and the action list at [PiHat/OpenQuestions.md](PiHat/OpenQuestions.md). The KiCad source reviewed for the full guide does **not** exactly match the assumptions in this older summary.
+
 [Back to the Circuit Board Reference](../CircuitBoardReference.md) · [Service Guide](../../ServiceGuide.md)
 
 A board that mates with a Raspberry Pi 40-pin header. It provides a filtered 5 V supply for the Pi and brings the I2S and I2C signals out to five signal connectors through 22 Ω series resistors. A few other GPIO lines are named for use elsewhere in the system.
@@ -89,4 +91,3 @@ All other header pins (SPI, UART0, ID EEPROM, GPIO4, 5, 6, 7, 8, 16, 17, 20, 22,
 - **J1** shows no wiring on this sheet. It may be a footprint-only or unfinished part; confirm in the KiCad project.
 - **I2C lines** have only 22 Ω series resistors on this sheet and no pull-ups. The Pi has on-board pull-ups on GPIO2 and GPIO3, but check the downstream device if I2C is unreliable.
 - Pin and net details were read from a screenshot. Confirm against the KiCad schematic before using them for repairs.
-
