@@ -22,7 +22,7 @@ This guide is provided for informational and educational purposes. Construction 
 
 **Reference:** [Transformer wiring](https://electro-dan.co.uk/electronics/wiringtrans.aspx)
 
-------------------------------------------------------------------------
+---
 
 ## Contents
 
@@ -31,7 +31,6 @@ This guide is provided for informational and educational purposes. Construction 
 - [Component Overview](#component-overview)
 - [Circuit Board Reference](service-guide/CircuitBoardReference.md)
 - [DAC and Audio Subsystem](service-guide/DacSubsystem.md)
-- [Power Supply Subsystem](service-guide/PowerSupplySubsystem.md)
 - [Mechanical Construction](service-guide/MechanicalConstruction.md)
 - [System Wiring and Commissioning](service-guide/SystemWiring.md)
 - [Parts Lists](#parts-lists)
@@ -61,41 +60,10 @@ The documented digital audio sources are:
 The audio source and output topology is shown in the architecture document. For board
 details, consult the focused [DAC and audio subsystem guide](service-guide/DacSubsystem.md).
 
-### Displays and Controls
-
-The front-panel display presents artwork and playback information. A secondary OLED
-provides input, status, and configuration feedback, and illuminated controls provide
-direct access to common functions. The software components and their responsibilities are
-described in the architecture and developer guides; this guide covers the physical build.
-
-### Build Requirements
-
-- Raspberry Pi running moOde Audio
-- Custom ESP32 firmware written in C++
-- UART communication between the Raspberry Pi and ESP32
-- Advanced skill level: the build involves mains wiring, metal chassis work, electronics assembly, Linux command-line use, firmware deployment, and system troubleshooting
-- Estimated build time: approximately 20–30 hours, depending on enclosure work and testing
-
-## System Architecture
-
-The control/communication and audio-system diagrams are maintained in
-[01 — System Architecture](../01-system-architecture.md#3-system-context-and-scope) to
-avoid divergent copies. Use the architecture document for system-level views and the
-focused subsystem guides below for build and service detail.
-
-### Power Connection Diagram
-
-<img src="../user-manual-media/media/service-guide/power-connection-diagram.png" style="width:6.26806in;height:3.26012in" />
 
 ## Component Overview
 
-### Display
-
-See the [Waveshare display documentation](https://www.waveshare.com/wiki/9.3inch_1600x600_LCD#Working_with_Raspberry_Pi).
-
-<img src="../user-manual-media/media/service-guide/waveshare-9-3-inch-display.png" style="width:4.97986in;height:1.97944in" />
-
-## Focused Guides
+### Focused Guides
 
 - [Circuit Board Reference](service-guide/CircuitBoardReference.md) — control, interface, and relay board descriptions and service notes.
 - [DAC and Audio Subsystem](service-guide/DacSubsystem.md) — digital-to-analogue conversion boards, signal selection, and audio output stages.
@@ -110,6 +78,6 @@ See the [Waveshare display documentation](https://www.waveshare.com/wiki/9.3inch
 
 ## Revision History
 
-| Revision | Date | Changes |
-|----------|------|---------|
-| 1.0 | TBD | Initial release |
+| Revision | Date | Changes         |
+| -------- | ---- | --------------- |
+| 1.0      | TBD  | Initial release |
