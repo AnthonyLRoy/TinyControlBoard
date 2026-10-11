@@ -5,7 +5,7 @@ argument-hint: "Button name, behavior (Momentary/Toggle/Timed/local-only), and t
 agent: "agent"
 ---
 You are adding a new button or a new action to the TinyControlBoard ESP32-S3
-firmware. Follow [docs/09-adding-button-actions.md](../../docs/09-adding-button-actions.md)
+firmware. Follow [docs/DeveloperGuides/09-adding-button-actions.md](../../docs/DeveloperGuides/09-adding-button-actions.md)
 exactly — it is the canonical, verified walkthrough for this codebase. Do not
 invent alternative wiring mechanisms.
 
@@ -34,4 +34,4 @@ Requirements:
 - Keep new button IDs additive (never renumber existing ones — it shifts LED bit positions).
 - Match existing naming conventions (`CMD_<NAME>`, `CMD_<NAME>_ON/OFF`, `k_<camelCase>`).
 - After editing, run the `PlatformIO Build` task and fix any compile errors before finishing.
-- Summarize exactly which files you changed and why, mapped back to the checklist in docs/09-adding-button-actions.md §8.
+- Summarize exactly which files you changed and why, mapped back to the checklist in docs/DeveloperGuides/09-adding-button-actions.md §8.

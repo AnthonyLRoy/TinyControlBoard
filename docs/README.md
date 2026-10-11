@@ -14,15 +14,15 @@ authoritative references for their respective implementation areas.
 ## Where to start
 
 1. New to the project? Read [01-system-architecture.md](01-system-architecture.md) first.
-2. Setting up a dev machine? Read [07-development-environment.md](07-development-environment.md).
-3. Working on firmware? [03-esp32-developer-guide.md](03-esp32-developer-guide.md).
-4. Working on the Raspberry Pi side? [04-rpi-developer-guide.md](04-rpi-developer-guide.md).
-5. Working on the Android app? [02-android-developer-guide.md](02-android-developer-guide.md).
-6. Changing the wire protocol? [05-communication-protocol.md](05-communication-protocol.md) — read this
+2. Setting up a dev machine? Read [07-development-environment.md](DeveloperGuides/07-development-environment.md).
+3. Working on firmware? [03-esp32-developer-guide.md](DeveloperGuides/03-esp32-developer-guide.md).
+4. Working on the Raspberry Pi side? [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md).
+5. Working on the Android app? [02-android-developer-guide.md](DeveloperGuides/02-android-developer-guide.md).
+6. Changing the wire protocol? [05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md) — read this
    before touching `uartProtocol.hpp`, `protocol.py`, or `BleProtocol.kt`.
-7. Working on wiring/GPIO/relays? [06-hardware-interface.md](06-hardware-interface.md).
-8. Known gaps and cross-component consistency checks: [08-quality-check.md](08-quality-check.md).
-9. Adding a new button or action: [09-adding-button-actions.md](09-adding-button-actions.md)
+7. Working on wiring/GPIO/relays? [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md).
+8. Known gaps and cross-component consistency checks: [08-quality-check.md](DeveloperGuides/08-quality-check.md).
+9. Adding a new button or action: [09-adding-button-actions.md](DeveloperGuides/09-adding-button-actions.md)
     (a matching `/add-button-action` prompt lives in `.github/prompts/`).
 
 ## Source snapshot

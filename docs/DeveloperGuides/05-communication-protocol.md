@@ -2,7 +2,7 @@
 
 Document version 1.0 — 2026-09-18 — describes commit `402f526` on branch `feature/library-improvements`.
 
-Authoritative source: [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp)
+Authoritative source: [lib/protocol/uartProtocol.hpp](../../lib/protocol/uartProtocol.hpp)
 (verified verbatim against source for this document). Mirrored on the Raspberry Pi in
 `scripts/rpi/home/antho/protocol.py`/`command_ids.py`, and on Android in
 `android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ble/BleProtocol.kt`. All three

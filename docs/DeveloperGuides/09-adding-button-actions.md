@@ -17,17 +17,17 @@ local-only variant:
 
 | Concern | File |
 |---|---|
-| Physical button ID constants | [lib/board/boardButtonIds.hpp](../lib/board/boardButtonIds.hpp) |
-| Button ID namespace alias (no edits needed) | [lib/app/ControlBoardButtonIds.hpp](../lib/app/ControlBoardButtonIds.hpp) |
-| **Button registration table** (the main thing you edit) | [lib/app/ControlBoardActionRegistry.cpp](../lib/app/ControlBoardActionRegistry.cpp) |
-| Action source implementations (Simple/Toggle/Timed/Rotary) | [lib/input/actions/actionTemplates.hpp](../lib/input/actions/actionTemplates.hpp) |
-| LED feedback policy (`None`/`Momentary`/`Toggle`) | [lib/app/ControlBoardInputDispatcher.hpp](../lib/app/ControlBoardInputDispatcher.hpp) / `.cpp` |
-| UART toggle normalization table | [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp) |
-| Local-only command routing | [lib/app/ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp) |
-| Route → concrete action mapping | [lib/app/ActionFactory.cpp](../lib/app/ActionFactory.cpp) |
-| Concrete local-action implementations | [lib/app/commands/](../lib/app/commands/) |
-| Protocol command IDs | [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp) |
-| Human-readable command names (logging) | [lib/protocol/commandCatalog.cpp](../lib/protocol/commandCatalog.cpp) |
+| Physical button ID constants | [lib/board/boardButtonIds.hpp](../../lib/board/boardButtonIds.hpp) |
+| Button ID namespace alias (no edits needed) | [lib/app/ControlBoardButtonIds.hpp](../../lib/app/ControlBoardButtonIds.hpp) |
+| **Button registration table** (the main thing you edit) | [lib/app/ControlBoardActionRegistry.cpp](../../lib/app/ControlBoardActionRegistry.cpp) |
+| Action source implementations (Simple/Toggle/Timed/Rotary) | [lib/input/actions/actionTemplates.hpp](../../lib/input/actions/actionTemplates.hpp) |
+| LED feedback policy (`None`/`Momentary`/`Toggle`) | [lib/app/ControlBoardInputDispatcher.hpp](../../lib/app/ControlBoardInputDispatcher.hpp) / `.cpp` |
+| UART toggle normalization table | [lib/app/ActionUartDispatcher.cpp](../../lib/app/ActionUartDispatcher.cpp) |
+| Local-only command routing | [lib/app/ActionCommandRoutingPolicy.hpp](../../lib/app/ActionCommandRoutingPolicy.hpp) |
+| Route → concrete action mapping | [lib/app/ActionFactory.cpp](../../lib/app/ActionFactory.cpp) |
+| Concrete local-action implementations | [lib/app/commands/](../../lib/app/commands/) |
+| Protocol command IDs | [lib/protocol/uartProtocol.hpp](../../lib/protocol/uartProtocol.hpp) |
+| Human-readable command names (logging) | [lib/protocol/commandCatalog.cpp](../../lib/protocol/commandCatalog.cpp) |
 | Raspberry Pi command handling | `scripts/rpi/home/antho/uart5_listener.py` + `command_ids.py`/`playback_commands.py` |
 
 There are no global action singletons — `ControlBoardActionRegistry::populate()`
@@ -64,11 +64,11 @@ because the *LED* toggles even though the underlying command doesn't carry state
 **Goal:** add a `Mute` button that sends one fixed command while pressed, LED on
 while held.
 
-1. Add the command ID in [lib/protocol/uartProtocol.hpp](../lib/protocol/uartProtocol.hpp):
+1. Add the command ID in [lib/protocol/uartProtocol.hpp](../../lib/protocol/uartProtocol.hpp):
    ```cpp
    CMD_MUTE = 0x0120,
    ```
-2. Reserve a button ID in [lib/board/boardButtonIds.hpp](../lib/board/boardButtonIds.hpp):
+2. Reserve a button ID in [lib/board/boardButtonIds.hpp](../../lib/board/boardButtonIds.hpp):
    ```cpp
    inline constexpr uint8_t k_mute = 16;
    // ...
@@ -84,7 +84,7 @@ while held.
    `k_commandRouteTable[]` (ActionCommandRoutingPolicy.hpp) defaults to
    `ActionCommandRoute::UartDispatch`, and `UartDispatchAction::execute()` sends it
    as a raw UART command with no parameters.
-5. Add a display name to [commandCatalog.cpp](../lib/protocol/commandCatalog.cpp)
+5. Add a display name to [commandCatalog.cpp](../../lib/protocol/commandCatalog.cpp)
    (`{CMD_MUTE, "Mute", "Mute"}`) so logs and the UART command name lookup work.
 6. Add handling on the Raspberry Pi side (`command_ids.py` + a handler in
    `uart5_listener.py`'s `COMMAND_HANDLERS`).
@@ -110,7 +110,7 @@ Pi as a single normalized command with a boolean parameter.
    { controlBoardButtons::k_mute, ActionSourceType::Toggle, CMD_MUTE_ON, CMD_MUTE_OFF, LedPolicy::Toggle },
    ```
 4. Add one row to `k_toggleTable[]` in
-   [lib/app/ActionUartDispatcher.cpp](../lib/app/ActionUartDispatcher.cpp):
+   [lib/app/ActionUartDispatcher.cpp](../../lib/app/ActionUartDispatcher.cpp):
    ```cpp
    {CMD_MUTE_ON, CMD_MUTE_OFF, CMD_TOGGLE_MUTE, CMD_TOGGLE_MUTE, "Mute"},
    ```
@@ -157,7 +157,7 @@ LED brightness. These are still registered as `Simple` (or `Toggle`) in
 `k_buttons[]`, but classified away from `UartDispatch`:
 
 1. **Classify it** — add a row to `k_commandRouteTable[]` in
-   [ActionCommandRoutingPolicy.hpp](../lib/app/ActionCommandRoutingPolicy.hpp):
+   [ActionCommandRoutingPolicy.hpp](../../lib/app/ActionCommandRoutingPolicy.hpp):
    ```cpp
    { CMD_TOGGLE_FAN, ActionCommandRoute::Relay },
    ```
@@ -165,7 +165,7 @@ LED brightness. These are still registered as `Simple` (or `Toggle`) in
    `PowerStateTransition`) if your new command fits one of the existing concrete
    classes in `lib/app/commands/` — check there before adding a new route.
 2. **If you added a brand-new route value**, map it in
-   [ActionFactory.cpp](../lib/app/ActionFactory.cpp)'s `createAction()` switch.
+   [ActionFactory.cpp](../../lib/app/ActionFactory.cpp)'s `createAction()` switch.
 3. **Implement the effect** — either extend an existing class's `execute()`
    (e.g. `RelayAction`, `BrightnessAction`, `SystemAction`), or add a new
    `IAction` subclass under `lib/app/commands/` following that pattern

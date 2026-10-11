@@ -12,7 +12,7 @@ contributors will only need the toolchain for the component they're changing.
 | ESP32-S3 firmware | PlatformIO + ESP-IDF (installed automatically by PlatformIO) |
 | Raspberry Pi scripts | Python 3 only (no build step; deploy by copying files) |
 | Android app | Android Studio / Gradle + JDK 17 |
-| Host-testable pure-logic tests | CMake + MSVC (Windows) under [host_tests/](../host_tests/) |
+| Host-testable pure-logic tests | CMake + MSVC (Windows) under [host_tests/](../../host_tests/) |
 
 ## 2. Prerequisites
 
@@ -66,7 +66,7 @@ adb install -r app\build\outputs\apk\debug\app-debug.apk
 
 ## 6. Building/Running Host Tests
 
-See [host-testability-notes.md] repo memory / [host_tests/CMakeLists.txt](../host_tests/CMakeLists.txt)
+See [host-testability-notes.md] repo memory / [host_tests/CMakeLists.txt](../../host_tests/CMakeLists.txt)
 for the current confirmed CMake configure/build/test command sequence for the
 `host_tests/` project (pure-logic tests, no ESP-IDF dependency).
 
@@ -100,5 +100,5 @@ ssh pi@<host> "sudo mv /tmp/*.service /etc/systemd/system/ && \
 |---|---|
 | PlatformIO can't find the board manifest | Ensure `boards/esp32-s3-devkitc-1-16mb.json` exists relative to the project root — it is a project-local board definition, not a stock PlatformIO board |
 | Android Gradle sync fails on JDK version | AGP 9.3.1 requires JDK 17+; set `JAVA_HOME` accordingly |
-| No UART traffic reaches the Pi | Confirm `dtoverlay=uart5` in `/boot/config.txt` and that `/dev/ttyAMA5` exists; see [docs/userDocumentation/RPI4_SETUP.md](userDocumentation/RPI4_SETUP.md) |
+| No UART traffic reaches the Pi | Confirm `dtoverlay=uart5` in `/boot/config.txt` and that `/dev/ttyAMA5` exists; see [docs/userDocumentation/RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md) |
 | Firmware boots but never leaves `TURNING_ON` | Raspberry Pi services not running or UART miswired — see [04-rpi-developer-guide.md](04-rpi-developer-guide.md) §12 |

@@ -1,9 +1,9 @@
 # 06 — Hardware Interface Reference
 
 Document version 1.0 — 2026-09-18 — describes commit `402f526` on branch `feature/library-improvements`.
-Primary source: [lib/board/boardConfig.hpp](../lib/board/boardConfig.hpp) (read verbatim for
-this document), cross-referenced with [wiring-reference.md](wiring-reference.md) and
-[docs/schema.png](schema.png).
+Primary source: [lib/board/boardConfig.hpp](../../lib/board/boardConfig.hpp) (read verbatim for
+this document), cross-referenced with [docs/wiring-reference.md](../wiring-reference.md) and
+[docs/schema.png](../schema.png).
 
 ## 1. Scope
 
@@ -60,7 +60,7 @@ organized by physical function instead.
 
 16-bit register, shifted low-byte-first then high-byte-first; one bit per front-panel push
 button (bit 0 unused — the power button has no LED). See
-[wiring-reference.md](wiring-reference.md) §1.5–1.6 for the full bit/command mapping.
+[docs/wiring-reference.md](../wiring-reference.md) §1.5–1.6 for the full bit/command mapping.
 
 ## 6. Relay Outputs
 
@@ -161,8 +161,8 @@ flowchart TD
 
 | Interface | Type | Connector/Location |
 |---|---|---|
-| Front-panel button/rotary/LED harness | 40-pin Molex | See [wiring-reference.md](wiring-reference.md) §1.7 |
-| Raspberry Pi UART link | Wired point-to-point, ESP32 GPIO1/2/41/42 ↔ Pi GPIO12/13/23/24 | Per [docs/userDocumentation/RPI4_SETUP.md](userDocumentation/RPI4_SETUP.md) |
+| Front-panel button/rotary/LED harness | 40-pin Molex | See [docs/wiring-reference.md](../wiring-reference.md) §1.7 |
+| Raspberry Pi UART link | Wired point-to-point, ESP32 GPIO1/2/41/42 ↔ Pi GPIO12/13/23/24 | Per [docs/userDocumentation/RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md) |
 | Power rails | Relay-switched: 3.3V, DAC, Output stage, Raspberry Pi 5V | 4 relays sequenced; 3 auxiliary relays (DAC signal-select, general 1/2) |
 | USB (firmware flashing) | ESP32-S3 native USB / UART bootloader | Development only |
 

@@ -4,10 +4,10 @@ This document is the architectural overview for the TinyControlBoard control sys
 its Riverbank Streamer DAC host. It follows an arc42-style structure, using the existing
 control-board and audio-system diagrams from the [Service Guide](userDocumentation/ServiceGuide.md).
 
-For implementation detail, use the focused references: [ESP32 firmware](03-esp32-developer-guide.md),
-[Android app](02-android-developer-guide.md), [Raspberry Pi services](04-rpi-developer-guide.md),
-[communication protocol](05-communication-protocol.md), and
-[hardware interface](06-hardware-interface.md).
+For implementation detail, use the focused references: [ESP32 firmware](DeveloperGuides/03-esp32-developer-guide.md),
+[Android app](DeveloperGuides/02-android-developer-guide.md), [Raspberry Pi services](DeveloperGuides/04-rpi-developer-guide.md),
+[communication protocol](DeveloperGuides/05-communication-protocol.md), and
+[hardware interface](DeveloperGuides/06-hardware-interface.md).
 
 ## 1. Introduction and Goals
 
@@ -27,10 +27,10 @@ and component-level details belong in the [Service Guide](userDocumentation/Serv
 
 This document covers the architecture and interactions of:
 
-- ESP32-S3 firmware in [`lib/`](../lib/) and [`src/`](../src/).
-- Raspberry Pi companion services in [`scripts/rpi/`](../scripts/rpi/), running alongside
+- ESP32-S3 firmware in [`lib/`](../../lib/) and [`src/`](../../src/).
+- Raspberry Pi companion services in [`scripts/rpi/`](../../scripts/rpi/), running alongside
   moOde Audio and MPD.
-- The Kotlin Android app in [`android/TinyRemote/`](../android/TinyRemote/).
+- The Kotlin Android app in [`android/TinyRemote/`](../../android/TinyRemote/).
 - The control-board and audio-system context needed to understand their relationship.
 
 It does not replace the circuit schematics, board references, service procedures, or
@@ -53,12 +53,12 @@ field-level protocol specification.
 
 | Constraint                                                                                                                                    | Architectural effect                                                                                                                                                                  |
 | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Existing controller hardware is an ESP32-S3 with a physical front panel and relay outputs.                                                    | The firmware is the authority for front-panel I/O and power sequencing; see the[hardware reference](06-hardware-interface.md).                                                         |
+| Existing controller hardware is an ESP32-S3 with a physical front panel and relay outputs.                                                    | The firmware is the authority for front-panel I/O and power sequencing; see the[hardware reference](DeveloperGuides/06-hardware-interface.md).                                                         |
 | The Android app connects to the board over BLE; the board and Pi communicate over a wired UART link with GPIO handshake lines.                | Control commands are mediated by the ESP32 rather than sent from Android to the Pi.                                                                                                   |
 | The deployed Pi runs moOde Audio and MPD.                                                                                                     | Pi-side actions use MPD and moOde-specific facilities; the ESP32 does not implement playback.                                                                                         |
-| The UART carrier uses the repository's framed protocol at 921600 baud. BLE carries characteristic-specific payloads rather than UART framing. | Protocol changes must remain consistent across firmware, Pi services, and Android. See[05-communication-protocol.md](05-communication-protocol.md).                                    |
+| The UART carrier uses the repository's framed protocol at 921600 baud. BLE carries characteristic-specific payloads rather than UART framing. | Protocol changes must remain consistent across firmware, Pi services, and Android. See[05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md).                                    |
 | The BLE service currently supports one connected client.                                                                                      | The Android control surface is single-client; concurrent phone control is not a supported deployment assumption.                                                                      |
-| The design integrates with a mains-powered audio assembly.                                                                                    | Wiring, enclosure, and service work must follow the[Service Guide](userDocumentation/ServiceGuide.md) and applicable schematics; this architecture document is not a safety procedure. |
+| The design integrates with a mains-powered audio assembly.                                                                                    | Wiring, enclosure, and service work must follow the[Service Guide](../userDocumentation/ServiceGuide.md) and applicable schematics; this architecture document is not a safety procedure. |
 
 The repository does not define budget, schedule, or formal operating-environment constraints.
 The exact moOde release and a separate staging topology are also not specified in the
@@ -114,13 +114,13 @@ and thumbnails; control, status, library, and playlist traffic follows the ESP32
 
 | Building block                | Responsibility                                                                                                                                 | Detailed reference                                                                                                                    |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| ESP32-S3 firmware             | Physical input and LED handling, relay control, power state machine, BLE GATT server, UART transport, heartbeat monitoring, and state updates. | [03-esp32-developer-guide.md](03-esp32-developer-guide.md), [06-hardware-interface.md](06-hardware-interface.md)                        |
-| Raspberry Pi UART listener    | Receives ESP32 commands and dispatches playback, library, playlist, panel, and power operations.                                               | [04-rpi-developer-guide.md](04-rpi-developer-guide.md)                                                                                 |
-| Raspberry Pi heartbeat sender | Sends heartbeat, now-playing, and track-progress information to the ESP32.                                                                     | [04-rpi-developer-guide.md](04-rpi-developer-guide.md)                                                                                 |
-| moOde / MPD                   | Provides playback, queue, library, and system services used by the Pi scripts.                                                                 | [04-rpi-developer-guide.md](04-rpi-developer-guide.md)                                                                                 |
-| Android app                   | Provides BLE-based control and browsing UI and fetches artwork from moOde over HTTP.                                                           | [02-android-developer-guide.md](02-android-developer-guide.md)                                                                         |
-| UART protocol                 | Defines packet framing, message types, commands, and payloads shared by the ESP32 and Pi.                                                      | [05-communication-protocol.md](05-communication-protocol.md)                                                                           |
-| Audio assembly                | Digital source selection, reclocking, DAC conversion, and analogue outputs.                                                                    | [Service Guide](userDocumentation/ServiceGuide.md) and its [DAC/audio subsystem guide](userDocumentation/service-guide/DacSubsystem.md) |
+| ESP32-S3 firmware             | Physical input and LED handling, relay control, power state machine, BLE GATT server, UART transport, heartbeat monitoring, and state updates. | [03-esp32-developer-guide.md](DeveloperGuides/03-esp32-developer-guide.md), [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md)                        |
+| Raspberry Pi UART listener    | Receives ESP32 commands and dispatches playback, library, playlist, panel, and power operations.                                               | [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md)                                                                                 |
+| Raspberry Pi heartbeat sender | Sends heartbeat, now-playing, and track-progress information to the ESP32.                                                                     | [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md)                                                                                 |
+| moOde / MPD                   | Provides playback, queue, library, and system services used by the Pi scripts.                                                                 | [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md)                                                                                 |
+| Android app                   | Provides BLE-based control and browsing UI and fetches artwork from moOde over HTTP.                                                           | [02-android-developer-guide.md](DeveloperGuides/02-android-developer-guide.md)                                                                         |
+| UART protocol                 | Defines packet framing, message types, commands, and payloads shared by the ESP32 and Pi.                                                      | [05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md)                                                                           |
+| Audio assembly                | Digital source selection, reclocking, DAC conversion, and analogue outputs.                                                                    | [Service Guide](../userDocumentation/ServiceGuide.md) and its [DAC/audio subsystem guide](../userDocumentation/service-guide/DacSubsystem.md) |
 
 ## 6. Runtime View
 
@@ -147,7 +147,7 @@ sequenceDiagram
 ```
 
 The exact GATT characteristic payloads, command identifiers, and UART packet fields are
-specified in [05-communication-protocol.md](05-communication-protocol.md) and  [02-android-developer-guide.md](02-android-developer-guide.md).
+specified in [05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md) and  [02-android-developer-guide.md](DeveloperGuides/02-android-developer-guide.md).
 
 ### Power-state lifecycle
 
@@ -170,7 +170,7 @@ stateDiagram-v2
 ```
 
 Power-on timing, relay order, shutdown behavior, and state implementation are documented in
-the [firmware guide](03-esp32-developer-guide.md) and [hardware reference](06-hardware-interface.md).
+the [firmware guide](DeveloperGuides/03-esp32-developer-guide.md) and [hardware reference](DeveloperGuides/06-hardware-interface.md).
 The enum also contains `SHUTTING_DOWN`; its role in transitions remains to be confirmed.
 
 ## 7. Deployment View
@@ -195,7 +195,7 @@ Audio sources ──> reclocking / source selection ──> DAC and output stage
 
 The ESP32 and Pi are deployed as connected hardware. The Android app is an optional client.
 No distinct staging or cloud deployment is documented. Raspberry Pi installation and
-service setup are covered by [RPI4_SETUP.md](userDocumentation/RPI4_SETUP.md); firmware
+service setup are covered by [RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md); firmware
 and Android build/deployment steps belong to their respective developer guides.
 
 ## 8. Cross-Cutting Concepts
@@ -205,14 +205,14 @@ and Android build/deployment steps belong to their respective developer guides.
 Relay sequencing and power-state transitions are firmware responsibilities. The firmware
 waits up to 60 seconds for the Pi's boot heartbeat and uses a 30-second heartbeat timeout
 while on. The software can detect missing Pi communication, but relay GPIO writes do not
-provide physical relay-state readback; consult the [hardware reference](06-hardware-interface.md).
+provide physical relay-state readback; consult the [hardware reference](DeveloperGuides/06-hardware-interface.md).
 
 ### Communication and errors
 
 UART uses framing and checksum validation. Invalid frames are dropped by the Pi listener;
 the documented path does not retry or send a NACK for those invalid frames. Android BLE
 connection recovery behavior and protocol payload details are maintained in the
-[Android guide](02-android-developer-guide.md) and [protocol specification](05-communication-protocol.md).
+[Android guide](DeveloperGuides/02-android-developer-guide.md) and [protocol specification](DeveloperGuides/05-communication-protocol.md).
 
 ### Security and privacy
 
@@ -262,14 +262,14 @@ dedicated ADR rather than relying on this summary alone.
 
 | Risk or open item                                                                                           | Impact                                                                                 | Follow-up reference                                                                                                |
 | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Invalid UART frames are dropped without a documented retry/NACK path.                                       | A lost or corrupt command/update may not be explicitly reported to its sender.         | [05-communication-protocol.md](05-communication-protocol.md), [04-rpi-developer-guide.md](04-rpi-developer-guide.md) |
-| Relay GPIO writes have no hardware readback.                                                                | Software cannot confirm that a relay physically changed state.                         | [06-hardware-interface.md](06-hardware-interface.md)                                                                |
-| Android-to-Pi artwork requests use cleartext HTTP.                                                          | Artwork traffic is not protected by HTTPS on the local network.                        | [02-android-developer-guide.md](02-android-developer-guide.md)                                                      |
+| Invalid UART frames are dropped without a documented retry/NACK path.                                       | A lost or corrupt command/update may not be explicitly reported to its sender.         | [05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md), [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md) |
+| Relay GPIO writes have no hardware readback.                                                                | Software cannot confirm that a relay physically changed state.                         | [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md)                                                                |
+| Android-to-Pi artwork requests use cleartext HTTP.                                                          | Artwork traffic is not protected by HTTPS on the local network.                        | [02-android-developer-guide.md](DeveloperGuides/02-android-developer-guide.md)                                                      |
 | BLE pairing/encryption and command authorization policy are not established in the architecture references. | Security behavior should not be assumed for deployments outside a trusted environment. | Verify firmware BLE configuration and Android connection behavior.                                                 |
-| BLE currently accepts one client.                                                                           | Concurrent remote controllers are not supported.                                       | [06-hardware-interface.md](06-hardware-interface.md)                                                                |
-| Exact moOde version and separate staging deployment are unspecified.                                        | Reproducibility and environment-specific validation are limited.                       | [04-rpi-developer-guide.md](04-rpi-developer-guide.md)                                                              |
+| BLE currently accepts one client.                                                                           | Concurrent remote controllers are not supported.                                       | [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md)                                                                |
+| Exact moOde version and separate staging deployment are unspecified.                                        | Reproducibility and environment-specific validation are limited.                       | [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md)                                                              |
 | The`SHUTTING_DOWN` power-state enum value is not mapped to an observed transition here.                   | State documentation may not fully match implementation intent.                         | Confirm in firmware state-transition code.                                                                         |
-| Wiring and commissioning documentation still has areas marked TODO.                                         | Builders may need to consult schematics and verify details before assembly or service. | [System Wiring and Commissioning](userDocumentation/service-guide/SystemWiring.md)                                  |
+| Wiring and commissioning documentation still has areas marked TODO.                                         | Builders may need to consult schematics and verify details before assembly or service. | [System Wiring and Commissioning](../userDocumentation/service-guide/SystemWiring.md)                                  |
 
 No dated refactoring plan or prioritization for these items is currently documented.
 

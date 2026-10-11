@@ -1,7 +1,7 @@
 # 02 — Android Developer Guide
 
 Document version 1.0 — 2026-09-18 — describes commit `402f526` on branch `feature/library-improvements`.
-App module: [android/TinyRemote/](../android/TinyRemote/) (Gradle root project name `DanStreamer`, `applicationId com.tinycb.remote`).
+App module: [android/TinyRemote/](../../android/TinyRemote/) (Gradle root project name `DanStreamer`, `applicationId com.tinycb.remote`).
 
 ## 1. Overview
 

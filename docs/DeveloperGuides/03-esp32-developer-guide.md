@@ -13,13 +13,13 @@ for the Android app. It is written in C++17 against ESP-IDF, built via PlatformI
 
 | Item | Value | Source |
 |---|---|---|
-| PlatformIO platform | `espressif32 @ ~6.5.0` | [platformio.ini](../platformio.ini) |
+| PlatformIO platform | `espressif32 @ ~6.5.0` | [platformio.ini](../../platformio.ini) |
 | Framework | `espidf` | platformio.ini |
 | ESP-IDF version | 5.3.1 | sdkconfig |
-| Board | `esp32-s3-devkitc-1-16mb` (project-local manifest at [boards/esp32-s3-devkitc-1-16mb.json](../boards/esp32-s3-devkitc-1-16mb.json)) | platformio.ini |
+| Board | `esp32-s3-devkitc-1-16mb` (project-local manifest at [boards/esp32-s3-devkitc-1-16mb.json](../../boards/esp32-s3-devkitc-1-16mb.json)) | platformio.ini |
 | C++ standard | C++17 | CMakeLists.txt |
 | CPU frequency | 240 MHz | `board_build.f_cpu` |
-| Flash | 16 MB, partitioned via [partitions.csv](../partitions.csv) | partitions.csv |
+| Flash | 16 MB, partitioned via [partitions.csv](../../partitions.csv) | partitions.csv |
 | Build tool | PlatformIO CLI (VS Code task **PlatformIO Build**, or `platformio run`) | .vscode task |
 | Environments | `esp32-s3-devkitc-1-16mb` (debug, default, `-DSIMULATE_RPI_BOOT=1`), `esp32-s3-devkitc-1-16mb-release` (`-DNDEBUG`) | platformio.ini |
 | Monitor | 115200 baud, filters `direct, esp32_exception_decoder` | platformio.ini |
