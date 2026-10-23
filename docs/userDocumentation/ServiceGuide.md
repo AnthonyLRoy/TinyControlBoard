@@ -27,10 +27,7 @@ This guide is provided for informational and educational purposes. Construction 
 ## Contents
 
 - [Project Overview](#project-overview)
-- [System Architecture](#system-architecture)
-- [Component Overview](#component-overview)
 - [Circuit Board Reference](service-guide/CircuitBoardReference.md)
-- [DAC and Audio Subsystem](service-guide/DacSubsystem.md)
 - [Mechanical Construction](service-guide/MechanicalConstruction.md)
 - [System Wiring and Commissioning](service-guide/SystemWiring.md)
 - [Parts Lists](#parts-lists)
@@ -59,17 +56,6 @@ The documented digital audio sources are:
 
 The audio source and output topology is shown in the architecture document. For board
 details, consult the focused [DAC and audio subsystem guide](service-guide/DacSubsystem.md).
-
-
-## Component Overview
-
-### Focused Guides
-
-- [Circuit Board Reference](service-guide/CircuitBoardReference.md) — control, interface, and relay board descriptions and service notes.
-- [DAC and Audio Subsystem](service-guide/DacSubsystem.md) — digital-to-analogue conversion boards, signal selection, and audio output stages.
-- [Power Supply Subsystem](service-guide/PowerSupplySubsystem.md) — power boards, supply rails, transformers, and power-supply parts.
-- [Mechanical Construction](service-guide/MechanicalConstruction.md) — enclosure drawings, mechanical parts, and assembly notes.
-- [System Wiring and Commissioning](service-guide/SystemWiring.md) — inter-board connections, signal routing, system wiring, and commissioning checks.
 
 ## Parts Lists
 
