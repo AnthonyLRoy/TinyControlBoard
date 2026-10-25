@@ -34,7 +34,8 @@ Drawings, dimensions and assembly views for building the cases. Read them in thi
 
 #### Custom PCBs
 
-Schematics, board layouts and manufacturing files for the custom circuit boards. *Documentation to be added.*
+See the [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) for the project workflow and
+current repository status. KiCad design files are not currently included in this repository.
 
 #### Wiring Diagrams and Bill of Materials
 
