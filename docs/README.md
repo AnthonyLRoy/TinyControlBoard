@@ -35,7 +35,10 @@ Drawings, dimensions and assembly views for building the cases. Read them in thi
 #### Custom PCBs
 
 See the [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) for the project workflow and
-current repository status. KiCad design files are not currently included in this repository.
+current repository status. The [Streamer DAC KiCad Schematic Reference](HardwareDocumentation/Streamer-DAC-KiCad-Reference.md)
+documents the supplied system schematic and its current limitations. KiCad design files
+are not currently included in this repository. The [Capacitor Bank KiCad Project Status](HardwareDocumentation/Capacitor-Bank-KiCad-Reference.md)
+records the state of the separately supplied capacitor-bank project files.
 
 #### Wiring Diagrams and Bill of Materials
 
