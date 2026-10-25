@@ -1,26 +1,34 @@
-# Internal components and Panel Assemblies
+# Internal Components and Panel Assemblies
 
-## Streamer Dac
+This document shows how the internal components are fitted to the panels and cases of the Streamer DAC and its power supply. Panel dimensions and drawings are in [Dac-Case.md](Dac-Case.md). Parts lists for each assembly are still to be added.
 
-### Front Panel Dac
+## Streamer DAC
 
-![Front Panel Dac](Images/%20Exploded%20Component%20FrontPanel%20assembly.png)
+The assemblies below are shown in the order they are built: front panel, rear panel, then the inner case that is fitted into the enclosure.
 
-### Rear View Components
+### Front Panel Assembly
 
-![Rear View Components](Images/FrontPanel%20assembly%20copper%20sheild.png)
+Exploded view of the components fitted to the front panel.
 
-### Back Panel
+![Front Panel Assembly](Images/%20Exploded%20Component%20FrontPanel%20assembly.png)
 
-![Back Panel](Images/Exploded%20Dual%20Power%20Rear%20Panel%20.png)
+### Front Panel Assembly with Copper Shield
 
-### Inserting the inner case into the dac
+Rear view of the front panel showing the copper shield.
 
-![Inserting the inner case into the dac](Images/Dac%20Enclosure%20with%20inner%20case.png)
+![Front Panel Assembly with copper shield](Images/FrontPanel%20assembly%20copper%20sheild.png)
 
-### Inner case Component Assembly
+### Rear Panel Assembly
 
-![Inner case Component Assembly](Images/Inner%20Case%20component%20Assembly.png)
+![Rear Panel Assembly](Images/Exploded%20Dual%20Power%20Rear%20Panel%20.png)
+
+### Inserting the Inner Case into the DAC Enclosure
+
+![Inserting the inner case into the DAC enclosure](Images/Dac%20Enclosure%20with%20inner%20case.png)
+
+### Inner Case Component Assembly
+
+![Inner Case Component Assembly](Images/Inner%20Case%20component%20Assembly.png)
 
 ### Station Pi Pro Assembly
 
@@ -28,21 +36,24 @@
 
 ## Power Supply Components
 
-### Back Panel Components
+### Rear Panel Assembly
 
-![Back Panel Components](Images/Back%20Panel%20assembly%20Exploded.png)
+![Power Supply Rear Panel Assembly](Images/Back%20Panel%20assembly%20Exploded.png)
 
-### Front Panel Components
-![Front Panel Components](Images/Power%20Supply%20FrontPanel%20Assembly%20exploded.png)
+### Front Panel Assembly
 
-### Power Supply
+![Power Supply Front Panel Assembly](Images/Power%20Supply%20FrontPanel%20Assembly%20exploded.png)
 
-![Power Supply](Images/Power%20supply%20Transformer%20%20%20stand%20assembly.png)
+### Transformer and Stand Assembly
 
-### UCPURE / Linear pi Module
+![Power Supply Transformer and Stand Assembly](Images/Power%20supply%20Transformer%20%20%20stand%20assembly.png)
 
-![UCPURE / Linear pi Module](Images/UCPureAssembly.png)
+### UCPure / Linear Pi Module
 
-### Internal power supply Full Assembly on Base
+Two UCPure modules and two Linear Pi boards mounted on holders with 5 mm standoffs.
 
-![Internal power supply Full Assembly on Base](Images/powerSupply%20sub%20Assembly.png)
+![UCPure / Linear Pi Module](Images/UCPureAssembly.png)
+
+### Internal Power Supply Full Assembly on Base
+
+![Internal power supply full assembly on base](Images/powerSupply%20sub%20Assembly.png)
