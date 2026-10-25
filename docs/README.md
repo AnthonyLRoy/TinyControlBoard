@@ -34,6 +34,8 @@ Drawings, dimensions and assembly views for building the cases. Read them in thi
 
 #### Custom PCBs
 
+See the [Custom Boards index](<Custom boards/README.md>) for a list of every custom board with a short description.
+
 See the [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) for the project workflow and
 current repository status. The [Streamer DAC KiCad Schematic Reference](HardwareDocumentation/Streamer-DAC-KiCad-Reference.md)
 documents the supplied system schematic and its current limitations. KiCad design files
