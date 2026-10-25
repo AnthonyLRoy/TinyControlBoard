@@ -1,8 +1,11 @@
 # Differentia_to_SingleEnded — Differential to Single-Ended Audio Board
 
+## Top View##
 ![Top-side board render](board-top.png)
 
-[View the back-side render](board-back.png)
+## Bottom View ##
+
+![View the back-side render](board-back.png)
 
 ## Overview
 
