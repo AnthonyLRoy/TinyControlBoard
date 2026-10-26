@@ -96,3 +96,16 @@ Transcribed from the supplied `CapacitorBank.csv`. The source contains no separa
 - Source files are `CapacitorBank.kicad_pro`, `CapacitorBank.kicad_sch`, and `CapacitorBank.kicad_pcb`; the supplied BOM is `CapacitorBank.csv` (with `production/bom.csv` also present).
 - Verify the allowed input voltage/current, the TPS2556-Q1 enable and current-limit behavior, and the capacitor part ratings/polarity before applying power.
 - Verify the connector pin orientation against the PCB silkscreen and the intended cable wiring.
+
+## Review for next version
+
+Issues identified from the current design documentation and files:
+
+1. **Switch is always enabled; no external control.** IC1's enable is active-low and EN is held low through R2 (10 kΩ), so the switch turns on whenever `Vin` is present. This is intended, but there is no way to disable the output. Consider exposing an enable input (for example a header or jumper) for a future version.
+2. **Operating limits undocumented.** Input voltage range, ILIM-programmed current limit (R3 = 160 kΩ) and capacitor-bank rating are not specified in the project. Add a rating note on the schematic and silkscreen.
+3. **Capacitor specification unclear.** C1–C18, C20–C21 are a single part (`875075361005`) with no capacitance or voltage rating in the BOM. State both and check the rating has margin over the maximum `Vin`.
+4. **No reverse-polarity or over-voltage protection** on J1; a miswired supply can damage IC1 and the polarised capacitors.
+5. **No visible output / fault indication.** D1 only shows `Vin`. Add an LED on `Vout` and/or the FAULT pin, which is currently only pulled up through R1 and not brought out.
+6. **No discharge path or inrush notes.** Behaviour at power-down and during start-up into 20 capacitors is not described; consider a bleed resistor and soft-start documentation.
+7. **Generic net names.** `Vin` and `Vout` appear only as wire annotations; the netlist and PCB use `Net-(D1-A)` / `Net-(C1-+)`. Add real net labels.
+8. **Housekeeping.** Two BOMs exist (`CapacitorBank.csv` and `production/bom.csv`), most BOM rows lack supplier part numbers, and the title-block date (2026-10-03) should be checked and kept in step with the revision.

@@ -177,3 +177,15 @@ Transcribed from the supplied [production BOM CSV](<BOM.csv>). Its `LCSC Part #`
 - Verify the supply current rating, the role and polarity of D1/D2, connector orientation against the physical silkscreen, and the `Earth`/signal-ground/chassis-grounding scheme before assembly.
 - The supplied production BOM lists IC1's footprint as `SOIC127P600X175-16N`; the PCB and schematic BOM export use `SOIC127P780X200-16N`. Verify the intended IC1 footprint before manufacturing.
 - The schematic says all lines are switched together, unless testing; confirm the intended relay control behavior before connecting equipment.
+
+## Review for next version
+
+Issues identified from the current design documentation and files:
+
+1. **IC1 footprint mismatch.** The production BOM lists `SOIC127P600X175-16N`, while the schematic and PCB use `SOIC127P780X200-16N`. Make them consistent before ordering.
+2. **Control-input design is unclear.** IC1 inputs 1–5 are tied to one net (`Net-(D2-A)`), with D2 and its resistor on that net. The role and polarity of D1/D2 are unclear, and the control drive level and current are not documented. Clarify the control scheme, including the "unless testing" note.
+3. **Grounding scheme is ambiguous.** `GND2`, `sig ground` (joined by 10 Ω R3) and `Earth` (J2) are separate. Document the intended grounding and consider a chassis/earth option.
+4. **Power ratings missing.** No supply current rating, no input protection, and only a single 0.1 µF capacitor (C1) for three relays and the driver; add bulk decoupling and a fuse or reverse-polarity protection.
+5. **Relay state not visible.** There is no indicator showing which input is selected; the LEDs are not tied to the relay output.
+6. **No signal-path protection.** No series resistors, pull-downs or termination on the switched audio lines, so inputs float when disconnected.
+7. **Naming and housekeeping.** The C1 value field holds a manufacturer part number (`C0603C104K4RAC3190`), the BOM mounting-hole footprint (`MountingHole_2.5mm`) differs from other boards, the schematic title is blank, the LCSC column is empty, and net names differ between schematic and PCB (`sig ground` vs `/SIG?GROUND`).

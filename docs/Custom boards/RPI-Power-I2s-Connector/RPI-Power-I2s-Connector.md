@@ -171,3 +171,15 @@ One row per reference; quantities, values, footprints, and part-number fields co
 - No BOM CSV or board render was present in the inventoried project files; [BOM.csv](./BOM.csv) and the board render above were generated from the schematic and PCB.
 - Schematic and PCB connector pad nets agree after normalizing KiCad’s escaped slash notation. No net-name discrepancy was found.
 - Verify the intended external 5 V input wiring: J2 pins 1 and 2 are both +5 V, while pin 3 is GND.
+
+## Review for next version
+
+Issues identified from the current design documentation and files:
+
+1. **Pi power path not explicit.** J1 pins 2 and 4 (5 V on a Raspberry Pi) are unconnected, so the Pi is powered through J2/J8/J9. This bypasses the Pi's protection circuitry; add input protection (fuse, reverse-polarity, TVS) and make the power path and back-feed behaviour clear.
+2. **Large unmanaged inrush.** Four 330 µF capacitors (C1, C4–C6) sit directly on the 5 V rail with no soft-start or current limiting.
+3. **I²C routed to U.FL.** SDA/SCL (J6/J7) go through 22 Ω series resistors to U.FL coax connectors with no pull-ups or buffering, which is unsuitable for I²C. Consider a proper connector or documenting pull-up location.
+4. **Inconsistent labels.** Net labels such as `GPIO23 /ESP DRY`, `GPIO12/ TX` and `GPIO13/ RX` contain stray spaces. ID_SDA/ID_SCL are not documented.
+5. **Many GPIOs are not broken out.** Only five signals reach connectors; the remaining labeled GPIOs have no connector.
+6. **Mixed component types.** 0402 resistors, a 0603 capacitor and THT parts are mixed, and Mouser numbers are given only for some parts.
+7. **Metadata.** Schematic title is blank, the title block date is `15 nov 2012`, and the project name (`RPI4_is2Power`) does not match the board name.

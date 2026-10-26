@@ -167,3 +167,18 @@ VCCA = 3.3 V, VCCB = 5 V. A-side (ESP32): `gen_relay_2/3/4`, `dac_on`, `screen_o
 - Board outline is roughly a square card with four M2.5 mounting holes; J3 runs along the right edge and J6 along the bottom edge (pin 1 / 40 / 39 labelled on silkscreen).
 - Source files: `tinyControlBoard.kicad_sch`, `.kicad_pcb`, `Bom.csv`, `schematic drawing.prn` in the KiCad project folder.
 - The 3.3 V LED (D2) and 5 V LED (D3) designators on the silkscreen sit next to R2/R4 respectively.
+
+## 8. Review for next version
+
+Issues identified from the current design documentation and files:
+
+1. **LDO output capacitance.** IC4 (LM3940-3.3) uses C7 = 0.47 µF and C1 = 0.33 µF, with only 10 µF bulk capacitors elsewhere. The LM3940 datasheet requires a larger output capacitor (about 33 µF) for stability, and the ESP32-S3 has high peak current demand. Verify and increase the output capacitance; also consider a regulator with more headroom.
+2. **Power-source selection and protection.** S1 selects between `USB_5V` and the board rail with no diode OR-ing, fuse or reverse-polarity protection on J8; the 5 V on J3/J6 and USB could back-feed one another.
+3. **Level shifter suitability.** The TXS0108E is intended for open-drain/low-drive signals and is a poor fit for driving relay or mains-control lines. Its OE net (`Net-(IC7-OE)`) and unused channel inputs should be defined. Consider buffers (for example 74AHCT) and/or transistor drivers.
+4. **Mains control lines have no isolation.** `mains_power_out` and `dac_on_out` are logic-level 5 V signals on the same header as power; add isolation or a dedicated driver stage.
+5. **BOM discrepancies.** R1/R2 are described as 100 Ω but the Panasonic part number `ERJ-H3EF1200V` is a 120 Ω part; confirm the intended value. D1/D2 use a different LED type from D3, and the silkscreen position of D2/D3 next to R2/R4 is confusing.
+6. **Strapping pins and spare GPIOs.** `on_led` is on IO3 (a strapping pin). GPIO_01, GPIO_02 and GPIO_39 are not broken out; `GPIO_39` is labelled both "spare" and `gen_relay_1` input, which should be resolved. Naming typos include `TXDO`/`RXDO` and the inconsistent `Intb`.
+7. **LED header mapping.** J3 LED outputs are out of sequence at the end (pin 32 = `led_o_16`, pin 34 = `led_o_15`), which is error-prone; the button and LED rows are interleaved.
+8. **Identical J3/J6 connectors.** Both are Molex 70246-4001 2x20 headers, so a front-panel or Pi/equipment ribbon cable can be plugged into the wrong one. Use different connector types or keying.
+9. **Debug access.** Programming is via USB-C or UART0 only; add a dedicated tag-connect/JTAG header, and expose spare GPIOs on test points.
+10. **Documentation gaps.** The `stp_clk`/`mcp_clk` net names need verifying, the LED current range set by R7/R17/VR1 is not documented, and the MAX6818 CH pin is left unconnected without explanation.

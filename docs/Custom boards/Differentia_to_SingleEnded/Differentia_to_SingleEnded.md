@@ -148,3 +148,15 @@ The BOM has 48 total units across these grouped reference rows. Its columns do n
 - **Verify grounding:** `GND`, `GND 2`, and `GND 3` are separate nets in both design files. Confirm how they should be connected in the finished system.
 - **Verify BOM sourcing:** the supplied CSV has datasheet links but no supplier-PN field. In particular, `1725669` is the listed value for J6–J8, not a separately identified supplier PN.
 - No MCU pin assignments or firmware/debug details apply to this board.
+
+## Review for next version
+
+Issues identified from the current design documentation and files:
+
+1. **Three unconnected grounds.** `GND`, `GND 2` and `GND 3` are separate nets in both the schematic and PCB. The power return (J2) is not tied to the signal return (J6–J8); define the grounding scheme and add a single-point link (for example a ferrite bead or 0 Ω) or a documented jumper.
+2. **Revision labelling inconsistent.** The silkscreen reads "Diff > Single Version 2.0" while the schematic title block says "XLR to single ended" revision 0.1 (2025-05-31). Align them.
+3. **Typographical and naming issues.** The block title "RIGH CHANNEL" is misspelled, power LED/resistor blocks have no title, and net names such as `/buffer L-  in` and `/buffer L+` are inconsistent between channels.
+4. **Mixed component technologies and sizes.** Large axial THT resistors sit alongside 0805/0603/1206 SMD parts, and a 1206 capacitor (810 pF) is mixed with 0805 ones. Consider moving to SMD to simplify assembly and reduce board area.
+5. **No supply protection.** ±5 V enters J2 with no reverse-polarity or over-voltage protection, and the 1 kΩ + LED rail indicators are the only supply features.
+6. **No output protection.** J8 only has a 10 Ω resistor (R15) and C11; consider output short-circuit and DC-offset protection if connected to external gear.
+7. **BOM gaps.** No supplier part numbers; J6–J8 are listed only as `1725669`, with the same string used as the footprint name.

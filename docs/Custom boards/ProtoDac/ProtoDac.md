@@ -147,3 +147,16 @@ The supplied CSV has no supplier part-number field. Supplier part numbers are th
 - Extracted PCB and schematic net names match; the board's WS/BC/DATA markings are silk text, not explicit schematic net labels.
 - The schematic drawing has no named functional-block titles, explicit supply-current requirement, or MCU/programming interface.
 - The BOM does not specify supplier part numbers. Confirm exact ordered parts and footprints with the BOM owner before purchasing.
+
+## Review for next version
+
+Issues identified from the current design documentation and files:
+
+1. **Unnamed signal nets.** WS, BC and DATA are identified only by silkscreen; the schematic uses `Net-(Jx-SIG)` names. Add proper net labels.
+2. **Duplicate input paths.** U.FL connectors J1–J3 and terminal J6 appear to feed the same WS/BC/DATA nets. Document that only one source may be connected at a time, or add a selection jumper.
+3. **Digital input conditioning.** All six inputs use 430 Ω series resistors with no termination or pull-downs. Check signal integrity at I2S clock rates on the U.FL coax runs and the DAC's logic-high threshold when driven from 3.3 V logic.
+4. **Power input.** 5 V connects directly to the DAC module with no regulator, reverse-polarity protection, fuse or per-channel filtering. The current requirement is not documented.
+5. **Large inrush.** Two 1000 µF capacitors (C3/C4) are fed directly from the terminal; consider soft-start or a series resistor/ferrite.
+6. **Output stage unspecified.** The 10 µF AC-coupling capacitors and 430 Ω resistors to ground set load and cutoff behaviour that is not documented; the R, G, G, L terminal has duplicated ground pins.
+7. **Unused module pins.** TDA1387x8 pins 4, 7–24 and 26–27 are unconnected; confirm that the module footprint is only partly used.
+8. **Specialty and unsourced parts.** Audio-grade components (Clarity Cap, Kaisei, Charcroft) have no supplier part numbers and are single-source; the BOM TDA1387x8 value is blank, and the schematic is dated 2024-11-19 (rev 0.2).
