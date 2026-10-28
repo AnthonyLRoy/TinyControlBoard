@@ -157,8 +157,8 @@ flowchart TD
 
 | Interface                             | Type                                                            | Connector/Location                                                            |
 | ------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Front-panel button/rotary/LED harness | 40-pin Molex                                                    | See [docs/wiring-reference.md](../wiring-reference.md) §1.7                   |
-| Raspberry Pi UART link                | Wired point-to-point, ESP32 GPIO1/2/41/42 ↔ Pi GPIO12/13/23/24 | Per [docs/userDocumentation/RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md) |
+| Front-panel button/rotary/LED harness | 40-pin Molex                                                    | See [03-esp32-developer-guide.md](03-esp32-developer-guide.md) §10             |
+| Raspberry Pi UART link                | Wired point-to-point, ESP32 GPIO1/2/41/42 ↔ Pi GPIO12/13/23/24 | Per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)                                       |
 | Power rails                           | Relay-switched: 3.3V, DAC, Output stage, Raspberry Pi 5V        | 4 relays sequenced; 3 auxiliary relays (DAC signal-select, general 1/2)       |
 | USB (firmware flashing)               | ESP32-S3 native USB / UART bootloader                           | Development only                                                              |
 

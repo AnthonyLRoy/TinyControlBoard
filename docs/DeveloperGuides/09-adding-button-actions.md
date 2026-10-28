@@ -197,6 +197,6 @@ re-read:
    `ActionFactory.cpp` if a new route, implement/extend `execute()`.
 6. Add display name(s) to `commandCatalog.cpp`.
 7. Update the Raspberry Pi listener if UART is involved.
-8. Update [button-command-map.md](button-command-map.md).
+8. Update the [communication protocol guide](05-communication-protocol.md) if the UART command set changes.
 9. Run the `PlatformIO Build` task and verify on hardware (or via `host_tests`
    for anything with host-testable logic).

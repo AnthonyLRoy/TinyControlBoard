@@ -19,7 +19,7 @@ report playback state back to the ESP32.
 | Language | Python 3 |
 | Key libraries | `pyserial` (UART), `RPi.GPIO` or `lgpio` (handshake GPIOs), standard `socket` (MPD TCP), `subprocess` (`mpc`, `moodeutl`), `requests`/`http.client` (Chrome DevTools Protocol) |
 | Process manager | systemd (unit files under `scripts/rpi/systemd/`) |
-| UART device | `/dev/ttyAMA5` (`dtoverlay=uart5` in `/boot/config.txt` per [docs/userDocumentation/RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md)) |
+| UART device | `/dev/ttyAMA5` (`dtoverlay=uart5` in `/boot/config.txt` per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)) |
 | Baud rate | 921600 (must match `board::serial` on the ESP32 side) |
 
 ## 3. Project Structure
@@ -66,7 +66,7 @@ graph TD
 
 Both `uart5_listener.service` and `heartbeat_sender.service` run as independent, always-on
 systemd services (`Restart=always` per the templates in
-[docs/userDocumentation/RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md)) — they are separate Python processes, not threads of
+[01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)) — they are separate Python processes, not threads of
 one process, and do not share in-memory state (any shared state goes through MPD).
 
 ## 5. Systemd Services
@@ -94,7 +94,7 @@ one process, and do not share in-memory state (any shared state goes through MPD
 | Device | `/dev/ttyAMA5` |
 | Baud | 921600 |
 | Framing | Custom binary protocol, mirrored 1:1 from `lib/protocol/uartProtocol.hpp` in `protocol.py` |
-| Handshake | GPIO23 (Pi input, ESP32→Pi data-ready) / GPIO24 (Pi output, Pi→ESP32 data-ready) per [docs/userDocumentation/RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md) |
+| Handshake | GPIO23 (Pi input, ESP32→Pi data-ready) / GPIO24 (Pi output, Pi→ESP32 data-ready) per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md) |
 | Resync | `uart5_listener.py`'s `read_packet_with_resync()` scans for the `0xAA` start byte and validates the header/checksum before accepting a frame; malformed frames are dropped silently (no NACK sent) |
 
 See [05-communication-protocol.md](05-communication-protocol.md) for the full wire format.
@@ -137,7 +137,7 @@ localhost-only services.
 
 ## 10. Deployment
 
-Per [docs/userDocumentation/RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md): copy the `home/antho/*.py` files to the target
+Per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md): copy the `home/antho/*.py` files to the target
 path on the Pi, copy the two `.service` files to `/etc/systemd/system/`, then:
 
 ```bash
@@ -162,7 +162,7 @@ preinstalled `RPi.GPIO`/`pyserial`, consistent with moOde's minimal-Python-footp
 |---|---|---|
 | ESP32 boot-diagnostic LEDs stuck flashing at the "RPi Comms" stage | `uart5-listener`/`heartbeat-sender` not running, or `/dev/ttyAMA5` misconfigured | `systemctl status uart5-listener heartbeat-sender`, `dmesg \| grep ttyAMA5` |
 | ESP32 forces SLEEP shortly after boot completes | Heartbeat stopped after the initial boot handshake (30s timeout) | `journalctl -u heartbeat-sender.service` |
-| A physical button appears to do nothing | Command may map to a `CommandId` with no registered handler in `uart5_listener.py`'s dispatch table, or (for `CMD_PREV_MENU_ITEM`) the button may be physically unreachable — see [documentation-gaps.md](documentation-gaps.md) | Check the handler dispatch table for the relevant `CommandId` |
+| A physical button appears to do nothing | Command may map to a `CommandId` with no registered handler in `uart5_listener.py`'s dispatch table, or (for `CMD_PREV_MENU_ITEM`) the button may be physically unreachable | Check the handler dispatch table for the relevant `CommandId` |
 | Cover art doesn't update in the Android app | Independent of UART — verify moOde's own HTTP endpoints (`get_currentsong`, `coverart.php`) respond, since the app fetches art directly over HTTP, not via UART | `curl` moOde's endpoints directly from another host on the LAN |
 
 ## 13. Extending the Raspberry Pi Side

@@ -215,8 +215,8 @@ a 4-entry Gray-code lookup table.
 | 47 | General relay 1 | out | active-high | `lib/board/boardConfig.hpp` |
 | 48 | Working-status LED | out | — | `lib/indicators/statusLed.cpp` |
 
-Full pin table also cross-referenced in [06-hardware-interface.md](06-hardware-interface.md)
-and [wiring-reference.md](wiring-reference.md).
+Full pin table is also cross-referenced in
+[06-hardware-interface.md](06-hardware-interface.md).
 
 ## 11. MCP23018
 
