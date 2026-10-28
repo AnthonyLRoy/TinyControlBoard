@@ -13,7 +13,7 @@ The Dac Chassis is directly earthed  via a cable to the power supply chassis whi
 
 **Power Supply control Wires**
 
-The power Supply control  wires allow the power supples to be switched off and on by the Control Board, this is usefull when moving into different supply modes . for example if you want to not have all the power supplies on , for examnpel in sleep or deepsleep modes. Note that there is no control power for the control board as that remains on all the time  , and can only be switched off if the mains power is disconnected via the Filter switch.
+The power Supply control  wires allow the power supples to be switched off and on by the Control Board. This is useful when moving into different supply modes . For example, in sleep or deepsleep modes. Note that there is no control power for the control board as that remains on all the time  , and can only be switched off if the mains power is disconnected via the Filter switch.
 
 
 <img src="media/PowerSupplyControl.drawio.png" alt="Power Distribution Diagram" width="1000" style="max-width: 100%; height: auto;">

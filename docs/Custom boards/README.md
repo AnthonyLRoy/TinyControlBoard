@@ -10,5 +10,6 @@ Index of the custom PCBs designed for the Tiny Control Board system. Each page c
 | [Differential to Single-Ended](Differentia_to_SingleEnded/Differentia_to_SingleEnded.md) | An audio board using OPA1692 dual op-amps to convert balanced (differential) audio signals to single-ended. Needs +5 V / -5 V supplies. |
 | [Single-Ended to Differential](Single_ended_to_Diff/Single_ended_to_Diff.md) | An audio board using two 1646S08-U devices to convert single-ended audio to balanced (differential) outputs. Needs +5 V / -5 V supplies. |
 | [Power Relay Board](Power_Relay_Board/Power_Relay_Board.md) | A six-channel relay board using a ULN2003 driver with EE2-5NU relays, for switching power and other loads from control signals. |
+| [PowerSupplyUCIndicators](PowerSupplyUCIndicators/PowerSupplyUCIndicators.md) | A two-channel indicator board with 2N3904 transistor stages, 1k trimmers, and six-pin host connectors for sense, power, and on/off signals. |
 | [ProtoDac](ProtoDac/ProtoDac.md) | An eight-channel TDA1387 DAC module carrier with digital audio inputs and stereo analog output terminals. Powered from 5 V. |
 | [RPI-Power-I2s-Connector](RPI-Power-I2s-Connector/RPI-Power-I2s-Connector.md) | A passive adapter with a 2x20 Raspberry Pi GPIO header that distributes 5 V power and breaks out the I2S audio signals to the DAC boards. |
