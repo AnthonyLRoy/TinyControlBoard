@@ -1,0 +1,10 @@
+﻿Designator,Footprint,Quantity,Value,LCSC Part #
+C1,0603,1,C0603C104K4RAC3190,
+"D1, D2",LEDC2012X40N,2,LS_R976,
+"H1, H2, H3, H4",MountingHole_2.5mm,4,MountingHole,
+IC1,SOIC127P600X175-16N,1,ULN2003LVDR,
+"J1, J10, J12, J13, J14, J15, J16, J17, J18, J19, J3",1725669,11,1725669,
+J2,PinHeader_1x01_P1.00mm_Vertical,1,Conn_01x01_Socket,
+"K1, K2, K3",Relay_DPDT_Kemet_EC2,3,EC2-5SNU,
+"R1, R2",0603,2,1k,
+R3,0603,1,10R,

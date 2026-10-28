@@ -52,6 +52,5 @@ respective documents where precision matters.
 
 ## Outstanding Items for a Future Pass
 
-All items are already listed with `TODO` markers in their respective documents and
-summarized in [documentation-gaps.md](documentation-gaps.md); no invented values were
+Items are marked with `TODO` in their respective documents; no invented values were
 substituted for any of them.

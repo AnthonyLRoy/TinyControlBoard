@@ -28,7 +28,7 @@ editing — do not assume the doc's example code is verbatim up to date):
 - Local-only: [lib/app/ActionCommandRoutingPolicy.hpp](../../lib/app/ActionCommandRoutingPolicy.hpp) (classify), [lib/app/ActionFactory.cpp](../../lib/app/ActionFactory.cpp) (map new route if needed), and the relevant class in [lib/app/commands/](../../lib/app/commands/).
 - [lib/protocol/commandCatalog.cpp](../../lib/protocol/commandCatalog.cpp) — add display name(s) for logging.
 - If UART is involved, add handling on the Raspberry Pi side (`scripts/rpi/home/antho/command_ids.py`, `playback_commands.py`, and `uart5_listener.py`'s `COMMAND_HANDLERS`).
-- Update [docs/button-command-map.md](../../docs/button-command-map.md).
+- Update the [communication protocol guide](../../docs/DeveloperGuides/05-communication-protocol.md) if the UART command set changes.
 
 Requirements:
 - Keep new button IDs additive (never renumber existing ones — it shifts LED bit positions).

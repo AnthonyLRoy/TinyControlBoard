@@ -1,8 +1,8 @@
 # TinyControlBoard System Architecture
 
 This document is the architectural overview for the TinyControlBoard control system and
-its Riverbank Streamer DAC host. It follows an arc42-style structure, using the existing
-control-board and audio-system diagrams from the [Service Guide](userDocumentation/ServiceGuide.md).
+its Riverbank Streamer DAC host. It follows an arc42-style structure and includes context
+and audio-system diagrams.
 
 For implementation detail, use the focused references: [ESP32 firmware](DeveloperGuides/03-esp32-developer-guide.md),
 [Android app](DeveloperGuides/02-android-developer-guide.md), [Raspberry Pi services](DeveloperGuides/04-rpi-developer-guide.md),
@@ -20,17 +20,18 @@ the Android app and the Raspberry Pi.
 
 The wider audio assembly accepts network playback from the Raspberry Pi and other digital
 sources, routes selected digital audio through reclocking and DAC stages, and provides
-analogue outputs. Its signal path is shown in the audio-system diagram below; construction
-and component-level details belong in the [Service Guide](userDocumentation/ServiceGuide.md).
+analogue outputs. Its signal path is shown in the audio-system diagram below. See the
+[custom board index](<Custom boards/README.md>) and [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md)
+for available hardware references.
 
 ### Scope
 
 This document covers the architecture and interactions of:
 
-- ESP32-S3 firmware in [`lib/`](../../lib/) and [`src/`](../../src/).
-- Raspberry Pi companion services in [`scripts/rpi/`](../../scripts/rpi/), running alongside
+- ESP32-S3 firmware in [`lib/`](../lib/) and [`src/`](../src/).
+- Raspberry Pi companion services in [`scripts/rpi/`](../scripts/rpi/), running alongside
   moOde Audio and MPD.
-- The Kotlin Android app in [`android/TinyRemote/`](../../android/TinyRemote/).
+- The Kotlin Android app in [`android/TinyRemote/`](../android/TinyRemote/).
 - The control-board and audio-system context needed to understand their relationship.
 
 It does not replace the circuit schematics, board references, service procedures, or
@@ -58,7 +59,7 @@ field-level protocol specification.
 | The deployed Pi runs moOde Audio and MPD.                                                                                                     | Pi-side actions use MPD and moOde-specific facilities; the ESP32 does not implement playback.                                                                                         |
 | The UART carrier uses the repository's framed protocol at 921600 baud. BLE carries characteristic-specific payloads rather than UART framing. | Protocol changes must remain consistent across firmware, Pi services, and Android. See[05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md).                                    |
 | The BLE service currently supports one connected client.                                                                                      | The Android control surface is single-client; concurrent phone control is not a supported deployment assumption.                                                                      |
-| The design integrates with a mains-powered audio assembly.                                                                                    | Wiring, enclosure, and service work must follow the[Service Guide](../userDocumentation/ServiceGuide.md) and applicable schematics; this architecture document is not a safety procedure. |
+| The design integrates with a mains-powered audio assembly.                                                                                    | Wiring and enclosure work must follow applicable schematics and safety requirements; this architecture document is not a safety procedure. |
 
 The repository does not define budget, schedule, or formal operating-environment constraints.
 The exact moOde release and a separate staging topology are also not specified in the
@@ -120,7 +121,7 @@ and thumbnails; control, status, library, and playlist traffic follows the ESP32
 | moOde / MPD                   | Provides playback, queue, library, and system services used by the Pi scripts.                                                                 | [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md)                                                                                 |
 | Android app                   | Provides BLE-based control and browsing UI and fetches artwork from moOde over HTTP.                                                           | [02-android-developer-guide.md](DeveloperGuides/02-android-developer-guide.md)                                                                         |
 | UART protocol                 | Defines packet framing, message types, commands, and payloads shared by the ESP32 and Pi.                                                      | [05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md)                                                                           |
-| Audio assembly                | Digital source selection, reclocking, DAC conversion, and analogue outputs.                                                                    | [Service Guide](../userDocumentation/ServiceGuide.md) and its [DAC/audio subsystem guide](../userDocumentation/service-guide/DacSubsystem.md) |
+| Audio assembly                | Digital source selection, reclocking, DAC conversion, and analogue outputs.                                                                    | [Custom Boards index](<Custom boards/README.md>); [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) |
 
 ## 6. Runtime View
 
@@ -195,7 +196,7 @@ Audio sources ──> reclocking / source selection ──> DAC and output stage
 
 The ESP32 and Pi are deployed as connected hardware. The Android app is an optional client.
 No distinct staging or cloud deployment is documented. Raspberry Pi installation and
-service setup are covered by [RPI4_SETUP.md](../userDocumentation/RPI4_SETUP.md); firmware
+service setup are covered by [01-Rpi4_SETUP.md](DeveloperGuides/01-Rpi4_SETUP.md); firmware
 and Android build/deployment steps belong to their respective developer guides.
 
 ## 8. Cross-Cutting Concepts
@@ -269,7 +270,7 @@ dedicated ADR rather than relying on this summary alone.
 | BLE currently accepts one client.                                                                           | Concurrent remote controllers are not supported.                                       | [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md)                                                                |
 | Exact moOde version and separate staging deployment are unspecified.                                        | Reproducibility and environment-specific validation are limited.                       | [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md)                                                              |
 | The`SHUTTING_DOWN` power-state enum value is not mapped to an observed transition here.                   | State documentation may not fully match implementation intent.                         | Confirm in firmware state-transition code.                                                                         |
-| Wiring and commissioning documentation still has areas marked TODO.                                         | Builders may need to consult schematics and verify details before assembly or service. | [System Wiring and Commissioning](../userDocumentation/service-guide/SystemWiring.md)                                  |
+| Wiring and commissioning documentation still has areas marked TODO.                                         | Builders may need to consult schematics and verify details before assembly or service. | [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md)                                  |
 
 No dated refactoring plan or prioritization for these items is currently documented.
 

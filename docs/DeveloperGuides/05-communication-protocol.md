@@ -120,7 +120,7 @@ graph LR
 | `CMD_STOP_TRACK` | 0x0103 | Stop | |
 | `CMD_SKIP_FORWARD` | 0x0104 | Seek forward | |
 | `CMD_SKIP_BACK` | 0x0105 | Seek back | |
-| `CMD_PREV_MENU_ITEM` | 0x0106 | Previous moOde menu item | Unreachable from any physical button, see [documentation-gaps.md](documentation-gaps.md) |
+| `CMD_PREV_MENU_ITEM` | 0x0106 | Previous moOde menu item | Unreachable from any physical button |
 | `CMD_NEXT_MENU_ITEM` | 0x0107 | Next moOde menu item | |
 | `CMD_ITEM_SELECT` | 0x0108 | Select current menu item | |
 | `CMD_EXIT_ITEM` | 0x0109 | Exit current menu item | |
@@ -238,7 +238,6 @@ in the header-level declarations reviewed for this document.**
   the inspected source (`MSG_NACK` exists as an enum value but no call site emitting it was
   found in either the ESP32 or Pi subagent inventories — **TODO – confirm whether
   `MSG_NACK` is dead protocol surface**).
-  Renamed as noted in [documentation-gaps.md](documentation-gaps.md) if resolved.
 - **Resync**: the Pi's `read_packet_with_resync()` scans forward for the next `0xAA` start
   byte after a bad frame, rather than dropping the whole connection.
   ESP32-side resync behavior: **TODO – confirm the ESP32 RX pump has equivalent resync
