@@ -41,8 +41,8 @@ current repository status.
 
 #### Wiring Diagrams and Bill of Materials
 
-See the [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md). The complete parts
-list (BOM) is still to be added.
+See the [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) and the
+[Bill of Materials](bom/BOM.md) for the complete parts list.
 
 For the GPIO, relay and wiring details used by the software, see
 [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md).
