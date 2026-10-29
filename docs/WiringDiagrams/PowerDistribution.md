@@ -19,7 +19,7 @@ The power Supply control  wires allow the power supples to be switched off and o
 <img src="Media/PowerSupplyControl.drawio.png" alt="Power Distribution Diagram" width="1000" style="max-width: 100%; height: auto;">
 
 
-**Led Indicator Wiring**
+**UCPure Led Indicator conenction Wiring**
 
 The led indicators indicate on the front panel of the power supply , weather the Capacitors are Charging (Orange) or are supplying Power (Green), the power on indicator is seperate and connected directly to the Softstart Board.
 
