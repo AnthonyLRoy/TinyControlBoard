@@ -37,12 +37,14 @@ Drawings, dimensions and assembly views for building the cases. Read them in thi
 See the [Custom Boards index](<Custom boards/README.md>) for a list of every custom board with a short description.
 
 See the [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) for the project workflow and
-current repository status. 
+current repository status.
 
 #### Wiring Diagrams and Bill of Materials
 
-See the [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) and the
-[Bill of Materials](bom/BOM.md) for the complete parts list.
+See the [Overall Wiring Overview](WiringDiagrams/OverallWiring.md) for the
+high-level audio and control connections, the
+[Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) for the power
+system, and the [Bill of Materials](bom/BOM.md) for the parts list.
 
 For the GPIO, relay and wiring details used by the software, see
 [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md).

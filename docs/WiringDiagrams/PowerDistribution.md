@@ -38,6 +38,10 @@ a complete mains wiring diagram or a verified construction drawing.
 
 <img src="Media/PowerSchematic.drawio.png" alt="High-level overview of the DAC power distribution" width="1000" style="max-width: 100%; height: auto;">
 
+**Figure 1 — Power distribution.** This overview shows the mains input path
+through the filter and soft-start circuit to the transformers, and how the
+transformer outputs supply the DAC components.
+
 The 9 V transformer has two 120 V primary windings connected for the 240 V
 mains input, and two separate secondary windings. Each secondary feeds a
 separate power-supply circuit for one UcPure module. This is one transformer,
@@ -62,6 +66,10 @@ fail-safe behavior need to be verified against the schematics and hardware.
 
 <img src="Media/PowerSupplyControl.drawio.png" alt="Overview of power-supply control signals" width="1000" style="max-width: 100%; height: auto;">
 
+**Figure 2 — Power-supply control wiring.** The control board switches selected
+supplies for modes such as Sleep and Deep Sleep; the control board itself
+remains powered.
+
 The current notes say that the control board remains powered while the
 controlled supplies are off. Sleep and Deep Sleep therefore must not be
 treated as mains isolation or as permission to open the equipment.
@@ -74,6 +82,10 @@ power-on indicator is connected to the soft-start board. Indicator state is
 not proof that stored energy is absent or that the equipment is safe to touch.
 
 <img src="Media/Ledindicatordiagram.drawio.png" alt="UcPure capacitor and power-on indicator connections" width="1000" style="max-width: 100%; height: auto;">
+
+**Figure 3 — UcPure indicators.** Orange LEDs indicate capacitor charging;
+green LEDs indicate that the capacitors are supplying power. A separate
+power-on indicator connects to the soft-start board.
 
 ## Information needed for a safe, build-ready guide
 

@@ -12,6 +12,9 @@ Check the board silkscreen and the pin-1 marker before attaching a cable.
 
 <img src="Media/tcb-connection-layout.drawio.png" alt="Locations of the TinyControlBoard's external connectors" width="600" style="max-width: 100%; height: auto;">
 
+**Figure 1 — External connector locations.** Use this overview to locate the
+board connections before consulting the detailed pinout diagrams.
+
 ## Power and setup
 
 The board accepts 5 V from USB-C, the J8 screw terminal, or a 40-pin header.
@@ -33,6 +36,9 @@ to the front panel.
 
 <img src="Media/TinyControlBoard-J3-FrontPanel.drawio.png" alt="J3 40-pin front-panel wiring and pin assignments" width="1000" style="max-width: 100%; height: auto;">
 
+**Figure 2 — J3 front-panel wiring.** Shows the button inputs, LED outputs,
+power and ground pins on the 40-pin front-panel header.
+
 ## J6: Raspberry Pi and equipment interface
 
 J6 is a 2x20 header for the Raspberry Pi and external equipment. It carries
@@ -41,6 +47,9 @@ signals for the relays, DAC, screen, and mains-control interface. See the
 diagram for the pin assignments and signal directions.
 
 <img src="Media/TinyControlBoard-J6-PiEquipment.drawio.png" alt="J6 40-pin Raspberry Pi and equipment wiring and pin assignments" width="1000" style="max-width: 100%; height: auto;">
+
+**Figure 3 — J6 Raspberry Pi and equipment wiring.** Shows the UART and
+handshake lines alongside the level-shifted control signals and power pins.
 
 The control lines are logic-level signals, not power outputs. Do not connect
 them directly to relay coils, mains, or other loads; use suitable external
@@ -52,7 +61,13 @@ The following diagrams show the relay and Raspberry Pi connections.
 
 <img src="Media/RelayTinycontrolBoard.png" alt="Example connection between the TinyControlBoard and relay interface" width="1000" style="max-width: 100%; height: auto;">
 
+**Figure 4 — Relay interface example.** Illustrates the connection between
+the TinyControlBoard and the relay interface.
+
 <img src="Media/controlBoard-rpi4.png" alt="Example connection between the TinyControlBoard and Raspberry Pi 4" width="1000" style="max-width: 100%; height: auto;">
+
+**Figure 5 — Raspberry Pi 4 connection example.** Illustrates how the
+TinyControlBoard connects to the Raspberry Pi.
 
 **Important:** J3 and J6 use identical connectors. Identify each cable at both
 ends before connecting it; plugging a cable into the wrong header can connect

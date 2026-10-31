@@ -74,6 +74,10 @@ the canonical architecture view.
 
 <img src="user-manual-media/media/service-guide/control-board-architecture-overview.svg" alt="Control and communication architecture showing the Android app, ESP32-S3 BLE GATT server and UART transport, Raspberry Pi services, moOde, and connected hardware" style="width:100%;height:auto" />
 
+**Figure 1 — Control and communication architecture.** Android sends control
+and library requests to the ESP32 over BLE; the ESP32 exchanges commands and
+playback data with the Raspberry Pi over UART.
+
 | External party or system               | Interaction with TinyControlBoard                                                                                                                                |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | User / front panel                     | Buttons, rotary input, LEDs, display controls, and power controls connect to the ESP32 hardware.                                                                 |
@@ -88,6 +92,9 @@ This existing Service Guide diagram shows the wider source, reclocking, DAC, and
 topology. It describes the audio assembly, not the software command path.
 
 <img src="user-manual-media/media/service-guide/streamer-dac-system-overview.svg" alt="Audio-system overview showing control and Bluetooth connections, digital audio sources, reclocking, ESS and ProtoDAC paths, and RCA and XLR outputs" style="width:100%;height:auto" />
+
+**Figure 2 — Audio-system overview.** Shows the digital audio sources, the
+reclocking and DAC paths, and the analogue RCA and XLR outputs.
 
 ### System boundary
 
