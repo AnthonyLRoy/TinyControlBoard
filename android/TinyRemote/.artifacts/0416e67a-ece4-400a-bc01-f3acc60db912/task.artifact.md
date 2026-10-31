@@ -1,3 +1,0 @@
-- [x] Move status elements to Toolbar in `activity_main.xml`
-- [x] Update `MainActivity.kt` to handle moved views and connection status
-- [x] Verify build and UI layout
