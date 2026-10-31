@@ -2,6 +2,7 @@
 
 ![TinyControlBoard PCB](TinyControlBoard-annotated.png)
 
+
 ## 1. Overview
 
 TinyControlBoard is a compact ESP32-S3 based controller. It scans a 16-button front panel, drives 16 constant-current LEDs, switches/level-shifts control lines to external equipment (DAC, screen, mains/relay controls) and talks to a Raspberry Pi over a 40-pin header. It is powered from 5 V (USB-C, screw terminal or the 40-pin headers) and runs the logic at 3.3 V.
