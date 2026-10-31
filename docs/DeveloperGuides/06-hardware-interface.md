@@ -15,13 +15,13 @@ organized by physical function instead.
 | ------------------------------ | ----: | -------------------------------------------------------- |
 | `k_heartbeatTimeoutMs`       | 30000 | Max silence from the Pi before forced SLEEP              |
 | `k_initDelayMs`              |  5000 | Startup power-stabilization delay                        |
-| `k_powerSettleDelayMs`       |  1500 | Settle time after DAC / output-stage relay changes       |
+| `k_powerSettleDelayMs`       |  1500 | Delay after enabling DAC / output-stage relays on power-on |
 | `k_vcc3v3OnDelayMs`          |  1000 | Settle time after the 3.3V rail relay turns on           |
 | `k_rpiOnDelayMs`             |  1000 | Settle time after the Pi power relay turns on            |
 | `k_rpiBootTimeoutMs`         | 60000 | Max wait for first Pi heartbeat during power-on          |
 | `k_rpiShutdownTimeoutMs`     | 60000 | Max wait for Pi shutdown to complete                     |
-| `k_rpiShutdownSettleDelayMs` |   500 | Settle time after shutdown wait, before cutting Pi power |
-| `k_vcc3v3PowerOffDelayMs`    |  5000 | Settle time before removing the 3.3V rail                |
+| `k_rpiShutdownSettleDelayMs` |  5500 | Settle time after cutting Pi power during shutdown       |
+| `k_vcc3v3PowerOffDelayMs`    |  5000 | Defined for 3.3V rail power-off; currently unused         |
 
 ## 3. UART / Handshake
 
@@ -56,7 +56,7 @@ organized by physical function instead.
 | Latch       | `GPIO5` |
 
 16-bit register, shifted low-byte-first then high-byte-first; one bit per front-panel push
-button (bit 0 unused — the power button has no LED). 
+button (bit 0 unused — the power button has no LED).
 
 ## 6. Relay Outputs
 
@@ -70,10 +70,16 @@ button (bit 0 unused — the power button has no LED).
 | General relay 1                         | `GPIO47` | High = ON    | No — unused by any action in inspected source                                                                |
 | General relay 2                         | `GPIO39` | High = ON    | No — dead output, never referenced                                                                           |
 
-Active-high confirmed directly in `lib/hal/relay/relay.cpp`
-(`gpio_set_level(relayPin, state ? 1 : 0)`), with internal pull-down enabled and no
-pull-up) — i.e. relays default to OFF on an undriven/floating pin. `StandardRelay::init(pin, initialState)`
-drives the pin to `initialState` immediately after configuring it (skipped if GPIO configuration fails).
+The table's `High = ON` describes the firmware convention in
+`StandardRelay::setRelayState()` (`true` writes the GPIO high); it does not
+confirm the electrical polarity or contact behavior of the physical relay
+assembly. During startup, `setupRelays()` calls `StandardRelay::init(pin,
+false)` for each relay-control GPIO. If GPIO configuration succeeds, `init()`
+configures the pin as an output with a pull-down and drives it low. If
+configuration fails, `init()` logs the error and returns, but `setupRelays()`
+does not check for that failure and still reports success. Therefore firmware
+alone does not guarantee that every relay control reached its intended startup
+state.
 
 ## 7. Indicator Outputs
 
@@ -155,33 +161,37 @@ flowchart TD
 
 ## 12. Physical Interfaces Table
 
-| Interface                             | Type                                                            | Connector/Location                                                            |
-| ------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Front-panel button/rotary/LED harness | 40-pin Molex                                                    | See [03-esp32-developer-guide.md](03-esp32-developer-guide.md) §10             |
-| Raspberry Pi UART link                | Wired point-to-point, ESP32 GPIO1/2/41/42 ↔ Pi GPIO12/13/23/24 | Per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)                                       |
-| Power rails                           | Relay-switched: 3.3V, DAC, Output stage, Raspberry Pi 5V        | 4 relays sequenced; 3 auxiliary relays (DAC signal-select, general 1/2)       |
-| USB (firmware flashing)               | ESP32-S3 native USB / UART bootloader                           | Development only                                                              |
+| Interface                             | Type                                                            | Connector/Location                                                      |
+| ------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Front-panel button/rotary/LED harness | 40-pin Molex                                                    | See [03-esp32-developer-guide.md](03-esp32-developer-guide.md) §10      |
+| Raspberry Pi UART link                | Wired point-to-point, ESP32 GPIO1/2/41/42 ↔ Pi GPIO12/13/23/24 | Per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)                                 |
+| Power and signal relay controls       | Seven firmware GPIO control signals                            | Four used in the power sequence; three auxiliary controls               |
+| USB (firmware flashing)               | ESP32-S3 native USB / UART bootloader                           | Development only                                                        |
 
 ## 13. Bill of Materials (as inferred from source)
 
-| Part                                                  | Role                                             | Source of inference                                                                                     |
-| ----------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| ESP32-S3 (16MB flash variant)                         | Main controller                                  | `boards/esp32-s3-devkitc-1-16mb.json`, `platformio.ini`                                             |
-| MCP23018                                              | 16-bit I2C GPIO expander for button/rotary input | `board::i2c::mcpAddress = 0x20`, `lib/hal/buttons/mcpInputHandler.cpp`                              |
-| 16-bit SPI shift register (e.g. 74HC595-class device) | Front-panel button LED driver                    | `lib/hal/leds/spiLedDriver.cpp` — exact part number **TODO – not present in supplied source** |
-| Raspberry Pi 4                                        | Audio playback host (moOde Audio)                | `docs/userDocumentation/RPI4_SETUP.md`, repo-wide references                                          |
-| Relay modules ×7                                     | Power-rail and signal switching                  | `lib/board/boardConfig.hpp::relays`                                                                   |
+| Part                                      | Role                                             | Source of inference                                                        |
+| ----------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------- |
+| ESP32-S3 (16MB flash variant)             | Main controller                                  | `boards/esp32-s3-devkitc-1-16mb.json`, `platformio.ini`                |
+| MCP23018                                  | 16-bit I2C GPIO expander for button/rotary input | `board::i2c::mcpAddress = 0x20`, `lib/hal/buttons/mcpInputHandler.cpp` |
+| 16-bit SPI shift register (STP16CPC26MTR) | Front-panel button LED driver                    | [TinyControlBoard BOM](../Custom%20boards/tinyControlBoard/TinyControlboard.md#6-bill-of-materials) |
+| Raspberry Pi 4                            | Audio playback host (moOde Audio)                | [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md) and repo-wide references             |
+| Relay control outputs ×7                  | Power-rail and signal control                    | `lib/board/boardConfig.hpp::relays`; physical relay count and ratings are not established by these GPIO definitions |
 
 ## 14. Safety Notes
 
-- All power-rail relays default OFF on an unconfigured/floating GPIO (pull-down enabled, no
-  pull-up) — a firmware crash before `setupRelays()` completes leaves the unit fully
-  powered off rather than in an undefined-energized state.
-- The DAC and output-stage relays are turned OFF before the Raspberry Pi relay in both the
-  Sleep and Deep Sleep sequences (output-stage first, then — for Deep Sleep only — DAC),
-  reducing the chance of an audible pop from the RPi's own shutdown transient reaching the
-  amplifier stage.
-- **TODO – Information not available in the supplied source**: relay coil voltage/current
-  ratings, PSU rail voltage/current ratings, and any fusing/overcurrent protection present
-  on the physical board. None of this electrical detail is expressed in the firmware source
-  (GPIO logic levels only) and was not present in any other supplied document.
+- **Startup state is not guaranteed by firmware alone.** The firmware attempts
+  to configure all seven relay-control GPIOs as outputs and drive them low, but
+  a GPIO configuration error is logged and not propagated by `setupRelays()`.
+  The hardware's behavior before firmware configures the pins, during reset, or
+  after a configuration failure must be verified on the actual board.
+- **Shutdown order:** both Sleep and Deep Sleep request Raspberry Pi shutdown,
+  switch off the Pi power relay, and wait 5.5 seconds before suspending the DAC
+  signal-select relay and switching off the output-stage relay. Deep Sleep also
+  switches off the DAC power relay; Sleep leaves that relay on. Verify that
+  this sequence is appropriate for the connected hardware.
+- **Still requires hardware verification:** physical relay count and part
+  numbers, coil voltage/current, relay-driver circuitry and polarity, PSU rail
+  voltage/current ratings, protective-earth and signal-ground arrangement, and
+  fuse/overcurrent protection. Firmware GPIO definitions describe logic
+  signals; they do not establish these electrical ratings or protections.

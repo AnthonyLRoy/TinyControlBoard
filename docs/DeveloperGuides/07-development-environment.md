@@ -86,7 +86,7 @@ ssh pi@<host> "sudo mv /tmp/*.service /etc/systemd/system/ && \
 - [ ] `platformio run` completes with no errors for both environments.
 - [ ] Firmware flashes and boots: boot-diagnostic LEDs light in sequence, then clear once
       the Raspberry Pi heartbeat arrives.
-- [ ] `systemctl status uart5-listener heartbeat-sender` both show `active (running)` on
+- [ ] `systemctl status uart5-listener heartbeat` both show `active (running)` on
       the Pi.
 - [ ] Android app: `ScanActivity` discovers the board (`TinyControlBoard` in the scan list)
       and connects successfully; `MainActivity` receives status/now-playing updates.

@@ -117,9 +117,9 @@ configuration).
 | `heartbeat_task` | Polls elapsed time since last UART RX, fires timeout callback | `lib/hal/uart/heartbeatMonitor.cpp` | 4096 | 5 | unpinned |
 | `ble_status` | Polls system/library/playlist state and pushes BLE notifications | `lib/ble/BleServer.cpp` | 4096 | 3 | unpinned |
 | `LED_Task` | Drains a 1-deep status-LED command queue | `lib/indicators/statusLed.cpp` | 4096 | 5 | unpinned |
-| `boot_diag_leds` (flash task) | Flashes boot-diagnostic LEDs on failure | `lib/indicators/BootDiagnosticLeds.cpp` | 2048 | TODO – verify exact priority constant | unpinned |
-| MCP23018 interrupt task | Reads MCP23018 registers on GPIO interrupt, decodes button/rotary state | `lib/hal/buttons/mcpInputHandler.cpp` | TODO – verify exact stack/priority constants | TODO | unpinned |
-| SPI boot indicator task | Legacy/auxiliary SPI boot LED task | `lib/indicators/SpiBootIndicator.cpp` | TODO – verify | TODO | unpinned |
+| `boot_diag_leds` (flash task) | Flashes boot-diagnostic LEDs on failure | `lib/indicators/BootDiagnosticLeds.cpp` | 2048 | `tskIDLE_PRIORITY + 1` | unpinned |
+| `mcp_int_task` | Reads MCP23018 registers on GPIO interrupt, decodes button/rotary state | `lib/hal/buttons/mcpInputHandler.cpp` | 4096 | 10 | unpinned |
+| `spi_boot_ind` | Legacy/auxiliary SPI boot LED task | `lib/indicators/SpiBootIndicator.cpp` | 4096 | `tskIDLE_PRIORITY + 1` | unpinned |
 
 No task is pinned to a specific core in the inspected source (no `xTaskCreatePinnedToCore`
 calls found).
@@ -143,7 +143,7 @@ graph LR
 | Peripheral | `UART_NUM_2` |
 | TX / RX pins | `GPIO2` (TX) / `GPIO1` (RX) |
 | Baud rate | 921600 |
-| Data format | 8N1 (default `uart_param_config`; explicit parity/stop-bit values: **TODO – confirm exact `uart_config_t` fields in `serial.cpp`**) |
+| Data format | 8N1: `UART_DATA_8_BITS`, `UART_PARITY_DISABLE`, `UART_STOP_BITS_1` |
 | Flow control | None — handled instead by a 2-GPIO data-ready handshake (`GPIO41` ESP32→Pi, `GPIO42` Pi→ESP32`) |
 | RX buffer | 1024 bytes (`k_bufferSize`, ring buffer ~2× that internally) |
 | Receive mechanism | ISR on the data-ready GPIO wakes `uart_rx_task`, which loops `uart_read_bytes()` until the driver buffer is drained (fixed in a prior fix for burst traffic — see hazard note below) |
@@ -206,7 +206,7 @@ a 4-entry Gray-code lookup table.
 | 15 | I2C SCL | out | — | `lib/hal/buttons/mcpInputHandler.cpp` |
 | 16 | I2C SDA | in/out | — | `lib/hal/buttons/mcpInputHandler.cpp` |
 | 17 | MCP23018 enable | out | active-high | `lib/hal/buttons/mcpInputHandler.cpp` |
-| 18 | MCP23018 interrupt | in | active-low (typical MCP23018 default; **TODO – confirm `IOCON.ODR`/polarity bits in code**) | `lib/hal/buttons/mcpInputHandler.cpp` |
+| 18 | MCP23018 interrupt | in | active-low, open-drain; ESP32 input uses pull-up and falling-edge interrupt | `lib/hal/buttons/mcpInputHandler.cpp` |
 | 21 | Button-LED PWM (overall brightness) | out (LEDC) | — | `lib/indicators/ledDefinitions.hpp` / PWM LED |
 | 39 | General relay 2 | out | active-high | `lib/board/boardConfig.hpp` — **initialized but never referenced by any action/power sequence in the inspected source (dead output)** |
 | 41 | ESP32→Pi data-ready output | out | active-high (10ms pulse) | `lib/hal/uart/dataReadyHandshake.cpp` |
@@ -322,8 +322,10 @@ C:\Users\<user>\.platformio\penv\Scripts\platformio.exe run -e esp32-s3-devkitc-
 platformio.exe run -t upload
 ```
 
-Exact upload port/baud: **TODO – not pinned in `platformio.ini`** (uses PlatformIO's
-auto-detected upload port; no `upload_port`/`upload_speed` override present).
+Upload port and baud are not explicitly pinned in `platformio.ini`; PlatformIO
+auto-detects the upload port and uses the selected platform's defaults. Check
+the upload log for the effective settings, or set `upload_port` and
+`upload_speed` when a fixed configuration is required.
 
 ## 19. Firmware Update
 
