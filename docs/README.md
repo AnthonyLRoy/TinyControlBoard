@@ -69,6 +69,8 @@ references for their respective areas.
 | [07-development-environment.md](DeveloperGuides/07-development-environment.md) | Setting up a development machine.                                                                       |
 | [08-quality-check.md](DeveloperGuides/08-quality-check.md)                     | Known gaps and cross-component consistency checks.                                                      |
 | [09-adding-button-actions.md](DeveloperGuides/09-adding-button-actions.md)     | Adding a new button or action (a matching `/add-button-action` prompt lives in `.github/prompts/`). |
+| [Plymouth theme INSTALL.md](../scripts/rpi/home/antho/riverbank-plymouth-theme/riverbank-theme/INSTALL.md) | Installing the Riverbank boot splash theme on the Pi. |
+| [TASKS.md](../TASKS.md) | Outstanding project tasks. |
 
 ### Bill of Materials
 
