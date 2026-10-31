@@ -39,12 +39,12 @@ See the [Custom Boards index](<Custom boards/README.md>) for a list of every cus
 See the [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) for the project workflow and
 current repository status.
 
-#### Wiring Diagrams and Bill of Materials
+Wiring Diagrams
 
-See the [Overall Wiring Overview](WiringDiagrams/OverallWiring.md) for the
-high-level audio and control connections, the
-[Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) for the power
-system, and the [Bill of Materials](bom/BOM.md) for the parts list.
+See the following documents for Wiring
+[Overall Wiring Overview](WiringDiagrams/OverallWiring.md) for the high-level audio and control connections, the
+[Control Board Wiring Guide](WiringDiagrams/ControlBoardWiring.md) for the TinyControlBoard connectors and equipment connections, the
+[Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) for the power system,
 
 For the GPIO, relay and wiring details used by the software, see
 [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md).
@@ -68,3 +68,7 @@ references for their respective areas.
 | [07-development-environment.md](DeveloperGuides/07-development-environment.md) | Setting up a development machine.                                                                       |
 | [08-quality-check.md](DeveloperGuides/08-quality-check.md)                     | Known gaps and cross-component consistency checks.                                                      |
 | [09-adding-button-actions.md](DeveloperGuides/09-adding-button-actions.md)     | Adding a new button or action (a matching `/add-button-action` prompt lives in `.github/prompts/`). |
+
+**Bill of Materials**
+
+[Bill of Materials](bom/BOM.md) List of all the major components used in the project
