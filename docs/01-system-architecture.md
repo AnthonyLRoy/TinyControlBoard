@@ -72,11 +72,11 @@ developer documentation.
 The diagram is maintained in the Service Guide's media directory and is embedded here as
 the canonical architecture view.
 
-<img src="user-manual-media/media/service-guide/control-board-architecture-overview.svg" alt="Control and communication architecture showing the Android app, ESP32-S3 BLE GATT server and UART transport, Raspberry Pi services, moOde, and connected hardware" style="width:100%;height:auto" />
+<img src="user-manual-media/media/service-guide/control-board-architecture-overview.png" alt="Control and communication architecture showing ESP32-S3 firmware and physical I/O, Android Bluetooth LE control, Raspberry Pi services, and direct HTTP album-art access" width="100%" style="display: block; width: 100%; max-width: 100%; height: auto;" />
 
 **Figure 1 — Control and communication architecture.** Android sends control
-and library requests to the ESP32 over BLE; the ESP32 exchanges commands and
-playback data with the Raspberry Pi over UART.
+requests to the ESP32 over BLE; Pi-bound commands and library operations use UART,
+while album art is fetched directly from moOde over HTTP.
 
 | External party or system               | Interaction with TinyControlBoard                                                                                                                                |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -91,7 +91,7 @@ playback data with the Raspberry Pi over UART.
 This existing Service Guide diagram shows the wider source, reclocking, DAC, and output
 topology. It describes the audio assembly, not the software command path.
 
-<img src="user-manual-media/media/service-guide/streamer-dac-system-overview.svg" alt="Audio-system overview showing control and Bluetooth connections, digital audio sources, reclocking, ESS and ProtoDAC paths, and RCA and XLR outputs" style="width:100%;height:auto" />
+<img src="user-manual-media/media/service-guide/streamer-dac-system-overview.png" alt="System and audio signal path showing Raspberry Pi, USB, and receiver inputs through source selection and reclocking to the ESS and ProtoDAC paths and RCA and XLR outputs" width="100%" style="display: block; width: 100%; max-width: 100%; height: auto;" />
 
 **Figure 2 — Audio-system overview.** Shows the digital audio sources, the
 reclocking and DAC paths, and the analogue RCA and XLR outputs.

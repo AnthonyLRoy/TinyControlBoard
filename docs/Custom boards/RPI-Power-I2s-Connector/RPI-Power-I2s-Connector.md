@@ -131,36 +131,21 @@ There is no MCU on the PCB. This table records the Raspberry Pi header signal as
 
 ## BOM
 
-One row per reference; quantities, values, footprints, and part-number fields come from the schematic BOM export. “—” means no corresponding part number was populated in the source.
+Matching components are grouped by value, footprint, and part-number fields. Quantities and part numbers come from the schematic BOM export. “—” means no corresponding part number was populated in the source.
 
 | Ref | Qty | Value / part | Footprint | Supplier PN (Mouser) | Manufacturer PN |
 |---|---:|---|---|---|---|
-| C1 | 1 | 330u | `CAPPRD350W60D800H1300` | 647-RNU1C331MDN1KX | RNU1C331MDN1KX |
+| C1, C4–C6 | 4 | 330u | `CAPPRD350W60D800H1300` | 647-RNU1C331MDN1KX | RNU1C331MDN1KX |
 | C2 | 1 | 0u1 | `Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder` | — | — |
 | C3 | 1 | 4u7 | `Capacitor_THT:CP_Radial_D5.0mm_P2.00mm` | — | — |
-| C4 | 1 | 330u | `CAPPRD350W60D800H1300` | 647-RNU1C331MDN1KX | RNU1C331MDN1KX |
-| C5 | 1 | 330u | `CAPPRD350W60D800H1300` | 647-RNU1C331MDN1KX | RNU1C331MDN1KX |
-| C6 | 1 | 330u | `CAPPRD350W60D800H1300` | 647-RNU1C331MDN1KX | RNU1C331MDN1KX |
 | D1 | 1 | LS_R976 | `samsys:LEDC2012X40N` | 720-LSR976D5178 | LS R976 |
-| H1 | 1 | MountingHole | `MountingHole:MountingHole_2.5mm` | — | — |
-| H2 | 1 | MountingHole | `MountingHole:MountingHole_2.5mm` | — | — |
-| H3 | 1 | MountingHole | `MountingHole:MountingHole_2.5mm` | — | — |
-| H4 | 1 | MountingHole | `MountingHole:MountingHole_2.5mm` | — | — |
+| H1–H4 | 4 | MountingHole | `MountingHole:MountingHole_2.5mm` | — | — |
 | J1 | 1 | GPIO | `Connector_PinSocket_2.54mm:PinSocket_2x20_P2.54mm_Vertical` | — | — |
 | J2 | 1 | 1725669 | `1725669` | 651-1725669 | 1725669 |
-| J3 | 1 | U.FL-R-SMT-1_80_ | `UFLRSMT180` | — | U.FL-R-SMT-1(80) |
-| J4 | 1 | U.FL-R-SMT-1_80_ | `UFLRSMT180` | — | U.FL-R-SMT-1(80) |
-| J5 | 1 | U.FL-R-SMT-1_80_ | `UFLRSMT180` | — | U.FL-R-SMT-1(80) |
-| J6 | 1 | U.FL-R-SMT-1_80_ | `UFLRSMT180` | — | U.FL-R-SMT-1(80) |
-| J7 | 1 | U.FL-R-SMT-1_80_ | `UFLRSMT180` | — | U.FL-R-SMT-1(80) |
-| J8 | 1 | Conn_01x01_Pin | `Connector_Pin:Pin_D1.2mm_L11.3mm_W3.0mm_Flat` | — | — |
-| J9 | 1 | Conn_01x01_Pin | `Connector_Pin:Pin_D1.2mm_L11.3mm_W3.0mm_Flat` | — | — |
+| J3–J7 | 5 | U.FL-R-SMT-1_80_ | `UFLRSMT180` | — | U.FL-R-SMT-1(80) |
+| J8, J9 | 2 | Conn_01x01_Pin | `Connector_Pin:Pin_D1.2mm_L11.3mm_W3.0mm_Flat` | — | — |
 | R3 | 1 | 1k | `Resistor_SMD:R_0402_1005Metric` | — | — |
-| R4 | 1 | 22 | `Resistor_SMD:R_0402_1005Metric` | — | — |
-| R5 | 1 | 22 | `Resistor_SMD:R_0402_1005Metric` | — | — |
-| R6 | 1 | 22 | `Resistor_SMD:R_0402_1005Metric` | — | — |
-| R7 | 1 | 22 | `Resistor_SMD:R_0402_1005Metric` | — | — |
-| R8 | 1 | 22 | `Resistor_SMD:R_0402_1005Metric` | — | — |
+| R4–R8 | 5 | 22 | `Resistor_SMD:R_0402_1005Metric` | — | — |
 
 ## Notes
 

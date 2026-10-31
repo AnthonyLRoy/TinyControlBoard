@@ -29,25 +29,26 @@ Technical documentation for building and developing the project, split into hard
 
 Drawings, dimensions and assembly views for building the cases. Read them in this order:
 
-1. [Dac-Case.md](HardwareDocumentation/Enclosure/Dac-Case.md) – panel drawings and dimensions for the main DAC enclosure, the inner case and the power supply enclosure.
-2. [Component-Assemblies.md](HardwareDocumentation/Enclosure/Component-Assemblies.md) – how the internal components are fitted to the panels and cases.
+| Order | Document | Description |
+| ----- | -------- | ----------- |
+| 1 | [Dac-Case.md](HardwareDocumentation/Enclosure/Dac-Case.md) | Panel drawings and dimensions for the main DAC enclosure, the inner case and the power supply enclosure. |
+| 2 | [Component-Assemblies.md](HardwareDocumentation/Enclosure/Component-Assemblies.md) | How the internal components are fitted to the panels and cases. |
 
 #### Custom PCBs
 
-See the [Custom Boards index](<Custom boards/README.md>) for a list of every custom board with a short description.
+| Document | Description |
+| -------- | ----------- |
+| [Custom Boards index](<Custom boards/README.md>) | List of every custom board with a short description. |
+| [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) | Project workflow and current repository status. |
 
-See the [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) for the project workflow and
-current repository status.
+#### Wiring Diagrams
 
-Wiring Diagrams
-
-See the following documents for Wiring
-[Overall Wiring Overview](WiringDiagrams/OverallWiring.md) for the high-level audio and control connections, the
-[Control Board Wiring Guide](WiringDiagrams/ControlBoardWiring.md) for the TinyControlBoard connectors and equipment connections, the
-[Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) for the power system,
-
-For the GPIO, relay and wiring details used by the software, see
-[06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md).
+| Document | Description |
+| -------- | ----------- |
+| [Overall Wiring Overview](WiringDiagrams/OverallWiring.md) | High-level audio and control connections. |
+| [Control Board Wiring Guide](WiringDiagrams/ControlBoardWiring.md) | TinyControlBoard connectors and equipment connections. |
+| [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) | The power system. |
+| [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md) | GPIO, relay and wiring details used by the software. |
 
 ### Software Documentation
 
@@ -69,6 +70,8 @@ references for their respective areas.
 | [08-quality-check.md](DeveloperGuides/08-quality-check.md)                     | Known gaps and cross-component consistency checks.                                                      |
 | [09-adding-button-actions.md](DeveloperGuides/09-adding-button-actions.md)     | Adding a new button or action (a matching `/add-button-action` prompt lives in `.github/prompts/`). |
 
-**Bill of Materials**
+### Bill of Materials
 
-[Bill of Materials](bom/BOM.md) List of all the major components used in the project
+| Document | Description |
+| -------- | ----------- |
+| [Bill of Materials](bom/BOM.md) | List of all the major components used in the project. |

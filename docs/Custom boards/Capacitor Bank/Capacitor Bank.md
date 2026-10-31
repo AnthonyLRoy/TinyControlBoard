@@ -1,8 +1,6 @@
 # Capacitor Bank
 
-
-
-**Top View** 
+**Top View**
 
 ![3D render, component side](CapacitorBank.png)
 
@@ -15,9 +13,23 @@
 | Item                | Details                                                                                                                                                                                  |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | MCU / main IC       | No MCU. IC1 is a TPS2556QDRBTQ1 power-distribution switch; its two outputs are connected together in the schematic.                                                                      |
-| Supply              | J1 pin 2 is shown on the schematic's `Vin` wire annotation; J1 pin 1 is GND. The input voltage and current limits are not specified in the project files.                              |
+| Supply              | J1 pin 2 is the `Vin` input; J1 pin 1 is GND. See [Operating limits](#operating-limits) for the input range and output current limit.                                                   |
 | Programming / debug | None shown. TP1-TP3 are test points; there is no programming interface.                                                                                                                  |
 | Source files        | `CapacitorBank.kicad_pro`, `CapacitorBank.kicad_sch`, `CapacitorBank.kicad_pcb`, and the supplied `CapacitorBank.csv` BOM. A second production BOM is at `production/bom.csv`. |
+
+## Operating limits
+
+| Parameter         | Limit / value                                                    |
+| ----------------- | ---------------------------------------------------------------- |
+| Input voltage     | 2.5-7 V; designed for a nominal 5 V supply.                      |
+| Output current    | Limited to approximately 700 mA.                                 |
+| Capacitor bank    | 9,400 µF nominal (20 × 470 µF capacitors).                    |
+| Bank ESR          | Approximately 0.5 mΩ (20 capacitors, each 10 mΩ, in parallel). |
+| Startup rise time | Approximately 50 ms.                                             |
+| Discharge time    | Approximately 200 ms observed; varies with the connected load.   |
+
+> [!WARNING]
+> There is no reverse-polarity protection at the input. Reversing the supply can damage the power switch and polarized capacitors. A series protection diode is not fitted because its forward-voltage drop would reduce the voltage available at the output.
 
 ## Schematic
 
@@ -61,8 +73,8 @@ Not applicable: no MCU or module is present. IC1 is a power switch, not a microc
 
 ## Peripheral details
 
-- **Power switch (IC1):** TPS2556QDRBTQ1. Schematic pin connections: pin 1 GND; pins 2 (IN_1) and 3 (IN_2) to `Vin`; pin 4 EN to R2 (10 kOhm) and then GND; pin 5 ILIM to R3 (160 kOhm) and TP3; pins 6 (OUT_1) and 7 (OUT_2) tied to `Vout`; pin 8 FAULT to R1 (100 kOhm) and `Vin`; pin 9 exposed pad to GND. The exact enable behavior, programmed current limit, and fault output behavior should be confirmed against the IC datasheet.
-- **Capacitor bank:** C1-C18, C20, and C21 are twenty 875075361005 parts between `Vout` and GND. The BOM does not state their capacitance or voltage rating separately; verify the part datasheet and polarity before assembly.
+- **Power switch (IC1):** TPS2556QDRBTQ1. Schematic pin connections: pin 1 GND; pins 2 (IN_1) and 3 (IN_2) to `Vin`; pin 4 EN to R2 (10 kOhm) and then GND; pin 5 ILIM to R3 (160 kOhm) and TP3; pins 6 (OUT_1) and 7 (OUT_2) tied to `Vout`; pin 8 FAULT to R1 (100 kOhm) and `Vin`; pin 9 exposed pad to GND. The output current limit is approximately 700 mA; confirm enable and FAULT behavior against the IC datasheet.
+- **Capacitor bank:** C1-C18, C20, and C21 are twenty [875075361005](https://www.mouser.co.uk/en/ProductDetail/Wurth-Elektronik/875075361005) 470 µF, 16 VDC aluminum polymer capacitors between `Vout` and GND. Each has a specified ESR of 10 mΩ; observe the polarity markings during assembly.
 - **Input capacitors:** C19 is 0.1 uF and C22 is 47 uF, both between `Vin` and GND.
 - **Indicator:** D1 and R4 (1 kOhm) are in series between `Vin` and GND. R1 (100 kOhm) pulls the FAULT connection toward `Vin`.
 - **Test points:** TP1 is on `Vout`; TP2 is on `Vin`; TP3 is on the ILIM/R3 connection.
@@ -73,20 +85,20 @@ Not applicable: no MCU or module is present. IC1 is a power switch, not a microc
 
 Transcribed from the supplied `CapacitorBank.csv`. The source contains no separate supplier part-number values for most generic components; `—` means no supplier PN was listed.
 
-| Ref             | Qty | Value / part         | Footprint                                                | Supplier PN    |
-| --------------- | --: | -------------------- | -------------------------------------------------------- | -------------- |
-| C1-C18, C20-C21 |  20 | 875075361005         | CAPAE1030X1270N                                          | 875075361005   |
-| C19             |   1 | 0.1uf                | Capacitor_SMD:C_0805_2012Metric                          | —             |
-| C22             |   1 | 47u                  | Capacitor_SMD:C_0805_2012Metric                          | —             |
-| D1              |   1 | LED                  | LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder    | —             |
-| H1-H4           |   4 | MountingHole         | MountingHole:MountingHole_3.2mm_M3                       | —             |
-| IC1             |   1 | TPS2556QDRBTQ1       | SON65P300X300X100-9N-D                                   | TPS2556QDRBTQ1 |
-| J1-J2           |   2 | Screw_Terminal_01x02 | TerminalBlock:TerminalBlock_483132_2P_P7.62mm            | —             |
-| R1              |   1 | 100k                 | Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder | —             |
-| R2              |   1 | 10k                  | Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder | —             |
-| R3              |   1 | 160k                 | Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder | —             |
-| R4              |   1 | 1k                   | Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder | —             |
-| TP1-TP3         |   3 | TestPoint            | TestPoint:TestPoint_Pad_1.5x1.5mm                        | —             |
+| Ref             | Qty | Value / part                     | Footprint                                                | Supplier PN                                                                                                              |
+| --------------- | --: | -------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| C1-C18, C20-C21 |  20 | 470 µF, 16 VDC aluminum polymer | CAPAE1030X1270N                                          | [875075361005](https://www.mouser.co.uk/en/ProductDetail/Wurth-Elektronik/875075361005)                                   |
+| C19             |   1 | 0.1uf                            | Capacitor_SMD:C_0805_2012Metric                          | Standard Ceramic                                                                                                         |
+| C22             |   1 | 47u                              | Capacitor_SMD:C_0805_2012Metric                          | Standard Ceramic                                                                                                         |
+| D1              |   1 | LED                              | LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder    | Standard Led                                                                                                             |
+| H1-H4           |   4 | MountingHole                     | MountingHole:MountingHole_3.2mm_M3                       | —                                                                                                                       |
+| IC1             |   1 | TPS2556QDRBTQ1                   | SON65P300X300X100-9N-D                                   | TPS2556QDRBTQ1                                                                                                           |
+| J1-J2           |   2 | Screw_Terminal_01x02             | TerminalBlock:TerminalBlock_483132_2P_P7.62mm            | [Link](https://www.switchelectronics.co.uk/products/2-way-pcb-terminal-block-connector-7-62mm-20a?variant=45367523508533) |
+| R1              |   1 | 100k                             | Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder | Standard                                                                                                                 |
+| R2              |   1 | 10k                              | Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder | Standard                                                                                                                 |
+| R3              |   1 | 160k                             | Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder | Standard                                                                                                                 |
+| R4              |   1 | 1k                               | Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder | Standard                                                                                                                 |
+| TP1-TP3         |   3 | TestPoint                        | TestPoint:TestPoint_Pad_1.5x1.5mm                        | —                                                                                                                       |
 
 ## Notes
 
@@ -94,7 +106,7 @@ Transcribed from the supplied `CapacitorBank.csv`. The source contains no separa
 - H1-H4 use 3.2 mm M3 mounting-hole footprints; verify mounting and component clearances in the enclosure.
 - The PCB title block says `Cap Bank`, revision 0.1, dated 2026-10-03. Board silkscreen shows RiverBank Systems, version 0.1, and `INPUT` / `OUTPUT` polarity markings.
 - Source files are `CapacitorBank.kicad_pro`, `CapacitorBank.kicad_sch`, and `CapacitorBank.kicad_pcb`; the supplied BOM is `CapacitorBank.csv` (with `production/bom.csv` also present).
-- Verify the allowed input voltage/current, the TPS2556-Q1 enable and current-limit behavior, and the capacitor part ratings/polarity before applying power.
+- Operate within the documented 2.5-7 V input range and approximately 700 mA current limit.
 - Verify the connector pin orientation against the PCB silkscreen and the intended cable wiring.
 
 ## Review for next version
@@ -102,10 +114,7 @@ Transcribed from the supplied `CapacitorBank.csv`. The source contains no separa
 Issues identified from the current design documentation and files:
 
 1. **Switch is always enabled; no external control.** IC1's enable is active-low and EN is held low through R2 (10 kΩ), so the switch turns on whenever `Vin` is present. This is intended, but there is no way to disable the output. Consider exposing an enable input (for example a header or jumper) for a future version.
-2. **Operating limits undocumented.** Input voltage range, ILIM-programmed current limit (R3 = 160 kΩ) and capacitor-bank rating are not specified in the project. Add a rating note on the schematic and silkscreen.
-3. **Capacitor specification unclear.** C1–C18, C20–C21 are a single part (`875075361005`) with no capacitance or voltage rating in the BOM. State both and check the rating has margin over the maximum `Vin`.
-4. **No reverse-polarity or over-voltage protection** on J1; a miswired supply can damage IC1 and the polarised capacitors.
-5. **No visible output / fault indication.** D1 only shows `Vin`. Add an LED on `Vout` and/or the FAULT pin, which is currently only pulled up through R1 and not brought out.
-6. **No discharge path or inrush notes.** Behaviour at power-down and during start-up into 20 capacitors is not described; consider a bleed resistor and soft-start documentation.
-7. **Generic net names.** `Vin` and `Vout` appear only as wire annotations; the netlist and PCB use `Net-(D1-A)` / `Net-(C1-+)`. Add real net labels.
-8. **Housekeeping.** Two BOMs exist (`CapacitorBank.csv` and `production/bom.csv`), most BOM rows lack supplier part numbers, and the title-block date (2026-10-03) should be checked and kept in step with the revision.
+2. **No reverse-polarity or over-voltage protection** on J1; a miswired supply can damage IC1 and the polarised capacitors. The reverse-polarity risk is called out above.
+3. **No visible output / fault indication.** D1 only shows `Vin`. Add an LED on `Vout` and/or the FAULT pin, which is currently only pulled up through R1 and not brought out.
+4. **Generic net names.** `Vin` and `Vout` appear only as wire annotations; the netlist and PCB use `Net-(D1-A)` / `Net-(C1-+)`. Add real net labels.
+5. **Housekeeping.** Two BOMs exist (`CapacitorBank.csv` and `production/bom.csv`), most BOM rows lack supplier part numbers, and the title-block date (2026-10-03) should be checked and kept in step with the revision.
