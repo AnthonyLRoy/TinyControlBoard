@@ -1,6 +1,6 @@
 # TinyControlBoard (River Bank Systems v1.0)
 
-![TinyControlBoard PCB](TinyControlBoard-annotated.png)
+![TinyControlBoard PCB](TinyControlboard-annotated.png)
 
 
 ## 1. Overview
