@@ -20,35 +20,35 @@ All drawings were created in Solid Edge. Dimensions are in millimetres unless st
 
 The finished outer enclosure with overall dimensions.
 
-![Streamer DAC Enclosure overall](Images/Main%20Dac%20basic.png)
+![Streamer DAC Enclosure overall](<Images/Main%20Dac%20basic.png>)
 
 ## Exploded View
 
 ### How the Enclosure Panels Fit Together
 
-![How each of the enclosure panels fit together](Images/Dac%20Case%20Assembly%20Exploded.png)
+![How each of the enclosure panels fit together](<Images/Dac%20Case%20Assembly%20Exploded.png>)
 
 ### Front Panel Drawing
 
-![Streamer DAC Front Panel Drawing](Images/v5%20Front%20Panel%203d.png)
+![Streamer DAC Front Panel Drawing](<Images/v5%20Front%20Panel%203d.png>)
 
 ### Rear Panel Drawing
 
-![Streamer DAC Rear Panel Drawing](Images/Dual%20power%20Rear%20panel%203D%202.png)
+![Streamer DAC Rear Panel Drawing](<Images/Dual%20power%20Rear%20panel%203D%202.png>)
 
 ### Enclosure Floor
 
-![Streamer DAC Enclosure floor](Images/Dac%20Case%20Floor.png)
+![Streamer DAC Enclosure floor](<Images/Dac%20Case%20Floor.png>)
 
 ### Top Cover Drawing
 
-![Streamer DAC Top cover drawing](Images/Top%20Panel%203d.png)
+![Streamer DAC Top cover drawing](<Images/Top%20Panel%203d.png>)
 
 ### Side Panel Drawing
 
 Note: the side panels are identical to the ones used on the power supply enclosure, so they are interchangeable. Four of these are included in the package.
 
-![Streamer DAC Side Panel Drawing](Images/Side%20Panel.png)
+![Streamer DAC Side Panel Drawing](<Images/Side%20Panel.png>)
 
 ## DAC Inner Case Dimensions and Assembly
 
@@ -58,33 +58,39 @@ The inner case is built from a front panel, a back panel, two side panels with a
 
 Carries the mounting holes, the round holes for the front controls and the cut-outs for the display connection. The hole positions and sizes are listed in the table on the drawing.
 
-![Inner Case Front Panel](Images/Inner%20case%20front.png)
+![Inner Case Front Panel](<Images/Inner%20case%20front.png>)
 
 ### Inner Case Back Panel
 
 Has three slots cut into its lower edge: one for the ribbon cable from the reclocker to the monitor Pi, one for the HDMI and USB cables, and one for the buttons and LEDs. The gaps around the cables can be sealed with copper tape to keep the case shielded.
 
-![Inner Case Back Panel](Images/Inner%20case%20Back%20Panel.png)
+![Inner Case Back Panel](<Images/Inner%20case%20Back%20Panel.png>)
 
 ### RPI4 and Control EMI Shield
 
-![RPI4 and Control EMI shield](Images/Pi%20Sheild%20.png)
+![RPI4 and Control EMI shield](<Images/Pi%20Sheild%20.png>)
 
 ### Inner Case Side Panels and Internal Power Supply Shield
 
-![Inner case side panels and internal power supply shield](Images/Inner%20case%20Side%20panel%20and%20internal%20Sheild.png)
+![Inner case side panels and internal power supply shield](<Images/Inner%20case%20Side%20panel%20and%20internal%20Sheild.png>)
 
 ### Inner Case Base
 
-![Inner Case Base](Images/Inner%20case%20Base.png)
+![Inner Case Base](<Images/Inner%20case%20Base.png>)
 
 ### Inner Case Exploded View
 
-![DAC Inner Case Exploded](Images/Inner%20Case%20Exploded.png)
+![DAC Inner Case Exploded](<Images/Inner%20Case%20Exploded.png>)
 
 ### Inner Case Complete Assembly
 
-![Inner Case Complete Assembly](Images/Inner%20case%20Complete%20case%20only%20Assembly.png)
+![Inner Case Complete Assembly](<Images/Inner%20case%20Complete%20case%20only%20Assembly.png>)
+
+### Cros Section view of how inner case sits inside main case
+
+Shows the inner case resting on the inner bobbins
+
+![Inner Case Complete Assembly](<Images/Cross%20Section%20Dac%20back%20to%20front.png>)
 
 ## Power Supply Enclosure
 
@@ -96,16 +102,16 @@ The case that houses the internal power supply. It uses the same side panels as 
 
 ### Back Panel Drawing
 
-![Power Supply Back Panel drawing](Images/Power%20suply%20back%20panel.png)
+![Power Supply Back Panel drawing](<Images/Power%20suply%20back%20panel.png>)
 
 ### Front Panel Drawing
 
-![Power Supply Front Panel drawing](Images/Power%20supply%20Front%20Panel.png)
+![Power Supply Front Panel drawing](<Images/Power%20supply%20Front%20Panel.png>)
 
 ### Floor Drawing
 
-![Power Supply floor enclosure](Images/Power%20Supply%20Base%20Floor.png)
+![Power Supply floor enclosure](<Images/Power%20Supply%20Base%20Floor.png>)
 
 ### Exploded View
 
-![Power Supply enclosure: exploded view](Images/Power%20Supply%20Enclosure%20Exploded.png)
+![Power Supply enclosure: exploded view](<Images/Power%20Supply%20Enclosure%20Exploded.png>)
