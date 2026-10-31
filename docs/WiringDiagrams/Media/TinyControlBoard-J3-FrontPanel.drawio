@@ -1,0 +1,396 @@
+<mxfile host="Electron">
+  <diagram id="j3-front-panel" name="J3 Front Panel Wiring">
+    <mxGraphModel dx="2203" dy="917" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;fontSize=16;" value="&lt;b&gt;TinyControlBoard (River Bank Systems v1.0) – J3 Front-Panel Wiring&lt;/b&gt;&lt;br&gt;Buttons, button LEDs, rotary encoder, power switch, power indicators" vertex="1">
+          <mxGeometry height="50" width="700" x="200" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="hdrL" parent="1" style="text;html=1;align=center;fontSize=12;" value="&lt;b&gt;Left side – odd J3 pins&lt;/b&gt;" vertex="1">
+          <mxGeometry height="20" width="300" x="20" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="hdrR" parent="1" style="text;html=1;align=center;fontSize=12;" value="&lt;b&gt;Right side – even J3 pins&lt;/b&gt;" vertex="1">
+          <mxGeometry height="20" width="300" x="660" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="j3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontSize=11;" value="&lt;b&gt;J3&lt;/b&gt;&lt;br&gt;Molex 70246-4001&lt;br&gt;2x20 header" vertex="1">
+          <mxGeometry height="560" width="240" x="370" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="p1" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" value="1  N/C" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" value="N/C  2" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="3  btn_in_9" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="166" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="btn_in_1  4" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="166" as="geometry" />
+        </mxCell>
+        <mxCell id="p5" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="5  btn_in_10" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="p6" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="btn_in_2  6" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="p7" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="7  btn_in_11" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="218" as="geometry" />
+        </mxCell>
+        <mxCell id="p8" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="btn_in_3  8" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="218" as="geometry" />
+        </mxCell>
+        <mxCell id="p9" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="9  btn_in_12" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="244" as="geometry" />
+        </mxCell>
+        <mxCell id="p10" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="btn_in_4  10" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="244" as="geometry" />
+        </mxCell>
+        <mxCell id="p11" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="11  btn_in_13" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="p12" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="btn_in_5  12" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="p13" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;" value="13  btn_in_14" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="296" as="geometry" />
+        </mxCell>
+        <mxCell id="p14" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="btn_in_6  14" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="296" as="geometry" />
+        </mxCell>
+        <mxCell id="p15" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;" value="15  btn_in_15" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="322" as="geometry" />
+        </mxCell>
+        <mxCell id="p16" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="btn_in_7  16" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="322" as="geometry" />
+        </mxCell>
+        <mxCell id="p17" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="17  btn_in_16" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="348" as="geometry" />
+        </mxCell>
+        <mxCell id="p18" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="btn_in_8  18" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="348" as="geometry" />
+        </mxCell>
+        <mxCell id="p19" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="19  led_o_1" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="374" as="geometry" />
+        </mxCell>
+        <mxCell id="p20" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="led_o_9  20" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="374" as="geometry" />
+        </mxCell>
+        <mxCell id="p21" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="21  led_o_2" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="p22" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="led_o_10  22" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="p23" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="23  led_o_3" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="426" as="geometry" />
+        </mxCell>
+        <mxCell id="p24" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="led_o_11  24" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="426" as="geometry" />
+        </mxCell>
+        <mxCell id="p25" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="25  led_o_4" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="452" as="geometry" />
+        </mxCell>
+        <mxCell id="p26" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="led_o_12  26" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="452" as="geometry" />
+        </mxCell>
+        <mxCell id="p27" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="27  led_o_5" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="478" as="geometry" />
+        </mxCell>
+        <mxCell id="p28" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="led_o_13  28" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="478" as="geometry" />
+        </mxCell>
+        <mxCell id="p29" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="29  led_o_6" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="504" as="geometry" />
+        </mxCell>
+        <mxCell id="p30" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="led_o_14  30" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="504" as="geometry" />
+        </mxCell>
+        <mxCell id="p31" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="31  led_o_7" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="p32" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="led_o_16  32" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="p33" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="33  led_o_8" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="556" as="geometry" />
+        </mxCell>
+        <mxCell id="p34" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="led_o_15  34" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="556" as="geometry" />
+        </mxCell>
+        <mxCell id="p35" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;strokeColor=#000000;" value="35  GND" vertex="1">
+          <mxGeometry height="22" width="110" x="380" y="582" as="geometry" />
+        </mxCell>
+        <mxCell id="p36" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;strokeColor=#000000;" value="GND  36" vertex="1">
+          <mxGeometry height="22" width="110" x="490" y="582" as="geometry" />
+        </mxCell>
+        <mxCell id="p37" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;strokeColor=#000000;" value="37  GND" vertex="1">
+          <mxGeometry height="18" width="110" x="380" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="p38" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;strokeColor=#000000;" value="GND  38" vertex="1">
+          <mxGeometry height="18" width="110" x="490" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="LB3" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_9 · Repeat (ID 8) → GND" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="166" as="geometry" />
+        </mxCell>
+        <mxCell id="LB5" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_10 · Toggle Random (ID 9) → GND" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="LB7" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_11 · Toggle DAC (ID 10) → GND" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="218" as="geometry" />
+        </mxCell>
+        <mxCell id="LB9" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_12 · Next Panel (ID 11) → GND" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="244" as="geometry" />
+        </mxCell>
+        <mxCell id="LB11" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_13 · Toggle Meter (ID 12) → GND" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="LB13" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;" value="ROTARY ENCODER phase A (ID 13) → GND" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="296" as="geometry" />
+        </mxCell>
+        <mxCell id="LB15" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;" value="ROTARY ENCODER phase B (ID 14) → GND" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="322" as="geometry" />
+        </mxCell>
+        <mxCell id="LB17" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_16 · Cycle Brightness (ID 15) → GND" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="348" as="geometry" />
+        </mxCell>
+        <mxCell id="LL19" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" value="led_o_1 · unused (power button has no LED)" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="374" as="geometry" />
+        </mxCell>
+        <mxCell id="LL21" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED2 · Prev Track  (+5V → R → LED → led_o_2)" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="LL23" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED3 · Next Track  (+5V → R → LED → led_o_3)" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="426" as="geometry" />
+        </mxCell>
+        <mxCell id="LL25" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED4 · Skip Forward  (+5V → R → LED → led_o_4)" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="452" as="geometry" />
+        </mxCell>
+        <mxCell id="LL27" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED5 · Skip Back  (+5V → R → LED → led_o_5)" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="478" as="geometry" />
+        </mxCell>
+        <mxCell id="LL29" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED6 · Play/Pause  (+5V → R → LED → led_o_6)" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="504" as="geometry" />
+        </mxCell>
+        <mxCell id="LL31" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED7 · Toggle Display  (+5V → R → LED → led_o_7)" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="LL33" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED8 · Cover  (+5V → R → LED → led_o_8)" vertex="1">
+          <mxGeometry height="22" width="260" x="20" y="556" as="geometry" />
+        </mxCell>
+        <mxCell id="RB4" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" value="POWER ON/OFF switch · btn_in_1 (ID 0) → GND" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="166" as="geometry" />
+        </mxCell>
+        <mxCell id="RB6" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_2 · Prev Track (ID 1) → GND" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="RB8" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_3 · Next Track (ID 2) → GND" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="218" as="geometry" />
+        </mxCell>
+        <mxCell id="RB10" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_4 · Skip Forward (ID 3) → GND" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="244" as="geometry" />
+        </mxCell>
+        <mxCell id="RB12" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_5 · Skip Back (ID 4) → GND" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="RB14" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_6 · Play/Pause (ID 5) → GND" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="296" as="geometry" />
+        </mxCell>
+        <mxCell id="RB16" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_7 · Toggle Display (ID 6) → GND" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="322" as="geometry" />
+        </mxCell>
+        <mxCell id="RB18" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SW btn_in_8 · Cover (ID 7) → GND" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="348" as="geometry" />
+        </mxCell>
+        <mxCell id="RL20" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED9 · Repeat  (+5V → R → LED → led_o_9)" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="374" as="geometry" />
+        </mxCell>
+        <mxCell id="RL22" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED10 · Toggle Random  (+5V → R → LED → led_o_10)" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="RL24" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED11 · Toggle DAC  (+5V → R → LED → led_o_11)" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="426" as="geometry" />
+        </mxCell>
+        <mxCell id="RL26" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED12 · Next Panel  (+5V → R → LED → led_o_12)" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="452" as="geometry" />
+        </mxCell>
+        <mxCell id="RL28" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED13 · Toggle Meter  (+5V → R → LED → led_o_13)" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="478" as="geometry" />
+        </mxCell>
+        <mxCell id="RL30" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" value="led_o_14 · spare (rotary A has no LED)" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="504" as="geometry" />
+        </mxCell>
+        <mxCell id="RL32" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="LED16 · Cycle Brightness  (+5V → R → LED → led_o_16)" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="RL34" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" value="led_o_15 · spare (rotary B has no LED)" vertex="1">
+          <mxGeometry height="22" width="280" x="690" y="556" as="geometry" />
+        </mxCell>
+        <mxCell id="GNDL" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;" value="GND (front-panel return)" vertex="1">
+          <mxGeometry height="44" width="260" x="20" y="582" as="geometry" />
+        </mxCell>
+        <mxCell id="V5R" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" value="+5 V (J3 pins 39, 40) – feeds LED anodes + power indicators" vertex="1">
+          <mxGeometry height="44" width="280" x="690" y="582" as="geometry" />
+        </mxCell>
+        <mxCell id="p39" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" value="39  +5V" vertex="1">
+          <mxGeometry height="10" width="110" x="380" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="p40" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" value="+5V  40" vertex="1">
+          <mxGeometry height="10" width="110" x="490" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="eL3" edge="1" parent="1" source="LB3" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="p3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL5" edge="1" parent="1" source="LB5" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="p5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL7" edge="1" parent="1" source="LB7" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="p7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL9" edge="1" parent="1" source="LB9" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="p9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL11" edge="1" parent="1" source="LB11" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="p11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL13" edge="1" parent="1" source="LB13" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" target="p13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL15" edge="1" parent="1" source="LB15" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" target="p15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL17" edge="1" parent="1" source="LB17" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="p17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL19" edge="1" parent="1" source="LL19" style="endArrow=none;html=1;strokeColor=#999999;strokeWidth=1;dashed=1;" target="p19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL21" edge="1" parent="1" source="LL21" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="p21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL23" edge="1" parent="1" source="LL23" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="p23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL25" edge="1" parent="1" source="LL25" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="p25">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL27" edge="1" parent="1" source="LL27" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="p27">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL29" edge="1" parent="1" source="LL29" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="p29">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL31" edge="1" parent="1" source="LL31" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="p31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL33" edge="1" parent="1" source="LL33" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="p33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eL35" edge="1" parent="1" source="GNDL" style="endArrow=none;html=1;strokeColor=#000000;strokeWidth=2;" target="p35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR4" edge="1" parent="1" source="p4" style="endArrow=none;html=1;strokeColor=#b85450;strokeWidth=2;" target="RB4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR6" edge="1" parent="1" source="p6" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="RB6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR8" edge="1" parent="1" source="p8" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="RB8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR10" edge="1" parent="1" source="p10" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="RB10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR12" edge="1" parent="1" source="p12" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="RB12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR14" edge="1" parent="1" source="p14" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="RB14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR16" edge="1" parent="1" source="p16" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="RB16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR18" edge="1" parent="1" source="p18" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="RB18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR20" edge="1" parent="1" source="p20" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="RL20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR22" edge="1" parent="1" source="p22" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="RL22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR24" edge="1" parent="1" source="p24" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="RL24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR26" edge="1" parent="1" source="p26" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="RL26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR28" edge="1" parent="1" source="p28" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="RL28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR30" edge="1" parent="1" source="p30" style="endArrow=none;html=1;strokeColor=#999999;strokeWidth=1;dashed=1;" target="RL30">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR32" edge="1" parent="1" source="p32" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" target="RL32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR34" edge="1" parent="1" source="p34" style="endArrow=none;html=1;strokeColor=#999999;strokeWidth=1;dashed=1;" target="RL34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eR36" edge="1" parent="1" source="p40" style="endArrow=none;html=1;strokeColor=#b85450;strokeWidth=2;" target="V5R">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr2" parent="1" style="text;html=1;align=center;fontSize=14;" value="&lt;b&gt;Controller side of J3 (on the TinyControlBoard)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="24" width="400" x="300" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="MAX" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;b&gt;IC2 + IC3 · MAX6818&lt;/b&gt;&lt;br&gt;8-ch debouncer / ESD&lt;br&gt;btn_in_1..8 → btn_l_1..8 (IC2)&lt;br&gt;btn_in_9..16 → btn_l_9..16 (IC3)&lt;br&gt;3.3 V supply" vertex="1">
+          <mxGeometry height="90" width="230" x="20" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="MCP" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;b&gt;IC5 · MCP23018&lt;/b&gt;&lt;br&gt;16-bit I2C expander, addr 0x20&lt;br&gt;GPA/GPB ← btn_l_1..16&lt;br&gt;(rotary A/B decoded in firmware)&lt;br&gt;INTA / INTB → ESP32" vertex="1">
+          <mxGeometry height="90" width="230" x="20" y="890" as="geometry" />
+        </mxCell>
+        <mxCell id="ESP" parent="1" style="rounded=1;html=1;fontSize=10;align=left;spacingLeft=8;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;b&gt;IC6 · ESP32-S3-WROOM-1U-N16&lt;/b&gt;&lt;br&gt;&lt;br&gt;GPIO15  I2C SCL (mcp_clk, 50 kHz)&lt;br&gt;GPIO16  I2C SDA (mcp_sda)&lt;br&gt;GPIO17  MCP23018 reset/enable&lt;br&gt;GPIO18  MCP interrupt (IntA)&lt;br&gt;GPIO8   MCP interrupt (IntB)&lt;br&gt;&lt;br&gt;GPIO7   STP16 SDI (data)&lt;br&gt;GPIO6   STP16 CLK&lt;br&gt;GPIO5   STP16 LE (latch)&lt;br&gt;GPIO21  STP16 OE / PWM (brightness)&lt;br&gt;&lt;br&gt;GPIO3   on_led (app active)&lt;br&gt;GPIO4   standby_led (sleep)" vertex="1">
+          <mxGeometry height="250" width="240" x="380" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="STP" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;b&gt;IC1 · STP16CPC26&lt;/b&gt;&lt;br&gt;16-ch constant-current LED driver&lt;br&gt;OUT0..15 = led_o_1..16 (sinks)&lt;br&gt;R-EXT: R7 / R17 + VR1 trimmer&lt;br&gt;3.3 V supply" vertex="1">
+          <mxGeometry height="90" width="230" x="740" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="PWR" parent="1" style="rounded=1;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;b&gt;Power-state indicators&lt;/b&gt;&lt;br&gt;GPIO3 → R → ON LED (D1 on_led)&lt;br&gt;GPIO4 → R → STANDBY LED&lt;br&gt;Front-panel power indicator [18] shows ON / sleep; flashes during start-up&lt;br&gt;&lt;i&gt;(not routed through J3 – see notes)&lt;/i&gt;" vertex="1">
+          <mxGeometry height="100" width="230" x="740" y="890" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" edge="1" parent="1" source="j3" style="endArrow=classic;html=1;fontSize=10;strokeColor=#6c8ebf;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" target="MAX" value="btn_in_1..16">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="365" />
+              <mxPoint x="320" y="785" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2" edge="1" parent="1" source="MAX" style="endArrow=classic;html=1;fontSize=10;strokeColor=#6c8ebf;strokeWidth=2;" target="MCP" value="btn_l_1..16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" edge="1" parent="1" source="MCP" style="endArrow=classic;startArrow=classic;html=1;fontSize=10;strokeColor=#d6b656;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" target="ESP" value="I2C SCL/SDA, RESET, INT">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" edge="1" parent="1" source="ESP" style="endArrow=classic;html=1;fontSize=10;strokeColor=#82b366;strokeWidth=2;" target="STP" value="SDI / CLK / LE / OE(PWM)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" edge="1" parent="1" source="STP" style="endArrow=classic;html=1;fontSize=10;strokeColor=#82b366;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" target="j3" value="led_o_1..16 (sink)">
+          <mxGeometry relative="1" x="-0.641" y="-15" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="855" y="730" />
+              <mxPoint x="490" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c6" edge="1" parent="1" source="ESP" style="endArrow=classic;html=1;fontSize=10;strokeColor=#b85450;strokeWidth=2;" target="PWR" value="GPIO3 / GPIO4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="notes" parent="1" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fillColor=#ffffcc;strokeColor=#d6b656;spacing=6;" value="&lt;b&gt;Notes / assumptions&lt;/b&gt;&lt;br&gt;• J3 pin map from docs/Custom boards/tinyControlBoard/TinyControlboard.md §3; GPIOs from lib/board/boardConfig.hpp and docs/DeveloperGuides/06-hardware-interface.md.&lt;br&gt;• Button ID n (lib/board/boardButtonIds.hpp) is assumed to map to btn_in_(n+1); confirm against the KiCad schematic.&lt;br&gt;• Button inputs: normally-open switch from btn_in_n to GND (MAX6818 inputs). Power switch = ID 0 (short press Sleep/wake, ~3 s hold Deep Sleep).&lt;br&gt;• Rotary: phase A/B = IDs 13/14 (btn_in_14/15), decoded in lib/hal/buttons/mcpInputHandler.cpp. The documented encoder push switch is not identified in the sources – verify its input.&lt;br&gt;• LEDs: STP16 outputs are current sinks, so each LED anode goes to +5 V and cathode to led_o_n (verify on the front-panel PCB). J3 pins 32/34 are led_o_16/led_o_15 (out of sequence).&lt;br&gt;• Power indicators: the documentation lists no J3 pins for them; on_led (GPIO3) and standby_led (GPIO4) are on-board outputs. If the front-panel indicator is wired to them, they leave via test points, not J3. Verify. J3 pins 1/2 are N/C." vertex="1">
+          <mxGeometry height="150" width="950" x="20" y="1020" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

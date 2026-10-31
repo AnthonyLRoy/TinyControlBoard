@@ -1,0 +1,188 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="j3-front-panel" name="J3 Front Panel Wiring">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="&lt;b&gt;TinyControlBoard (River Bank Systems v1.0) – J3 Front-Panel Wiring&lt;/b&gt;&lt;br&gt;Buttons, button LEDs, rotary encoder, power switch, power indicators" style="text;html=1;align=center;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="200" y="10" width="700" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="hdrL" value="&lt;b&gt;Left side – odd J3 pins&lt;/b&gt;" style="text;html=1;align=center;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="75" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="hdrR" value="&lt;b&gt;Right side – even J3 pins&lt;/b&gt;" style="text;html=1;align=center;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="660" y="75" width="300" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="j3" value="&lt;b&gt;J3&lt;/b&gt;&lt;br&gt;Molex 70246-4001&lt;br&gt;2x20 header" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="370" y="85" width="240" height="560" as="geometry" />
+        </mxCell>
+
+        <!-- Row 0: pins 1,2 -->
+        <mxCell id="p1" value="1  N/C" style="rounded=0;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="380" y="140" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p2" value="N/C  2" style="rounded=0;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="490" y="140" width="110" height="22" as="geometry" /></mxCell>
+
+        <!-- Button pins 3-18 -->
+        <mxCell id="p3" value="3  btn_in_9" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="380" y="166" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p4" value="btn_in_1  4" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="490" y="166" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p5" value="5  btn_in_10" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="380" y="192" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p6" value="btn_in_2  6" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="490" y="192" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p7" value="7  btn_in_11" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="380" y="218" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p8" value="btn_in_3  8" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="490" y="218" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p9" value="9  btn_in_12" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="380" y="244" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p10" value="btn_in_4  10" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="490" y="244" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p11" value="11  btn_in_13" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="380" y="270" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p12" value="btn_in_5  12" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="490" y="270" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p13" value="13  btn_in_14" style="rounded=0;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="380" y="296" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p14" value="btn_in_6  14" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="490" y="296" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p15" value="15  btn_in_15" style="rounded=0;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="380" y="322" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p16" value="btn_in_7  16" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="490" y="322" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p17" value="17  btn_in_16" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="380" y="348" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p18" value="btn_in_8  18" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="490" y="348" width="110" height="22" as="geometry" /></mxCell>
+
+        <!-- LED pins 19-34 -->
+        <mxCell id="p19" value="19  led_o_1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="374" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p20" value="led_o_9  20" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="490" y="374" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p21" value="21  led_o_2" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="400" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p22" value="led_o_10  22" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="490" y="400" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p23" value="23  led_o_3" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="426" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p24" value="led_o_11  24" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="490" y="426" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p25" value="25  led_o_4" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="452" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p26" value="led_o_12  26" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="490" y="452" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p27" value="27  led_o_5" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="478" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p28" value="led_o_13  28" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="490" y="478" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p29" value="29  led_o_6" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="504" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p30" value="led_o_14  30" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="490" y="504" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p31" value="31  led_o_7" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="530" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p32" value="led_o_16  32" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="490" y="530" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p33" value="33  led_o_8" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="556" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p34" value="led_o_15  34" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="490" y="556" width="110" height="22" as="geometry" /></mxCell>
+
+        <!-- GND / +5V -->
+        <mxCell id="p35" value="35  GND" style="rounded=0;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="380" y="582" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p36" value="GND  36" style="rounded=0;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="490" y="582" width="110" height="22" as="geometry" /></mxCell>
+        <mxCell id="p37" value="37  GND" style="rounded=0;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="380" y="608" width="110" height="18" as="geometry" /></mxCell>
+        <mxCell id="p38" value="GND  38" style="rounded=0;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="490" y="608" width="110" height="18" as="geometry" /></mxCell>
+
+        <!-- Left blocks: odd pins, buttons 9-16 -->
+        <mxCell id="LB3" value="SW btn_in_9 · Repeat (ID 8) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="20" y="166" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LB5" value="SW btn_in_10 · Toggle Random (ID 9) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="20" y="192" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LB7" value="SW btn_in_11 · Toggle DAC (ID 10) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="20" y="218" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LB9" value="SW btn_in_12 · Next Panel (ID 11) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="20" y="244" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LB11" value="SW btn_in_13 · Toggle Meter (ID 12) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="20" y="270" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LB13" value="ROTARY ENCODER phase A (ID 13) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="20" y="296" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LB15" value="ROTARY ENCODER phase B (ID 14) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="20" y="322" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LB17" value="SW btn_in_16 · Cycle Brightness (ID 15) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="20" y="348" width="260" height="22" as="geometry" /></mxCell>
+
+        <!-- Left blocks: LEDs 1-8 -->
+        <mxCell id="LL19" value="led_o_1 · unused (power button has no LED)" style="rounded=1;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="20" y="374" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LL21" value="LED2 · Prev Track  (+5V → R → LED → led_o_2)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="20" y="400" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LL23" value="LED3 · Next Track  (+5V → R → LED → led_o_3)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="20" y="426" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LL25" value="LED4 · Skip Forward  (+5V → R → LED → led_o_4)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="20" y="452" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LL27" value="LED5 · Skip Back  (+5V → R → LED → led_o_5)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="20" y="478" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LL29" value="LED6 · Play/Pause  (+5V → R → LED → led_o_6)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="20" y="504" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LL31" value="LED7 · Toggle Display  (+5V → R → LED → led_o_7)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="20" y="530" width="260" height="22" as="geometry" /></mxCell>
+        <mxCell id="LL33" value="LED8 · Cover  (+5V → R → LED → led_o_8)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="20" y="556" width="260" height="22" as="geometry" /></mxCell>
+
+        <!-- Right blocks: even pins, buttons 1-8 -->
+        <mxCell id="RB4" value="POWER ON/OFF switch · btn_in_1 (ID 0) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="690" y="166" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RB6" value="SW btn_in_2 · Prev Track (ID 1) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="690" y="192" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RB8" value="SW btn_in_3 · Next Track (ID 2) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="690" y="218" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RB10" value="SW btn_in_4 · Skip Forward (ID 3) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="690" y="244" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RB12" value="SW btn_in_5 · Skip Back (ID 4) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="690" y="270" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RB14" value="SW btn_in_6 · Play/Pause (ID 5) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="690" y="296" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RB16" value="SW btn_in_7 · Toggle Display (ID 6) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="690" y="322" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RB18" value="SW btn_in_8 · Cover (ID 7) → GND" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="690" y="348" width="280" height="22" as="geometry" /></mxCell>
+
+        <!-- Right blocks: LEDs 9-16 -->
+        <mxCell id="RL20" value="LED9 · Repeat  (+5V → R → LED → led_o_9)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="690" y="374" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RL22" value="LED10 · Toggle Random  (+5V → R → LED → led_o_10)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="690" y="400" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RL24" value="LED11 · Toggle DAC  (+5V → R → LED → led_o_11)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="690" y="426" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RL26" value="LED12 · Next Panel  (+5V → R → LED → led_o_12)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="690" y="452" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RL28" value="LED13 · Toggle Meter  (+5V → R → LED → led_o_13)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="690" y="478" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RL30" value="led_o_14 · spare (rotary A has no LED)" style="rounded=1;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="690" y="504" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RL32" value="LED16 · Cycle Brightness  (+5V → R → LED → led_o_16)" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="690" y="530" width="280" height="22" as="geometry" /></mxCell>
+        <mxCell id="RL34" value="led_o_15 · spare (rotary B has no LED)" style="rounded=1;html=1;fontSize=10;fillColor=#eeeeee;strokeColor=#999999;" vertex="1" parent="1"><mxGeometry x="690" y="556" width="280" height="22" as="geometry" /></mxCell>
+
+        <!-- Rails -->
+        <mxCell id="GNDL" value="GND (front-panel return)" style="rounded=1;html=1;fontSize=10;fillColor=#333333;fontColor=#ffffff;" vertex="1" parent="1"><mxGeometry x="20" y="582" width="260" height="44" as="geometry" /></mxCell>
+        <mxCell id="V5R" value="+5 V (J3 pins 39, 40) – feeds LED anodes + power indicators" style="rounded=1;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="690" y="582" width="280" height="44" as="geometry" /></mxCell>
+        <mxCell id="p39" value="39  +5V" style="rounded=0;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="380" y="630" width="110" height="10" as="geometry" /></mxCell>
+        <mxCell id="p40" value="+5V  40" style="rounded=0;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="490" y="630" width="110" height="10" as="geometry" /></mxCell>
+
+        <!-- Wires: left side -->
+        <mxCell id="eL3" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="LB3" target="p3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL5" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="LB5" target="p5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL7" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="LB7" target="p7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL9" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="LB9" target="p9"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL11" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="LB11" target="p11"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL13" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="LB13" target="p13"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL15" style="endArrow=none;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" parent="1" source="LB15" target="p15"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL17" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="LB17" target="p17"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL19" style="endArrow=none;html=1;strokeColor=#999999;strokeWidth=1;dashed=1;" edge="1" parent="1" source="LL19" target="p19"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL21" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="LL21" target="p21"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL23" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="LL23" target="p23"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL25" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="LL25" target="p25"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL27" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="LL27" target="p27"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL29" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="LL29" target="p29"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL31" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="LL31" target="p31"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL33" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="LL33" target="p33"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eL35" style="endArrow=none;html=1;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1" source="GNDL" target="p35"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Wires: right side -->
+        <mxCell id="eR4" style="endArrow=none;html=1;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p4" target="RB4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR6" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="p6" target="RB6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR8" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="p8" target="RB8"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR10" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="p10" target="RB10"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR12" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="p12" target="RB12"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR14" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="p14" target="RB14"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR16" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="p16" target="RB16"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR18" style="endArrow=none;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="p18" target="RB18"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR20" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p20" target="RL20"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR22" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p22" target="RL22"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR24" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p24" target="RL24"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR26" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p26" target="RL26"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR28" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p28" target="RL28"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR30" style="endArrow=none;html=1;strokeColor=#999999;strokeWidth=1;dashed=1;" edge="1" parent="1" source="p30" target="RL30"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR32" style="endArrow=none;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="p32" target="RL32"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR34" style="endArrow=none;html=1;strokeColor=#999999;strokeWidth=1;dashed=1;" edge="1" parent="1" source="p34" target="RL34"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eR36" style="endArrow=none;html=1;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p40" target="V5R"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ================= Controller side ================= -->
+        <mxCell id="hdr2" value="&lt;b&gt;Controller side of J3 (on the TinyControlBoard)&lt;/b&gt;" style="text;html=1;align=center;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="300" y="690" width="400" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="MAX" value="&lt;b&gt;IC2 + IC3 · MAX6818&lt;/b&gt;&lt;br&gt;8-ch debouncer / ESD&lt;br&gt;btn_in_1..8 → btn_l_1..8 (IC2)&lt;br&gt;btn_in_9..16 → btn_l_9..16 (IC3)&lt;br&gt;3.3 V supply" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="20" y="740" width="230" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="MCP" value="&lt;b&gt;IC5 · MCP23018&lt;/b&gt;&lt;br&gt;16-bit I2C expander, addr 0x20&lt;br&gt;GPA/GPB ← btn_l_1..16&lt;br&gt;(rotary A/B decoded in firmware)&lt;br&gt;INTA / INTB → ESP32" style="rounded=1;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="20" y="890" width="230" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ESP" value="&lt;b&gt;IC6 · ESP32-S3-WROOM-1U-N16&lt;/b&gt;&lt;br&gt;&lt;br&gt;GPIO15  I2C SCL (mcp_clk, 50 kHz)&lt;br&gt;GPIO16  I2C SDA (mcp_sda)&lt;br&gt;GPIO17  MCP23018 reset/enable&lt;br&gt;GPIO18  MCP interrupt (IntA)&lt;br&gt;GPIO8   MCP interrupt (IntB)&lt;br&gt;&lt;br&gt;GPIO7   STP16 SDI (data)&lt;br&gt;GPIO6   STP16 CLK&lt;br&gt;GPIO5   STP16 LE (latch)&lt;br&gt;GPIO21  STP16 OE / PWM (brightness)&lt;br&gt;&lt;br&gt;GPIO3   on_led (app active)&lt;br&gt;GPIO4   standby_led (sleep)" style="rounded=1;html=1;fontSize=10;align=left;spacingLeft=8;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="380" y="740" width="240" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="STP" value="&lt;b&gt;IC1 · STP16CPC26&lt;/b&gt;&lt;br&gt;16-ch constant-current LED driver&lt;br&gt;OUT0..15 = led_o_1..16 (sinks)&lt;br&gt;R-EXT: R7 / R17 + VR1 trimmer&lt;br&gt;3.3 V supply" style="rounded=1;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="740" y="740" width="230" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="PWR" value="&lt;b&gt;Power-state indicators&lt;/b&gt;&lt;br&gt;GPIO3 → R → ON LED (D1 on_led)&lt;br&gt;GPIO4 → R → STANDBY LED&lt;br&gt;Front-panel power indicator [18] shows ON / sleep; flashes during start-up&lt;br&gt;&lt;i&gt;(not routed through J3 – see notes)&lt;/i&gt;" style="rounded=1;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="740" y="890" width="230" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c1" value="btn_in_1..16" style="endArrow=classic;html=1;fontSize=10;strokeColor=#6c8ebf;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="j3" target="MAX"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c2" value="btn_l_1..16" style="endArrow=classic;html=1;fontSize=10;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" parent="1" source="MAX" target="MCP"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c3" value="I2C SCL/SDA, RESET, INT" style="endArrow=classic;startArrow=classic;html=1;fontSize=10;strokeColor=#d6b656;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="MCP" target="ESP"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c4" value="SDI / CLK / LE / OE(PWM)" style="endArrow=classic;html=1;fontSize=10;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="ESP" target="STP"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c5" value="led_o_1..16 (sink)" style="endArrow=classic;html=1;fontSize=10;strokeColor=#82b366;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="STP" target="j3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c6" value="GPIO3 / GPIO4" style="endArrow=classic;html=1;fontSize=10;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="ESP" target="PWR"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Notes -->
+        <mxCell id="notes" value="&lt;b&gt;Notes / assumptions&lt;/b&gt;&lt;br&gt;• J3 pin map from docs/Custom boards/tinyControlBoard/TinyControlboard.md §3; GPIOs from lib/board/boardConfig.hpp and docs/DeveloperGuides/06-hardware-interface.md.&lt;br&gt;• Button ID n (lib/board/boardButtonIds.hpp) is assumed to map to btn_in_(n+1); confirm against the KiCad schematic.&lt;br&gt;• Button inputs: normally-open switch from btn_in_n to GND (MAX6818 inputs). Power switch = ID 0 (short press Sleep/wake, ~3 s hold Deep Sleep).&lt;br&gt;• Rotary: phase A/B = IDs 13/14 (btn_in_14/15), decoded in lib/hal/buttons/mcpInputHandler.cpp. The documented encoder push switch is not identified in the sources – verify its input.&lt;br&gt;• LEDs: STP16 outputs are current sinks, so each LED anode goes to +5 V and cathode to led_o_n (verify on the front-panel PCB). J3 pins 32/34 are led_o_16/led_o_15 (out of sequence).&lt;br&gt;• Power indicators: the documentation lists no J3 pins for them; on_led (GPIO3) and standby_led (GPIO4) are on-board outputs. If the front-panel indicator is wired to them, they leave via test points, not J3. Verify. J3 pins 1/2 are N/C."
+ style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fillColor=#ffffcc;strokeColor=#d6b656;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="1020" width="950" height="150" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

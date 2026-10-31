@@ -19,7 +19,7 @@ report playback state back to the ESP32.
 | Language | Python 3 |
 | Key libraries | `pyserial` (UART), `RPi.GPIO` or `lgpio` (handshake GPIOs), standard `socket` (MPD TCP), `subprocess` (`mpc`, `moodeutl`), `requests`/`http.client` (Chrome DevTools Protocol) |
 | Process manager | systemd (unit files under `scripts/rpi/systemd/`) |
-| UART device | `/dev/ttyAMA5` (`dtoverlay=uart5` in `/boot/config.txt` per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)) |
+| UART device | `/dev/ttyAMA5` (`dtoverlay=uart5` in `/boot/firmware/config.txt` per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)) |
 | Baud rate | 921600 (must match `board::serial` on the ESP32 side) |
 
 ## 3. Project Structure
@@ -38,8 +38,8 @@ scripts/rpi/
     power_commands.py           — moodeutl shutdown handler
     UAart5Listener.py           — legacy 3-line shim invoking uart5_listener.main() (kept for compatibility)
   systemd/
-    uart5-listener.service
-    heartbeat-sender.service
+    uart5_listener.service
+    heartbeat.service
 ```
 
 (Exact file list confirmed via subagent inventory of the working tree; filenames above
