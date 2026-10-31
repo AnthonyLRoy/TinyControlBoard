@@ -1,6 +1,6 @@
 # Streamer DAC – Bill of Materials
 
-I have only included the major components here , an the list currently is not fully complete.  I have not included the prices becuase they change (also a bit embarised at the costs). The Bill of the materials for the custom circuit boards are included in the board descriptions.
+I have only included the major components here , an the list currently is not fully complete.  I have not included the prices becuase they change (also a bit embarised at the costs). The Bill of the materials for the custom circuit boards are included in the board descriptions.is
 
 ## Mains, power and audio/IO connectors
 
