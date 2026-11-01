@@ -1,9 +1,9 @@
-# TinyControlBoard
+# Streamer DAC
 
 ## Project Overview
 
-TinyControlBoard is the front-panel control and power-sequencing system for a Raspberry Pi based
-[moOde Audio](https://moodeaudio.org/) music streamer (the **Streamer DAC**). It brings together:
+The Streamer DAC is a Raspberry Pi-based [moOde Audio](https://moodeaudio.org/) music streamer. The
+project brings together:
 
 - **Custom hardware** – an enclosure, custom circuit boards and an external linear power supply.
 - **ESP32 firmware** – reads the front-panel buttons and controls the display, relays and power sequencing.
@@ -29,26 +29,26 @@ Technical documentation for building and developing the project, split into hard
 
 Drawings, dimensions and assembly views for building the cases. Read them in this order:
 
-| Order | Document | Description |
-| ----- | -------- | ----------- |
-| 1 | [Dac-Case.md](HardwareDocumentation/Enclosure/Dac-Case.md) | Panel drawings and dimensions for the main DAC enclosure, the inner case and the power supply enclosure. |
-| 2 | [Component-Assemblies.md](HardwareDocumentation/Enclosure/Component-Assemblies.md) | How the internal components are fitted to the panels and cases. |
+| Order | Document                                                                          | Description                                                                                              |
+| ----- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1     | [Dac-Case.md](HardwareDocumentation/Enclosure/Dac-Case.md)                         | Panel drawings and dimensions for the main DAC enclosure, the inner case and the power supply enclosure. |
+| 2     | [Component-Assemblies.md](HardwareDocumentation/Enclosure/Component-Assemblies.md) | How the internal components are fitted to the panels and cases.                                          |
 
 #### Custom PCBs
 
-| Document | Description |
-| -------- | ----------- |
-| [Custom Boards index](<Custom boards/README.md>) | List of every custom board with a short description. |
-| [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) | Project workflow and current repository status. |
+| Document                                           | Description                                          |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| [Custom Boards index](<Custom boards/README.md>)    | List of every custom board with a short description. |
+| [KiCad Guide](HardwareDocumentation/KiCad-Guide.md) | Project workflow and current repository status.      |
 
 #### Wiring Diagrams
 
-| Document | Description |
-| -------- | ----------- |
-| [Overall Wiring Overview](WiringDiagrams/OverallWiring.md) | High-level audio and control connections. |
-| [Control Board Wiring Guide](WiringDiagrams/ControlBoardWiring.md) | TinyControlBoard connectors and equipment connections. |
-| [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md) | The power system. |
-| [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md) | GPIO, relay and wiring details used by the software. |
+| Document                                                            | Description                                            |
+| ------------------------------------------------------------------- | ------------------------------------------------------ |
+| [Overall Wiring Overview](WiringDiagrams/OverallWiring.md)           | High-level audio and control connections.              |
+| [Control Board Wiring Guide](WiringDiagrams/ControlBoardWiring.md)   | TinyControlBoard connectors and equipment connections. |
+| [Power Distribution Diagram](WiringDiagrams/PowerDistribution.md)    | The power system.                                      |
+| [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md) | GPIO, relay and wiring details used by the software.   |
 
 ### Software Documentation
 
@@ -57,23 +57,23 @@ boundaries, component responsibilities, communication flows, deployment, quality
 the control/audio diagrams. Read it first. The developer guides below are the authoritative
 references for their respective areas.
 
-| Guide                                                                         | Description                                                                                             |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [01-system-architecture.md](01-system-architecture.md)                         | Overall system architecture and diagrams. **Start here.**                                         |
-| [01-Rpi4_SETUP.md](DeveloperGuides/01-Rpi4_SETUP.md)                           | Setting up the Raspberry Pi 4.                                                                          |
-| [02-android-developer-guide.md](DeveloperGuides/02-android-developer-guide.md) | Working on the Android app.                                                                             |
-| [03-esp32-developer-guide.md](DeveloperGuides/03-esp32-developer-guide.md)     | Working on the ESP32 firmware.                                                                          |
-| [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md)         | Working on the Raspberry Pi side.                                                                       |
-| [05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md)   | The wire protocol. Read before touching `uartProtocol.hpp`, `protocol.py` or `BleProtocol.kt`.    |
-| [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md)           | Wiring, GPIO and relays.                                                                                |
-| [07-development-environment.md](DeveloperGuides/07-development-environment.md) | Setting up a development machine.                                                                       |
-| [08-quality-check.md](DeveloperGuides/08-quality-check.md)                     | Known gaps and cross-component consistency checks.                                                      |
-| [09-adding-button-actions.md](DeveloperGuides/09-adding-button-actions.md)     | Adding a new button or action (a matching `/add-button-action` prompt lives in `.github/prompts/`). |
-| [Plymouth theme INSTALL.md](../scripts/rpi/home/antho/riverbank-plymouth-theme/riverbank-theme/INSTALL.md) | Installing the Riverbank boot splash theme on the Pi. |
-| [TASKS.md](../TASKS.md) | Outstanding project tasks. |
+| Guide                                                                                                     | Description                                                                                             |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [01-system-architecture.md](01-system-architecture.md)                                                     | Overall system architecture and diagrams. **Start here.**                                         |
+| [01-Rpi4_SETUP.md](DeveloperGuides/01-Rpi4_SETUP.md)                                                       | Setting up the Raspberry Pi 4.                                                                          |
+| [02-android-developer-guide.md](DeveloperGuides/02-android-developer-guide.md)                             | Working on the Android app.                                                                             |
+| [03-esp32-developer-guide.md](DeveloperGuides/03-esp32-developer-guide.md)                                 | Working on the ESP32 firmware.                                                                          |
+| [04-rpi-developer-guide.md](DeveloperGuides/04-rpi-developer-guide.md)                                     | Working on the Raspberry Pi side.                                                                       |
+| [05-communication-protocol.md](DeveloperGuides/05-communication-protocol.md)                               | The wire protocol. Read before touching `uartProtocol.hpp`, `protocol.py` or `BleProtocol.kt`.    |
+| [06-hardware-interface.md](DeveloperGuides/06-hardware-interface.md)                                       | Wiring, GPIO and relays.                                                                                |
+| [07-development-environment.md](DeveloperGuides/07-development-environment.md)                             | Setting up a development machine.                                                                       |
+| [08-quality-check.md](DeveloperGuides/08-quality-check.md)                                                 | Known gaps and cross-component consistency checks.                                                      |
+| [09-adding-button-actions.md](DeveloperGuides/09-adding-button-actions.md)                                 | Adding a new button or action (a matching `/add-button-action` prompt lives in `.github/prompts/`). |
+| [Plymouth theme INSTALL.md](../scripts/rpi/home/antho/riverbank-plymouth-theme/riverbank-theme/INSTALL.md) | Installing the Riverbank boot splash theme on the Pi.                                                   |
+| [TASKS.md](../TASKS.md)                                                                                    | Outstanding project tasks.                                                                              |
 
 ### Bill of Materials
 
-| Document | Description |
-| -------- | ----------- |
+| Document                       | Description                                           |
+| ------------------------------ | ----------------------------------------------------- |
 | [Bill of Materials](bom/BOM.md) | List of all the major components used in the project. |
