@@ -27,14 +27,14 @@ respective documents where precision matters.
 
 ## Not Independently Re-Verified (carried from subagent inventories with reasonable confidence)
 
-| Item                                                             | Document / Section | Reason not re-verified                                                                                           | Marked as                                        |
+| Item                                                             | Document / Section | Evidence                                                                                                         | Result                                           |
 | ---------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Exact `heartbeat_sender.py` polling intervals (2s/5s/10s)      | 04 §8             | Time constraints; only the ESP32-side heartbeat constant (`k_heartbeatTimeoutMs`) was read from primary source | `TODO` inline in 04-rpi-developer-guide.md §8 |
-| MCP23018 interrupt-handling task stack/priority                  | 03 §6             | Not read directly this session                                                                                   | `TODO` inline in the task table                |
-| `MSG_NACK` dead-code status                                    | 05 §10            | No call-site search performed for this specific enum value                                                       | `TODO` inline                                  |
-| Exact `uart_config_t` parity/stop-bit fields in `serial.cpp` | 03 §7             | Not read directly this session                                                                                   | `TODO` inline                                  |
-| SPI shift-register exact part number                             | 06 §13            | Not present in any inspected source file                                                                         | STP16CPC26MTR confirmed                          |
-| moOde Audio exact version                                        | 01 §6, 04 §2     | Not present in any inspected source file                                                                         | `Version 10.3.2` confirmed                    |
+| Exact `heartbeat_sender.py` polling intervals (2s/5s/10s)      | 04 §8             | Re-read `scripts/rpi/home/antho/heartbeat_sender.py`: `TRACK_PROGRESS_INTERVAL_S=2.0`, `NOW_PLAYING_INTERVAL_S=5.0`, `HEARTBEAT_INTERVAL_S=10.0`, `TICK_S=1.0` | **Verified**; TODO removed from 04 §8 |
+| MCP23018 interrupt-handling task stack/priority                  | 03 §6             | Re-read `mcpInputHandler.cpp`: `xTaskCreate(..., "mcp_int_task", 4096, this, 10, ...)` matches the task table | **Verified** |
+| `MSG_NACK` dead-code status                                    | 05 §10            | Searched all firmware, Pi and Android sources: only the enum declaration in `uartProtocol.hpp` exists (the other hit is an unrelated I2C `LAST_NACK`) | **Verified** — declared but unused |
+| Exact `uart_config_t` parity/stop-bit fields in `serial.cpp` | 03 §7             | `serial.cpp` uses 8 data bits; parity/stop bits are parameters, and `ControlBoardBootstrap.cpp` passes `UART_PARITY_DISABLE`, `UART_STOP_BITS_1` | **Verified** (8N1) |
+| SPI shift-register exact part number                             | 06 §13            | Not in firmware source, but the board doc (`TinyControlboard.md` BOM) lists STP16CPC26MTR | **Verified** against board docs |
+| moOde Audio exact version                                        | 01 §6, 04 §2     | No moOde version string exists anywhere in the repo; 04 §2 still says TODO, which conflicts with the `10.3.2` previously recorded here | **Still unverified** — confirm on the Pi (moOde System Info) |
 
 ## Cross-Document Consistency Check
 

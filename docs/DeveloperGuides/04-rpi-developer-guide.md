@@ -13,14 +13,14 @@ report playback state back to the ESP32.
 
 ## 2. Development Environment
 
-| Item | Value |
-|---|---|
-| OS | Raspberry Pi OS / moOde Audio image (exact moOde version: **TODO – not present in supplied source**) |
-| Language | Python 3 |
-| Key libraries | `pyserial` (UART), `RPi.GPIO` or `lgpio` (handshake GPIOs), standard `socket` (MPD TCP), `subprocess` (`mpc`, `moodeutl`), `requests`/`http.client` (Chrome DevTools Protocol) |
-| Process manager | systemd (unit files under `scripts/rpi/systemd/`) |
-| UART device | `/dev/ttyAMA5` (`dtoverlay=uart5` in `/boot/firmware/config.txt` per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)) |
-| Baud rate | 921600 (must match `board::serial` on the ESP32 side) |
+| Item            | Value                                                                                                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OS              | Raspberry Pi OS / moOde Audio image (exact moOde version: 10.3.2)                                                                                                                                |
+| Language        | Python 3                                                                                                                                                                                         |
+| Key libraries   | `pyserial` (UART), `RPi.GPIO` or `lgpio` (handshake GPIOs), standard `socket` (MPD TCP), `subprocess` (`mpc`, `moodeutl`), `requests`/`http.client` (Chrome DevTools Protocol) |
+| Process manager | systemd (unit files under `scripts/rpi/systemd/`)                                                                                                                                              |
+| UART device     | `/dev/ttyAMA5` (`dtoverlay=uart5` in `/boot/firmware/config.txt` per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md))                                                                                  |
+| Baud rate       | 921600 (must match `board::serial` on the ESP32 side)                                                                                                                                          |
 
 ## 3. Project Structure
 
@@ -71,10 +71,10 @@ one process, and do not share in-memory state (any shared state goes through MPD
 
 ## 5. Systemd Services
 
-| Service | Purpose | Restart policy |
-|---|---|---|
-| `uart5-listener.service` | Long-running loop: waits on the data-ready GPIO / reads UART, dispatches by `CommandId` via a handler table, writes framed responses back | `Restart=always` |
-| `heartbeat-sender.service` | Periodically sends `CMD_SYS_HEARTBEAT`, `MSG_NOW_PLAYING`, `MSG_TRACK_PROGRESS` over UART | `Restart=always` |
+| Service                    | Purpose                                                                                                                                     | Restart policy     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `uart5_listener.service` | Long-running loop: waits on the data-ready GPIO / reads UART, dispatches by `CommandId` via a handler table, writes framed responses back | `Restart=always` |
+| `heartbeat.service`      | Periodically sends `CMD_SYS_HEARTBEAT`, `MSG_NOW_PLAYING`, `MSG_TRACK_PROGRESS` over UART                                             | `Restart=always` |
 
 ## 6. Audio Backend
 
@@ -89,13 +89,13 @@ one process, and do not share in-memory state (any shared state goes through MPD
 
 ## 7. UART Communication (Raspberry Pi side)
 
-| Property | Value |
-|---|---|
-| Device | `/dev/ttyAMA5` |
-| Baud | 921600 |
-| Framing | Custom binary protocol, mirrored 1:1 from `lib/protocol/uartProtocol.hpp` in `protocol.py` |
-| Handshake | GPIO23 (Pi input, ESP32→Pi data-ready) / GPIO24 (Pi output, Pi→ESP32 data-ready) per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md) |
-| Resync | `uart5_listener.py`'s `read_packet_with_resync()` scans for the `0xAA` start byte and validates the header/checksum before accepting a frame; malformed frames are dropped silently (no NACK sent) |
+| Property  | Value                                                                                                                                                                                                    |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Device    | `/dev/ttyAMA5`                                                                                                                                                                                         |
+| Baud      | 921600                                                                                                                                                                                                   |
+| Framing   | Custom binary protocol, mirrored 1:1 from `lib/protocol/uartProtocol.hpp` in `protocol.py`                                                                                                           |
+| Handshake | GPIO23 (Pi input, ESP32→Pi data-ready) / GPIO24 (Pi output, Pi→ESP32 data-ready) per [01-Rpi4_SETUP.md](01-Rpi4_SETUP.md)                                                                               |
+| Resync    | `uart5_listener.py`'s `read_packet_with_resync()` scans for the `0xAA` start byte and validates the header/checksum before accepting a frame; malformed frames are dropped silently (no NACK sent) |
 
 See [05-communication-protocol.md](05-communication-protocol.md) for the full wire format.
 
@@ -117,20 +117,19 @@ sequenceDiagram
     end
 ```
 
-Exact polling intervals (2s/5s/10s above) are as reported by the ESP32-side subagent
-inventory of `heartbeat_sender.py`'s sleep constants; **TODO – re-confirm exact sleep()
-values directly against `heartbeat_sender.py` if precise timing matters for a future
-change.**
+Polling intervals (2 s track progress, 5 s now playing, 10 s heartbeat) are verified against
+`TRACK_PROGRESS_INTERVAL_S`, `NOW_PLAYING_INTERVAL_S` and `HEARTBEAT_INTERVAL_S` in
+`heartbeat_sender.py`; the main loop ticks every 1 s (`TICK_S`).
 
 ## 9. Configuration
 
-| Config | Location | Notes |
-|---|---|---|
-| UART device path, baud rate | Hardcoded constants near the top of `uart5_listener.py`/`heartbeat_sender.py` | Must match `/boot/config.txt` `dtoverlay=uart5` and the ESP32's `board::serial` |
-| GPIO handshake pin numbers | Hardcoded constants in the same files | Must match `board::serial::rpiDataReadyPin`/`esp32DataReadyPin` on the ESP32 side |
-| MPD host/port | `localhost:6600` (hardcoded, since MPD runs on the same Pi) | |
-| Rotary track jump | `ROTARY_DEBOUNCE_SECONDS`, `ROTARY_WRAP_AROUND`, `ROTARY_KEEP_PLAY_STATE` at the top of the rotary section in `playback_commands.py` | Clicks accumulate in a lock-protected counter; after 1 s with no click, one `mpc play <position>` jumps by the net count (position read from `mpc status` when the timer fires). Wraps or clamps at the playlist ends; keeps paused/stopped state after the jump. Net count of 0 does nothing |
-| CDP port | `localhost:9222` (hardcoded) | Requires moOde's kiosk browser started with `--remote-debugging-port=9222` |
+| Config                      | Location                                                                                                                                     | Notes                                                                                                                                                                                                                                                                                             |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UART device path, baud rate | Hardcoded constants near the top of `uart5_listener.py`/`heartbeat_sender.py`                                                            | Must match `/boot/config.txt` `dtoverlay=uart5` and the ESP32's `board::serial`                                                                                                                                                                                                             |
+| GPIO handshake pin numbers  | Hardcoded constants in the same files                                                                                                        | Must match `board::serial::rpiDataReadyPin`/`esp32DataReadyPin` on the ESP32 side                                                                                                                                                                                                             |
+| MPD host/port               | `localhost:6600` (hardcoded, since MPD runs on the same Pi)                                                                                |                                                                                                                                                                                                                                                                                                   |
+| Rotary track jump           | `ROTARY_DEBOUNCE_SECONDS`, `ROTARY_WRAP_AROUND`, `ROTARY_KEEP_PLAY_STATE` at the top of the rotary section in `playback_commands.py` | Clicks accumulate in a lock-protected counter; after 1 s with no click, one `mpc play <position>` jumps by the net count (position read from `mpc status` when the timer fires). Wraps or clamps at the playlist ends; keeps paused/stopped state after the jump. Net count of 0 does nothing |
+| CDP port                    | `localhost:9222` (hardcoded)                                                                                                               | Requires moOde's kiosk browser started with `--remote-debugging-port=9222`                                                                                                                                                                                                                      |
 
 No credentials/secrets are present in these scripts — MPD and CDP are both unauthenticated
 localhost-only services.
@@ -158,12 +157,12 @@ preinstalled `RPi.GPIO`/`pyserial`, consistent with moOde's minimal-Python-footp
 
 ## 12. Troubleshooting
 
-| Symptom | Likely cause | Check |
-|---|---|---|
-| ESP32 boot-diagnostic LEDs stuck flashing at the "RPi Comms" stage | `uart5-listener`/`heartbeat-sender` not running, or `/dev/ttyAMA5` misconfigured | `systemctl status uart5-listener heartbeat-sender`, `dmesg \| grep ttyAMA5` |
-| ESP32 forces SLEEP shortly after boot completes | Heartbeat stopped after the initial boot handshake (30s timeout) | `journalctl -u heartbeat-sender.service` |
-| A physical button appears to do nothing | Command may map to a `CommandId` with no registered handler in `uart5_listener.py`'s dispatch table, or (for `CMD_PREV_MENU_ITEM`) the button may be physically unreachable | Check the handler dispatch table for the relevant `CommandId` |
-| Cover art doesn't update in the Android app | Independent of UART — verify moOde's own HTTP endpoints (`get_currentsong`, `coverart.php`) respond, since the app fetches art directly over HTTP, not via UART | `curl` moOde's endpoints directly from another host on the LAN |
+| Symptom                                                            | Likely cause                                                                                                                                                                      | Check                                                                          |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| ESP32 boot-diagnostic LEDs stuck flashing at the "RPi Comms" stage | `uart5-listener`/`heartbeat-sender` not running, or `/dev/ttyAMA5` misconfigured                                                                                            | `systemctl status uart5-listener heartbeat-sender`, `dmesg \| grep ttyAMA5` |
+| ESP32 forces SLEEP shortly after boot completes                    | Heartbeat stopped after the initial boot handshake (30s timeout)                                                                                                                  | `journalctl -u heartbeat-sender.service`                                     |
+| A physical button appears to do nothing                            | Command may map to a `CommandId` with no registered handler in `uart5_listener.py`'s dispatch table, or (for `CMD_PREV_MENU_ITEM`) the button may be physically unreachable | Check the handler dispatch table for the relevant `CommandId`                |
+| Cover art doesn't update in the Android app                        | Independent of UART — verify moOde's own HTTP endpoints (`get_currentsong`, `coverart.php`) respond, since the app fetches art directly over HTTP, not via UART              | `curl` moOde's endpoints directly from another host on the LAN               |
 
 ## 13. Extending the Raspberry Pi Side
 

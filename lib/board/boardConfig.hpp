@@ -7,6 +7,8 @@
 #include "driver/i2c.h"
 #include "driver/uart.h"
 #include "board/boardButtonIds.hpp"
+#define SIMULATE_RPI_BOOT 0
+
 
 namespace board
 {

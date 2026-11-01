@@ -1,4 +1,0 @@
-- [x] Create monitor and grouping drawables
-- [x] Group brightness controls in `activity_main.xml`
-- [x] Implement dynamic monitor icons in `MainActivity.kt`
-- [x] Verify changes (build and manual check logic)

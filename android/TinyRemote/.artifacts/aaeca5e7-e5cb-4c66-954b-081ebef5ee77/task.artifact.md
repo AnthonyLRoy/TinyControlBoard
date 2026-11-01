@@ -1,3 +1,0 @@
-- `[x]` Update `ButtonCatalog.kt` span sizes
-- `[x]` Verify build
-- `[x]` Final walkthrough

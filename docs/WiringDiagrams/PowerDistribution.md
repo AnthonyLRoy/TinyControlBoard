@@ -86,27 +86,3 @@ not proof that stored energy is absent or that the equipment is safe to touch.
 **Figure 3 — UcPure indicators.** Orange LEDs indicate capacitor charging;
 green LEDs indicate that the capacitors are supplying power. A separate
 power-on indicator connects to the soft-start board.
-
-## Information needed for a safe, build-ready guide
-
-Before expanding this overview into wiring or service instructions, verify and
-document the following from the released schematics, component data, and
-physical assembly:
-
-- The exact mains input range, filter and soft-start part numbers, and approved
-  fuse type, rating, and location.
-- Transformer part numbers, primary and secondary connections, output ratings,
-  and which loads each winding supplies.
-- The complete mains wiring diagram, including protective-earth bonding,
-  insulation/isolation boundaries, wire types and sizes, terminals, and
-  enclosure entry/strain relief.
-- The power-control connector pinouts, signal levels, polarity, isolation,
-  default state, and what happens if the controller or its wiring fails.
-- Capacitor discharge provisions, residual voltage/energy expectations, and a
-  qualified-person service procedure for verifying a safe state.
-- The exact revision of each schematic and diagram, matched to the physical
-  build.
-
-Until those details have been checked, use this page only to understand the
-intended system at a high level. Have mains-related design, construction, and
-testing reviewed by a qualified electrical professional.

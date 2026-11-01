@@ -4,12 +4,12 @@
 
 ## Overview
 
-| Item | Details |
-|---|---|
-| MCU / main IC | No MCU. Two 1646S08-U devices (IC1, IC2) form the differential output stages. |
-| Supply | Schematic block specifies +5 V (VCC) and -5 V (VEE); J4 also carries GND2. |
-| Programming / debug | None shown. |
-| Source files | `se_to_diff board.kicad_pro`, `se_to_diff board.kicad_sch`, `se_to_diff board.kicad_pcb`, `bom.csv`. |
+| Item                | Details                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ |
+| MCU / main IC       | No MCU. Two 1646S08-U devices (IC1, IC2) form the differential output stages.                                |
+| Supply              | Schematic block specifies +5 V (VCC) and -5 V (VEE); J4 also carries GND2.                                   |
+| Programming / debug | None shown.                                                                                                  |
+| Source files        | `se_to_diff board.kicad_pro`, `se_to_diff board.kicad_sch`, `se_to_diff board.kicad_pcb`, `bom.csv`. |
 
 ## Schematic
 
@@ -19,13 +19,13 @@ One schematic sheet was found. Open the exported [PDF](schematic/se_to_diff_boar
 
 ## Functional blocks
 
-| Block (schematic title) | Parts | Description |
-|---|---|---|
+| Block (schematic title)       | Parts                                   | Description                                                                                               |
+| ----------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | Power Supply +5v Vcc, -5V Vee | J4, D1-D2, R1-R2, C1-C2, C5, C7, R5, c8 | Brings in VCC, GND2, and VEE; includes rail indicator components, bulk capacitors, and the GND/GND2 link. |
-| Single ended Input | J1, C3-C4, R3-R4 | Two single-ended signal inputs, labeled `in L` and `in R`, with associated passive components. |
-| Differential Stage | IC1-IC2, c9-c16, C13 | Two 1646S08-U stages with local capacitors. |
-| Output Stages | 22R1-22R3, R6, FB1-FB4, J2-J3 | Series resistors and ferrite beads feed the left and right differential output connectors. |
-| Mounting Holes | H1-H4 | Four mounting-hole footprints. |
+| Single ended Input            | J1, C3-C4, R3-R4                        | Two single-ended signal inputs, labeled `in L` and `in R`, with associated passive components.        |
+| Differential Stage            | IC1-IC2, c9-c16, C13                    | Two 1646S08-U stages with local capacitors.                                                               |
+| Output Stages                 | 22R1-22R3, R6, FB1-FB4, J2-J3           | Series resistors and ferrite beads feed the left and right differential output connectors.                |
+| Mounting Holes                | H1-H4                                   | Four mounting-hole footprints.                                                                            |
 
 ## Connector pinouts
 
@@ -33,35 +33,35 @@ Pin numbers and net assignments below follow the schematic and were checked agai
 
 ### J1 — single-ended input
 
-| Pin | Schematic signal | PCB net |
-|---:|---|---|
-| 1 | Left input | `/in L` |
-| 2 | Signal ground | `GND` |
-| 3 | Right input | `/in R` |
+| Pin | Schematic signal | PCB net   |
+| --: | ---------------- | --------- |
+|   1 | Left input       | `/in L` |
+|   2 | Signal ground    | `GND`   |
+|   3 | Right input      | `/in R` |
 
 ### J2 — left output
 
-| Pin | Schematic signal | PCB net |
-|---:|---|---|
-| 1 | Left output +, after FB2 | `Net-(FB2-Pad2)` |
-| 2 | Ground | `GND` |
-| 3 | Left output -, after FB1 | `Net-(FB1-Pad2)` |
+| Pin | Schematic signal         | PCB net            |
+| --: | ------------------------ | ------------------ |
+|   1 | Left output +, after FB2 | `Net-(FB2-Pad2)` |
+|   2 | Ground                   | `GND`            |
+|   3 | Left output -, after FB1 | `Net-(FB1-Pad2)` |
 
 ### J3 — right output
 
-| Pin | Schematic signal | PCB net |
-|---:|---|---|
-| 1 | Right output +, after FB4 | `Net-(FB4-Pad2)` |
-| 2 | Ground | `GND` |
-| 3 | Right output -, after FB3 | `Net-(FB3-Pad2)` |
+| Pin | Schematic signal          | PCB net            |
+| --: | ------------------------- | ------------------ |
+|   1 | Right output +, after FB4 | `Net-(FB4-Pad2)` |
+|   2 | Ground                    | `GND`            |
+|   3 | Right output -, after FB3 | `Net-(FB3-Pad2)` |
 
 ### J4 — power input
 
-| Pin | Schematic signal | PCB net |
-|---:|---|---|
-| 1 | +5 V rail | `VCC` |
-| 2 | Supply return | `GND2` |
-| 3 | -5 V rail | `VEE` |
+| Pin | Schematic signal | PCB net  |
+| --: | ---------------- | -------- |
+|   1 | +5 V rail        | `VCC`  |
+|   2 | Supply return    | `GND2` |
+|   3 | -5 V rail        | `VEE`  |
 
 The output connector wires have no explicit labels after their ferrite beads; their signal functions above are traced from the schematic wiring. The PCB uses the corresponding auto-generated `Net-(FBx-Pad2)` names.
 
@@ -81,29 +81,26 @@ Not applicable: no MCU or module appears in the schematic or PCB.
 
 Transcribed from the updated BOM export (KiCad CSV with Datasheet and DNP columns). No supplier part-number field exists; datasheet links are given where supplied. No parts are marked DNP.
 
-| Reference(s) | Qty | Value / part | Footprint | Datasheet |
-|---|---:|---|---|---|
-| 22R1, 22R2, 22R3 | 3 | 22 | `Resistor_SMD:R_0603_1608Metric` | — |
-| C1, C2, C5, C7 | 4 | 47u | `CAPAE660X800N` | — |
-| C3, C4 | 2 | 220p (KGM21BCG2A221JM) | `Capacitor_SMD:C_0805_2012Metric` | [Mouser](https://www.mouser.co.uk/ProductDetail/KYOCERA-AVX/KGM21BCG2A221JM?qs=Jm2GQyTW%2FbhetNzMNqmO3g%3D%3D) |
-| c8, c12, c14, c15, c16 | 5 | 100n | `CAPC2012X94N` | [KYOCERA AVX](https://spicat.kyocera-avx.com/product/mlcc/chartview/0805YC104M4T2A/DataSheet/X7R) |
-| c9, c10, c11, C13 | 4 | 10u | `CAPC3216X229N` | [KYOCERA AVX](https://spicat.kyocera-avx.com/product/mlcc/chartview/12063C106KAT2A/DataSheet/X7R) |
-| D1, D2 | 2 | LS_R976 | `samsys:LEDC2012X40N` | [Datasheet](https://www.mouser.co.uk/datasheet/2/588/asset_pdf_5057921-3418987.pdf) |
-| FB1, FB2, FB3, FB4 | 4 | NFZ2MSD101SZ10L | `BEADC2016X120N` | — |
-| H1, H2, H3, H4 | 4 | MountingHole | `MountingHole:MountingHole_2.5mm` | — |
-| IC1, IC2 | 2 | 1646S08-U | `SOIC127P602X173-8N` | [THAT Corp](http://www.thatcorp.com/datashts/1600data.pdf) |
-| J1, J2, J3, J4 | 4 | 1725669 | `1725669` | [Phoenix Contact](https://www.phoenixcontact.com/online/portal/us?uri=pxc-oc-itemdetail:pid=1725669&library=usen&tab=1) |
-| R1, R2 | 2 | 3k | `samsys:ERJH3` | [Panasonic](http://industrial.panasonic.com/cdbs/www-data/pdf/RDQ0000/ast-ind-151033.pdf) |
-| R3, R4 | 2 | 47k | `samsys:ERJH3` | [Panasonic](http://industrial.panasonic.com/cdbs/www-data/pdf/RDQ0000/ast-ind-151033.pdf) |
-| R5 | 1 | 10R | `Resistor_SMD:R_0603_1608Metric` | — |
-| R6 | 1 | 22R | `Resistor_SMD:R_0603_1608Metric` | — |
+| Reference(s)           | Qty | Value / part           | Footprint                           | Datasheet                                                                                                              |
+| ---------------------- | --: | ---------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 22R1, 22R2, 22R3       |   3 | 22                     | `Resistor_SMD:R_0603_1608Metric`  | —                                                                                                                     |
+| C1, C2, C5, C7         |   4 | 47u                    | `CAPAE660X800N`                   | —                                                                                                                     |
+| C3, C4                 |   2 | 220p (KGM21BCG2A221JM) | `Capacitor_SMD:C_0805_2012Metric` | [Mouser](https://www.mouser.co.uk/ProductDetail/KYOCERA-AVX/KGM21BCG2A221JM?qs=Jm2GQyTW%2FbhetNzMNqmO3g%3D%3D)          |
+| c8, c12, c14, c15, c16 |   5 | 100n                   | `CAPC2012X94N`                    | [KYOCERA AVX](https://spicat.kyocera-avx.com/product/mlcc/chartview/0805YC104M4T2A/DataSheet/X7R)                       |
+| c9, c10, c11, C13      |   4 | 10u                    | `CAPC3216X229N`                   | [KYOCERA AVX](https://spicat.kyocera-avx.com/product/mlcc/chartview/12063C106KAT2A/DataSheet/X7R)                       |
+| D1, D2                 |   2 | LS_R976                | `samsys:LEDC2012X40N`             | [Datasheet](https://www.mouser.co.uk/datasheet/2/588/asset_pdf_5057921-3418987.pdf)                                     |
+| FB1, FB2, FB3, FB4     |   4 | NFZ2MSD101SZ10L        | `BEADC2016X120N`                  | —                                                                                                                     |
+| H1, H2, H3, H4         |   4 | MountingHole           | `MountingHole:MountingHole_2.5mm` | —                                                                                                                     |
+| IC1, IC2               |   2 | 1646S08-U              | `SOIC127P602X173-8N`              | [THAT Corp](http://www.thatcorp.com/datashts/1600data.pdf)                                                              |
+| J1, J2, J3, J4         |   4 | 1725669                | `1725669`                         | [Phoenix Contact](https://www.phoenixcontact.com/online/portal/us?uri=pxc-oc-itemdetail:pid=1725669&library=usen&tab=1) |
+| R1, R2                 |   2 | 3k                     | `samsys:ERJH3`                    | [Panasonic](http://industrial.panasonic.com/cdbs/www-data/pdf/RDQ0000/ast-ind-151033.pdf)                               |
+| R3, R4                 |   2 | 47k                    | `samsys:ERJH3`                    | [Panasonic](http://industrial.panasonic.com/cdbs/www-data/pdf/RDQ0000/ast-ind-151033.pdf)                               |
+| R5                     |   1 | 10R                    | `Resistor_SMD:R_0603_1608Metric`  | —                                                                                                                     |
+| R6                     |   1 | 22R                    | `Resistor_SMD:R_0603_1608Metric`  | —                                                                                                                     |
 
 ## Notes
 
 - The Edge.Cuts outline is a 65 mm x 56.5 mm rectangle (PCB coordinates 100,50 to 165,106.5).
-- H1-H4 use the `MountingHole_2.5mm` footprint. The exact drilled-hole and clearance dimensions have not been independently verified.
-- Source project filenames contain spaces: `se_to_diff board.kicad_pro`, `se_to_diff board.kicad_sch`, and `se_to_diff board.kicad_pcb`.
-- The updated BOM now uses the schematic designators `22R1`–`22R3` for the 22 Ω resistors and `R1`/`R2` for the 3 kΩ resistors; the earlier `R1_2`, `R2`, `R3_2` and `R2_2` mismatches are resolved.
 - The checked pad-to-net mappings for J1-J4 and IC1-IC2 agree between the schematic and PCB. The J2/J3 connector-side names are autogenerated PCB net names rather than explicit schematic labels.
 - No explicit programming/debug interface or MCU is shown.
 

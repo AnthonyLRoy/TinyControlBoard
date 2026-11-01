@@ -16,3 +16,6 @@
 ## Future Considerations
 
 - [ ] Upgrade protocol checksum from 1-byte sum to CRC-16 (implement alongside item 4), this will be fixed on a future update
+- [ ] Review Failures in Circuitboard design
+- [ ] Remove bugs from Android App
+- [ ] Refactor C++ code , its over complex for what it does
