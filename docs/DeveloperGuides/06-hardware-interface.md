@@ -13,14 +13,14 @@ organized by physical function instead.
 
 | Constant                       | Value | Purpose                                                  |
 | ------------------------------ | ----: | -------------------------------------------------------- |
-| `k_heartbeatTimeoutMs`       | 30000 | Max silence from the Pi before forced SLEEP              |
+| `k_heartbeatTimeoutMs`       | 30000 | UART silence threshold for the Pi watchdog               |
 | `k_initDelayMs`              |  5000 | Startup power-stabilization delay                        |
 | `k_powerSettleDelayMs`       |  1500 | Delay after enabling DAC / output-stage relays on power-on |
 | `k_vcc3v3OnDelayMs`          |  1000 | Settle time after the 3.3V rail relay turns on           |
 | `k_rpiOnDelayMs`             |  1000 | Settle time after the Pi power relay turns on            |
 | `k_rpiBootTimeoutMs`         | 60000 | Max wait for first Pi heartbeat during power-on          |
 | `k_rpiShutdownTimeoutMs`     | 60000 | Max wait for Pi shutdown to complete                     |
-| `k_rpiShutdownSettleDelayMs` |  5500 | Settle time after cutting Pi power during shutdown       |
+| `k_rpiShutdownSettleDelayMs` |  5500 | Delay after watchdog timeout and before cutting Pi power |
 | `k_vcc3v3PowerOffDelayMs`    |  5000 | Defined for 3.3V rail power-off; currently unused         |
 
 ## 3. UART / Handshake
@@ -186,10 +186,15 @@ flowchart TD
   The hardware's behavior before firmware configures the pins, during reset, or
   after a configuration failure must be verified on the actual board.
 - **Shutdown order:** both Sleep and Deep Sleep request Raspberry Pi shutdown,
-  switch off the Pi power relay, and wait 5.5 seconds before suspending the DAC
-  signal-select relay and switching off the output-stage relay. Deep Sleep also
-  switches off the DAC power relay; Sleep leaves that relay on. Verify that
-  this sequence is appropriate for the connected hardware.
+  wait for UART activity to cease, then wait 5.5 seconds before switching off
+  the Pi relay. The DAC signal-select and output-stage relays are then switched
+  off; Deep Sleep also switches off the DAC power relay. If shutdown is not
+  observed within 60 seconds, or UART activity resumes during the delay, Pi power
+  remains on and the board returns to ON.
+  Silence on UART is not proof that the Pi has fully halted; verify this sequence
+  on the connected hardware.
+- **Boot failure:** if the Pi heartbeat does not arrive, the Pi and output-stage
+  relays are turned off and the board enters SLEEP with controls available to retry.
 - **Still requires hardware verification:** physical relay count and part
   numbers, coil voltage/current, relay-driver circuitry and polarity, PSU rail
   voltage/current ratings, protective-earth and signal-ground arrangement, and

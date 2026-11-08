@@ -9,6 +9,7 @@ namespace controlSystem
         Press,
         Release,
         Rotary,
+        RemoteCommand,
     };
 
     struct ButtonEvent
@@ -16,5 +17,7 @@ namespace controlSystem
         ButtonEventType type = ButtonEventType::Press;
         uint8_t buttonId = 0;
         int8_t rotaryDelta = 0;
+        uint16_t command = 0;
+        uint16_t releaseMs = 0;
     };
 }

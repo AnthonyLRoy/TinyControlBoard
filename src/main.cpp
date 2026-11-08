@@ -35,13 +35,18 @@ extern "C" void app_main(void)
     }
 
     static ble::BleServer bleServer;
-    bleServer.start(board.getActionProcessor(), board.getSystemState(),
-                    [](uint16_t cmdId, uint16_t param)
+    bleServer.start(board.getSystemState(),
+                    [&board](uint16_t command, uint16_t releaseMs)
+                    {
+                        return board.enqueueRemoteCommand(command, releaseMs);
+                    },
+                    [](uint16_t cmdId, uint16_t param, uint16_t param1)
                     {
                         UartMessage msg;
                         msg.msgType   = MSG_COMMAND;
                         msg.commandId = cmdId;
                         msg.params[0] = param;
+                        msg.params[1] = param1;
                         transport::uart::UartTransport::getInstance().sendUartMessage("BLE_Library", msg);
                     },
                     [](uint16_t cmdId, const uint8_t *p_name, uint8_t nameLen)

@@ -91,13 +91,14 @@ sequenceDiagram
     CB->>CB: initTransport() — get UartTransport/StandardRelay singletons, wire RX + heartbeat-timeout callbacks
     CB->>CB: initComponents() — construct ActionProcessor + ControlBoardInputDispatcher
     CB->>BS: setupRelays() — configure 7 relay GPIOs as outputs, each driven OFF via `StandardRelay::init(pin, false)`
+    CB->>BS: configureMcpCallbacks() — bind input callbacks, gated until startup completes
     CB->>BS: setupMcpHandler() — I2C init, MCP23018 init, GPIO ISR install
     CB->>CB: ButtonEventQueue::start() — create queue (depth 16) + action_task (stack 4096, prio 5)
-    CB->>BS: configureMcpCallbacks() — wire press/release/rotary callbacks into the queue
     CB->>BS: setupSerial() — UART2 init (921600 baud), uart_rx_task (stack 4096, prio 10), HeartbeatMonitor (stack 4096, prio 5)
     CB->>CB: ControlBoardActionRegistry::populate() — build the 16-button action table
     CB->>BS: finalizeStartupIndicators() — 5s init delay
     CB->>AP: triggerInitialPowerOn() — runs the PowerOn relay sequence (see §12)
+    CB->>CB: Enable physical input after the initial power attempt
     Main->>BLE: BleServer::start() — NimBLE GATT init, statusNotifyTask (stack 4096, prio 3)
     Main->>Main: while(true) vTaskDelay(1000ms) — idle, all work happens in tasks
 ```
@@ -112,7 +113,7 @@ configuration).
 
 | Task | Purpose | File | Stack | Priority | Core |
 |---|---|---|---|---|---|
-| `action_task` | Drains the button/rotary event queue, drives `ActionProcessor` | `lib/app/ButtonEventQueue.cpp` | 4096 | 5 | unpinned |
+| `action_task` | Serializes button, rotary and remote actions through `ActionProcessor` | `lib/app/ButtonEventQueue.cpp` | 4096 | 5 | unpinned |
 | `uart_rx_task` | Drains UART RX bytes, reassembles framed packets | `lib/hal/uart/uartRxPump.cpp` | 4096 | 10 | unpinned |
 | `heartbeat_task` | Polls elapsed time since last UART RX, fires timeout callback | `lib/hal/uart/heartbeatMonitor.cpp` | 4096 | 5 | unpinned |
 | `ble_status` | Polls system/library/playlist state and pushes BLE notifications | `lib/ble/BleServer.cpp` | 4096 | 3 | unpinned |
@@ -274,8 +275,8 @@ format specification (this firmware is one of the two endpoints of that protocol
 | Direction | Raspberry Pi → ESP32 (any valid UART RX packet resets the timer, not just an explicit heartbeat command) |
 | Timeout | 30000 ms (`board::timing::k_heartbeatTimeoutMs`) |
 | Check interval | Monitor task polls the elapsed-time watchdog periodically (interval constant lives in `heartbeatMonitor.cpp`) |
-| Failure behavior | `ActionProcessor::handleHeartbeatTimeout()` forces the power state toward `SLEEP` if currently `ON`/`TURNING_ON` |
-| Recovery | A subsequent power-on cycle re-arms the boot-time 60s RPi-boot wait (`RpiBootManager::waitForRpiToBoot`) |
+| Failure behavior | A timeout is logged; the current power state is retained. During shutdown it signals the shutdown wait. |
+| Recovery | A failed boot switches off the Pi and output-stage relays and leaves controls available for a power-on retry. |
 
 ```mermaid
 sequenceDiagram
@@ -290,7 +291,7 @@ sequenceDiagram
     RPi--xFW: UART link lost (Pi crash / cable fault)
     FW->>FW: 30000ms elapses with no RX
     FW->>FW: onTimeout() -> ActionProcessor::handleHeartbeatTimeout()
-    FW->>FW: Power state forced toward SLEEP
+    FW->>FW: Log timeout; retain current power state
 ```
 
 ## 15. Error Handling

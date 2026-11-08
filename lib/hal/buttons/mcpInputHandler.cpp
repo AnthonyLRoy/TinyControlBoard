@@ -21,24 +21,69 @@ McpInputHandler::McpInputHandler(uint8_t address, i2c_port_t port)
             m_ticksToWait(pdMS_TO_TICKS(50)),
             mp_interruptTaskHandle(nullptr) {}
 
+McpInputHandler::~McpInputHandler() {
+    stop();
+}
+
 // Initializes the I2C bus, MCP23018 chip, interrupt pin, and background task for GPIO edge events.
 esp_err_t McpInputHandler::begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin) {
     m_interruptPin = intPin;
 
-    ESP_RETURN_ON_ERROR(initI2cBus(sda, scl), k_logTag, "I2C init failed");
-    ESP_RETURN_ON_ERROR(initMcp23018(), k_logTag, "MCP init failed");
-    ESP_RETURN_ON_ERROR(initInterruptPin(), k_logTag, "Interrupt pin setup failed");
+    esp_err_t err = initI2cBus(sda, scl);
+    if (err == ESP_OK) err = initMcp23018();
+    if (err != ESP_OK) {
+        ESP_LOGE(k_logTag, "MCP initialization failed: %d", err);
+        stop();
+        return err;
+    }
 
+    m_stopping.store(false);
+    m_taskStopped = xSemaphoreCreateBinary();
+    if (m_taskStopped == nullptr) {
+        stop();
+        return ESP_ERR_NO_MEM;
+    }
+
+    clearInitialInterrupts();
     createInterruptTask();
     if (mp_interruptTaskHandle == nullptr)
     {
         ESP_LOGE(k_logTag, "Failed to create MCP interrupt task");
+        stop();
         return ESP_ERR_NO_MEM;
     }
-    clearInitialInterrupts();
+    err = initInterruptPin();
+    if (err != ESP_OK) {
+        ESP_LOGE(k_logTag, "MCP interrupt initialization failed: %d", err);
+        stop();
+        return err;
+    }
+    xTaskNotifyGive(mp_interruptTaskHandle);
 
     ESP_LOGI(k_logTag, "MCP23018 initialized successfully");
     return ESP_OK;
+}
+
+void McpInputHandler::stop() {
+    if (m_isrInstalled) {
+        gpio_intr_disable(m_interruptPin);
+        gpio_isr_handler_remove(m_interruptPin);
+        m_isrInstalled = false;
+    }
+    if (mp_interruptTaskHandle) {
+        m_stopping.store(true);
+        xTaskNotifyGive(mp_interruptTaskHandle);
+        xSemaphoreTake(m_taskStopped, portMAX_DELAY);
+        mp_interruptTaskHandle = nullptr;
+    }
+    if (m_taskStopped) {
+        vSemaphoreDelete(m_taskStopped);
+        m_taskStopped = nullptr;
+    }
+    if (m_i2cInstalled) {
+        i2c_driver_delete(m_i2cPort);
+        m_i2cInstalled = false;
+    }
 }
 
 // Stores the callback invoked when a button transitions to a pressed state.
@@ -109,6 +154,7 @@ esp_err_t McpInputHandler::initI2cBus(gpio_num_t sda, gpio_num_t scl) {
 
     ESP_RETURN_ON_ERROR(i2c_param_config(m_i2cPort, &conf), k_logTag, "I2C config failed");
     ESP_RETURN_ON_ERROR(i2c_driver_install(m_i2cPort, I2C_MODE_MASTER, 0, 0, 0), k_logTag, "I2C install failed");
+    m_i2cInstalled = true;
 
     gpio_set_direction(PIN_I2C_ENABLE, GPIO_MODE_OUTPUT);
     gpio_set_level(PIN_I2C_ENABLE, 1);
@@ -141,6 +187,7 @@ esp_err_t McpInputHandler::initInterruptPin() {
 
     esp_err_t add_err = gpio_isr_handler_add(m_interruptPin, McpInputHandler::gpioIsr, this);
     if (add_err != ESP_OK) return add_err;
+    m_isrInstalled = true;
     return ESP_OK;
 }
 
@@ -180,8 +227,11 @@ void IRAM_ATTR McpInputHandler::gpioIsr(void *p_arg) {
 void McpInputHandler::runInterruptTaskLoop() {
     while (true) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        if (m_stopping.load()) break;
         handleInterrupt();
     }
+    xSemaphoreGive(m_taskStopped);
+    vTaskDelete(nullptr);
 }
 
 // Reads the changed MCP input pins and dispatches button presses/releases and rotary changes.

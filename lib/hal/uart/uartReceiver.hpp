@@ -3,7 +3,6 @@
 #include "protocol/uartProtocol.hpp"
 
 #include <cstring>
-#include <esp_log.h>
 
 class UartReceiver
 {

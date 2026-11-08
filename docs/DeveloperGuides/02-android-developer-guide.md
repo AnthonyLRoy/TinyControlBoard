@@ -217,7 +217,7 @@ Android↔Raspberry-Pi traffic is plain HTTP for album art/thumbnails (see §11)
 | `NOW_PLAYING_CHAR` | `...9d03` | READ, NOTIFY | UTF-8 track name |
 | `TRACK_PROGRESS_CHAR` | `...9d04` | READ, NOTIFY | `[elapsed_lo, elapsed_hi, duration_lo, duration_hi, isPlaying]` |
 | `LIBRARY_CHAR` | `...9d05` | READ, NOTIFY | `MSG_LIBRARY_ENTRY` payload (browse/search/queue rows) |
-| `LIBRARY_CMD_CHAR` | `...9d06` | WRITE, WRITE_NO_RESPONSE | `[cmdId_lo, cmdId_hi, param_lo, param_hi]` |
+| `LIBRARY_CMD_CHAR` | `...9d06` | WRITE, WRITE_NO_RESPONSE | `[cmdId_lo, cmdId_hi, param0_lo, param0_hi]`, optionally followed by `param1_lo, param1_hi` |
 | `PLAYLIST_CMD_CHAR` | `...9d07` | WRITE, WRITE_NO_RESPONSE | `[cmdId_lo, cmdId_hi, name(UTF-8)]` |
 | `PLAYLIST_RESULT_CHAR` | `...9d08` | READ, NOTIFY | `[ok_u8, message(UTF-8)]` |
 

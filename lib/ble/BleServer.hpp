@@ -4,7 +4,7 @@
 #include <functional>
 
 // Forward declarations only — no NimBLE headers in this header.
-namespace controlSystem { class ActionProcessor; struct SystemState; }
+namespace controlSystem { struct SystemState; }
 struct UartMessage;
 
 namespace ble
@@ -16,7 +16,7 @@ namespace ble
     ///   STATUS char    (READ  | NOTIFY)            — 3 bytes [powerState, bitmask_lo, bitmask_hi]
     ///   TRACK_PROGRESS (READ  | NOTIFY)            — 5 bytes [elapsed_lo, elapsed_hi, duration_lo, duration_hi, isPlaying]
     ///   LIBRARY        (READ  | NOTIFY)            — MSG_LIBRARY_ENTRY payload, pushed immediately (not the 200ms poll)
-    ///   LIBRARY_CMD    (WRITE | WRITE_NO_RESPONSE) — 4 bytes [cmdId_lo, cmdId_hi, param_lo, param_hi]
+    ///   LIBRARY_CMD    (WRITE | WRITE_NO_RESPONSE) — cmdId, param0, optional param1 (uint16 LE)
     ///   PLAYLIST_CMD   (WRITE | WRITE_NO_RESPONSE) — [cmdId_lo, cmdId_hi, name(UTF-8, variable)]
     ///   PLAYLIST_RESULT(READ  | NOTIFY)            — MSG_PLAYLIST_RESULT payload, pushed immediately
     ///
@@ -26,9 +26,9 @@ namespace ble
     {
     public:
         // Starts the BLE GATT server and attaches the action processor callbacks it will use.
-        void start(controlSystem::ActionProcessor &processor,
-                   controlSystem::SystemState     &state,
-                   std::function<void(uint16_t cmdId, uint16_t param)> onLibraryCommand,
+        void start(controlSystem::SystemState &state,
+                   std::function<bool(uint16_t, uint16_t)> onCommand,
+                   std::function<void(uint16_t cmdId, uint16_t param0, uint16_t param1)> onLibraryCommand,
                    std::function<void(uint16_t cmdId, const uint8_t *p_name, uint8_t nameLen)> onPlaylistCommand);
     };
 

@@ -1,5 +1,4 @@
 ﻿#include "ble/BleServer.hpp"
-#include "app/actionProcessor.hpp"
 #include "app/SystemState.hpp"
 #include "app/ActionFactory.hpp"
 #include "board/boardConfig.hpp"
@@ -74,8 +73,8 @@ static constexpr const char *k_logTag = "BLE_Server";
 // ---------------------------------------------------------------------------
 // File-scope state (avoids NimBLE types in the class header)
 // ---------------------------------------------------------------------------
-static controlSystem::ActionProcessor *s_processor       = nullptr;
 static controlSystem::SystemState     *s_state            = nullptr;
+static std::function<bool(uint16_t, uint16_t)> s_onCommand;
 static uint16_t                        s_connHandle       = BLE_HS_CONN_HANDLE_NONE;
 static uint16_t                        s_statusValHandle  = 0;
 static uint16_t                        s_nowPlayingValHandle = 0;
@@ -87,7 +86,7 @@ static volatile bool                   s_nowPlayingSubscribed = false;
 static volatile bool                   s_trackProgressSubscribed = false;
 static volatile bool                   s_librarySubscribed = false;
 static volatile bool                   s_playlistResultSubscribed = false;
-static std::function<void(uint16_t, uint16_t)> s_onLibraryCommand;
+static std::function<void(uint16_t, uint16_t, uint16_t)> s_onLibraryCommand;
 static std::function<void(uint16_t, const uint8_t *, uint8_t)> s_onPlaylistCommand;
 
 // Notify-capable characteristics, used to dispatch SUBSCRIBE/DISCONNECT GAP events
@@ -205,8 +204,11 @@ static int cmdChrAccess(uint16_t conn, uint16_t attr,
 
     ESP_LOGI(k_logTag, "BLE command received: 0x%04X releaseMs=%u", cmdId, releaseMs);
 
-    if (s_processor)
-        s_processor->injectCommand(static_cast<CommandId>(cmdId), releaseMs);
+    if (!s_onCommand || !s_onCommand(cmdId, releaseMs))
+    {
+        ESP_LOGW(k_logTag, "Unable to queue BLE command 0x%04X", cmdId);
+        return BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
     return 0;
 }
 
@@ -230,8 +232,8 @@ static int nowPlayingChrAccess(uint16_t conn, uint16_t attr,
 {
     if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR || !s_state)
         return BLE_ATT_ERR_UNLIKELY;
-    const char *text = s_state->nowPlayingText;
-    os_mbuf_append(ctxt->om, text, strlen(text));
+    const auto text = s_state->getNowPlaying();
+    os_mbuf_append(ctxt->om, text.data(), strlen(text.data()));
     return 0;
 }
 
@@ -278,14 +280,18 @@ static int libraryCmdChrAccess(uint16_t conn, uint16_t attr,
     if (OS_MBUF_PKTLEN(ctxt->om) < 4)
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
 
-    uint8_t payload[4] = {};
-    os_mbuf_copydata(ctxt->om, 0, sizeof(payload), payload);
+    uint8_t payload[6] = {};
+    const uint16_t pktLen = OS_MBUF_PKTLEN(ctxt->om);
+    if (pktLen != 4 && pktLen != 6)
+        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+    os_mbuf_copydata(ctxt->om, 0, pktLen, payload);
     const uint16_t cmdId = static_cast<uint16_t>(payload[0]) | (static_cast<uint16_t>(payload[1]) << 8);
     const uint16_t param = static_cast<uint16_t>(payload[2]) | (static_cast<uint16_t>(payload[3]) << 8);
-    ESP_LOGI(k_logTag, "BLE library command received: cmd=0x%04X param=%u", cmdId, param);
+    const uint16_t param1 = static_cast<uint16_t>(payload[4]) | (static_cast<uint16_t>(payload[5]) << 8);
+    ESP_LOGI(k_logTag, "BLE library command received: cmd=0x%04X param0=%u param1=%u", cmdId, param, param1);
 
     if (s_onLibraryCommand)
-        s_onLibraryCommand(cmdId, param);
+        s_onLibraryCommand(cmdId, param, param1);
     return 0;
 }
 
@@ -364,8 +370,8 @@ static bool pushNowPlayingNotification()
 {
     if (!s_state)
         return false;
-    const char *text = s_state->nowPlayingText;
-    return notifyBytes(s_nowPlayingValHandle, text, strlen(text), "now-playing");
+    const auto text = s_state->getNowPlaying();
+    return notifyBytes(s_nowPlayingValHandle, text.data(), strlen(text.data()), "now-playing");
 }
 
 static bool pushTrackProgressNotification()
@@ -590,7 +596,7 @@ static void statusNotifyTask(void *arg)
 
         if (s_nowPlayingSubscribed && npv != lastNowPlayingVer)
         {
-            ESP_LOGI(k_logTag, "Pushing now-playing: %s", s_state->nowPlayingText);
+            ESP_LOGI(k_logTag, "Pushing now-playing");
             if (pushNowPlayingNotification())
                 lastNowPlayingVer = npv;
         }
@@ -611,13 +617,13 @@ static void statusNotifyTask(void *arg)
 // ---------------------------------------------------------------------------
 // BleServer::start
 // ---------------------------------------------------------------------------
-void ble::BleServer::start(controlSystem::ActionProcessor &processor,
-                           controlSystem::SystemState     &state,
-                           std::function<void(uint16_t cmdId, uint16_t param)> onLibraryCommand,
+void ble::BleServer::start(controlSystem::SystemState &state,
+                           std::function<bool(uint16_t, uint16_t)> onCommand,
+                           std::function<void(uint16_t cmdId, uint16_t param0, uint16_t param1)> onLibraryCommand,
                            std::function<void(uint16_t cmdId, const uint8_t *p_name, uint8_t nameLen)> onPlaylistCommand)
 {
-    s_processor = &processor;
     s_state     = &state;
+    s_onCommand = std::move(onCommand);
     s_onLibraryCommand = std::move(onLibraryCommand);
     s_onPlaylistCommand = std::move(onPlaylistCommand);
 

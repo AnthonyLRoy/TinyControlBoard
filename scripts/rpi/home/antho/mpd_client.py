@@ -16,21 +16,23 @@ def mpd_command(command_line):
         sock.recv(1024)  # banner: "OK MPD <version>\n"
         sock.sendall((command_line + "\n").encode("utf-8"))
         data = b""
-        while not data.endswith(b"OK\n") and b"ACK " not in data:
+        while True:
             chunk = sock.recv(4096)
             if not chunk:
-                break
+                raise ConnectionError("MPD connection closed before command completed")
             data += chunk
+            if data.endswith(b"\n"):
+                last_line = data.splitlines()[-1]
+                if last_line == b"OK" or last_line.startswith(b"ACK "):
+                    break
     finally:
         sock.close()
 
     text = data.decode("utf-8", errors="replace")
-    if text.startswith("ACK "):
-        raise RuntimeError(f"MPD error: {text.strip()}")
     lines = text.splitlines()
-    if lines and lines[-1] == "OK":
-        lines = lines[:-1]
-    return lines
+    if lines[-1].startswith("ACK "):
+        raise RuntimeError(f"MPD error: {lines[-1]}")
+    return lines[:-1]
 
 
 def mpd_lsinfo(path):

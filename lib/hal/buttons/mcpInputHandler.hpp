@@ -6,10 +6,12 @@
 #include <driver/gpio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
+#include "freertos/semphr.h"
 #include "esp_Check.h"
 #include <esp_log.h>
 #include "board/boardConfig.hpp"
 #include "project_cfg.hpp"
+#include <atomic>
 
 constexpr uint8_t MCP_IODIRA = 0x00;
 constexpr uint8_t MCP_IODIRB = 0x01;
@@ -40,9 +42,11 @@ class McpInputHandler {
 public:
     // Creates a driver instance bound to a specific MCP23018 address and I2C bus.
     McpInputHandler(uint8_t address, i2c_port_t port);
+    ~McpInputHandler();
 
     // Initializes the I2C bus, the MCP23018 chip, and the interrupt handling task.
     esp_err_t begin(gpio_num_t sda, gpio_num_t scl, gpio_num_t intPin);
+    void stop();
 
     // Registers the callback used when a button transitions to the pressed state.
     void setButtonCallback(std::function<void(uint8_t, bool)> cb);
@@ -106,6 +110,10 @@ private:
     TickType_t m_ticksToWait;
 
     TaskHandle_t mp_interruptTaskHandle;
+    SemaphoreHandle_t m_taskStopped = nullptr;
+    std::atomic<bool> m_stopping{false};
+    bool m_isrInstalled = false;
+    bool m_i2cInstalled = false;
     std::function<void(uint8_t, bool)> m_buttonCallback;
     std::function<void(uint8_t, bool)> m_releaseCallback;
     std::function<void(int)> m_rotaryCallback;

@@ -28,10 +28,8 @@ namespace controlSystem
     private:
         // Reports a new working status to the board's activity indicator sink.
         void reportStatus(ControlBoardWorkingStatus status);
-        /// Shared preamble for both Sleep and DeepSleep: notifies the RPi,
-        /// waits for its shutdown, then cuts the RPi and 3V3 relays.
-        // Runs the common Raspberry Pi shutdown sequence before cutting power rail relays.
-        void runRpiShutdownSequence();
+        // Returns false without cutting power if shutdown was not observed.
+        bool runRpiShutdownSequence();
         /// Publishes the new state to both the LED indicator and the BLE-visible
         /// SystemState so remote clients see intermediate transitions in real time.
         // Updates the board state and LED indicators so remote clients see the current power transition.

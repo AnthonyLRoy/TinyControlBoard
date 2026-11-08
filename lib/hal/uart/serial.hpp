@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <functional>
+#include <mutex>
 
 namespace transport::uart
 {
@@ -66,6 +67,7 @@ namespace transport::uart
 
         uart_port_t m_uartNumber;
         std::atomic<bool> m_initialized{false};
+        std::mutex m_sendMutex;
 
         DataReadyHandshake m_handshake;
         UartRxPump m_rxPump;

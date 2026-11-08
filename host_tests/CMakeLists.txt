@@ -13,6 +13,7 @@ add_executable(tiny_control_board_host_tests
     host_test_action_stubs.cpp
     ../lib/protocol/uartProtocol.cpp
     ../lib/protocol/commandCatalog.cpp
+    ../lib/hal/uart/uartReceiver.cpp
     ../lib/app/ActionFactory.cpp
     ../lib/app/ActionUartDispatcher.cpp
     ../lib/app/ControlBoardActionRegistry.cpp

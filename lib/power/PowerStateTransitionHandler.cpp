@@ -5,6 +5,7 @@
 #include "indicators/powerLed.hpp"
 #include "power/PowerStateTransitionPolicy.hpp"
 #include <inttypes.h>
+#include <esp_timer.h>
 
 namespace controlSystem
 {
@@ -39,13 +40,27 @@ namespace controlSystem
         mr_systemState.powerState.store(state);
     }
 
-    void PowerStateTransitionHandler::runRpiShutdownSequence()
+    bool PowerStateTransitionHandler::runRpiShutdownSequence()
     {
         publishPowerState(ControlBoardPowerState::GOING_TO_SLEEP);
         mr_serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
-        mr_rpiBootManager.waitForRpiShutdown(board::timing::k_rpiShutdownTimeoutMs);
-        mr_relayController.shutdownRpi();
+        if (!mr_rpiBootManager.waitForRpiShutdown(board::timing::k_rpiShutdownTimeoutMs))
+        {
+            ESP_LOGE(k_logTag, "RPi shutdown not confirmed; retaining power");
+            publishPowerState(ControlBoardPowerState::ON);
+            return false;
+        }
         vTaskDelay(pdMS_TO_TICKS(board::timing::k_rpiShutdownSettleDelayMs));
+        const uint64_t lastRxUs = mr_serial.getLastRxTimeUs();
+        const uint64_t nowUs = static_cast<uint64_t>(esp_timer_get_time());
+        if (lastRxUs == 0 || nowUs - lastRxUs <= static_cast<uint64_t>(board::timing::k_heartbeatTimeoutMs) * 1000)
+        {
+            ESP_LOGE(k_logTag, "RPi UART activity resumed; retaining power");
+            publishPowerState(ControlBoardPowerState::ON);
+            return false;
+        }
+        mr_relayController.shutdownRpi();
+        return true;
     }
 
     ControlBoardPowerState PowerStateTransitionHandler::handle(const actions::IAction &action)
@@ -84,6 +99,8 @@ namespace controlSystem
             }
 
             indicators::getBootDiagnosticLeds().stageFailure(indicators::BootStage::RpiComms);
+            mr_relayController.shutdownRpi();
+            mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             publishPowerState(ControlBoardPowerState::SLEEP);
             reportStatus(ControlBoardWorkingStatus::sleeping);
             ESP_LOGW(k_logTag, "Power ON sequence aborted because no RPi heartbeat was received");
@@ -95,7 +112,8 @@ namespace controlSystem
         if (transition == PowerTransitionAction::Sleep)
         {
             ESP_LOGI(k_logTag, "Initiating sleep sequence");
-            runRpiShutdownSequence();
+            if (!runRpiShutdownSequence())
+                return ControlBoardPowerState::ON;
             mr_relayController.suspendDac();
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);
             indicators::getSpiLedDriver().setAllLeds(false);
@@ -108,7 +126,8 @@ namespace controlSystem
         if (transition == PowerTransitionAction::DeepSleep)
         {
             ESP_LOGI(k_logTag, "Initiating deep sleep sequence");
-            runRpiShutdownSequence();
+            if (!runRpiShutdownSequence())
+                return ControlBoardPowerState::ON;
             mr_relayController.suspendDac();
             mr_relayController.setRelayWithDelay(PIN_RELAY_DAC_POWER, false, 0);
             mr_relayController.setRelayWithDelay(PIN_RELAY_OUTPUT_STAGE_POWER, false, 0);

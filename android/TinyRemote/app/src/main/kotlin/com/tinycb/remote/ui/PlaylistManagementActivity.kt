@@ -176,7 +176,9 @@ class PlaylistManagementActivity : ConnectedControlActivity() {
         vm.playlist.requestNames()
         lifecycleScope.launch {
             try {
-                val entries = withTimeout(5000) { vm.playlist.nameEntries.first { it != null } }
+                val entries = withTimeout(5000) {
+                    vm.playlist.nameEntries.first { BleProtocol.isCompleteListing(it) }
+                }
                 onResult(entries!!.map { it.name })
             } catch (e: TimeoutCancellationException) {
                 onFailure()

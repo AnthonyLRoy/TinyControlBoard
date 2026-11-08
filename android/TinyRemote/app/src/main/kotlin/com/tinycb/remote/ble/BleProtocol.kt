@@ -155,6 +155,15 @@ object BleProtocol {
         return if (index == 0) listOf(entry) else currentListing + entry
     }
 
+    fun isCompleteListing(entries: List<LibraryEntry>?): Boolean {
+        if (entries == null) return false
+        if (entries.isEmpty()) return true
+        val total = entries.first().total
+        return total > 0 && entries.size == total &&
+            entries.all { it.total == total } &&
+            entries.map { it.index }.toSet() == (0 until total).toSet()
+    }
+
     /** Parses a PLAYLIST_RESULT_CHAR notification: MSG_PLAYLIST_RESULT payload = [ok(u8), message]. */
     fun parsePlaylistResult(value: ByteArray): PlaylistOpResult? {
         if (value.isEmpty()) return null

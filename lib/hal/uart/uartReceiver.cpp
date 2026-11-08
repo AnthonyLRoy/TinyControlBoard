@@ -27,6 +27,12 @@ bool UartReceiver::getNextMessage(UartMessage &rOutMsg)
         }
 
         const int payloadLen = static_cast<int>(m_buffer[protocol::k_indexPayloadLen]);
+        if (payloadLen > protocol::k_maxPayloadSize)
+        {
+            memmove(m_buffer, m_buffer + 1, m_bufferLen - 1);
+            m_bufferLen -= 1;
+            continue;
+        }
         const int frameSize  = protocol::k_headerSize + payloadLen + 1; // +1 for checksum
 
         if (m_bufferLen < frameSize)

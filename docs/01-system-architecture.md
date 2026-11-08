@@ -257,8 +257,8 @@ dedicated ADR rather than relying on this summary alone.
 
 | Quality attribute      | Scenario / evidence                                                           | Current target or status                                                                                       |
 | ---------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Power reliability      | Pi does not provide a heartbeat during startup.                               | Firmware waits up to 60 seconds, then leaves the startup path for`SLEEP`.                                    |
-| Runtime liveness       | Pi heartbeat is lost while the system is on.                                  | Firmware timeout is 30 seconds and triggers a transition toward`SLEEP`.                                      |
+| Power reliability      | Pi does not provide a heartbeat during startup.                               | Firmware waits up to 60 seconds, turns off Pi and output-stage relays, and enters `SLEEP` with retry controls available. |
+| Runtime liveness       | Pi heartbeat is lost while the system is on.                                  | Firmware logs a timeout after 30 seconds of UART silence and retains the current power state.                  |
 | Control availability   | Android app is disconnected or unavailable.                                   | Physical controls remain the local control path; Android is optional.                                          |
 | Communication capacity | ESP32 and Pi exchange framed UART packets.                                    | UART is configured for 921600 baud; end-to-end latency/throughput goals are not specified.                     |
 | Mobile concurrency     | Multiple clients attempt to connect.                                          | BLE server supports one client; multi-client support is not a requirement currently documented.                |

@@ -133,6 +133,7 @@ void UartTransport::sendUartMessage(const char *p_logTag, UartMessage &rMessage)
 // Sends raw byte data across the UART link only when the interface is active and ready.
 bool UartTransport::sendData(const uint8_t *p_data, size_t len)
 {
+    std::lock_guard<std::mutex> lock(m_sendMutex);
     if (!p_data || len == 0 || !m_initialized.load(std::memory_order_acquire))
     {
         ESP_LOGW(k_logTag, "Invalid send attempt");

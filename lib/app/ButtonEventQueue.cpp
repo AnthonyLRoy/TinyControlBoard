@@ -10,9 +10,11 @@ namespace controlSystem
     }
 
     // Starts the FreeRTOS queue and worker task that serializes button and rotary input events.
-    bool ButtonEventQueue::start(ControlBoardInputDispatcher &rDispatcher)
+    bool ButtonEventQueue::start(ControlBoardInputDispatcher &rDispatcher,
+                                 std::function<void(uint16_t, uint16_t)> onRemoteCommand)
     {
         mp_dispatcher = &rDispatcher;
+        m_onRemoteCommand = std::move(onRemoteCommand);
 
         m_queue = xQueueCreate(k_depth, sizeof(ButtonEvent));
         if (!m_queue)
@@ -60,18 +62,18 @@ namespace controlSystem
             return true;
         }
 
-        ++m_droppedEvents;
-        if ((m_droppedEvents % 16U) == 1U)
+        const uint32_t droppedEvents = m_droppedEvents.fetch_add(1) + 1;
+        if ((droppedEvents % 16U) == 1U)
         {
             ESP_LOGW(k_logTag, "Button event queue full, dropped %lu events (latest=%s)",
-                     static_cast<unsigned long>(m_droppedEvents), p_eventName);
+                     static_cast<unsigned long>(droppedEvents), p_eventName);
         }
         return false;
     }
 
-    void ButtonEventQueue::enqueuePress(uint8_t pin)
+    bool ButtonEventQueue::enqueuePress(uint8_t pin)
     {
-        enqueue({ButtonEventType::Press, pin, 0}, "press");
+        return enqueue({ButtonEventType::Press, pin, 0}, "press");
     }
 
     void ButtonEventQueue::enqueueRelease(uint8_t pin)
@@ -82,6 +84,11 @@ namespace controlSystem
     void ButtonEventQueue::enqueueRotary(int movement)
     {
         enqueue({ButtonEventType::Rotary, 0, static_cast<int8_t>(movement)}, "rotary");
+    }
+
+    bool ButtonEventQueue::enqueueRemoteCommand(uint16_t command, uint16_t releaseMs)
+    {
+        return enqueue({ButtonEventType::RemoteCommand, 0, 0, command, releaseMs}, "remote command");
     }
 
     void ButtonEventQueue::taskEntry(void *pvParam)
@@ -107,6 +114,9 @@ namespace controlSystem
                     break;
                 case ButtonEventType::Rotary:
                     mp_dispatcher->handleRotaryMovement(event.rotaryDelta);
+                    break;
+                case ButtonEventType::RemoteCommand:
+                    m_onRemoteCommand(event.command, event.releaseMs);
                     break;
                 }
             }

@@ -10,8 +10,7 @@ namespace actions
         if (command == CMD_SYS_RPI_SHUTDOWN)
         {
             ctx.brightnessController.clearDisplayOffMode();
-            ctx.serial.sendUartCommand("RPi_Shutdown", CMD_SYS_RPI_SHUTDOWN);
-            ctx.relayController.shutdownRpi();
+            ctx.systemState.powerState.store(ctx.powerHandler.handle(*this));
         }
         // CMD_EXIT_ITEM: intentionally a no-op beyond logging
         ESP_LOGI("System_Action", "System command executed: 0x%04X", command);

@@ -27,23 +27,36 @@ namespace controlSystem
         if (!bootstrap::setupRelays())
             return false;
 
+        bootstrap::configureMcpCallbacks(
+            m_mcpHandler,
+            [this](uint8_t pin) {
+                if (m_acceptInput.load() && pin < 16 && m_buttonQueue.enqueuePress(pin)) {
+                    m_activeInputPresses |= static_cast<uint16_t>(1u << pin);
+                }
+            },
+            [this](uint8_t pin) {
+                if (pin < 16) {
+                    const auto mask = static_cast<uint16_t>(1u << pin);
+                    if (m_acceptInput.load() && (m_activeInputPresses & mask))
+                        m_buttonQueue.enqueueRelease(pin);
+                    m_activeInputPresses &= static_cast<uint16_t>(~mask);
+                }
+            },
+            [this](int movement) { if (m_acceptInput.load()) m_buttonQueue.enqueueRotary(movement); });
+
         if (!bootstrap::setupMcpHandler(m_mcpHandler))
         {
             indicators::getBootDiagnosticLeds().firmwareInitFailed();
             return false;
         }
 
-        if (!m_buttonQueue.start(*mp_inputDispatcher))
+        if (!m_buttonQueue.start(*mp_inputDispatcher, [this](uint16_t command, uint16_t releaseMs) {
+                mp_responseProcessor->injectCommand(static_cast<CommandId>(command), releaseMs);
+            }))
         {
             indicators::getBootDiagnosticLeds().firmwareInitFailed();
             return false;
         }
-
-        bootstrap::configureMcpCallbacks(
-            m_mcpHandler,
-            [this](uint8_t pin)  { m_buttonQueue.enqueuePress(pin); },
-            [this](uint8_t pin)  { m_buttonQueue.enqueueRelease(pin); },
-            [this](int movement) { m_buttonQueue.enqueueRotary(movement); });
 
         if (!bootstrap::setupSerial(*mp_serialHandler))
         {
@@ -56,8 +69,9 @@ namespace controlSystem
         if (!mp_responseProcessor->triggerInitialPowerOn())
         {
             indicators::getBootDiagnosticLeds().firmwareInitFailed();
-            return false;
+            ESP_LOGW(k_logTag, "Initial power-on failed; controls remain available for retry");
         }
+        m_acceptInput.store(true);
         return true;
     }
 
@@ -122,6 +136,8 @@ namespace controlSystem
     // Tears down the control board tasks and hardware interfaces before a shutdown or reset.
     void ControlBoard::deinit()
     {
+        m_acceptInput.store(false);
+        m_mcpHandler.stop();
         m_buttonQueue.stop();
         if (mp_serialHandler != nullptr)
         {
@@ -184,9 +200,8 @@ namespace controlSystem
 
         if (rMsg.msgType == MSG_NOW_PLAYING)
         {
-            memcpy(m_systemState.nowPlayingText, rMsg.nowPlayingText, rMsg.nowPlayingLen + 1);
-            m_systemState.nowPlayingVersion.fetch_add(1, std::memory_order_release);
-            ESP_LOGI(k_logTag, "Now playing: %s", m_systemState.nowPlayingText);
+            m_systemState.setNowPlaying(rMsg.nowPlayingText, rMsg.nowPlayingLen);
+            ESP_LOGI(k_logTag, "Now playing: %s", rMsg.nowPlayingText);
             return;
         }
 

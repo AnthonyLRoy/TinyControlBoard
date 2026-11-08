@@ -48,7 +48,10 @@ def _cdp_ws_handshake(sock, host, port, path):
 
     buf = b''
     while b'\r\n\r\n' not in buf:
-        buf += sock.recv(1024)
+        chunk = sock.recv(1024)
+        if not chunk:
+            raise ConnectionError("WebSocket closed during handshake")
+        buf += chunk
     if b'101' not in buf:
         raise Exception(f"WS handshake failed: {buf[:100]}")
 
@@ -72,23 +75,24 @@ def _build_ws_text_frame(payload):
 def _read_ws_text_frame(sock, timeout=2):
     """Reads a single (unmasked) server->client WebSocket frame and returns its payload bytes."""
     sock.settimeout(timeout)
-    header = b''
-    while len(header) < 2:
-        header += sock.recv(2 - len(header))
+    def read_exact(size):
+        data = b''
+        while len(data) < size:
+            chunk = sock.recv(size - len(data))
+            if not chunk:
+                raise ConnectionError("WebSocket closed during frame")
+            data += chunk
+        return data
+
+    header = read_exact(2)
     length = header[1] & 0x7F
     if length == 126:
-        ext = sock.recv(2)
+        ext = read_exact(2)
         length = struct.unpack('>H', ext)[0]
     elif length == 127:
-        ext = sock.recv(8)
+        ext = read_exact(8)
         length = struct.unpack('>Q', ext)[0]
-    payload = b''
-    while len(payload) < length:
-        chunk = sock.recv(length - len(payload))
-        if not chunk:
-            break
-        payload += chunk
-    return payload
+    return read_exact(length)
 
 
 def _click_panel(css_selector):

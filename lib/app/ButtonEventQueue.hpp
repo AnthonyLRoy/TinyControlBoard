@@ -4,6 +4,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
+#include <atomic>
+#include <functional>
 
 namespace controlSystem
 {
@@ -21,7 +23,8 @@ namespace controlSystem
         /// Creates the queue and spawns the dispatch task.
         /// Must be called after rDispatcher is fully constructed.
         // Starts the queue and worker task that drains raw button and rotary events.
-        bool start(ControlBoardInputDispatcher &rDispatcher);
+        bool start(ControlBoardInputDispatcher &rDispatcher,
+                   std::function<void(uint16_t, uint16_t)> onRemoteCommand);
 
         /// Deletes the task and queue; safe to call more than once.
         // Stops the worker task and releases the queue used for event dispatch.
@@ -32,11 +35,12 @@ namespace controlSystem
         bool enqueue(const ButtonEvent &event, const char *p_eventName);
 
         // Queues a button press event for the given input pin.
-        void enqueuePress(uint8_t pin);
+        bool enqueuePress(uint8_t pin);
         // Queues a button release event for the given input pin.
         void enqueueRelease(uint8_t pin);
         // Queues a signed rotary movement event from the encoder.
         void enqueueRotary(int movement);
+        bool enqueueRemoteCommand(uint16_t command, uint16_t releaseMs);
 
     private:
         // FreeRTOS trampoline that calls the queue task loop for the dispatcher.
@@ -52,6 +56,7 @@ namespace controlSystem
         QueueHandle_t m_queue = nullptr;
         TaskHandle_t m_taskHandle = nullptr;
         ControlBoardInputDispatcher *mp_dispatcher = nullptr;
-        uint32_t m_droppedEvents = 0;
+        std::function<void(uint16_t, uint16_t)> m_onRemoteCommand;
+        std::atomic<uint32_t> m_droppedEvents{0};
     };
 }

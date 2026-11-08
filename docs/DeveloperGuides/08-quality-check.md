@@ -1,56 +1,91 @@
 # 08 — Quality Check
 
-Document version 1.0 — 2026-09-18 — describes commit `402f526` on branch `feature/library-improvements`.
+Updated 2026-11-08 against the working tree based on commit `de9811a`. The
+working tree includes uncommitted firmware, Pi, Android, test and documentation
+changes; this record is not a statement about `de9811a` alone or a deployed
+device. It summarizes a targeted source and documentation check and the most
+recent validation results, not a complete re-audit of every claim in the guides.
 
-This pass reconciles every factual claim in documents 01–07 against the source files that
-were directly inspected during this documentation effort (not just subagent-reported
-summaries). Facts that were only available via subagent inventory and not independently
-re-read are listed as such below and are additionally marked `TODO` inline in their
-respective documents where precision matters.
+The previous version described commit `402f526` on
+`feature/library-improvements`. Its historical review is available in Git
+history; its shutdown sequence and verification status should not be treated as
+current.
 
-## Directly Re-Verified Against Source (this session)
+## Current Source Checks
 
-| Checked Item                                                                               | Document / Section                                 | Expected (per brief/prior assumption)                                                    | Found (verified in source)                                                                                                                                                                                                                                                                                         | Status                                                                                                                                                                                                                 |
-| ------------------------------------------------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Android↔Pi control transport                                                              | 01 §5, 02 §9                                     | Original brief assumed a network/HTTP control path from Android to the Pi                | Android controls the system exclusively via BLE to the ESP32; HTTP is used only for album art, direct to the Pi's web server                                                                                                                                                                                       | **Corrected**                                                                                                                                                                                                    |
-| Relay control path                                                                         | 03 §12, 06 §6                                    | Original brief assumed relay control went through an I/O-expander chain                  | All 7 relays are driven by direct ESP32 GPIO outputs; the MCP23018 expander is input-only (buttons/rotary)                                                                                                                                                                                                         | **Corrected**                                                                                                                                                                                                    |
-| `k_simulateRpiBoot` / `SIMULATE_RPI_BOOT`                                              | 03 (build environments), platformio.ini            | Repo memory claimed this flag is "automatically true in debug builds"                    | `platformio.ini` shows `-DSIMULATE_RPI_BOOT=1` is an explicit build flag on the default (`esp32-s3-devkitc-1-16mb`) environment, not something `boardConfig.hpp` derives implicitly from `NDEBUG`/debug alone                                                                                            | **Corrected** — the debug environment happens to also pass this flag explicitly; both statements describe the same net effect but the mechanism is an explicit build flag, not implicit `#ifdef NDEBUG` logic |
-| `lib/wifi/` module existence                                                             | Documentation-gaps.md                              | Repo memory described a WiFi/HTTP command layer (WifiManager, HttpCommandServer, SoftAP) | Confirmed absent from `lib/` at this commit — directory contains only `app/, ble/, board/, hal/, indicators/, input/, power/, protocol/`                                                                                                                                                                      | **Confirmed removed; documented as BLE-only**                                                                                                                                                                    |
-| UART protocol constants, `CommandId` table, `MessageType` enum, `UartMessage` struct | 05 (entire document)                               | N/A — first-time documentation                                                          | Read verbatim from `lib/protocol/uartProtocol.hpp` in full                                                                                                                                                                                                                                                       | **Verified directly, no discrepancy**                                                                                                                                                                            |
-| GPIO/timing/I2C/relay/indicator/BLE constants                                              | 03 §10, 06 (entire document)                      | N/A — first-time documentation                                                          | Read verbatim from `lib/board/boardConfig.hpp` in full                                                                                                                                                                                                                                                           | **Verified directly, no discrepancy**                                                                                                                                                                            |
-| Relay active-high polarity                                                                 | 06 §6                                             | Assumed active-high (industry convention)                                                | Confirmed in `lib/hal/relay/relay.cpp`: `gpio_set_level(relayPin, state ? 1 : 0)`, pull-down enabled/pull-up disabled                                                                                                                                                                                          | **Confirmed**                                                                                                                                                                                                    |
-| Firmware boot sequence order                                                               | 01 §7, 03 §5                                     | Subagent-reported sequence                                                               | Re-read `src/main.cpp` and `lib/app/ControlBoard.cpp` directly; confirmed order: `esp_pm_configure` → 5000ms delay → `ControlBoard::init()` (NVS → transport → components → relays → MCP → button queue → serial → action registry → `triggerInitialPowerOn`) → BLE server start → idle loop | **Verified directly, no discrepancy**                                                                                                                                                                            |
-| Power-on relay sequence and delays                                                         | 01 §7, 03 §12, 06 §2                            | Subagent-reported sequence                                                               | Re-read `PowerStateTransitionHandler.cpp` directly: VCC3V3 (+1000ms) → DAC (+1500ms) → Output stage (+1500ms) → RPi (+1000ms, then wait ≤60s for heartbeat)                                                                                                                                                  | **Verified directly, no discrepancy**                                                                                                                                                                            |
-| Sleep/Deep Sleep relay teardown order                                                      | 01 §8, 03 §12                                    | Subagent-reported sequence                                                               | Re-read `PowerStateTransitionHandler.cpp` directly: both run the RPi shutdown sequence first (command, wait ≤60s, relay off, 500ms settle), then Sleep turns off only the output stage, Deep Sleep additionally turns off the DAC relay                                                                         | **Verified directly, no discrepancy**                                                                                                                                                                            |
-| BLE GATT characteristic UUIDs and property flags                                           | 02 §9, 06 §8                                     | Subagent-reported table                                                                  | Re-read `lib/ble/BleServer.cpp` `grep` output directly: 8 characteristics, UUID suffixes `...9d01`–`...9d08`, property flags (`WRITE`/`WRITE_NO_RSP` for command chars, `READ`/`NOTIFY` for status/data chars)                                                                                    | **Verified directly, no discrepancy**                                                                                                                                                                            |
-| Front-panel connector pin 17 / button index 7 mismatch                                     | Documentation-gaps.md, 05 (CMD_PREV_MENU_ITEM row) | Repo memory claim                                                                        | Confirmed in `docs/wiring-reference.md` §1.7's own mismatch row (`17                                                                                                                                                                                                                                            | CMD_Prev_Menu_Item                                                                                                                                                                                                     |
+| Area | Source checked | Current result |
+| --- | --- | --- |
+| Architecture | [main.cpp](../../src/main.cpp), [BleServer.cpp](../../lib/ble/BleServer.cpp), [heartbeat_sender.py](../../scripts/rpi/home/antho/heartbeat_sender.py) | Android communicates with the ESP32 over BLE; the Pi exchanges control and playback information with the ESP32 over UART. BLE defines eight characteristics, with UUID suffixes `9d01`–`9d08`. |
+| Relay control | [boardConfig.hpp](../../lib/board/boardConfig.hpp), [ControlBoardBootstrap.cpp](../../lib/app/ControlBoardBootstrap.cpp) | Seven relay-control outputs are direct ESP32 GPIOs. The MCP23018 handles input, not relay outputs. Relay initialization failures are logged by the relay driver but are not propagated by `setupRelays()`. Electrical polarity and contacts require hardware confirmation. |
+| Startup | [main.cpp](../../src/main.cpp), [ControlBoard.cpp](../../lib/app/ControlBoard.cpp) | After the startup delay, the board initializes its components, relays, MCP, action queue and UART before the initial power-on attempt. MCP callbacks are installed before the attempt but physical input is gated until it ends. An initial Pi boot failure leaves controls available for retry. |
+| Power-on | [PowerStateTransitionHandler.cpp](../../lib/power/PowerStateTransitionHandler.cpp), [boardConfig.hpp](../../lib/board/boardConfig.hpp) | Enables 3.3V, DAC, output-stage and Pi relays with 1 s, 1.5 s, 1.5 s and 1 s delays respectively, then waits up to 60 s for a Pi heartbeat. On timeout it switches off the Pi and output-stage relays and enters `SLEEP`. |
+| Sleep and deep sleep | [PowerStateTransitionHandler.cpp](../../lib/power/PowerStateTransitionHandler.cpp), [RPIBootManager.cpp](../../lib/power/RPIBootManager.cpp) | Sends a Pi shutdown command, waits up to 60 s for a watchdog timeout, then waits another 5.5 s before cutting Pi power. If the wait fails or recent UART activity is detected after the delay, Pi power is retained and state returns to `ON`. Otherwise, sleep disables the output stage; deep sleep also disables DAC power. |
+| Watchdog | [heartbeatWatchdog.hpp](../../lib/hal/uart/heartbeatWatchdog.hpp), [heartbeat_sender.py](../../scripts/rpi/home/antho/heartbeat_sender.py) | The watchdog timeout is 30 s; the Pi sender's nominal intervals are 2 s for progress, 5 s for now-playing and 10 s for heartbeat. Actual received-data time is tracked separately from watchdog rearming. |
+| Input and BLE | [ButtonEventQueue.cpp](../../lib/app/ButtonEventQueue.cpp), [BoardBleManager.kt](../../android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ble/BoardBleManager.kt) | Physical inputs and remote action commands share a firmware action queue. Android serializes subscriptions, reads and writes in a GATT queue, with a timeout that closes and attempts to reconnect the connection. |
+| UART and library commands | [uartReceiver.cpp](../../lib/hal/uart/uartReceiver.cpp), [BleServer.cpp](../../lib/ble/BleServer.cpp) | The receiver discards oversized payload headers and resynchronizes. BLE library commands accept a second 16-bit parameter when present; four-byte commands remain accepted. |
+| Pi playlist load | [playlist_manager.py](../../scripts/rpi/home/antho/playlist_manager.py), [mpd_client.py](../../scripts/rpi/home/antho/mpd_client.py) | Loads the requested playlist before stopping playback and removing the old queue range. MPD errors and premature connection closure are reported rather than treated as success. The sequence is not atomic against other MPD clients. |
+| Playlist names | [BleProtocol.kt](../../android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ble/BleProtocol.kt), [PlaylistManagementActivity.kt](../../android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ui/PlaylistManagementActivity.kt) | The overwrite decision waits for a complete listing or the empty-list indication. |
 
-## Not Independently Re-Verified (carried from subagent inventories with reasonable confidence)
+**Safety limitation:** A UART timeout indicates silence, not proof that the Pi
+operating system has halted. A broken UART link can also cause silence. The
+grace-period activity check does not eliminate this risk. Do not treat the
+shutdown behavior as hardware-verified; see
+[Hardware Interface](06-hardware-interface.md).
 
-| Item                                                             | Document / Section | Evidence                                                                                                         | Result                                           |
-| ---------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Exact `heartbeat_sender.py` polling intervals (2s/5s/10s)      | 04 §8             | Re-read `scripts/rpi/home/antho/heartbeat_sender.py`: `TRACK_PROGRESS_INTERVAL_S=2.0`, `NOW_PLAYING_INTERVAL_S=5.0`, `HEARTBEAT_INTERVAL_S=10.0`, `TICK_S=1.0` | **Verified**; TODO removed from 04 §8 |
-| MCP23018 interrupt-handling task stack/priority                  | 03 §6             | Re-read `mcpInputHandler.cpp`: `xTaskCreate(..., "mcp_int_task", 4096, this, 10, ...)` matches the task table | **Verified** |
-| `MSG_NACK` dead-code status                                    | 05 §10            | Searched all firmware, Pi and Android sources: only the enum declaration in `uartProtocol.hpp` exists (the other hit is an unrelated I2C `LAST_NACK`) | **Verified** — declared but unused |
-| Exact `uart_config_t` parity/stop-bit fields in `serial.cpp` | 03 §7             | `serial.cpp` uses 8 data bits; parity/stop bits are parameters, and `ControlBoardBootstrap.cpp` passes `UART_PARITY_DISABLE`, `UART_STOP_BITS_1` | **Verified** (8N1) |
-| SPI shift-register exact part number                             | 06 §13            | Not in firmware source, but the board doc (`TinyControlboard.md` BOM) lists STP16CPC26MTR | **Verified** against board docs |
-| moOde Audio exact version                                        | 01 §6, 04 §2     | No moOde version string exists anywhere in the repo; 04 §2 still says TODO, which conflicts with the `10.3.2` previously recorded here | **Still unverified** — confirm on the Pi (moOde System Info) |
+## Validation Record
 
-## Cross-Document Consistency Check
+The following results were obtained in the preceding implementation session on
+this working tree. They are not new runs performed during this documentation
+update.
 
-- `CommandId` values in 02 (Android), 03 (ESP32), 04 (RPi), and 05 (protocol spec) all
-  reference the same numeric values sourced from 05's table, which was itself transcribed
-  directly from `uartProtocol.hpp` — no divergent values were introduced across documents.
-- GPIO pin numbers are identical across 03 §10 and 06 §9 (both sourced from the same
-  `boardConfig.hpp` read).
-- Timing constants (heartbeat timeout, boot timeout, relay settle delays) are identical
-  across 01, 03, and 06 — all trace to the single `board::timing` namespace read once and
-  reused.
-- The BLE-vs-WiFi architecture correction (see table above) was applied consistently across
-  01, 02, 03, and documentation-gaps.md — no document in this set still describes the
-  superseded WiFi/HTTP-relay architecture as current.
+| Check | Result | Limits |
+| --- | --- | --- |
+| PlatformIO `esp32-s3-devkitc-1-16mb-release` build | Passed | Reported a flash-size mismatch; see below. Build success does not establish relay or hardware behavior. |
+| Android `:app:testDebugUnitTest` with Gradle offline | Passed | Includes listing-completion tests; does not validate GATT operations on a device. |
+| `python -m unittest discover -s test -p 'test_rpi_review.py'` | 7 passed | Mocked WebSocket, MPD and playlist tests; not an integration test against a running Pi or MPD. |
+| `python behavior_test.py` | 8 assertions passed | Mocked behavior checks. On Windows the prior run used `PYTHONIOENCODING=utf-8`. |
+| `git diff --check` | Passed before this documentation update | Checks whitespace only. |
+| Host C++ tests | Not run | CMake configuration could not find a native compiler/build tool. The added UART and watchdog tests therefore remain unexecuted. |
+| Hardware / end-to-end | Not run | Relay timing, boot-failure retry, MCP teardown, BLE reconnect/queue behavior, and move-track forwarding need device tests. |
 
-## Outstanding Items for a Future Pass
+## Open Discrepancies and Follow-up
 
-Items are marked with `TODO` in their respective documents; no invented values were
-substituted for any of them.
+1. **Flash and partition configuration:** [platformio.ini](../../platformio.ini)
+   selects the 16 MB board and specifies `partitions.csv`, but
+   [release sdkconfig](../../sdkconfig.esp32-s3-devkitc-1-16mb-release) selects
+   2 MB and the single-app partition table. The release build reported the
+   flash-size mismatch. Reconcile the effective build configuration and confirm
+   the physical flash capacity and partition layout before flashing.
+2. **Boot simulation flag:** The default PlatformIO environment passes
+   `SIMULATE_RPI_BOOT=1`, but [boardConfig.hpp](../../lib/board/boardConfig.hpp)
+   unconditionally defines it as `0` before evaluating it. The prior quality
+   check's claim that the build flag alone determines the setting is therefore
+   not reliable. Reconcile the definition, build flags and guide before relying
+   on simulation behavior.
+3. **Pi guide inventory:** [04-rpi-developer-guide.md](04-rpi-developer-guide.md)
+   lists `library_commands.py`, `playlist_commands.py`, `panel_commands.py`,
+   `power_commands.py` and service files that do not match the current
+   repository inventory. The current modules include
+   [library_browser.py](../../scripts/rpi/home/antho/library_browser.py),
+   [playlist_manager.py](../../scripts/rpi/home/antho/playlist_manager.py) and
+   [panel_control.py](../../scripts/rpi/home/antho/panel_control.py). Verify
+   deployed service names on the Pi before updating installation instructions.
+4. **moOde version:** The Pi guide states `10.3.2`, but this check did not
+   establish the installed version. Confirm it on the Pi rather than assuming
+   the documented value applies.
+5. **Wiring reference:** The previous review referred to a
+   `docs/wiring-reference.md` connector mismatch; that path is absent from the
+   current tree. Locate the authoritative wiring drawing and verify the
+   connector mapping on hardware before resolving that historical item.
+6. **Playlist concurrency:** A separate MPD client can change the queue between
+   the length query, load and deletion. The current load protection does not
+   make the replacement transaction atomic.
+7. **Remaining validation:** Run host tests with a suitable native compiler and
+   perform the hardware checks above, including shutdown timeout, resumed UART
+   traffic, relay order and timing, and Android disconnect/reconnect cases.
+
+For command-ID ownership and the participant-specific update checklist, see
+[Adding Button Actions](09-adding-button-actions.md) and the
+[Communication Protocol](05-communication-protocol.md). Cross-language IDs,
+hardware wiring and deployed software should be checked when they change;
+this record does not certify every value across those surfaces.

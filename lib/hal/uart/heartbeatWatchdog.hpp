@@ -19,10 +19,14 @@ namespace transport::uart
         uint32_t getTimeoutMs() const { return m_timeoutMs; }
 
         // Records the timestamp of the most recent received UART data.
-        void notifyRx(uint64_t nowUs) { m_lastRxTimeUs.store(nowUs, std::memory_order_relaxed); }
+        void notifyRx(uint64_t nowUs)
+        {
+            m_lastActualRxTimeUs.store(nowUs, std::memory_order_relaxed);
+            m_lastRxTimeUs.store(nowUs, std::memory_order_relaxed);
+        }
 
         // Returns the timestamp of the most recently recorded UART data.
-        uint64_t getLastRxTimeUs() const { return m_lastRxTimeUs.load(std::memory_order_relaxed); }
+        uint64_t getLastRxTimeUs() const { return m_lastActualRxTimeUs.load(std::memory_order_relaxed); }
 
         // Returns true once when more than timeoutMs has elapsed since the last recorded RX
         // (or since the last timeout fired). A zero last-RX time means "never armed" and never times out.
@@ -46,5 +50,6 @@ namespace transport::uart
     private:
         uint32_t m_timeoutMs;
         std::atomic<uint64_t> m_lastRxTimeUs{0};
+        std::atomic<uint64_t> m_lastActualRxTimeUs{0};
     };
 } // namespace transport::uart

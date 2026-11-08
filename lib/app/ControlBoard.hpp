@@ -14,6 +14,7 @@
 #include "board/boardConfig.hpp"
 #include "freertos/FreeRTOS.h"
 #include <array>
+#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -30,6 +31,10 @@ namespace controlSystem
         ActionProcessor &getActionProcessor() { return *mp_responseProcessor; }
         // Returns the live shared runtime state for board subscribers.
         SystemState &getSystemState() { return m_systemState; }
+        bool enqueueRemoteCommand(uint16_t command, uint16_t releaseMs)
+        {
+            return m_buttonQueue.enqueueRemoteCommand(command, releaseMs);
+        }
         // Registers the callback invoked when a library-entry UART message arrives.
         void setLibraryEntryCallback(std::function<void(const UartMessage &)> callback)
         {
@@ -69,6 +74,8 @@ namespace controlSystem
         buttons::McpInputHandler m_mcpHandler{board::i2c::k_mcpAddress, I2C_NUM_0};
         ControlBoardInputDispatcher::ActionMap mp_buttonActions{};
         ButtonEventQueue m_buttonQueue;
+        std::atomic<bool> m_acceptInput{false};
+        uint16_t m_activeInputPresses = 0;
 
         SystemState m_systemState;
         std::function<void(const UartMessage &)> m_libraryEntryCallback;

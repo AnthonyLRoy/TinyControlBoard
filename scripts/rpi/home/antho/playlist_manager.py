@@ -72,8 +72,13 @@ def handle_playlist_save_overwrite(name):
 def handle_playlist_load(name):
     name = name.strip()
     try:
-        mpd_command("clear")
+        status = mpd_command("status")
+        old_count = next(int(line[len("playlistlength: "):])
+                         for line in status if line.startswith("playlistlength: "))
         mpd_command(f'load "{_mpd_escape(name)}"')
+        if old_count:
+            mpd_command("stop")
+            mpd_command(f"delete 0:{old_count}")
         print(f"Playlist loaded: {name}", flush=True)
         _send_playlist_result(True, name)
     except Exception as e:

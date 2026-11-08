@@ -153,8 +153,7 @@ namespace controlSystem
         const auto state = mr_systemState.powerState.load();
         if (state == ControlBoardPowerState::ON || state == ControlBoardPowerState::TURNING_ON)
         {
-            ESP_LOGW(k_logTag, "Heartbeat lost while system was ON -- forcing power state to SLEEP");
-            mr_systemState.powerState.store(ControlBoardPowerState::SLEEP);
+            ESP_LOGW(k_logTag, "Heartbeat lost while system was active; retaining the current power state");
         }
     }
 

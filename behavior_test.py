@@ -228,6 +228,7 @@ fake_lb.handle_add_track = lambda params: None
 fake_lb.handle_playlist_request = lambda params: None
 fake_lb.handle_play_track = lambda params: None
 fake_lb.handle_remove_track = lambda params: None
+fake_lb.handle_move_track = lambda params: None
 fake_lb.handle_add_folder = lambda params: None
 fake_lb.handle_replace_with_folder = lambda params: None
 fake_lb.handle_clear_queue = lambda params: None
@@ -287,6 +288,7 @@ fake_cmd.CMD_LIBRARY_SEARCH_ALBUM = 0x0136
 fake_cmd.CMD_LIBRARY_SEARCH_ANY = 0x0137
 fake_cmd.CMD_ADD_SEARCH_RESULT = 0x0138
 fake_cmd.CMD_SEEK_TO_PERCENT = 0x0139
+fake_cmd.CMD_MOVE_TRACK = 0x013A
 sys.modules["command_ids"] = fake_cmd
 
 # Mock panel_control

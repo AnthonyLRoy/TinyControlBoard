@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "hal/uart/heartbeatWatchdog.hpp"
+#include "hal/uart/uartReceiver.hpp"
 #include "indicators/activityStatus.hpp"
 #include "input/actions/actionTemplates.hpp"
 #include "app/ActionCommandRoutingPolicy.hpp"
@@ -79,6 +80,28 @@ void test_uart_message_defaults_match_protocol()
     for (uint16_t parameter : message.params)
     {
         expect_equal(static_cast<uint16_t>(0), parameter, "Default parameters should be cleared");
+    }
+}
+
+void test_uart_receiver_resynchronizes_after_oversized_length()
+{
+    for (int length = protocol::k_maxPayloadSize + 1; length <= 255; ++length)
+    {
+        UartReceiver receiver;
+        const uint8_t invalidHeader[] = {UART_START_BYTE, UART_PROTOCOL_VERSION, APP_PI,
+                                         MSG_COMMAND, 0, 0, 0, static_cast<uint8_t>(length)};
+        receiver.pushBytes(invalidHeader, sizeof(invalidHeader));
+        UartMessage parsed;
+        expect_true(!receiver.getNextMessage(parsed), "Oversized header must not produce a message");
+
+        UartMessage original;
+        original.commandId = CMD_SYS_HEARTBEAT;
+        uint8_t frame[UART_PACKET_SIZE] = {};
+        const uint8_t size = serializeMessage(original, frame);
+        receiver.pushBytes(frame, size);
+        expect_true(receiver.getNextMessage(parsed), "Receiver must recover after oversized header");
+        expect_equal(static_cast<uint16_t>(CMD_SYS_HEARTBEAT), parsed.commandId,
+                     "Recovered message must retain its command");
     }
 }
 
@@ -1129,6 +1152,7 @@ void test_heartbeat_watchdog_does_not_refire_until_next_window_elapses()
 
     watchdog.notifyRx(1);
     expect_true(watchdog.checkAndConsumeTimeout(1 + 1'001'000), "First timeout past the threshold should fire");
+    expect_equal(static_cast<uint64_t>(1), watchdog.getLastRxTimeUs(), "Timeout must not change actual RX timestamp");
     expect_true(!watchdog.checkAndConsumeTimeout(1 + 1'500'000), "Timeout should not refire again before another full window elapses");
     expect_true(watchdog.checkAndConsumeTimeout(1 + 2'002'000), "Timeout should fire again once another full window elapses");
 }
@@ -1324,6 +1348,7 @@ int main()
         {"test_simple_command_action_returns_configured_command_when_pressed", test_simple_command_action_returns_configured_command_when_pressed},
         {"test_simple_command_action_returns_no_action_when_released", test_simple_command_action_returns_no_action_when_released},
         {"test_uart_message_defaults_match_protocol", test_uart_message_defaults_match_protocol},
+        {"test_uart_receiver_resynchronizes_after_oversized_length", test_uart_receiver_resynchronizes_after_oversized_length},
         {"test_serialize_message_writes_expected_fields_and_checksum", test_serialize_message_writes_expected_fields_and_checksum},
         {"test_deserialize_message_round_trips_serialized_message", test_deserialize_message_round_trips_serialized_message},
         {"test_deserialize_message_rejects_invalid_start_byte", test_deserialize_message_rejects_invalid_start_byte},

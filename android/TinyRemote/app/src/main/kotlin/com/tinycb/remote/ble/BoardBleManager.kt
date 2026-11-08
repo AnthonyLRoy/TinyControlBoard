@@ -71,13 +71,17 @@ class BoardBleManager(context: Context) {
     @Volatile private var libraryCmdChar: BluetoothGattCharacteristic? = null
     @Volatile private var playlistCmdChar: BluetoothGattCharacteristic? = null
     @Volatile private var libraryNotificationsReady = false
-    @Volatile private var pendingLibraryCommand: ByteArray? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val notificationQueue = ArrayDeque<BluetoothGattCharacteristic>()
-    private var notificationWriteInFlight = false
-    // Chained fallback reads (status/now-playing/track-progress) fired once shortly after connect —
-    // see onServicesDiscovered for why this exists alongside the notification path.
-    private val initialReadQueue = ArrayDeque<BluetoothGattCharacteristic>()
+    private sealed interface GattOperation {
+        val characteristic: BluetoothGattCharacteristic
+        data class Subscribe(override val characteristic: BluetoothGattCharacteristic) : GattOperation
+        data class Read(override val characteristic: BluetoothGattCharacteristic) : GattOperation
+        data class Write(override val characteristic: BluetoothGattCharacteristic, val bytes: ByteArray) : GattOperation
+    }
+    private val operationQueue = ArrayDeque<GattOperation>()
+    private var operationInFlight: GattOperation? = null
+    private var operationTimeout: Runnable? = null
+    private val operationTimeoutMs = 15_000L
     private val connectTimeoutMs = 15_000L
     private val connectTimeoutRunnable = Runnable {
         if (_connectionState.value is ConnectionState.Connecting) {
@@ -110,6 +114,7 @@ class BoardBleManager(context: Context) {
     private val gattCallback = object : BluetoothGattCallback() {
 
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
+            if (g !== gatt) return
             mainHandler.removeCallbacks(connectTimeoutRunnable)
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
@@ -124,7 +129,6 @@ class BoardBleManager(context: Context) {
                     libraryCmdChar = null
                     playlistCmdChar = null
                     libraryNotificationsReady = false
-                    pendingLibraryCommand = null
                     clearNotificationQueue()
                     
                     if (!isManualDisconnect && lastDevice != null) {
@@ -151,6 +155,7 @@ class BoardBleManager(context: Context) {
         }
 
         override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
+            if (g !== gatt) return
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.i(TAG, "MTU negotiated: $mtu bytes")
             } else {
@@ -160,6 +165,7 @@ class BoardBleManager(context: Context) {
         }
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
+            if (g !== gatt) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 Log.e(TAG, "Service discovery failed: $status")
                 return
@@ -202,10 +208,6 @@ class BoardBleManager(context: Context) {
                 Log.w(TAG, "Playlist-cmd characteristic not found — playlist management unavailable")
             }
 
-            // Both required characteristics ready — now it is safe to open the control panel
-            Log.i(TAG, "All characteristics found — emitting Connected")
-            _connectionState.value = ConnectionState.Connected(g.device.name)
-
             clearNotificationQueue()
             enqueueNotification(statusChar)
             if (nowPlayingChar != null) {
@@ -228,36 +230,32 @@ class BoardBleManager(context: Context) {
             } else {
                 Log.w(TAG, "Playlist-result characteristic not found — playlist save/load/delete feedback unavailable")
             }
-            writeNextNotification(g)
-
+            Log.i(TAG, "All characteristics found — emitting Connected")
+            _connectionState.value = ConnectionState.Connected(g.device.name)
             // Explicitly read the current status/now-playing/track-progress values after a short
             // delay, instead of relying solely on the notification arriving in time. Without this,
             // if the board was already playing a track before connecting, the UI could show "Nothing
             // Playing" until the next unrelated notify race resolved it. GATT only allows one
-            // operation in flight at a time, so these are chained via initialReadQueue rather than
-            // fired all at once.
+            // operation in flight at a time, so these use the shared GATT operation queue.
             mainHandler.postDelayed({
-                initialReadQueue.clear()
-                listOfNotNull(statusChar, nowPlayingChar, trackProgressChar).forEach { initialReadQueue.addLast(it) }
-                readNextInitialChar(g)
+                if (g === gatt) {
+                    listOfNotNull(statusChar, nowPlayingChar, trackProgressChar)
+                        .forEach { enqueueOperation(GattOperation.Read(it)) }
+                }
             }, 1000L)
         }
 
         override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+            if (!isCurrentOperation(g, descriptor.characteristic, GattOperation.Subscribe::class.java)) return
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.i(TAG, "CCCD write confirmed (handle=${descriptor.characteristic?.uuid}) — notifications active")
                 if (descriptor.characteristic?.uuid == BleUuids.LIBRARY_CHAR) {
                     libraryNotificationsReady = true
-                    pendingLibraryCommand?.let { bytes ->
-                        pendingLibraryCommand = null
-                        writeToCharacteristic(libraryCmdChar ?: return@let, bytes)
-                    }
                 }
             } else {
                 Log.e(TAG, "CCCD write FAILED status=$status — notifications will not arrive!")
             }
-            notificationWriteInFlight = false
-            writeNextNotification(g)
+            finishOperation(g)
         }
 
         // Android 13+ (API 33) overload — preferred
@@ -266,6 +264,7 @@ class BoardBleManager(context: Context) {
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
+            if (g !== gatt) return
             Log.d(TAG, "onCharacteristicChanged (API33+): uuid=${characteristic.uuid} bytes=${value.size}")
             when (characteristic.uuid) {
                 BleUuids.STATUS_CHAR         -> parseStatus(value)
@@ -282,6 +281,7 @@ class BoardBleManager(context: Context) {
             g: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            if (g !== gatt) return
             val value = characteristic.value ?: run {
                 Log.w(TAG, "onCharacteristicChanged (legacy): value is null for ${characteristic.uuid}")
                 return
@@ -304,13 +304,13 @@ class BoardBleManager(context: Context) {
             value: ByteArray,
             status: Int
         ) {
+            if (!isCurrentOperation(g, characteristic, GattOperation.Read::class.java)) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 Log.w(TAG, "onCharacteristicRead (API33+): failed uuid=${characteristic.uuid} status=$status")
-                return
+            } else {
+                handleInitialRead(characteristic.uuid, value)
             }
-            Log.d(TAG, "onCharacteristicRead (API33+): uuid=${characteristic.uuid} bytes=${value.size}")
-            handleInitialRead(characteristic.uuid, value)
-            readNextInitialChar(g)
+            finishOperation(g)
         }
 
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
@@ -319,17 +319,23 @@ class BoardBleManager(context: Context) {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
+            if (!isCurrentOperation(g, characteristic, GattOperation.Read::class.java)) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 Log.w(TAG, "onCharacteristicRead (legacy): failed uuid=${characteristic.uuid} status=$status")
-                return
+            } else {
+                val value = characteristic.value
+                if (value != null) handleInitialRead(characteristic.uuid, value)
+                else Log.w(TAG, "onCharacteristicRead (legacy): value is null for ${characteristic.uuid}")
             }
-            val value = characteristic.value ?: run {
-                Log.w(TAG, "onCharacteristicRead (legacy): value is null for ${characteristic.uuid}")
-                return
+            finishOperation(g)
+        }
+
+        override fun onCharacteristicWrite(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+            if (!isCurrentOperation(g, characteristic, GattOperation.Write::class.java)) return
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.e(TAG, "Characteristic write failed for ${characteristic.uuid}: $status")
             }
-            Log.d(TAG, "onCharacteristicRead (legacy): uuid=${characteristic.uuid} bytes=${value.size}")
-            handleInitialRead(characteristic.uuid, value)
-            readNextInitialChar(g)
+            finishOperation(g)
         }
     }
 
@@ -344,17 +350,7 @@ class BoardBleManager(context: Context) {
      *  API 33+ vs. legacy write API split in one place. No-op (with a log) if not connected. */
     @SuppressLint("MissingPermission")
     private fun writeToCharacteristic(characteristic: BluetoothGattCharacteristic, bytes: ByteArray) {
-        val g = gatt ?: run { Log.w(TAG, "write to ${characteristic.uuid}: gatt is null"); return }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            g.writeCharacteristic(characteristic, bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
-        } else {
-            @Suppress("DEPRECATION")
-            characteristic.value = bytes
-            @Suppress("DEPRECATION")
-            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(characteristic)
-        }
+        enqueueOperation(GattOperation.Write(characteristic, bytes.copyOf()))
     }
 
     /** Clears the Android GATT service cache via the hidden refresh() API.
@@ -414,45 +410,119 @@ class BoardBleManager(context: Context) {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private fun readNextInitialChar(g: BluetoothGatt) {
-        val next = initialReadQueue.pollFirst() ?: return
-        g.readCharacteristic(next)
-    }
-
     private fun enqueueNotification(characteristic: BluetoothGattCharacteristic) {
-        notificationQueue.addLast(characteristic)
+        enqueueOperation(GattOperation.Subscribe(characteristic))
     }
 
+    @Synchronized
     private fun clearNotificationQueue() {
-        notificationQueue.clear()
-        notificationWriteInFlight = false
+        operationTimeout?.let { mainHandler.removeCallbacks(it) }
+        operationTimeout = null
+        operationQueue.clear()
+        operationInFlight = null
     }
 
-    private fun writeNextNotification(g: BluetoothGatt) {
-        if (notificationWriteInFlight || notificationQueue.isEmpty()) return
+    @Synchronized
+    private fun isCurrentOperation(
+        g: BluetoothGatt,
+        characteristic: BluetoothGattCharacteristic?,
+        type: Class<out GattOperation>
+    ): Boolean {
+        val op = operationInFlight
+        if (g === gatt && op != null && type.isInstance(op) && op.characteristic === characteristic) return true
+        Log.w(TAG, "Ignoring unexpected GATT callback for ${characteristic?.uuid}")
+        return false
+    }
 
-        val characteristic = notificationQueue.removeFirst()
-        val descriptor = characteristic.getDescriptor(BleUuids.CCCD)
-        if (descriptor == null || !g.setCharacteristicNotification(characteristic, true)) {
-            Log.e(TAG, "Could not enable notifications for ${characteristic.uuid}")
-            writeNextNotification(g)
+    @Synchronized
+    private fun enqueueOperation(operation: GattOperation) {
+        if (gatt == null) {
+            Log.w(TAG, "Cannot queue GATT operation for ${operation.characteristic.uuid}: disconnected")
             return
         }
+        operationQueue.addLast(operation)
+        startNextOperation()
+    }
 
-        notificationWriteInFlight = true
-        val writeStarted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            g.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) == BluetoothStatusCodes.SUCCESS
-        } else {
-            @Suppress("DEPRECATION")
-            descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-            @Suppress("DEPRECATION")
-            g.writeDescriptor(descriptor)
-        }
-        if (!writeStarted) {
-            Log.e(TAG, "Could not start CCCD write for ${characteristic.uuid}")
-            notificationWriteInFlight = false
-            writeNextNotification(g)
+    @Synchronized
+    private fun finishOperation(g: BluetoothGatt) {
+        if (g !== gatt) return
+        operationTimeout?.let { mainHandler.removeCallbacks(it) }
+        operationTimeout = null
+        operationInFlight = null
+        startNextOperation()
+    }
+
+    @Synchronized
+    private fun handleOperationTimeout(g: BluetoothGatt, op: GattOperation) {
+        if (g !== gatt || operationInFlight !== op) return
+        Log.e(TAG, "GATT operation timed out for ${op.characteristic.uuid}; reconnecting")
+        clearNotificationQueue()
+        gatt = null
+        g.disconnect()
+        g.close()
+        cmdChar = null
+        libraryCmdChar = null
+        playlistCmdChar = null
+        libraryNotificationsReady = false
+        _status.value = null
+        _libraryListing.value = emptyList()
+        _playlistNameEntries.value = null
+        _playlistOpResult.value = null
+        _searchResults.value = null
+        playlistNameMode = false
+        searchMode = false
+        _connectionState.value = ConnectionState.Error("Bluetooth operation timed out. Reconnecting…")
+        mainHandler.postDelayed({
+            if (!isManualDisconnect && gatt == null) lastDevice?.let { connect(it) }
+        }, 2000L)
+    }
+
+    @Synchronized
+    private fun startNextOperation() {
+        val g = gatt ?: return
+        if (operationInFlight != null) return
+        while (operationQueue.isNotEmpty()) {
+            val op = operationQueue.removeFirst()
+            operationInFlight = op
+            val started = when (op) {
+                is GattOperation.Subscribe -> {
+                    val descriptor = op.characteristic.getDescriptor(BleUuids.CCCD)
+                    if (descriptor == null || !g.setCharacteristicNotification(op.characteristic, true)) {
+                        false
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        g.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) == BluetoothStatusCodes.SUCCESS
+                    } else {
+                        @Suppress("DEPRECATION")
+                        descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                        @Suppress("DEPRECATION")
+                        g.writeDescriptor(descriptor)
+                    }
+                }
+                is GattOperation.Read -> g.readCharacteristic(op.characteristic)
+                is GattOperation.Write -> {
+                    if (op.characteristic.uuid == BleUuids.LIBRARY_CMD_CHAR && !libraryNotificationsReady) {
+                        false
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        g.writeCharacteristic(op.characteristic, op.bytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) == BluetoothStatusCodes.SUCCESS
+                    } else {
+                        @Suppress("DEPRECATION")
+                        op.characteristic.value = op.bytes
+                        @Suppress("DEPRECATION")
+                        op.characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                        @Suppress("DEPRECATION")
+                        g.writeCharacteristic(op.characteristic)
+                    }
+                }
+            }
+            if (started) {
+                val timeout = Runnable { handleOperationTimeout(g, op) }
+                operationTimeout = timeout
+                mainHandler.postDelayed(timeout, operationTimeoutMs)
+                return
+            }
+            Log.e(TAG, "Could not start GATT operation for ${op.characteristic.uuid}")
+            operationInFlight = null
         }
     }
 
@@ -538,7 +608,6 @@ class BoardBleManager(context: Context) {
         playlistNameMode = false
         searchMode = false
         libraryNotificationsReady = false
-        pendingLibraryCommand = null
     }
 
     fun setSelectedViewId(id: Int?) {
@@ -546,7 +615,7 @@ class BoardBleManager(context: Context) {
     }
 
     private fun writeLibraryCommand(commandId: Int, param: Int, secondParam: Int = 0) {
-        playlistNameMode = false
+        playlistNameMode = commandId == BleProtocol.CMD_PLAYLIST_LIST_REQUEST
         searchMode = false
         val char = libraryCmdChar ?: run { Log.w(TAG, "library cmd 0x%04X: libraryCmdChar is null".format(commandId)); return }
         val bytes = commandId16Bytes(commandId) + byteArrayOf(
@@ -555,12 +624,7 @@ class BoardBleManager(context: Context) {
             (secondParam and 0xFF).toByte(),
             ((secondParam shr 8) and 0xFF).toByte()
         )
-        if (libraryNotificationsReady) {
-            writeToCharacteristic(char, bytes)
-        } else {
-            pendingLibraryCommand = bytes
-            Log.d(TAG, "Queueing library command 0x%04X until library notifications are active".format(commandId))
-        }
+        writeToCharacteristic(char, bytes)
     }
 
     fun browseRoot() = writeLibraryCommand(BleProtocol.CMD_BROWSE_REQUEST, BleProtocol.LIB_BROWSE_ROOT)
@@ -585,10 +649,7 @@ class BoardBleManager(context: Context) {
 
     fun requestPlaylistNames() {
         _playlistNameEntries.value = null
-        // writeLibraryCommand() unconditionally clears playlistNameMode, so it must be
-        // set AFTER the write, not before — otherwise the reply gets routed to libraryListing.
         writeLibraryCommand(BleProtocol.CMD_PLAYLIST_LIST_REQUEST, 0)
-        playlistNameMode = true
     }
 
     fun clearPlaylistOpResult() {

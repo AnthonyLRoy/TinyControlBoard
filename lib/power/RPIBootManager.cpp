@@ -84,7 +84,7 @@ namespace controlSystem
         const EventBits_t clearMask = static_cast<EventBits_t>(ms_rpiHeartbeatBit | ms_rpiShutdownBit);
         xEventGroupClearBits(mp_rpiBootEventGroup, clearMask);
 
-        ESP_LOGI(k_logTag, "Waiting for RPi shutdown confirmation (timeout: %" PRIu32 " ms)...", timeoutMs);
+        ESP_LOGI(k_logTag, "Waiting for RPi UART silence (timeout: %" PRIu32 " ms)...", timeoutMs);
 
         EventBits_t bits = xEventGroupWaitBits(
             mp_rpiBootEventGroup,
@@ -95,11 +95,11 @@ namespace controlSystem
         );
 
         if (bits & ms_rpiShutdownBit) {
-            ESP_LOGI(k_logTag, "RPi shutdown confirmed by heartbeat timeout");
+            ESP_LOGW(k_logTag, "RPi UART silence detected; OS shutdown is not confirmed");
             return true;
         }
 
-        ESP_LOGW(k_logTag, "Timed out waiting for RPi shutdown after %" PRIu32 " ms", timeoutMs);
+        ESP_LOGW(k_logTag, "Timed out waiting for RPi UART silence after %" PRIu32 " ms", timeoutMs);
         return false;
     }
 }
