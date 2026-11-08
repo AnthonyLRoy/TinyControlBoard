@@ -132,14 +132,13 @@ app never uses your actual location.
 
 ### Control Panel
 - **Power state** is shown at the top (OFF / ON / SLEEP / …).
-- Each of the 16 buttons mirrors a physical button on the board.
-- **Amber LED dots** in the top-right of each card reflect the physical LED state
-  (updated automatically every ~500 ms via BLE notification).
-- Tap any button to trigger the corresponding command on the board.
+- Playback and display controls reflect the board's status; active toggle controls are highlighted.
 - Controls other than Power and moOde settings are available only while the board is connected
-  and reports **ON**. They remain disabled while the power state is unknown, sleeping, or
-  transitioning, and while disconnected. If the board becomes unavailable while browsing,
-  the app returns to the control panel.
+  and reports **ON**. They are dimmed and disabled while the power state is unknown, sleeping,
+  or transitioning, and while disconnected; they become available automatically once the
+  board reconnects and reports **ON**. Power remains enabled but cannot send a command without
+  a Bluetooth connection. If the board becomes unavailable while browsing, the app returns to
+  the control panel.
 - Navigating back disconnects from the board and returns to the Scan screen.
 
 ---
@@ -179,4 +178,5 @@ app never uses your actual location.
 | Gradle sync fails — "Could not resolve…" | Check internet connection; run `gradle --refresh-dependencies`. |
 | `adb devices` shows no device | Reconnect USB, accept debug prompt on phone, check USB mode is "File transfer" not "Charging only". |
 | Commands sent but board doesn't respond | Confirm the power state is **ON** (board ignores most commands when in SLEEP or OFF). |
+| Controls are dimmed or unavailable | Check that Bluetooth is connected, wake the board with Power if needed, and wait for the status to report **ON**. Power and moOde settings remain available. |
 | App disconnects immediately after connect | BLE notify subscription may have failed. Force-stop the app, reopen, and reconnect. |

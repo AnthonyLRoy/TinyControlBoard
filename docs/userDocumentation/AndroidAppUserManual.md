@@ -8,9 +8,9 @@ The phone acts as a remote control. Music plays through the player and your conn
 
 **App version (repository build):** 1.0
 
-**Guide revision:** 3.2
+**Guide revision:** 3.3
 
-**Updated:** 4 October 2026
+**Updated:** 8 November 2026
 
 ## Requirements and Permissions
 
@@ -46,6 +46,17 @@ If the player does not appear, see [Can't find the player](#cant-find-the-player
 
 The main screen shows the current song, album artwork when available, and the playback and player controls. Tap the song name to open the queue.
 
+Playback, library, queue, display, seek, and artwork information controls are dimmed and
+disabled until the app is connected and the player reports **ON**. This includes startup,
+Sleep, Deep Sleep, power transitions, an unknown power state, and disconnection. **Power**
+and **Settings** remain available. The Power button can only send a command while the
+Bluetooth connection is working.
+
+The controls become available automatically when the connection is restored and the player
+reports **ON**. If the player becomes unavailable while you are on a library, queue,
+playlist, display selection, or artist/album information screen, the app returns to the
+main screen.
+
 > **Main controls**
 >
 > <img src="../user-manual-media/media/androidApp/MainScreen.jpg" alt="DanStreamer main control screen" width="240" style="max-width: 100%; height: auto;">
@@ -71,7 +82,7 @@ Tap **Play / Pause** to pause or resume playback. Use **Previous** and **Next** 
 
 When shuffle, repeat, cover, meter, or alternate DAC mode is active, its control is highlighted.
 
-When track duration is available, the progress bar shows the elapsed and remaining time. Touch or drag along the bar to seek to that position in the track. Seeking requires an active connection and a track with a known duration.
+When track duration is available, the progress bar shows the elapsed and remaining time. Touch or drag along the bar to seek to that position in the track. Seeking requires an active connection, the player reporting **ON**, and a track with a known duration.
 
 ## Find and Play Music
 
@@ -201,13 +212,16 @@ This address is used for album artwork, not for the current-song text or playbac
 
 ### Use power options
 
-Tap the power button on the main screen to open the power options:
+Use the power button on the main screen:
 
 - If the player is asleep or off, tap the power button to wake it.
 - If the player is on, choose **Sleep** for normal standby.
 - Choose **Deep Sleep** when you will not use the player for a longer time.
 
-Wait for the power change to finish before sending another command. The status beside the app title shows whether the player is on, asleep, or changing state.
+The status beside the app title shows whether the player is on, asleep, or changing state.
+While connected, use Power to wake the player and wait until the status shows **ON**; the
+other controls then become available. Power remains visible and enabled during a
+disconnection, but cannot wake the player until Bluetooth reconnects.
 
 > <img src="../user-manual-media/media/androidApp/ShutDown.jpg" alt="DanStreamer power options dialog" width="240" style="max-width: 100%; height: auto;">
 >
@@ -268,7 +282,10 @@ Open your phone's **Settings**, go to **Apps**, select **DanStreamer**, and allo
 
 ### A button does not seem to work
 
-Check that the app is connected and the player status shows **ON**. If the player is changing power state, wait for the change to finish before trying again.
+Dimmed controls are disabled when the connection is lost or the player has not reported
+**ON**. Check the connection status, use Power to wake the player if needed, and wait for
+the status to show **ON**. The app attempts to reconnect after an unexpected disconnect.
+Power and Settings remain available, although Power cannot send a command while disconnected.
 
 ### I cannot see my music library or search results
 

@@ -1,6 +1,6 @@
 # 02 — Android Developer Guide
 
-Document version 1.0 — 2026-09-18 — describes commit `402f526` on branch `feature/library-improvements`.
+Document version 1.1 — 2026-11-08 — includes Android control availability behavior.
 App module: [android/TinyRemote/](../../android/TinyRemote/) (Gradle root project name `DanStreamer`, `applicationId com.tinycb.remote`).
 
 ## 1. Overview
@@ -122,7 +122,8 @@ reproduced here since it predates the current architecture).
 3. Tapping a discovered device calls `BoardBleManager.connect()`; on `ConnectionState.Connected`,
    `ScanActivity` starts `MainActivity`.
 4. In DEBUG builds only, `ScanActivity` also shows a "Preview UI (no board)" shortcut that
-   jumps straight to `MainActivity` without a real BLE connection.
+   jumps straight to `MainActivity` without a real BLE connection. Controls other than Power
+   and Settings remain disabled in this preview.
 
 ## 6. UI Architecture
 
@@ -147,6 +148,23 @@ flowchart TD
     Playlist --> Manage[PlaylistManagementActivity]
     Manage --> ListScreen[PlaylistListActivity]
 ```
+
+### Control availability
+
+`controlsAvailable` in `ui/ControlsAvailability.kt` requires both
+`ConnectionState.Connected` and `BoardStatus.powerStateName == "ON"`. A missing or
+unknown status, any other power state (including transitions and sleep), or a lost
+connection disables controls until both conditions are met again. `MainActivity`
+combines the connection and board status flows, dims and disables the fixed controls,
+seek bar, now-playing and album-art interactions, and updates `ButtonPanelAdapter` for
+grid buttons and steppers. The MusicBrainz choice dialog is dismissed if availability
+is lost. Power and moOde Settings are excluded from this gate; Power still requires a
+working BLE connection to send a command.
+
+`ConnectedControlActivity` applies the same predicate to view selection, library, search,
+queue, playlist management, saved-playlist, and MusicBrainz screens. It finishes those
+screens when the board is no longer available, returning the user to the main panel.
+This is a UI availability rule, not a protocol-level authorization check.
 
 ## 7. Audio Control
 
@@ -286,8 +304,13 @@ publishing is used — this is a personal-use sideloaded app.
 
 - **New screen**: add an `Activity` + layout under `ui/`, register it in
   `AndroidManifest.xml`, and add any new BLE plumbing to `BoardBleManager` +
-  `MainViewModel`.
-- **New control/button**: add a `ButtonDef` entry to `data/ButtonCatalog.kt`.
+  `MainViewModel`. Screens that depend on the board being connected and ON should extend
+  `ConnectedControlActivity`.
+- **New control/button**: add a `ButtonDef` entry to `data/ButtonCatalog.kt`. Grid items use
+  `ButtonPanelAdapter`'s availability state; add fixed main-screen controls to
+  `MainActivity.updateControlsEnabled` unless they must remain available like Power or Settings.
+- **Availability changes**: keep `ControlsAvailabilityTest` in sync and run
+  `.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug` from the Android project directory.
 - **New BLE command**: add the `CommandId` constant to `BleProtocol.kt` (must match the
   firmware's `uartProtocol.hpp` and the Pi's `command_ids.py` — see
   [05-communication-protocol.md](05-communication-protocol.md) before adding any new wire
