@@ -1258,26 +1258,44 @@ void test_action_registry_reset_states_restores_toggle_actions()
                  "Reset should restore the first toggle command");
 }
 
+template <typename TAction, size_t N>
+void expect_factory_actions(const CommandId (&commands)[N])
+{
+    for (const CommandId command : commands)
+    {
+        const auto action = controlSystem::createAction(command);
+        const auto description = "Command " + std::to_string(static_cast<uint16_t>(command));
+        expect_true(dynamic_cast<TAction *>(action.get()) != nullptr,
+                    description + " should create the expected action type");
+        expect_equal(static_cast<uint16_t>(command), static_cast<uint16_t>(action->command),
+                     description + " should preserve the command");
+    }
+}
+
 void test_action_factory_creates_expected_action_types_and_preserves_release_time()
 {
-    const auto uart = controlSystem::createAction(CMD_PLAY_PAUSE);
-    const auto relay = controlSystem::createAction(CMD_TOGGLE_DAC_ON);
-    const auto power = controlSystem::createAction(CMD_SYS_POWER, 1234);
-    const auto system = controlSystem::createAction(CMD_SYS_RPI_SHUTDOWN);
-    const auto brightness = controlSystem::createAction(CMD_CYCLE_BRIGHTNESS);
+    const CommandId systemCommands[] = {CMD_SYS_RPI_SHUTDOWN, CMD_EXIT_ITEM};
+    const CommandId relayCommands[] = {CMD_TOGGLE_DAC_ON, CMD_TOGGLE_DAC_OFF, CMD_TOGGLE_DAC};
+    const CommandId brightnessCommands[] = {
+        CMD_CYCLE_BRIGHTNESS, CMD_TOGGLE_DISPLAY, CMD_SET_BRIGHTNESS_UP, CMD_SET_BRIGHTNESS_DOWN
+    };
+    const CommandId uartCommands[] = {CMD_PLAY_PAUSE, static_cast<CommandId>(0xFFFF)};
 
-    expect_true(dynamic_cast<actions::UartDispatchAction *>(uart.get()) != nullptr,
-                "Simple commands should create UartDispatchAction");
-    expect_true(dynamic_cast<actions::RelayAction *>(relay.get()) != nullptr,
-                "Relay commands should create RelayAction");
+    expect_factory_actions<actions::SystemAction>(systemCommands);
+    expect_factory_actions<actions::RelayAction>(relayCommands);
+    expect_factory_actions<actions::BrightnessAction>(brightnessCommands);
+    expect_factory_actions<actions::UartDispatchAction>(uartCommands);
+
+    const auto power = controlSystem::createAction(CMD_SYS_POWER, 1234);
     expect_true(dynamic_cast<actions::PowerTransitionAction *>(power.get()) != nullptr,
                 "Power commands should create PowerTransitionAction");
-    expect_true(dynamic_cast<actions::SystemAction *>(system.get()) != nullptr,
-                "System commands should create SystemAction");
-    expect_true(dynamic_cast<actions::BrightnessAction *>(brightness.get()) != nullptr,
-                "Brightness commands should create BrightnessAction");
+    expect_equal(static_cast<uint16_t>(CMD_SYS_POWER), static_cast<uint16_t>(power->command),
+                 "Power action should preserve the command");
     expect_equal(static_cast<uint16_t>(1234), power->releaseTimeMillis,
                  "Power action should preserve release duration");
+    const auto defaultPower = controlSystem::createAction(CMD_SYS_POWER);
+    expect_equal(static_cast<uint16_t>(0), defaultPower->releaseTimeMillis,
+                 "Power action should default to zero release duration");
     expect_true(controlSystem::createAction(CMD_NO_ACTION) == nullptr,
                 "No-action command should not create an action");
 }

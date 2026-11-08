@@ -1,72 +1,19 @@
-# ActionFactory Refactoring: Template Specialization
+# ActionFactory Routing
 
-## Overview
-Refactored `ActionFactory.cpp` to use template specializations for action creation, with a switch statement for runtime dispatch.
+`createAction()` classifies a command with the power state set to `ON` and
+constructs the corresponding action in a switch. The action processor checks
+whether an action is allowed in the current power state before executing it.
 
-## Changes Made
+- `CMD_NO_ACTION` returns `nullptr`.
+- Power commands create a `PowerTransitionAction`, preserving the release time.
+- System, relay, and brightness commands create their respective action types.
+- Commands without an explicit route create a `UartDispatchAction`. The
+  existing fallback for `IgnoreWhileNotOn` and unknown routes is also UART.
 
-### ActionFactory.hpp
-- Added template declaration: `template<ActionCommandRoute Route> std::unique_ptr<actions::IAction> createActionForRoute(...)`
-- Kept the main `createAction()` function signature unchanged
+To add a command to an existing category, add its mapping to
+`lib/app/ActionCommandRoutingPolicy.hpp` and extend the factory host test. A
+new action category also requires a route enum value and a switch case in
+`lib/app/ActionFactory.cpp`.
 
-### ActionFactory.cpp
-- Added 7 template specializations:
-  - `PowerStateTransition` → `PowerTransitionAction`
-  - `System` → `SystemAction`
-  - `Relay` → `RelayAction`
-  - `Brightness` → `BrightnessAction`
-  - `UartDispatch` → `UartDispatchAction`
-  - `None` → `nullptr`
-  - `IgnoreWhileNotOn` → `UartDispatchAction` (fallback)
-
-- Main `createAction()` now dispatches to appropriate template specialization
-
-## Benefits
-
-Each route has a separate specialization. Adding a route also requires updating the dispatcher switch.
-
-The compiler checks the syntax and types of the specializations used by the dispatcher. The switch's default case means it does not enforce exhaustive handling of new routes.
-
-✅ **Clear Separation** - Each action type's creation logic is isolated in its own specialization
-
-The dispatcher still selects a route at runtime; performance equivalence has not been measured.
-
-Future actions require both a specialization and a dispatcher case.
-
-## Example: Adding a New Action Type
-
-To add support for a new `CustomAction`:
-
-1. Add to `ActionCommandRoute.hpp` enum:
-   ```cpp
-   enum class ActionCommandRoute { 
-       // ... existing ...
-       Custom,
-   };
-   ```
-
-2. Add new specialization in `ActionFactory.cpp`:
-   ```cpp
-   template<>
-   std::unique_ptr<actions::IAction> 
-   createActionForRoute<ActionCommandRoute::Custom>(CommandId command, uint16_t)
-   {
-       return std::make_unique<actions::CustomAction>(command);
-   }
-   ```
-
-3. Add mapping in `ActionCommandRoutingPolicy.hpp`:
-   ```cpp
-   { CMD_CUSTOM, ActionCommandRoute::Custom }
-   ```
-
-4. Add dispatch case in `createAction()`:
-   ```cpp
-   case ActionCommandRoute::Custom:
-       return createActionForRoute<ActionCommandRoute::Custom>(command, releaseTimeMs);
-   ```
-
-## Validation
-The host ActionFactory test passed for the existing action types, no-action
-command, and power transition release time. The template declaration also adds
-a new public API to the header; the existing `createAction()` signature is unchanged.
+The host test in `host_tests/test_logic.cpp` covers the explicitly mapped
+commands, an unmapped UART fallback, no-action handling, and power release time.
