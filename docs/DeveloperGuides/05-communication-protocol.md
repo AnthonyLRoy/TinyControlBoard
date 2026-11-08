@@ -2,12 +2,12 @@
 
 Document version 1.0 — 2026-09-18 — describes commit `402f526` on branch `feature/library-improvements`.
 
-Authoritative source: [lib/protocol/uartProtocol.hpp](../../lib/protocol/uartProtocol.hpp)
-(verified verbatim against source for this document). Mirrored on the Raspberry Pi in
-`scripts/rpi/home/antho/protocol.py`/`command_ids.py`, and on Android in
-`android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ble/BleProtocol.kt`. All three
-were found consistent with each other at this commit (header layout, checksum, `CommandId`
-values, `MessageType` values).
+The ESP32 source for protocol constants and command IDs is
+[lib/protocol/uartProtocol.hpp](../../lib/protocol/uartProtocol.hpp). The Raspberry Pi
+and Android maintain definitions for the protocol features they use; they do not
+necessarily define every ESP32 command. Keep shared values and packet formats compatible
+when updating any participant. For command responsibilities and an implementation
+checklist, see [Adding a Command](09-adding-button-actions.md#11-adding-a-command).
 
 This protocol has **two carriers**:
 

@@ -33,6 +33,54 @@ local-only variant:
 There are no global action singletons — `ControlBoardActionRegistry::populate()`
 constructs one action-source instance per button straight from the table below.
 
+### 1.1 Adding a Command
+
+The ESP32 declares each `CommandId` and its numeric value in
+[uartProtocol.hpp](../../lib/protocol/uartProtocol.hpp). Other occurrences usually
+associate that ID with a layer's behavior rather than redefine it. For example,
+`CMD_TOGGLE_DAC_OFF` is classified as `Relay` in the routing policy, paired with
+`CMD_TOGGLE_DAC_ON` in the button registry, and given a name in the command
+catalog. The relay action implements the effect. Keeping these responsibilities
+separate avoids making the protocol layer depend on button or application logic.
+
+Some protocol values are also defined independently by other participants, such as
+the [Pi command IDs](../../scripts/rpi/home/antho/command_ids.py) and
+[Android BLE protocol](../../android/TinyRemote/app/src/main/kotlin/com/tinycb/remote/ble/BleProtocol.kt).
+They contain the commands needed by those participants, not necessarily every ESP32
+command. A shared generated definition could reduce drift, but would need to preserve
+the existing wire values and work across the different languages and build systems.
+Centralizing app-specific routing and button mappings in the protocol layer would
+instead couple unrelated responsibilities.
+
+When adding or changing a command:
+
+1. Choose an unused numeric ID in `uartProtocol.hpp`; preserve existing IDs to
+   maintain compatibility. Check the other participants before allocating a value.
+2. Decide which participants send or receive it. Update their definitions and
+   handlers as needed, and document its ID, direction, payload, and semantics in
+   the [protocol guide](05-communication-protocol.md).
+3. If it is produced as an ESP32 action, choose its route in
+   [ActionCommandRoutingPolicy.hpp](../../lib/app/ActionCommandRoutingPolicy.hpp).
+   `CMD_NO_ACTION` and `CMD_SYS_POWER` are special cases. Other commands default
+   to `UartDispatch` when the board is on; omitting a local route can therefore
+   change behavior. Verify power-state handling and the concrete action as well.
+4. For UART-dispatched actions, check
+   [ActionUartDispatcher.cpp](../../lib/app/ActionUartDispatcher.cpp): a default
+   route alone does not guarantee transmission. Add a toggle mapping, a simple
+   log tag in [commandCatalog.cpp](../../lib/protocol/commandCatalog.cpp), or
+   explicit dispatch handling as appropriate. A missing catalog name returns
+   `UNKNOWN`; a missing simple log tag can also mean the command is not sent.
+5. If a button triggers it, register the button and select its LED policy; for
+   remote toggles, also check whether button state synchronization is needed.
+6. Add tests for the intended route, power states, payload and receiver behavior.
+   Run the applicable host tests and firmware build, and verify on hardware where
+   needed. See §8 for the button-specific checklist.
+
+Consolidation is optional, not a prerequisite for correctness. Any refactoring
+should preserve routing defaults, catalog and dispatch behavior, power gating,
+button mappings, and shared wire values; a C++ enum alone does not ensure that
+every table or external participant is updated correctly.
+
 ## 2. The Registration Table
 
 Everything starts with one row in `k_buttons[]`
@@ -64,9 +112,10 @@ because the *LED* toggles even though the underlying command doesn't carry state
 **Goal:** add a `Mute` button that sends one fixed command while pressed, LED on
 while held.
 
-1. Add the command ID in [lib/protocol/uartProtocol.hpp](../../lib/protocol/uartProtocol.hpp):
+1. Choose an unused command ID after checking all participants, then add it to
+   [lib/protocol/uartProtocol.hpp](../../lib/protocol/uartProtocol.hpp), for example:
    ```cpp
-   CMD_MUTE = 0x0120,
+   CMD_MUTE = 0x0140,
    ```
 2. Reserve a button ID in [lib/board/boardButtonIds.hpp](../../lib/board/boardButtonIds.hpp):
    ```cpp
@@ -80,10 +129,9 @@ while held.
    ```cpp
    { controlBoardButtons::k_mute, ActionSourceType::Simple, CMD_MUTE, CMD_NO_ACTION, LedPolicy::Momentary },
    ```
-4. Nothing else to wire in firmware: any command not listed in
-   `k_commandRouteTable[]` (ActionCommandRoutingPolicy.hpp) defaults to
-   `ActionCommandRoute::UartDispatch`, and `UartDispatchAction::execute()` sends it
-   as a raw UART command with no parameters.
+4. For an ordinary command, absence from `k_commandRouteTable[]` defaults to
+   `ActionCommandRoute::UartDispatch`. The dispatcher must still recognize the
+   command before it will send it.
 5. Add a display name to [commandCatalog.cpp](../../lib/protocol/commandCatalog.cpp)
    (`{CMD_MUTE, "Mute", "Mute"}`) so logs and the UART command name lookup work.
 6. Add handling on the Raspberry Pi side (`command_ids.py` + a handler in
@@ -98,11 +146,11 @@ What runs under the hood: `SimpleCommandAction::produce(bool isPressed)`
 **Goal:** add a `Mute` button that alternates ON/OFF and reports its state to the
 Pi as a single normalized command with a boolean parameter.
 
-1. Add three command IDs in `uartProtocol.hpp`:
+1. Choose three unused IDs and add them to `uartProtocol.hpp`, for example:
    ```cpp
-   CMD_MUTE_ON  = 0x0121,
-   CMD_MUTE_OFF = 0x0122,
-   CMD_TOGGLE_MUTE = 0x0123,
+   CMD_MUTE_ON  = 0x0141,
+   CMD_MUTE_OFF = 0x0142,
+   CMD_TOGGLE_MUTE = 0x0143,
    ```
 2. Reserve the button ID as in §3.
 3. Add a `Toggle` row:
@@ -116,7 +164,7 @@ Pi as a single normalized command with a boolean parameter.
    ```
    This collapses the alternating `CMD_MUTE_ON`/`CMD_MUTE_OFF` produced by the
    button into one wire command (`CMD_TOGGLE_MUTE`) with `params[0] = 1` (ON) or
-   `0` (OFF) — the same normalized command also works if a remote client (BLE/WiFi)
+   `0` (OFF) —    the same normalized command also works if a remote client
    injects `CMD_TOGGLE_MUTE` directly, since `ActionUartDispatcher::handle()`
    tracks per-row toggle state and flips it whenever the row's `toggleCmd` arrives.
 5. Add catalog names for all three IDs.
@@ -125,14 +173,16 @@ Pi as a single normalized command with a boolean parameter.
 What runs under the hood: `DynamicToggleAction::produce(bool isPressed)`
 flips an internal `bool m_state` on every press and returns
 `createAction(m_state ? cmdOn : cmdOff)`. It also implements
-`syncExternalState(bool)` so a remote (BLE/HTTP) toggle keeps the physical
-button's next press in sync instead of emitting a stale command.
+`syncExternalState(bool)` so a remote toggle keeps the physical
+button's next press in sync when the remote command is wired into the existing
+remote-toggle synchronization path.
 
 ## 5. Example 3 — Timed Action
 
 **Goal:** add a button whose *hold duration* matters (like `Power`).
 
-1. Add one command ID, e.g. `CMD_FACTORY_RESET_HOLD = 0x0124`.
+1. Choose an unused command ID, e.g. `CMD_FACTORY_RESET_HOLD = 0x0144`,
+   after checking all participants.
 2. Reserve the button ID.
 3. Add a `Timed` row:
    ```cpp
@@ -145,10 +195,10 @@ What runs under the hood: `DynamicTimedAction::produce(bool isPressed)`
 (actionTemplates.hpp) stamps `esp_timer_get_time()` on press and returns
 `nullptr`; on release it computes the elapsed microseconds, converts to
 milliseconds, and returns `createAction(cmd, releaseMs)`. The duration travels
-as the `releaseTimeMillis` field on the produced `IAction` (see
-`ActionContext`/`IAction.hpp`) — a UART-dispatched timed command carries it as a
-UART parameter, exactly like the existing `CMD_SYS_POWER` handling in
-`PowerTransitionAction`.
+as the `releaseTimeMillis` field on the produced `IAction` (see `IAction.hpp`).
+`CMD_SYS_POWER` uses the power-transition path to interpret the duration. A
+generic UART-dispatched action does not automatically transmit that field;
+implement and test any required encoding in the dispatcher and receiver.
 
 ## 6. Local-Only Actions (No UART)
 
@@ -192,7 +242,8 @@ re-read:
 1. Add/confirm the `CMD_*` constant(s) in `uartProtocol.hpp`.
 2. Add/confirm the button ID in `boardButtonIds.hpp`; bump `k_count`.
 3. Add one row to `k_buttons[]` in `ControlBoardActionRegistry.cpp`.
-4. Toggle only: add a row to `k_toggleTable[]` in `ActionUartDispatcher.cpp`.
+4. UART-normalized toggle only: add a row to `k_toggleTable[]` in
+   `ActionUartDispatcher.cpp` and wire remote button-state synchronization if needed.
 5. Local-only: classify in `ActionCommandRoutingPolicy.hpp`, map in
    `ActionFactory.cpp` if a new route, implement/extend `execute()`.
 6. Add display name(s) to `commandCatalog.cpp`.
