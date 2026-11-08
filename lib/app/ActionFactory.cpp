@@ -8,30 +8,80 @@
 
 namespace controlSystem
 {
-    // Maps a command to its concrete action implementation based on the board's routing policy.
+    // Template specializations for each action route type
+
+    template<>
+    std::unique_ptr<actions::IAction> 
+    createActionForRoute<ActionCommandRoute::PowerStateTransition>(CommandId command, uint16_t releaseTimeMs)
+    {
+        return std::make_unique<actions::PowerTransitionAction>(command, releaseTimeMs);
+    }
+
+    template<>
+    std::unique_ptr<actions::IAction> 
+    createActionForRoute<ActionCommandRoute::System>(CommandId command, uint16_t)
+    {
+        return std::make_unique<actions::SystemAction>(command);
+    }
+
+    template<>
+    std::unique_ptr<actions::IAction> 
+    createActionForRoute<ActionCommandRoute::Relay>(CommandId command, uint16_t)
+    {
+        return std::make_unique<actions::RelayAction>(command);
+    }
+
+    template<>
+    std::unique_ptr<actions::IAction> 
+    createActionForRoute<ActionCommandRoute::Brightness>(CommandId command, uint16_t)
+    {
+        return std::make_unique<actions::BrightnessAction>(command);
+    }
+
+    template<>
+    std::unique_ptr<actions::IAction> 
+    createActionForRoute<ActionCommandRoute::UartDispatch>(CommandId command, uint16_t)
+    {
+        return std::make_unique<actions::UartDispatchAction>(command);
+    }
+
+    template<>
+    std::unique_ptr<actions::IAction> 
+    createActionForRoute<ActionCommandRoute::None>(CommandId, uint16_t)
+    {
+        return nullptr;
+    }
+
+    template<>
+    std::unique_ptr<actions::IAction> 
+    createActionForRoute<ActionCommandRoute::IgnoreWhileNotOn>(CommandId command, uint16_t)
+    {
+        return std::make_unique<actions::UartDispatchAction>(command);
+    }
+
+    // Main factory dispatcher
     std::unique_ptr<actions::IAction> createAction(CommandId command, uint16_t releaseTimeMs)
     {
-        switch (classifyCommand(command, ControlBoardPowerState::ON))
+        const auto route = classifyCommand(command, ControlBoardPowerState::ON);
+
+        switch (route)
         {
         case ActionCommandRoute::None:
-            return nullptr;
-
+            return createActionForRoute<ActionCommandRoute::None>(command, releaseTimeMs);
         case ActionCommandRoute::PowerStateTransition:
-            return std::make_unique<actions::PowerTransitionAction>(command, releaseTimeMs);
-
+            return createActionForRoute<ActionCommandRoute::PowerStateTransition>(command, releaseTimeMs);
         case ActionCommandRoute::System:
-            return std::make_unique<actions::SystemAction>(command);
-
+            return createActionForRoute<ActionCommandRoute::System>(command, releaseTimeMs);
         case ActionCommandRoute::Relay:
-            return std::make_unique<actions::RelayAction>(command);
-
+            return createActionForRoute<ActionCommandRoute::Relay>(command, releaseTimeMs);
         case ActionCommandRoute::Brightness:
-            return std::make_unique<actions::BrightnessAction>(command);
-
+            return createActionForRoute<ActionCommandRoute::Brightness>(command, releaseTimeMs);
         case ActionCommandRoute::UartDispatch:
-        case ActionCommandRoute::IgnoreWhileNotOn: // never reached (ON passed above)
+            return createActionForRoute<ActionCommandRoute::UartDispatch>(command, releaseTimeMs);
+        case ActionCommandRoute::IgnoreWhileNotOn:
+            return createActionForRoute<ActionCommandRoute::IgnoreWhileNotOn>(command, releaseTimeMs);
         default:
-            return std::make_unique<actions::UartDispatchAction>(command);
+            return createActionForRoute<ActionCommandRoute::UartDispatch>(command, releaseTimeMs);
         }
     }
 }
