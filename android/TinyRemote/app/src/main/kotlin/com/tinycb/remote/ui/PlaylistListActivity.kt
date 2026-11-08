@@ -4,7 +4,6 @@ import android.app.Activity
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -20,7 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 /** Shows saved playlist names for either Load or Delete, sharing the fetch/empty/error states. */
-class PlaylistListActivity : AppCompatActivity() {
+class PlaylistListActivity : ConnectedControlActivity() {
 
     private lateinit var b: ActivityPlaylistListBinding
     private val vm: MainViewModel by viewModels()

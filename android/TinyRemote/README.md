@@ -136,6 +136,10 @@ app never uses your actual location.
 - **Amber LED dots** in the top-right of each card reflect the physical LED state
   (updated automatically every ~500 ms via BLE notification).
 - Tap any button to trigger the corresponding command on the board.
+- Controls other than Power and moOde settings are available only while the board is connected
+  and reports **ON**. They remain disabled while the power state is unknown, sleeping, or
+  transitioning, and while disconnected. If the board becomes unavailable while browsing,
+  the app returns to the control panel.
 - Navigating back disconnects from the board and returns to the Scan screen.
 
 ---

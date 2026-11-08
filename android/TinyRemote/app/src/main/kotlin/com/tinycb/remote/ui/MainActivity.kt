@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonAdapter: ButtonPanelAdapter
 
     private var powerButtonAnimator: ValueAnimator? = null
+    private var musicBrainzDialog: androidx.appcompat.app.AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        updateControlsEnabled(false)
         b.btnPrev.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_PREV) }
         b.btnPlayPause.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_PLAY) }
         b.btnNext.setOnClickListener { vm.sendCommand(ButtonCatalog.CMD_NEXT) }
@@ -98,11 +100,11 @@ class MainActivity : AppCompatActivity() {
         val albumArtGesture = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(event: MotionEvent): Boolean = true
             override fun onDoubleTap(event: MotionEvent): Boolean {
-                showMusicBrainzChoice()
+                if (b.ivAlbumArt.isEnabled) showMusicBrainzChoice()
                 return true
             }
             override fun onLongPress(event: MotionEvent) {
-                showMusicBrainzChoice()
+                if (b.ivAlbumArt.isEnabled) showMusicBrainzChoice()
             }
         })
         b.ivAlbumArt.setOnTouchListener { _, event -> albumArtGesture.onTouchEvent(event) }
@@ -171,7 +173,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(padding, 0, padding, 0)
             addView(artistInput)
         }
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        musicBrainzDialog = androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("MusicBrainz information")
             .setMessage("Enter an artist or album name to test the information screen, or leave it blank to use the current track.")
             .setView(container)
@@ -196,6 +198,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
+        lifecycleScope.launch {
+            combine(vm.connectionState, vm.boardStatus, ::controlsAvailable).collectLatest { available ->
+                updateControlsEnabled(available)
+            }
+        }
+
         lifecycleScope.launch {
             vm.buttons.collectLatest { buttonAdapter.submitList(it) }
         }
@@ -249,6 +257,23 @@ class MainActivity : AppCompatActivity() {
                 updateTransportUi(status)
                 refreshStatusBadge(vm.connectionState.value, status?.powerStateName)
             }
+        }
+    }
+
+    private fun updateControlsEnabled(enabled: Boolean) {
+        val controls = listOf(
+            b.btnLibrary, b.ivAlbumArt, b.tvNowPlaying, b.progressTrack,
+            b.btnPrev, b.btnPlayPause, b.btnNext, b.btnMenu, b.btnShuffle, b.btnRepeat,
+            b.btnBrightnessDown, b.btnBrightnessUp, b.btnDisplayToggle
+        )
+        controls.forEach {
+            it.isEnabled = enabled
+            it.alpha = if (enabled) 1f else 0.4f
+        }
+        buttonAdapter.setControlsEnabled(enabled)
+        if (!enabled) {
+            musicBrainzDialog?.dismiss()
+            musicBrainzDialog = null
         }
     }
 

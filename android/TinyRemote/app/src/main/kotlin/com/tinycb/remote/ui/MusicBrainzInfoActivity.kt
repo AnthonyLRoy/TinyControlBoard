@@ -11,7 +11,6 @@ import android.graphics.drawable.GradientDrawable
 import android.text.TextUtils
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.tinycb.remote.R
@@ -25,7 +24,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class MusicBrainzInfoActivity : AppCompatActivity() {
+class MusicBrainzInfoActivity : ConnectedControlActivity() {
     private val vm: MusicBrainzInfoViewModel by viewModels()
     private lateinit var content: LinearLayout
     private lateinit var progress: ProgressBar

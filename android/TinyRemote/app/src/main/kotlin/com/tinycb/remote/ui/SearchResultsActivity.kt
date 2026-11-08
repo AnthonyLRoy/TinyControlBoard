@@ -5,7 +5,6 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tinycb.remote.R
@@ -16,7 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class SearchResultsActivity : AppCompatActivity() {
+class SearchResultsActivity : ConnectedControlActivity() {
 
     private lateinit var b: ActivitySearchResultsBinding
     private val vm: MainViewModel by viewModels()
@@ -145,4 +144,3 @@ class SearchResultsActivity : AppCompatActivity() {
         const val EXTRA_QUERY = "extra_query"
     }
 }
-

@@ -23,6 +23,13 @@ class ButtonPanelAdapter(
 ) : ListAdapter<GridItem, RecyclerView.ViewHolder>(DIFF) {
 
     private var currentStatus: BoardStatus? = null
+    private var controlsEnabled = false
+
+    fun setControlsEnabled(enabled: Boolean) {
+        if (controlsEnabled == enabled) return
+        controlsEnabled = enabled
+        notifyDataSetChanged()
+    }
 
     fun updateStatus(status: BoardStatus?) {
         currentStatus = status
@@ -73,6 +80,9 @@ class ButtonPanelAdapter(
     inner class StepperViewHolder(private val b: ItemBrightnessStepperBinding) : RecyclerView.ViewHolder(b.root) {
         fun bind(stepper: GridItem.Stepper) {
             b.ivIcon.setImageResource(stepper.iconRes)
+            b.btnDec.isEnabled = controlsEnabled
+            b.btnInc.isEnabled = controlsEnabled
+            b.root.alpha = if (controlsEnabled) 1f else 0.4f
             b.btnDec.setOnClickListener { onButtonClick(stepper.decCommandId) }
             b.btnInc.setOnClickListener { onButtonClick(stepper.incCommandId) }
         }
@@ -87,6 +97,8 @@ class ButtonPanelAdapter(
     ) : RecyclerView.ViewHolder(root) {
 
         fun bind(btn: ButtonDef, status: BoardStatus?) {
+            root.isEnabled = controlsEnabled
+            root.alpha = if (controlsEnabled) 1f else 0.4f
             ivIcon.setImageResource(btn.iconRes)
             ivIcon.contentDescription = btn.name
             resizeForIcon(btn.iconSizeDp)
@@ -150,4 +162,3 @@ class ButtonPanelAdapter(
         }
     }
 }
-

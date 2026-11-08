@@ -3,7 +3,6 @@ package com.tinycb.remote.ui
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tinycb.remote.R
@@ -12,7 +11,7 @@ import com.tinycb.remote.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class ViewSelectionActivity : AppCompatActivity() {
+class ViewSelectionActivity : ConnectedControlActivity() {
 
     private lateinit var b: ActivityViewSelectionBinding
     private val vm: MainViewModel by viewModels()

@@ -5,7 +5,6 @@ import android.content.Intent
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,7 +16,7 @@ import com.tinycb.remote.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class LibraryActivity : AppCompatActivity() {
+class LibraryActivity : ConnectedControlActivity() {
 
     private lateinit var b: ActivityLibraryBinding
     private val vm: MainViewModel by viewModels()

@@ -8,7 +8,6 @@ import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tinycb.remote.R
@@ -22,7 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
-class PlaylistManagementActivity : AppCompatActivity() {
+class PlaylistManagementActivity : ConnectedControlActivity() {
 
     private lateinit var b: ActivityPlaylistManagementBinding
     private val vm: MainViewModel by viewModels()
